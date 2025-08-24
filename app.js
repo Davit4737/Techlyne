@@ -1,3 +1,6 @@
+import Web3Modal from "https://cdn.jsdelivr.net/npm/web3modal@1.9.12/dist/index.js";
+import WalletConnectProvider from "https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js";
+
 const qs = (sel) => document.querySelector(sel);
 
 const connectBtn = qs("#connectBtn");
@@ -9,61 +12,67 @@ const addrBox = qs("#addrBox");
 const networkBox = qs("#networkBox");
 const notice = qs("#notice");
 
-let currentAccount = null;
+let web3Modal;
+let provider;
+let currentAccount;
+
+async function init() {
+  web3Modal = new Web3Modal({
+    cacheProvider: false,
+    providerOptions: {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          rpc: {
+            1: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
+            56: "https://bsc-dataseed.binance.org/",
+            137: "https://polygon-rpc.com"
+          }
+        }
+      }
+    }
+  });
+}
 
 function short(addr) {
   if (!addr) return "—";
   return addr.slice(0, 6) + "…" + addr.slice(-4);
 }
 
-function getChainName(chainId) {
-  const map = {
-    "0x1": "Ethereum Mainnet",
-    "0xaa36a7": "Sepolia",
-    "0x5": "Goerli (legacy)",
-    "0x89": "Polygon",
-    "0x38": "BSC",
-    "0x2105": "Base",
-  };
-  return map[chainId] || chainId;
-}
-
 async function connect() {
-  if (!window.ethereum) {
-    alert("Wallet provider not found (MetaMask/Trust/OKX). Open the site in the wallet browser or install the extension.");
-    return;
-  }
-
   try {
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    provider = await web3Modal.connect();
+    provider.on("accountsChanged", (accounts) => {
+      currentAccount = accounts[0];
+      addrBox.textContent = Адрес: ${short(currentAccount)};
+    });
+    provider.on("chainChanged", (chainId) => {
+      networkBox.textContent = Сеть: ${chainId};
+    });
+
+    const accounts = await provider.request({ method: "eth_accounts" });
     currentAccount = accounts[0];
-    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    const chainId = await provider.request({ method: "eth_chainId" });
 
     addrBox.textContent = Адрес: ${short(currentAccount)};
-    networkBox.textContent = Сеть: ${getChainName(chainId)} (${chainId});
+    networkBox.textContent = Сеть: ${chainId};
 
     connectBtn.classList.add("hidden");
     disconnectBtn.classList.remove("hidden");
     claimBtn.disabled = false;
     copyBtn.disabled = false;
 
-    window.ethereum.on?.("accountsChanged", (accs) => {
-      if (!accs || !accs.length) return disconnect();
-      currentAccount = accs[0];
-      addrBox.textContent = Адрес: ${short(currentAccount)};
-    });
-
-    window.ethereum.on?.("chainChanged", async (cid) => {
-      networkBox.textContent = Сеть: ${getChainName(cid)} (${cid});
-    });
-
   } catch (err) {
     console.error(err);
-    alert("Connection was cancelled or failed.");
+    alert("Connection cancelled or failed.");
   }
 }
 
 function disconnect() {
+  if (provider?.close) {
+    provider.close();
+  }
+  provider = null;
   currentAccount = null;
   addrBox.textContent = "Wallet not connected";
   networkBox.textContent = "Network: —";
@@ -78,17 +87,15 @@ async function claimDemo() {
 
   const message = [
     "Little Pepe Airdrop — proof of address ownership.",
-    "AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet.",
     Адрес: ${currentAccount},
     Метка времени: ${new Date().toISOString()}
   ].join("\n");
 
   try {
-    const from = currentAccount;
     const msgHex = "0x" + Buffer.from(message, "utf8").toString("hex");
-    const sig = await window.ethereum.request({
+    const sig = await provider.request({
       method: "personal_sign",
-      params: [msgHex, from],
+      params: [msgHex, currentAccount],
     });
     notice.innerHTML = ✅ Claim approved.<br/><code>${sig}</code>;
   } catch (err) {
@@ -111,3 +118,5 @@ connectBtn.addEventListener("click", connect);
 disconnectBtn.addEventListener("click", disconnect);
 claimBtn.addEventListener("click", claimDemo);
 copyBtn.addEventListener("click", copyAddr);
+
+init();
