@@ -1,7 +1,4 @@
-// Подключаем Web3Modal и WalletConnect через CDN в HTML перед этим скриптом
-// <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
-// <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
-
+// Глобальные элементы
 const qs = (sel) => document.querySelector(sel);
 
 const connectBtn = qs("#connectBtn");
@@ -38,14 +35,22 @@ function initWeb3Modal() {
   });
 }
 
+// Короткая форма адреса
+function short(addr) {
+  if (!addr) return "—";
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
+}
+
 // Подключение кошелька
 async function connect() {
   try {
     provider = await web3Modal.connect();
+
     provider.on("accountsChanged", (accounts) => {
       currentAccount = accounts[0];
       addrBox.textContent = Адрес: ${short(currentAccount)};
     });
+
     provider.on("chainChanged", (chainId) => {
       networkBox.textContent = Сеть: ${chainId};
     });
@@ -83,15 +88,9 @@ function disconnect() {
   copyBtn.disabled = true;
 }
 
-// Короткая форма адреса
-function short(addr) {
-  if (!addr) return "—";
-  return addr.slice(0, 6) + "…" + addr.slice(-4);
-}
-
 // Claim через личную подпись
 async function claimDemo() {
-  if (!currentAccount) return alert("First connect your wallet.");
+  if (!currentAccount) return alert("Сначала подключи кошелек.");
 
   const message = [
     "Little Pepe Airdrop — proof of address ownership.",
@@ -108,7 +107,7 @@ async function claimDemo() {
     notice.innerHTML = ✅ Claim approved.<br/><code>${sig}</code>;
   } catch (err) {
     console.error(err);
-    alert("Signature rejected.");
+    alert("Подпись отклонена.");
   }
 }
 
@@ -117,17 +116,17 @@ async function copyAddr() {
   if (!currentAccount) return;
   try {
     await navigator.clipboard.writeText(currentAccount);
-    alert("The address has been copied.");
+    alert("Адрес скопирован.");
   } catch {
     alert(currentAccount);
   }
 }
 
-// События кнопок
+// Кнопки
 connectBtn.addEventListener("click", connect);
 disconnectBtn.addEventListener("click", disconnect);
 claimBtn.addEventListener("click", claimDemo);
 copyBtn.addEventListener("click", copyAddr);
 
 // Инициализация при загрузке страницы
-window.addEventListener("DOMContentLoaded", initWeb3Modal);
+window.addEventListener("DOMContentLoaded", initWeb3Modal)
