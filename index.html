@@ -195,6 +195,47 @@ document.getElementById('tokens-left').innerText = '258,000';
 <script src="https://unpkg.com/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 <script src="https://unpkg.com/evm-chains/lib/index.js"></script>
 
+<script>
+  // Конфиг кошельков
+  const providerOptions = {
+    walletconnect: {
+      package: window.WalletConnectProvider.default,
+      options: {
+        infuraId: "8043bb2cf99347b1bfadfb233c5325c0" // тестовый Infura ID
+      }
+    }
+  };
+
+  // Создаём модалку
+  const web3Modal = new window.Web3Modal.default({
+    cacheProvider: false,
+    providerOptions,
+  });
+
+  let provider;
+  let signer;
+
+  async function connectWallet() {
+    try {
+      provider = await web3Modal.connect();   // открывает модалку
+      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      signer = ethersProvider.getSigner();
+
+      const address = await signer.getAddress();
+      alert("Подключён кошелёк: " + address);
+    } catch (err) {
+      console.error("Ошибка подключения:", err);
+    }
+  }
+
+  // Вешаем на кнопку
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("connectBtn");
+    if (btn) {
+      btn.addEventListener("click", connectWallet);
+    }
+  });
+</script>
 	
   <script src="app.js" defer></script>
 </body>
