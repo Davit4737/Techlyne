@@ -1,53 +1,67 @@
-const providerOptions = {
-  walletconnect: {
-    package: WalletConnectProvider,
-    options: {
-      infuraId: "YOUR_INFURA_ID",
-      qrcodeModalOptions: {
-        mobileLinks: ["metamask", "trust"]
-      }
-    }
+// wallet.js
+
+let provider;
+let accounts;
+
+// Кнопки и элементы UI
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const addrBox = document.getElementById("addrBox");
+const networkBox = document.getElementById("networkBox");
+
+// Проверяем, есть ли Ethereum провайдер
+function getProvider() {
+  if (window.ethereum) {
+    return window.ethereum;
+  } else {
+    alert("Установите MetaMask или TrustWallet!");
+    return null;
   }
-};
+}
 
-const web3Modal = new Web3Modal({
-  network: "mainnet",
-  cacheProvider: false,
-  providerOptions
-});
-
+// Подключение кошелька
 async function connectWallet() {
+  provider = getProvider();
+  if (!provider) return;
+
   try {
-    const instance = await web3Modal.connect();
-    const ethersProvider = new ethers.providers.Web3Provider(instance);
-    const signer = ethersProvider.getSigner();
-    const address = await signer.getAddress();
-    const network = await ethersProvider.getNetwork();
-    let netName = (network.name === "homestead") ? "Ethereum Mainnet" : network.name;
-    await signer.signMessage("Sign in to claim your airdrop");
-    document.getElementById("addrBox").innerText = address;
-    document.getElementById("networkBox").innerText = netName;
-    document.getElementById("connectBtn").style.display = "none";
-    document.getElementById("disableBtn").style.display = "inline-block";
-  } catch (e) {
-    console.error("Ошибка подключения:", e);
+    accounts = await provider.request({ method: "eth_requestAccounts" });
+    const networkId = await provider.request({ method: "net_version" });
+    
+    addrBox.innerText = accounts[0];
+    networkBox.innerText = "Network ID: " + networkId;
+
+    connectBtn.style.display = "none";
+    disconnectBtn.style.display = "inline-block";
+
+    // Слушаем смену аккаунта
+    provider.on("accountsChanged", (newAccounts) => {
+      accounts = newAccounts;
+      addrBox.innerText = accounts[0] || "Wallet not connected";
+    });
+
+    // Слушаем смену сети
+    provider.on("chainChanged", (chainId) => {
+      networkBox.innerText = "Network ID: " + parseInt(chainId, 16);
+    });
+
+  } catch (err) {
+    console.error("Подключение не удалось:", err);
   }
 }
 
-async function disconnectWallet() {
-  if (provider && provider.disconnect) {
-    await provider.disconnect();
-  }
-  web3Modal.clearCachedProvider();
-  document.getElementById("addrBox").innerText = "";
-  document.getElementById("networkBox").innerText = "";
-  document.getElementById("connectBtn").style.display = "inline-block";
-  document.getElementById("disableBtn").style.display = "none";
+// Отключение кошелька
+function disconnectWallet() {
+  accounts = null;
+  provider = null;
+
+  addrBox.innerText = "Wallet not connected";
+  networkBox.innerText = "Network: —";
+
+  connectBtn.style.display = "inline-block";
+  disconnectBtn.style.display = "none";
 }
 
-window.addEventListener("load", async () => {
-  await initWeb3Modal();
-  document.getElementById("connectBtn").addEventListener("click", connectWallet);
-  document.getElementById("disconnectBtn").addEventListener("click", disconnectWallet);
-});
-
+// Привязка событий к кнопкам
+connectBtn.addEventListener("click", connectWallet);
+disconnectBtn.addEventListener("click", disconnectWallet);
