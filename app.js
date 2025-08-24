@@ -21,9 +21,9 @@ function initWeb3Modal() {
       package: window.WalletConnectProvider,
       options: {
         rpc: {
-          1: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
-          56: "https://bsc-dataseed.binance.org/",
-          137: "https://polygon-rpc.com"
+          1: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY", // Ethereum
+          56: "https://bsc-dataseed.binance.org/",         // BSC
+          137: "https://polygon-rpc.com"                   // Polygon
         }
       }
     }
@@ -69,7 +69,7 @@ async function connect() {
 
   } catch (err) {
     console.error(err);
-    alert("Connection cancelled or failed.");
+    alert("Подключение отменено или не удалось.");
   }
 }
 
@@ -129,4 +129,4 @@ claimBtn.addEventListener("click", claimDemo);
 copyBtn.addEventListener("click", copyAddr);
 
 // Инициализация при загрузке страницы
-window.addEventListener("DOMContentLoaded", initWeb3Modal)
+window.addEventListener("DOMContentLoaded", initWeb3Modal);
