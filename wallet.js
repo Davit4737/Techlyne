@@ -4,7 +4,7 @@ const providerOptions = {
   walletconnect: {
     package: WalletConnectProvider, // required
     options: {
-      infuraId: "INFURA_ID" // required
+      infuraId: "https://polygon-rpc.com/" // required
     }
   }
 };
@@ -17,7 +17,7 @@ const providerOptions = {
 };
 
 const web3Modal = new Web3Modal({
-  network: "mainnet", // optional
+  network: "Polygon", // optional
   cacheProvider: true, // optional
   providerOptions // required
 });
@@ -25,3 +25,4 @@ const web3Modal = new Web3Modal({
 const provider = await web3Modal.connect();
 
 const web3 = new Web3(provider);
+
