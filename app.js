@@ -1,5 +1,6 @@
-import Web3Modal from "https://cdn.jsdelivr.net/npm/web3modal@1.9.12/dist/index.js";
-import WalletConnectProvider from "https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js";
+// Подключаем Web3Modal и WalletConnect через CDN в HTML перед этим скриптом
+// <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+// <script src="https://unpkg.com/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
 const qs = (sel) => document.querySelector(sel);
 
@@ -16,29 +17,28 @@ let web3Modal;
 let provider;
 let currentAccount;
 
-async function init() {
-  web3Modal = new Web3Modal({
-    cacheProvider: false,
-    providerOptions: {
-      walletconnect: {
-        package: WalletConnectProvider,
-        options: {
-          rpc: {
-            1: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
-            56: "https://bsc-dataseed.binance.org/",
-            137: "https://polygon-rpc.com"
-          }
+// Инициализация Web3Modal
+function initWeb3Modal() {
+  const providerOptions = {
+    walletconnect: {
+      package: window.WalletConnectProvider,
+      options: {
+        rpc: {
+          1: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
+          56: "https://bsc-dataseed.binance.org/",
+          137: "https://polygon-rpc.com"
         }
       }
     }
+  };
+
+  web3Modal = new window.Web3Modal.default({
+    cacheProvider: false,
+    providerOptions
   });
 }
 
-function short(addr) {
-  if (!addr) return "—";
-  return addr.slice(0, 6) + "…" + addr.slice(-4);
-}
-
+// Подключение кошелька
 async function connect() {
   try {
     provider = await web3Modal.connect();
@@ -68,6 +68,7 @@ async function connect() {
   }
 }
 
+// Отключение кошелька
 function disconnect() {
   if (provider?.close) {
     provider.close();
@@ -82,6 +83,13 @@ function disconnect() {
   copyBtn.disabled = true;
 }
 
+// Короткая форма адреса
+function short(addr) {
+  if (!addr) return "—";
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
+}
+
+// Claim через личную подпись
 async function claimDemo() {
   if (!currentAccount) return alert("First connect your wallet.");
 
@@ -104,6 +112,7 @@ async function claimDemo() {
   }
 }
 
+// Копирование адреса
 async function copyAddr() {
   if (!currentAccount) return;
   try {
@@ -114,9 +123,11 @@ async function copyAddr() {
   }
 }
 
+// События кнопок
 connectBtn.addEventListener("click", connect);
 disconnectBtn.addEventListener("click", disconnect);
 claimBtn.addEventListener("click", claimDemo);
 copyBtn.addEventListener("click", copyAddr);
 
-init();
+// Инициализация при загрузке страницы
+window.addEventListener("DOMContentLoaded", initWeb3Modal);
