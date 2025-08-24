@@ -1,51 +1,90 @@
-import WalletConnectProvider from "@walletconnect/web3-provider";
+// wallet.js
 
+// Параметры провайдеров
 const providerOptions = {
   walletconnect: {
-    package: WalletConnectProvider, // required
+    package: window.WalletConnectProvider.default,
     options: {
-      infuraId: "https://polygon-rpc.com/" // required
+      rpc: {
+        137: "https://polygon-rpc.com/" // Polygon mainnet
+      }
     }
-  }
+  },
+  // Можно добавить другие провайдеры, если есть CDN
+  // Например, OkxWalletProvider, LedgerProvider и т.д.
 };
 
-import Web3 from "web3";
-import Web3Modal from "web3modal";
-
-const providerOptions = {
-  
-};
-
-const web3Modal = new Web3Modal({
-  network: "Polygon", // optional
-  cacheProvider: true, // optional
-  providerOptions // required
+// Инициализация Web3Modal
+const web3Modal = new window.Web3Modal.default({
+  cacheProvider: true,
+  providerOptions
 });
 
-const provider = await web3Modal.connect();
+let web3;
+let accounts;
+let providerInstance;
 
-const web3 = new Web3(provider);
+// DOM элементы
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const addrBox = document.getElementById("addrBox");
+const networkBox = document.getElementById("networkBox");
 
-
-
-
-
-
-
-
-const connectWallet = async () => {
+// Подключение кошелька
+async function connectWallet() {
   try {
-    const provider = await web3Modal.connect();
-    const web3 = new Web3(provider);
-    const accounts = await web3.eth.getAccounts();
-    console.log("Connected:", accounts[0]);
-    // тут можно обновить UI
+    providerInstance = await web3Modal.connect();
+    web3 = new Web3(providerInstance);
+
+    accounts = await web3.eth.getAccounts();
+    addrBox.innerText = accounts[0];
+
+    const networkId = await web3.eth.net.getId();
+    networkBox.innerText = "Network ID: " + networkId;
+
+    connectBtn.classList.add("hidden");
+    disconnectBtn.classList.remove("hidden");
+
+    // Событие смены аккаунта
+    providerInstance.on("accountsChanged", (newAccounts) => {
+      accounts = newAccounts;
+      addrBox.innerText = accounts[0] || "Wallet not connected";
+    });
+
+    // Событие смены сети
+    providerInstance.on("chainChanged", (chainId) => {
+      networkBox.innerText = "Network ID: " + parseInt(chainId, 16);
+    });
+
+    // Событие отключения
+    providerInstance.on("disconnect", () => disconnectWallet());
   } catch (err) {
-    console.error("Failed to connect", err);
+    console.error("Could not connect wallet:", err);
   }
-};
+}
 
-// Привязка к кнопке
-document.querySelector(".connectBtn").addEventListener("click", connectWallet);
+// Отключение кошелька
+function disconnectWallet() {
+  addrBox.innerText = "Wallet not connected";
+  networkBox.innerText = "Network: —";
+  connectBtn.classList.remove("hidden");
+  disconnectBtn.classList.add("hidden");
 
+  if (providerInstance && providerInstance.close) {
+    providerInstance.close(); // для WalletConnect
+  }
 
+  web3Modal.clearCachedProvider();
+  web3 = null;
+  accounts = null;
+  providerInstance = null;
+}
+
+// Привязка кнопок
+connectBtn.addEventListener("click", connectWallet);
+disconnectBtn.addEventListener("click", disconnectWallet);
+
+// Если есть кэшированный провайдер — подключаем автоматически
+if (web3Modal.cachedProvider) {
+  connectWallet();
+}
