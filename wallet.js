@@ -48,5 +48,6 @@ async function disconnectWallet() {
 window.addEventListener("load", async () => {
   await initWeb3Modal();
   document.getElementById("connectBtn").addEventListener("click", connectWallet);
-  document.getElementById("disableBtn").addEventListener("click", disconnectWallet);
+  document.getElementById("disconnectBtn").addEventListener("click", disconnectWallet);
 });
+
