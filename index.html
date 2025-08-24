@@ -236,7 +236,42 @@ document.getElementById('tokens-left').innerText = '258,000';
     }
   });
 </script>
-	
+	<script type="module">
+  import { EthereumClient, w3mConnectors, w3mProvider } from "@web3modal/ethereum";
+  import { Web3Modal } from "@web3modal/html";
+  import { configureChains, createClient } from "@wagmi/core";
+  import { mainnet } from "@wagmi/core/chains";
+
+  const projectId = "ТВОЙ_PROJECT_ID";
+
+  const chains = [mainnet];
+  const { provider } = configureChains(chains, [w3mProvider({ projectId })]);
+
+  const wagmiClient = createClient({
+    autoConnect: true,
+    connectors: w3mConnectors({ projectId, version: 1, chains }),
+    provider
+  });
+
+  const ethereumClient = new EthereumClient(wagmiClient, chains);
+
+  // Здесь создаётся модалка — именно меню
+  const web3modal = new Web3Modal({
+    projectId,
+    walletImages: {
+      metamask: "https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg",
+      trust: "https://seeklogo.com/images/T/trust-wallet-logo-FA3FE6F652-seeklogo.com.png",
+      coinbase: "https://avatars.githubusercontent.com/u/18060234?s=200&v=4"
+    },
+    themeMode: "dark"
+  }, ethereumClient);
+
+  // Кнопка "подключить"
+  document.getElementById("connectBtn").addEventListener("click", () => {
+    web3modal.openModal();
+  });
+</script>
+
   <script src="app.js" defer></script>
 </body>
 </html>
