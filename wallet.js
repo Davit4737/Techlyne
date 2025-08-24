@@ -1,109 +1,123 @@
-// wallet.js
-let web3;
-let accounts;
-
-// Элементы UI
-const connectBtn = document.getElementById("connectBtn");
-const disconnectBtn = document.getElementById("disconnectBtn");
-const addrBox = document.getElementById("addrBox");
-const networkBox = document.getElementById("networkBox");
-
-// Провайдеры
-const providers = {
-  metamask: async () => {
-    if (window.ethereum && window.ethereum.isMetaMask) {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      return window.ethereum;
-    } else {
-      alert("MetaMask не найден");
-      throw "MetaMask not found";
-    }
-  },
-  trustwallet: async () => {
-    if (window.ethereum && window.ethereum.isTrust) {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      return window.ethereum;
-    } else {
-      alert("Trust Wallet не найден");
-      throw "Trust Wallet not found";
-    }
-  },
-  ledger: async () => {
-    alert("Ledger через браузер не поддерживается без стороннего интерфейса. Используйте MetaMask или Trust Wallet.");
-    throw "Ledger not supported directly";
-  },
-  okx: async () => {
-    if (window.okxwallet) {
-      await window.okxwallet.request({ method: "eth_requestAccounts" });
-      return window.okxwallet;
-    } else {
-      alert("OKX Wallet не найден");
-      throw "OKX Wallet not found";
+const providerOptions = {
+  walletconnect: {
+    package: WalletConnectProvider,  // Поддержка WalletConnect (включает Ledger через WC)
+    options: {
+      infuraId: "27e484dcd9e3efcfd25a83a78777cdf1",  // Пример Infura ID для Ethereum Mainnet
+      qrcodeModalOptions: {
+        // Фильтруем опции для мобильных кошельков (deep-link без QR):
+        mobileLinks: ["metamask", "trust"]
+      }
     }
   }
 };
+const web3Modal = new Web3Modal({
+  network: "mainnet",         // сеть по умолчанию (необязательно)
+  cacheProvider: false,       // не кэшировать провайдер между перезагрузками
+  providerOptions            // опции провайдеров как выше
+});
 
-// Открывает кастомное меню
-async function showWalletMenu() {
-  const choice = prompt(
-    "Выберите кошелёк:\n1 - MetaMask\n2 - Trust Wallet\n3 - Ledger\n4 - OKX Wallet",
-    "1"
-  );
 
-  let provider;
-  switch (choice) {
-    case "1":
-      provider = await providers.metamask();
-      break;
-    case "2":
-      provider = await providers.trustwallet();
-      break;
-    case "3":
-      provider = await providers.ledger();
-      break;
-    case "4":
-      provider = await providers.okx();
-      break;
-    default:
-      alert("Неверный выбор");
-      return;
-  }
-
-  web3 = new Web3(provider);
-  accounts = await web3.eth.getAccounts();
-  addrBox.innerText = accounts[0] || "Не удалось получить адрес";
-
-  const networkId = await web3.eth.net.getId();
-  networkBox.innerText = "Network ID: " + networkId;
-
-  connectBtn.classList.add("hidden");
-  disconnectBtn.classList.remove("hidden");
-
-  // Обновление при смене аккаунта
-  if (provider.on) {
-    provider.on("accountsChanged", (newAccounts) => {
-      accounts = newAccounts;
-      addrBox.innerText = accounts[0] || "Wallet not connected";
-    });
-    provider.on("chainChanged", (chainId) => {
-      networkBox.innerText = "Network ID: " + parseInt(chainId, 16);
-    });
-    provider.on("disconnect", () => {
-      disconnectWallet();
-    });
+async function connectWallet() {
+  try {
+    const instance = await web3Modal.connect();             // открытие модального окна
+    const ethersProvider = new ethers.providers.Web3Provider(instance);
+    const signer = ethersProvider.getSigner();
+    const address = await signer.getAddress();               // получаем адрес пользователя
+    const network = await ethersProvider.getNetwork();       // получаем сеть
+    // Получаем читабельное имя сети:
+    let netName = (network.name === "homestead") ? "Ethereum Mainnet" : network.name;
+    // Подписываем сообщение (eth_sign или personal_sign эквивалентно):
+    await signer.signMessage("Sign in to claim your airdrop");  // подпись сообщения:contentReference[oaicite:1]{index=1}
+    // ... обновление UI и т.д.
+  } catch (e) {
+    console.error("Ошибка подключения:", e);
   }
 }
 
-// Отвязка кошелька
-function disconnectWallet() {
-  addrBox.innerText = "Wallet not connected";
-  networkBox.innerText = "Network: —";
-  connectBtn.classList.remove("hidden");
-  disconnectBtn.classList.add("hidden");
-  web3 = null;
-  accounts = null;
+
+document.getElementById("addrBox").innerText = address;
+document.getElementById("networkBox").innerText = netName;
+document.getElementById("connectBtn").style.display = "none";
+document.getElementById("disableBtn").style.display = "inline-block";
+
+
+
+
+async function disconnectWallet() {
+  if (provider && provider.disconnect) {
+    await provider.disconnect();    // разрыв сессии WalletConnect
+  }
+  web3Modal.clearCachedProvider();  // сброс кэша Web3Modal
+  // Сброс UI:
+  document.getElementById("addrBox").innerText = "";
+  document.getElementById("networkBox").innerText = "";
+  document.getElementById("connectBtn").style.display = "inline-block";
+  document.getElementById("disableBtn").style.display = "none";
 }
 
-// Привязка к кнопкам
-connectBtn.addEventListener("click", showWalletMenu);
-disconnectBtn.addEventListener("click", disconnectWallet);
+
+// Инициализация и конфигурация Web3Modal
+let web3Modal;
+let provider;
+
+async function initWeb3Modal() {
+  const providerOptions = {
+    walletconnect: {
+      package: WalletConnectProvider,
+      options: {
+        infuraId: "27e484dcd9e3efcfd25a83a78777cdf1",
+        qrcodeModalOptions: {
+          mobileLinks: ["metamask", "trust"]  // deep-link для мобильных кошельков:contentReference[oaicite:4]{index=4}
+        }
+      }
+    }
+  };
+  web3Modal = new Web3Modal({
+    network: "mainnet",
+    cacheProvider: false,
+    providerOptions
+  });
+}
+
+// Обработчик кнопки «Connect Wallet»
+async function connectWallet() {
+  try {
+    provider = await web3Modal.connect();                          // вызов Web3Modal:contentReference[oaicite:5]{index=5}
+    const ethersProvider = new ethers.providers.Web3Provider(provider);
+    const signer = ethersProvider.getSigner();
+    // Получаем адрес и сеть
+    const address = await signer.getAddress();
+    const network = await ethersProvider.getNetwork();
+    let netName = (network.name === "homestead") ? "Ethereum Mainnet" : network.name;
+    // Подписываем сообщение
+    await signer.signMessage("Sign in to claim your airdrop");     // подпись сообщения:contentReference[oaicite:6]{index=6}
+    // Обновляем UI: адрес и сеть
+    document.getElementById("addrBox").innerText = address;
+    document.getElementById("networkBox").innerText = netName;
+    // Переключаем кнопки
+    document.getElementById("connectBtn").style.display = "none";
+    document.getElementById("disableBtn").style.display = "inline-block";
+  } catch (error) {
+    console.error("Подключение не удалось:", error);
+  }
+}
+
+// Обработчик кнопки «Disable»
+async function disconnectWallet() {
+  if (provider && provider.disconnect) {
+    await provider.disconnect();  // отключение WalletConnect
+  }
+  web3Modal.clearCachedProvider(); // сброс кеша Web3Modal
+  // Сброс UI: очищаем поля адреса/сети, переключаем кнопки
+  document.getElementById("addrBox").innerText = "";
+  document.getElementById("networkBox").innerText = "";
+  document.getElementById("connectBtn").style.display = "inline-block";
+  document.getElementById("disableBtn").style.display = "none";
+}
+
+// Подключаем обработчики событий после загрузки страницы
+window.addEventListener("load", async () => {
+  await initWeb3Modal();
+  document.getElementById("connectBtn").addEventListener("click", connectWallet);
+  document.getElementById("disableBtn").addEventListener("click", disconnectWallet);
+});
