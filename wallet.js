@@ -26,3 +26,26 @@ const provider = await web3Modal.connect();
 
 const web3 = new Web3(provider);
 
+
+
+
+
+
+
+
+const connectWallet = async () => {
+  try {
+    const provider = await web3Modal.connect();
+    const web3 = new Web3(provider);
+    const accounts = await web3.eth.getAccounts();
+    console.log("Connected:", accounts[0]);
+    // тут можно обновить UI
+  } catch (err) {
+    console.error("Failed to connect", err);
+  }
+};
+
+// Привязка к кнопке
+document.querySelector(".connectBtn").addEventListener("click", connectWallet);
+
+
