@@ -37,7 +37,7 @@ async function connectWallet() {
 
 document.getElementById("addrBox").innerText = address;
 document.getElementById("networkBox").innerText = netName;
-document.getElementById("connectBtn").style.display = "none";
+document.getElementById("connectBtn").addEventListener("click", connectWallet);
 document.getElementById("disableBtn").style.display = "inline-block";
 
 
@@ -51,7 +51,7 @@ async function disconnectWallet() {
   // Сброс UI:
   document.getElementById("addrBox").innerText = "";
   document.getElementById("networkBox").innerText = "";
-  document.getElementById("connectBtn").style.display = "inline-block";
+  document.getElementById("connectBtn").style.display =;
   document.getElementById("disableBtn").style.display = "none";
 }
 
@@ -121,3 +121,4 @@ window.addEventListener("load", async () => {
   document.getElementById("connectBtn").addEventListener("click", connectWallet);
   document.getElementById("disableBtn").addEventListener("click", disconnectWallet);
 });
+
