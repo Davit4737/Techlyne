@@ -1,43 +1,28 @@
-
 :root{
   --bg:#0c0d14; --bg2:#0a0b12;
   --ink:#f6f7fb; --muted:#aeb2c7;
   --pri:#6c47ff; --pri2:#9c70ff;
   --ok:#45e39c; --err:#ff5566;
-  --card: rgba(255,255,255,.06);
   --border: rgba(255,255,255,.12);
   --radius: 18px;
-  --shadow: 0 20px 60px rgba(0,0,0,.45);
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
 body{
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", sans-serif;
+  font-family: sans-serif;
+  margin:0; padding:0;
   color: var(--ink);
-  background: radial-gradient(1200px 600px at 15% -10%, #251b5a 0%, transparent 55%),
-              radial-gradient(900px 520px at 120% 0%, #1a1540 0%, transparent 60%),
-              linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  background: linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
   min-height: 100vh;
 }
-
-.nav{
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 18px 16px;
-  display:flex; align-items:center; justify-content:space-between;
-}
-
-.brand{display:flex; gap:12px; align-items:center}
-.logo{width:40px; height:40px}
-.title{font-weight:900; letter-spacing:.6px}
-.title span{background: linear-gradient(90deg,var(--pri),var(--pri2)); -webkit-background-clip:text; color:transparent}
-.subtitle{font-size:12px; color:var(--muted)}
+.container{ max-width: 800px; margin:20px auto; padding:0 16px; }
+.hero h1{ font-size:2rem; margin:0; }
+.lead{ color: var(--muted); margin-bottom:20px; }
 
 .btn{
   background: #ffffff10;
   border:1px solid var(--border);
-  padding:10px 14px; border-radius:12px; cursor:pointer;
+  padding:8px 12px; border-radius:12px; cursor:pointer;
   color:#fff; font-weight:700;
 }
 .btn.primary{ background: linear-gradient(90deg,var(--pri),var(--pri2)); border:none }
@@ -45,38 +30,12 @@ body{
 .btn.success{ background: linear-gradient(90deg,#24bf6a,#5fe2a5); border:none }
 .btn:disabled{ opacity:.5; cursor:not-allowed }
 
-.container{ max-width: 1100px; margin: 6px auto 40px; padding: 0 16px; }
+.wallet-info{ background:#111; border-radius:12px; padding:16px; margin-bottom:20px; }
+.actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.notice{ margin-top:10px; font-size:0.85rem; color: var(--muted); }
 
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
-  border:1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: clamp(16px, 2.6vw, 26px);
-  margin-bottom: 16px;
-}
-
-.hero h1{ margin: 8px 0 6px; font-size: clamp(24px, 4.5vw, 40px); }
-.lead{ color: var(--muted); max-width: 780px }
-
-.stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin: 16px 0 }
-.stat{ background:#ffffff0b; border:1px solid var(--border); border-radius:14px; padding:12px; text-align:center }
-.stat-num{ font-size:20px; font-weight:900 }
-.stat-label{ color: var(--muted); font-size:12px }
-
-.card.inner{ display:flex; flex-direction:column; gap:12px }
-.wallet-info{ display:flex; gap:16px; flex-wrap:wrap }
-.muted{ color: var(--muted) }
-.actions{ display:flex; gap:12px; flex-wrap:wrap }
-.notice{ font-size:13px; color: var(--muted) }
-
-.faq h2{ margin:0 0 8px }
-details{ background:#ffffff08; border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin:8px 0 }
-details summary{ cursor:pointer; font-weight:800 }
-details p{ color:var(--muted) }
-
-.footer{ color: var(--muted); text-align:center; padding: 20px 10px }
-
-.hidden{ display:none }
-
-
+.stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
+.stat{ background:#111; border-radius:12px; padding:12px; text-align:center }
+.stat-num{ font-weight:700; font-size:1.2rem; color:#00bfff }
+.stat-label{ font-size:0.8rem; color: var(--muted) }
+.hidden{ display:none; }
