@@ -15,7 +15,7 @@ function getProvider() {
     return window.ethereum;
   } else {
     alert("Установите MetaMask или TrustWallet!");
-    return null;
+    return connectWallet;
   }
 }
 
@@ -65,3 +65,4 @@ function disconnectWallet() {
 // Привязка событий к кнопкам
 connectBtn.addEventListener("click", connectWallet);
 disconnectBtn.addEventListener("click", disconnectWallet);
+
