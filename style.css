@@ -1,41 +1,66 @@
-:root{
-  --bg:#0c0d14; --bg2:#0a0b12;
-  --ink:#f6f7fb; --muted:#aeb2c7;
-  --pri:#6c47ff; --pri2:#9c70ff;
-  --ok:#45e39c; --err:#ff5566;
-  --border: rgba(255,255,255,.12);
-  --radius: 18px;
+<style>
+.airdrop-tab {
+  background: #111;
+  color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  max-width: 1200px;
 }
 
-*{box-sizing:border-box}
-body{
-  font-family: sans-serif;
-  margin:0; padding:0;
-  color: var(--ink);
-  background: linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
-  min-height: 100vh;
+.airdrop-tab h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
 }
-.container{ max-width: 800px; margin:20px auto; padding:0 16px; }
-.hero h1{ font-size:2rem; margin:0; }
-.lead{ color: var(--muted); margin-bottom:20px; }
 
-.btn{
-  background: #ffffff10;
-  border:1px solid var(--border);
-  padding:8px 12px; border-radius:12px; cursor:pointer;
-  color:#fff; font-weight:700;
+.airdrop-tab p {
+  font-size: 14px;
+  line-height: 1.4;
 }
-.btn.primary{ background: linear-gradient(90deg,var(--pri),var(--pri2)); border:none }
-.btn.ghost{ background: transparent }
-.btn.success{ background: linear-gradient(90deg,#24bf6a,#5fe2a5); border:none }
-.btn:disabled{ opacity:.5; cursor:not-allowed }
 
-.wallet-info{ background:#111; border-radius:12px; padding:16px; margin-bottom:20px; }
-.actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-.notice{ margin-top:10px; font-size:0.85rem; color: var(--muted); }
+.airdrop-stats {
+  display: flex;
+  gap: 10px;
+  background: #000;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 1200px;
+}
 
-.stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
-.stat{ background:#111; border-radius:12px; padding:12px; text-align:center }
-.stat-num{ font-weight:700; font-size:1.2rem; color:#00bfff }
-.stat-label{ font-size:0.8rem; color: var(--muted) }
-.hidden{ display:none; }
+.stat-tab {
+  flex: 1;
+  background: #111;
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  color: #00bfff; /* голубой цвет */
+}
+
+.stat-number {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #ccc;
+}
+</style>
+
+<script>
+// Пример динамических данных
+document.getElementById('total-distributed').innerText = '742,000';
+document.getElementById('users-received').innerText = '371';
+document.getElementById('tokens-left').innerText = '258,000';
+</script>
+
+  </main>
+  <br><br><br><br>
+  <footer class="footer">
+    <div>© 2025 Little Pepe Airdrop. Not affiliated with Little Pepe Foundation.</div>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>\
