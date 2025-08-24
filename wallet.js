@@ -1,39 +1,16 @@
-import { AppKit } from "@reown/appkit";
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { createClient } from "wagmi";
-import { mainnet } from "viem/chains";
+import Web3 from "web3";
+import Web3Modal from "web3modal";
 
-// Создаём Wagmi клиента
-const client = createClient({
-  autoConnect: true,
-  connectors: WagmiAdapter.defaultConnectors({ chains: [mainnet] }),
+const providerOptions = {
+  /* See Provider Options Section */
+};
+
+const web3Modal = new Web3Modal({
+  network: "mainnet", // optional
+  cacheProvider: true, // optional
+  providerOptions // required
 });
 
-// Инициализируем AppKit с выбором кошельков
-const appKit = new AppKit({
-  client,
-  walletOptions: {
-    defaultWallets: ["MetaMask", "Trust", "Ledger", "WalletConnect"]
-  }
-});
+const provider = await web3Modal.connect();
 
-// Кнопка Connect Wallet
-const connectBtn = document.getElementById("connectBtn");
-if(connectBtn){
-  connectBtn.addEventListener("click", () => {
-    appKit.open();
-  });
-}
-
-// Иконка кошелька
-const walletIcon = document.getElementById("walletIcon");
-if(walletIcon){
-  walletIcon.addEventListener("click", () => {
-    appKit.open();
-  });
-}
-
-// После подключения кошелька
-appKit.on("connect", wallet => {
-  console.log("Подключён кошелёк:", wallet.address);
-});
+const web3 = new Web3(provider);
