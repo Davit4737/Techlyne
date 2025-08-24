@@ -1,0 +1,59 @@
+:root{
+  --bg:#0c0d14; --bg2:#0a0b12;
+  --ink:#f6f7fb; --muted:#aeb2c7;
+  --pri:#6c47ff; --pri2:#9c70ff;
+  --card: rgba(255,255,255,.06);
+  --border: rgba(255,255,255,.12);
+  --radius: 18px;
+  --shadow: 0 20px 60px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(1200px 600px at 15% -10%, #251b5a 0%, transparent 55%),
+              radial-gradient(900px 520px at 120% 0%, #1a1540 0%, transparent 60%),
+              linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  min-height: 100vh;
+}
+
+.nav{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.brand{display:flex; gap:12px; align-items:center}
+.logo{width:40px; height:40px}
+.title{font-weight:900; letter-spacing:.6px}
+.title span{background: linear-gradient(90deg,var(--pri),var(--pri2)); -webkit-background-clip:text; color:transparent}
+.subtitle{font-size:12px; color:var(--muted)}
+
+.btn{
+  background: #ffffff10;
+  border:1px solid var(--border);
+  padding:10px 14px; border-radius:12px; cursor:pointer;
+  color:#fff; font-weight:700;
+}
+.btn.primary{ background: linear-gradient(90deg,var(--pri),var(--pri2)); border:none }
+
+.container{ max-width: 1100px; margin: 6px auto 40px; padding: 0 16px; }
+
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(16px, 2.6vw, 26px);
+  margin-bottom: 16px;
+}
+
+.airdrop-stats{ display: flex; gap: 10px; }
+.stat-tab{ flex: 1; background: #111; border-radius: 6px; padding: 10px; text-align:center; color: #00bfff; }
+.stat-number{ font-size: 16px; font-weight: bold; }
+.stat-label{ font-size: 12px; margin-top: 4px; color: #ccc; }
+
+.footer{ color: var(--muted); text-align:center; padding: 20px 10px }
