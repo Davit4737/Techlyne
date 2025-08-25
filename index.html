@@ -219,6 +219,19 @@ document.getElementById('tokens-left').innerText = '258,000';
 
  
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+	<script type="module">
+  import AppKit from './node_modules/@reown/appkit/dist/index.js';
+
+  // Инициализация AppKit
+  const app = new AppKit({
+    projectId: 'твой_projectId',  // вставь свой projectId
+    networks: ['polygon'],        // сети, которые поддерживаешь
+    wallets: ['metamask', 'trust', 'ledger'] // только кошельки
+  });
+
+  // app теперь готов к использованию в коде
+  console.log('AppKit подключен', app);
+</script>
 
 
 	
