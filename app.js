@@ -1,69 +1,84 @@
-// ---------------------- Web3Modal Setup ----------------------
-let web3Modal;
-let provider;
-let web3;
+import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
+import { polygon } from "https://esm.sh/viem/chains";
+import { getAccount, getNetwork, disconnect } from "https://esm.sh/@wagmi/core";
 
-function initWeb3Modal() {
-    const providerOptions = {
-        walletconnect: {
-            package: window.WalletConnectProvider.default,
-            options: {
-                infuraId: "YOUR_INFURA_ID" // замените на свой Infura ID
-            }
-        }
-    };
+// 1. Project ID
+const projectId = "56edaed968d799280ffd685113d7f126";
 
-    web3Modal = new window.Web3Modal.default({
-        cacheProvider: false,
-        providerOptions
-    });
-}
+// 2. Chains
+const chains = [polygon];
 
-async function connectWallet() {
-    try {
-        provider = await web3Modal.connect();
-        web3 = new Web3(provider);
-
-        const accounts = await web3.eth.getAccounts();
-        console.log("Connected wallet:", accounts[0]);
-
-        const addrEl = document.getElementById('walletAddress');
-        if(addrEl) addrEl.innerText = 'Wallet Address: ' + accounts[0];
-
-        provider.on("accountsChanged", (accounts) => {
-            console.log("Account changed:", accounts[0]);
-            if(addrEl) addrEl.innerText = 'Wallet Address: ' + accounts[0];
-        });
-
-        provider.on("chainChanged", (chainId) => {
-            console.log("Chain changed:", chainId);
-        });
-
-        provider.on("disconnect", (code, reason) => {
-            console.log("Disconnected:", code, reason);
-            if(addrEl) addrEl.innerText = 'Wallet Address: Not connected';
-        });
-
-    } catch (err) {
-        console.error("Wallet connection failed:", err);
-    }
-}
-
-// ---------------------- Airdrop Stats ----------------------
-document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация Web3Modal
-    initWeb3Modal();
-
-    // Пример динамических данных
-    const totalDistEl = document.getElementById('total-distributed');
-    const usersRecEl = document.getElementById('users-received');
-    const tokensLeftEl = document.getElementById('tokens-left');
-
-    if(totalDistEl) totalDistEl.innerText = '742,000';
-    if(usersRecEl) usersRecEl.innerText = '371';
-    if(tokensLeftEl) tokensLeftEl.innerText = '258,000';
-
-    // Кнопка подключения кошелька
-    const btnConnect = document.getElementById('connectWallet');
-    if(btnConnect) btnConnect.addEventListener('click', connectWallet);
+// 3. Wagmi config
+const config = defaultWagmiConfig({
+  chains,
+  projectId,
 });
+
+// 4. Init Web3Modal
+const modal = createWeb3Modal({
+  wagmiConfig: config,
+  projectId,
+  chains,
+  themeMode: "dark",
+  themeVariables: {
+    "--w3m-accent-color": "#6c47ff",
+    "--w3m-background-color": "#111",
+    "--w3m-button-border-radius": "12px"
+  }
+});
+
+// DOM элементы
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const addrBox = document.getElementById("addrBox");
+const networkBox = document.getElementById("networkBox");
+const claimBtn = document.getElementById("claimBtn");
+const copyBtn = document.getElementById("copyBtn");
+
+// Обновление UI после коннекта
+async function updateUI() {
+  const account = getAccount(config);
+  const network = getNetwork(config);
+
+  if (account.isConnected) {
+    addrBox.innerText = "Address: " + account.address.slice(0, 6) + "..." + account.address.slice(-4);
+    networkBox.innerText = "Network: " + network.chain?.name || "Unknown";
+
+    connectBtn.classList.add("hidden");
+    disconnectBtn.classList.remove("hidden");
+
+    claimBtn.disabled = false;
+    copyBtn.disabled = false;
+  } else {
+    addrBox.innerText = "Wallet not connected";
+    networkBox.innerText = "Network: —";
+
+    connectBtn.classList.remove("hidden");
+    disconnectBtn.classList.add("hidden");
+
+    claimBtn.disabled = true;
+    copyBtn.disabled = true;
+  }
+}
+
+// Слушатели кнопок
+connectBtn.addEventListener("click", async () => {
+  modal.open();
+  setTimeout(updateUI, 1500); // даём время подключиться
+});
+
+disconnectBtn.addEventListener("click", async () => {
+  await disconnect(config);
+  updateUI();
+});
+
+copyBtn.addEventListener("click", () => {
+  const account = getAccount(config);
+  if (account.isConnected) {
+    navigator.clipboard.writeText(account.address);
+    alert("Address copied!");
+  }
+});
+
+// Автообновление UI при заходе
+updateUI();
