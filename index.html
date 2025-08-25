@@ -7,6 +7,38 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <meta name="description" content=Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve."/>
+	  <script type="module">
+    import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
+    import { polygon } from "https://esm.sh/viem/chains";
+
+    // 1. Твой projectId
+    const projectId = "56edaed968d799280ffd685113d7f126";
+
+    // 2. Chains
+    const chains = [polygon];
+
+    // 3. Wagmi config
+    const config = defaultWagmiConfig({ chains, projectId });
+
+    // 4. Init Web3Modal
+    const modal = createWeb3Modal({
+      wagmiConfig: config,
+      projectId,
+      chains,
+      themeMode: "dark",
+      themeVariables: {
+        "--w3m-accent-color": "#4caf50",
+        "--w3m-background-color": "#121212"
+      }
+    });
+
+    // 5. Открытие модалки
+    window.onload = () => {
+      document.getElementById("connect").onclick = () => {
+        modal.open();
+      };
+    };
+  </script>
 </head>
 <body>
   <header class="nav">
@@ -19,7 +51,7 @@
     </div>
 
     <div class="wallet-box">
-      <button id="connectBtn" class="btn primary">Connect Wallet</button>
+      <button id="connect" class="btn primary">Connect Wallet</button>
       <button id="disconnectBtn" class="btn ghost hidden">Disable</button>
     </div>
   </header>
