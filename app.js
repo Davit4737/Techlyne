@@ -38,3 +38,23 @@ async function afterConnect(address) {
   document.getElementById("copyBtn").disabled = false;
 }
 
+
+
+
+import AppKit from './node_modules/@reown/appkit/dist/index.js';
+
+const app = new AppKit({
+  projectId: '56edaed968d799280ffd685113d7f126',
+  networks: ['polygon'],
+  wallets: ['metamask', 'trust', 'ledger'], // только кошельки
+  features: {
+    socialLogin: false // отключаем все соцсети
+  }
+});
+
+document.getElementById('claimBtn').addEventListener('click', () => {
+  app.openWalletModal();
+});
+
+
+
