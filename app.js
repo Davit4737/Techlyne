@@ -11,8 +11,7 @@ document.getElementById("copyBtn").addEventListener("click", () => {
 });
 
 // Обработчик кнопки Claim
-document.getElementById("claimBtn").addEventListener("click", async () => {
-  if (!userAddress || !window.ethereum) return alert("Connect wallet first!");
+
   
   const web3 = new Web3(window.ethereum);
   const msg = "Claim LittlePepe Airdrop!";
@@ -38,3 +37,4 @@ async function afterConnect(address) {
   document.getElementById("claimBtn").disabled = false;
   document.getElementById("copyBtn").disabled = false;
 }
+
