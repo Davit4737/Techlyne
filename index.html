@@ -198,6 +198,9 @@ document.getElementById('tokens-left').innerText = '258,000';
 <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
 
+<script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+
 <button id="connectWallet">Подключить кошелёк</button>
 
 <script>
@@ -208,6 +211,15 @@ document.getElementById('tokens-left').innerText = '258,000';
       137: "https://polygon-rpc.com/", // Polygon
     },
   });
+
+  document.getElementById("connectWallet").onclick = async () => {
+    await provider.enable();
+    const web3 = new Web3(provider);
+    const accounts = await web3.eth.getAccounts();
+    alert("Подключён кошелёк: " + accounts[0]);
+  };
+</script>
+
 
   document.getElementById("connectWallet").onclick = async () => {
     await provider.enable();
