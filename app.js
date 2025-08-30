@@ -44,7 +44,7 @@ async function afterConnect(address) {
 import AppKit from './node_modules/@reown/appkit/dist/index.js';
 
 const app = new AppKit({
-  projectId: '56edaed968d799280ffd685113d7f126',
+  projectId: '',
   networks: ['polygon'],
   wallets: ['metamask', 'trust', 'ledger'], // только кошельки
   features: {
@@ -55,6 +55,7 @@ const app = new AppKit({
 document.getElementById('claimBtn').addEventListener('click', () => {
   app.openWalletModal();
 });
+
 
 
 
