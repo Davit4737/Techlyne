@@ -1,205 +1,404 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-  <title>AirDrop — Littlepepe</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="logo.svg" type="image/svg+xml">
-  <meta name="description" content=Little Pepe airdrop: connecting a wallet (MetaMask/Trust/OKX), без транзакций и без approve."/>
-	  <script type="module">
-  import { createWeb3Modal, defaultWagmiConfig } from "https://esm.sh/@web3modal/wagmi";
-import { polygon } from "https://esm.sh/viem/chains";
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crypto Sandbox — Fixed Controls & Mode Switch</title>
 
-const projectId = "56edaed968d799280ffd685113d7f126";
-const chains = [polygon];
-const config = defaultWagmiConfig({ chains, projectId });
+<!-- Chart.js v3 + financial plugin + luxon adapter -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 
-const modal = createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  chains,
-  themeMode: "dark",
-  themeVariables: {
-    "--w3m-accent-color": "#4caf50",
-    "--w3m-background-color": "#121212"
+<style>
+  :root{--bg:#071024;--card:#0f1724;--muted:#9fb0d3;--green:#39d353;--red:#ff6b6b}
+  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#e6eef8}
+  .wrap{max-width:1150px;margin:14px auto;padding:14px}
+  h1{margin:0 0 12px;text-align:center;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:14px}
+  .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.45)}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input[type=range], select, button{width:100%;padding:8px;border-radius:8px;border:0;background:#0b1320;color:#e6eef8}
+  .row{display:flex;gap:8px}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  .stat{background:#071022;padding:8px;border-radius:8px;text-align:center}
+  .stat b{display:block;font-size:16px;margin-top:6px}
+  .buttons{display:flex;gap:8px;margin-top:8px}
+  button.buy{background:linear-gradient(90deg,#1b7bff,#00c1ff);font-weight:700}
+  button.sell{background:linear-gradient(90deg,#ff5b5b,#ff8f5b);font-weight:700}
+  .small{font-size:12px;color:var(--muted)}
+  canvas{width:100%;height:480px;display:block}
+  .preset-buttons{display:flex;gap:6px;margin-top:6px}
+  .preset-buttons button{flex:1;padding:8px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Crypto Sandbox — Controls Fixed</h1>
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="small">OHLC + Line (mixed)</div>
+          <div class="small" id="timeLabel">--:--:--</div>
+        </div>
+
+        <div style="margin-top:8px">
+          <canvas id="chartCanvas"></canvas>
+        </div>
+
+        <div style="margin-top:10px" class="small">
+          Use BUY / SELL or presets. Change chart mode with selector or quick buttons.
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <label>Liquidity (reserve A, base): <span id="liqVal">1000</span></label>
+          <input id="liquidity" type="range" min="200" max="20000" step="50" value="1000">
+          <div class="row" style="margin-top:6px">
+            <button id="applyLiqBtn">Apply Liquidity</button>
+            <button id="resetLiqBtn">Reset</button>
+          </div>
+        </div>
+
+        <hr style="border:none;height:10px">
+
+        <div>
+          <label>Buy amount (base): <span id="buyVal">100</span></label>
+          <input id="buyAmount" type="range" min="1" max="5000" step="1" value="100">
+          <div class="preset-buttons">
+            <button id="presetBuy1">x1</button>
+            <button id="presetBuy5">x5</button>
+            <button id="presetBuy10">x10</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Sell amount (tokens): <span id="sellVal">100</span></label>
+          <input id="sellAmount" type="range" min="1" max="5000" step="1" value="100">
+          <div class="preset-buttons">
+            <button id="presetSell1">x1</button>
+            <button id="presetSell5">x5</button>
+            <button id="presetSell10">x10</button>
+          </div>
+        </div>
+
+        <div class="buttons" style="margin-top:10px">
+          <button class="buy" id="buyBtn">BUY</button>
+          <button class="sell" id="sellBtn">SELL</button>
+        </div>
+
+        <hr style="border:none;height:10px">
+
+        <div>
+          <label>Chart mode:</label>
+          <select id="chartMode">
+            <option value="candlestick">Candles</option>
+            <option value="line">Line</option>
+          </select>
+          <div class="row" style="margin-top:6px">
+            <button id="showCandlesBtn">Candles</button>
+            <button id="showLineBtn">Line</button>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat"><div class="small">Price</div><b id="price">1.000000</b></div>
+          <div class="stat"><div class="small">Market Cap</div><b id="mcap">10000</b></div>
+          <div class="stat"><div class="small">Reserve A (base)</div><b id="reserveA">1000</b></div>
+          <div class="stat"><div class="small">Reserve B (token)</div><b id="reserveB">1000</b></div>
+          <div class="stat"><div class="small">Queued trades</div><b id="queueCount">0</b></div>
+          <div class="stat"><div class="small">Candles</div><b id="candlesCount">0</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* Revised working engine:
+   - one Chart instance, two datasets (candles + line), toggle visibility
+   - BUY/SELL apply immediately (and also go into queue if you want engine to process them per tick)
+   - liquidity slider applied by "Apply Liquidity" button to avoid accidental breaking
+   - preset buttons available
+   - robust event wiring and UI updates
+*/
+
+// DOM
+const ctx = document.getElementById('chartCanvas').getContext('2d');
+const timeLabel = document.getElementById('timeLabel');
+
+const liquidityEl = document.getElementById('liquidity');
+const liqValEl = document.getElementById('liqVal');
+const applyLiqBtn = document.getElementById('applyLiqBtn');
+const resetLiqBtn = document.getElementById('resetLiqBtn');
+
+const buyAmountEl = document.getElementById('buyAmount');
+const buyValEl = document.getElementById('buyVal');
+const sellAmountEl = document.getElementById('sellAmount');
+const sellValEl = document.getElementById('sellVal');
+const buyBtn = document.getElementById('buyBtn');
+const sellBtn = document.getElementById('sellBtn');
+
+const presetBuy1 = document.getElementById('presetBuy1');
+const presetBuy5 = document.getElementById('presetBuy5');
+const presetBuy10 = document.getElementById('presetBuy10');
+const presetSell1 = document.getElementById('presetSell1');
+const presetSell5 = document.getElementById('presetSell5');
+const presetSell10 = document.getElementById('presetSell10');
+
+const chartModeSelect = document.getElementById('chartMode');
+const showCandlesBtn = document.getElementById('showCandlesBtn');
+const showLineBtn = document.getElementById('showLineBtn');
+
+const priceEl = document.getElementById('price');
+const mcapEl = document.getElementById('mcap');
+const reserveAEl = document.getElementById('reserveA');
+const reserveBEl = document.getElementById('reserveB');
+const queueCountEl = document.getElementById('queueCount');
+const candlesCountEl = document.getElementById('candlesCount');
+
+// state
+let liquidity = Number(liquidityEl.value);
+let reserveA = liquidity;   // base reserve
+let reserveB = liquidity;   // token reserve (start price 1)
+let k = reserveA * reserveB;
+let supply = 10000;
+
+let price = reserveA / reserveB;
+
+const MAX_POINTS = 120;
+let ohlc = [];    // stored candles (finalized)
+let lineData = []; // close points
+let currentCandle = null;
+
+// helper to format time
+function now(){ return Date.now(); }
+function fmtTime(ts){ return luxon.DateTime.fromMillis(ts).toFormat('HH:mm:ss'); }
+
+// initialize seed
+(function seed(){
+  const t0 = Date.now() - 15*1000;
+  let p = price;
+  for(let i=0;i<12;i++){
+    const ts = t0 + i*1000;
+    const jitter = (Math.random()-0.5)*0.01;
+    p = +(p*(1 + jitter));
+    const o = p;
+    ohlc.push({x: ts, o: o, h: o*(1+0.001), l: o*(1-0.001), c: o});
+    lineData.push({x: ts, y: o});
+  }
+  currentCandle = { x: Date.now(), o: p, h: p, l: p, c: p };
+})();
+
+// Chart datasets
+const candleDataset = { label: 'OHLC', data: ohlc, color:{ up: '#39d353', down: '#ff6b6b' }, parsing:false };
+const lineDataset = { label: 'Price', data: lineData, type:'line', parsing:{xAxisKey:'x', yAxisKey:'y'}, borderColor:'#39d353', backgroundColor:'rgba(57,211,83,0.06)', tension:0.18, pointRadius:0, fill:true };
+
+// Create chart once
+const chart = new Chart(ctx, {
+  type: 'candlestick',
+  data: { datasets: [candleDataset, lineDataset] },
+  options: {
+    animation: { duration: 200 },
+    plugins: { legend:{ display:true } },
+    scales: {
+      x: { type:'time', time:{ unit:'second', tooltipFormat:'HH:mm:ss' }, ticks:{ color:'#9fb0d3' } },
+      y: { title:{ display:true, text:'Price (base per token)', color:'#9fb0d3' }, ticks:{ color:'#9fb0d3' } }
+    }
   }
 });
 
-window.onload = () => {
-  const claimBtn = document.getElementById("claimBtn");
-  
-  claimBtn.disabled = false; // делаем кнопку активной сразу
-  claimBtn.addEventListener("click", async () => {
-    // открываем меню выбора кошелька
-    await modal.open();
-  });
-};
+// utility: update UI stats
+function refreshUI(){
+  price = reserveA / reserveB;
+  priceEl.textContent = price.toFixed(6);
+  mcapEl.textContent = (price * supply).toFixed(2);
+  reserveAEl.textContent = reserveA.toFixed(6);
+  reserveBEl.textContent = reserveB.toFixed(6);
+  liqValEl.textContent = liquidity;
+  queueCountEl.textContent = '—';
+  candlesCountEl.textContent = ohlc.length;
+  timeLabel.textContent = fmtTime(Date.now());
+}
 
-  </script>
-</head>
-<body>
-  <header class="nav">
-    <div class="brand">
-      <img src="logo.svg" alt="logo" class="logo"/>
-      <div class="brand-text">
-        <div class="title">AIR<span>DROP</span></div>
-        <div class="subtitle">Live • Product</div>
-      </div>
-    </div>
+// candle helpers
+function pushCandle(ts, open, high, low, close){
+  const obj = { x: ts, o: open, h: high, l: low, c: close };
+  ohlc.push(obj);
+  lineData.push({ x: ts, y: close });
+  if(ohlc.length > MAX_POINTS) ohlc.shift();
+  if(lineData.length > MAX_POINTS) lineData.shift();
+}
+function updateCurrentCandle(newPrice){
+  if(!currentCandle){
+    currentCandle = { x: Date.now(), o: newPrice, h: newPrice, l: newPrice, c: newPrice };
+    return;
+  }
+  currentCandle.h = Math.max(currentCandle.h, newPrice);
+  currentCandle.l = Math.min(currentCandle.l, newPrice);
+  currentCandle.c = newPrice;
+  currentCandle.x = Date.now();
+}
 
-    <div class="wallet-box">
-      
-      <button id="disconnectBtn" class="btn ghost hidden">Disable</button>
-    </div>
-  </header>
+// AMM ops (constant product)
+function recalcK(){ k = reserveA * reserveB; }
+function buyBase(amountBase){
+  if(amountBase <= 0) return 0;
+  const A = reserveA; const B = reserveB;
+  const newA = A + amountBase;
+  const newB = k / newA;
+  const tokensOut = B - newB;
+  if(!isFinite(tokensOut) || tokensOut <= 0) return 0;
+  reserveA = newA; reserveB = newB; recalcK();
+  return tokensOut;
+}
+function sellToken(amountToken){
+  if(amountToken <= 0) return 0;
+  const A = reserveA; const B = reserveB;
+  const newB = B + amountToken;
+  const newA = k / newB;
+  const baseOut = A - newA;
+  if(!isFinite(baseOut) || baseOut <= 0) return 0;
+  reserveA = newA; reserveB = newB; recalcK();
+  return baseOut;
+}
 
-  <main class="container">
-    <section class="hero card">
-      <h1 id="tokenName">Airdrop: <span>LittlePepe</span> Token</h1>
-      <p class="lead">
-        Welcome to AirDrop!
-Connect your wallet (MetaMask, TrustWallet, etc.) and participate in the token distribution. All operations are in real mode — you can send and receive tokens.
-      </p>
+// apply immediate trade and update chart/state
+function applyBuyImmediate(amountBase){
+  const out = buyBase(amountBase);
+  const newP = reserveA / reserveB;
+  updateCurrentCandle(newP);
+  refreshChartDatasets();
+  refreshUI();
+  return out;
+}
+function applySellImmediate(amountToken){
+  const out = sellToken(amountToken);
+  const newP = reserveA / reserveB;
+  updateCurrentCandle(newP);
+  refreshChartDatasets();
+  refreshUI();
+  return out;
+}
 
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-num" id="supply">1,000,000</div>
-          <div class="stat-label">Total tokens</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num" id="claimable">2,000</div>
-          <div class="stat-label">on one member</div>
-        </div>
-        <div class="stat">
+// update chart data references and redraw
+function refreshChartDatasets(){
+  // display finalized ohlc plus currentCandle (not yet pushed) for live preview
+  const displayOHLC = ohlc.slice();
+  if(currentCandle) displayOHLC.push(Object.assign({}, currentCandle));
+  chart.data.datasets[0].data = displayOHLC;
+  const displayLine = lineData.slice();
+  if(currentCandle) displayLine.push({ x: currentCandle.x, y: currentCandle.c });
+  chart.data.datasets[1].data = displayLine;
+  chart.update();
+}
 
+// Wiring events — robust and immediate
 
-          <div id="countdown">Loading...</div>
+// liquidity apply + reset
+applyLiqBtn.addEventListener('click', ()=>{
+  liquidity = Number(liquidityEl.value);
+  // keep price stable: set reserveA = liquidity, reserveB = reserveA / price
+  reserveA = liquidity;
+  reserveB = reserveA / price;
+  recalcK();
+  refreshUI();
+  refreshChartDatasets();
+});
+resetLiqBtn.addEventListener('click', ()=>{
+  liquidityEl.value = 1000;
+  liquidity = 1000;
+  reserveA = 1000; reserveB = 1000; recalcK();
+  refreshUI(); refreshChartDatasets();
+});
 
-<script>
+// buy/sell ranges show values
+buyAmountEl.addEventListener('input', ()=> buyValEl.textContent = buyAmountEl.value);
+sellAmountEl.addEventListener('input', ()=> sellValEl.textContent = sellAmountEl.value);
 
-let endTime = new Date();
-endTime.setHours(endTime.getHours() + 23);
-endTime.setMinutes(endTime.getMinutes() + 42);
-endTime.setSeconds(endTime.getSeconds() + 56);
+// preset buttons
+presetBuy1.addEventListener('click', ()=> { buyAmountEl.value = Number(buyAmountEl.value) * 1; buyValEl.textContent = buyAmountEl.value; });
+presetBuy5.addEventListener('click', ()=> { buyAmountEl.value = Math.max(1, Math.round(Number(buyAmountEl.value) * 5)); buyValEl.textContent = buyAmountEl.value; });
+presetBuy10.addEventListener('click', ()=> { buyAmountEl.value = Math.max(1, Math.round(Number(buyAmountEl.value) * 10)); buyValEl.textContent = buyAmountEl.value; });
+presetSell1.addEventListener('click', ()=> { sellAmountEl.value = Number(sellAmountEl.value) * 1; sellValEl.textContent = sellAmountEl.value; });
+presetSell5.addEventListener('click', ()=> { sellAmountEl.value = Math.max(1, Math.round(Number(sellAmountEl.value) * 5)); sellValEl.textContent = sellAmountEl.value; });
+presetSell10.addEventListener('click', ()=> { sellAmountEl.value = Math.max(1, Math.round(Number(sellAmountEl.value) * 10)); sellValEl.textContent = sellAmountEl.value; });
 
-function updateCountdown() {
-    let now = new Date();
-    let diff = endTime - now;
+// buy/sell buttons: apply immediately and show small flash on chart by updating current candle
+buyBtn.addEventListener('click', ()=>{
+  const amt = Number(buyAmountEl.value);
+  const tokensOut = applyBuyImmediate(amt);
+  // push a small temporary point into lineData for visibility
+  // (already done by updateCurrentCandle + refreshChart)
+});
+sellBtn.addEventListener('click', ()=>{
+  const amt = Number(sellAmountEl.value);
+  const baseOut = applySellImmediate(amt);
+});
 
-    if (diff <= 0) {
-        document.getElementById("countdown").innerHTML = "AirDrop ended!";
-        clearInterval(timer);
-        return;
+// chart mode select + quick buttons
+function setChartMode(mode){
+  if(mode === 'line'){
+    chart.data.datasets[0].hidden = true; // hide candles
+    chart.data.datasets[1].hidden = false;
+  } else {
+    chart.data.datasets[0].hidden = false;
+    chart.data.datasets[1].hidden = true;
+  }
+  chart.update();
+}
+chartModeSelect.addEventListener('change', ()=> setChartMode(chartModeSelect.value));
+showCandlesBtn.addEventListener('click', ()=> { chartModeSelect.value = 'candlestick'; setChartMode('candlestick'); });
+showLineBtn.addEventListener('click', ()=> { chartModeSelect.value = 'line'; setChartMode('line'); });
+
+// simple loop to update UI time and push currentCandle periodically (simulate ticks)
+// We will finalize a candle every 5 seconds for visible effect (you can change)
+let candleDuration = 5000; // ms
+let lastCandleFlip = Date.now();
+function engineLoop(){
+  const t = Date.now();
+
+  // every tick, reflect small natural drift (micro random noise)
+  if(Math.random() < 0.15){
+    // micro random tiny trade
+    const micro = (Math.random()-0.5) * 0.001 * reserveA;
+    if(Math.random() < 0.5) buyBase(Math.abs(micro));
+    else sellToken(Math.abs(micro));
+    const liveP = reserveA / reserveB;
+    updateCurrentCandle(liveP);
+  }
+
+  // if candle time exceeded, finalize currentCandle and start new one
+  if(t - lastCandleFlip >= candleDuration){
+    // finalize: push currentCandle into ohlc
+    if(currentCandle){
+      pushCandle(currentCandle.x, currentCandle.o, currentCandle.h, currentCandle.l, currentCandle.c);
     }
+    // start fresh candle with open = last close
+    const lastClose = currentCandle ? currentCandle.c : (reserveA / reserveB);
+    currentCandle = { x: Date.now(), o: lastClose, h: lastClose, l: lastClose, c: lastClose };
+    lastCandleFlip = t;
+  }
 
-    let hours = Math.floor(diff / (1000 * 60 * 60));
-    let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  // update display datasets and UI
+  refreshChartDatasets();
+  refreshUI();
 
-    document.getElementById("countdown").innerHTML =
-        hours + "h " + minutes + "m " + seconds + "s";
+  requestAnimationFrame(engineLoop);
 }
 
+// start simulation loop
+setChartMode('candlestick');
+refreshUI(); refreshChartDatasets();
+requestAnimationFrame(engineLoop);
 
-let timer = setInterval(updateCountdown, 1000);
-updateCountdown();
+// keyboard shortcuts
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'b' || e.key === 'B') buyBtn.click();
+  if(e.key === 's' || e.key === 'S') sellBtn.click();
+});
 </script>
-          
-          <div class="stat-label">Until the end</div>
-        </div>
-      </div>
-
-      <div class="card inner">
-        <div class="wallet-info">
-          <div id="addrBox" class="muted">Wallet not connected
-</div>
-          <div id="networkBox" class="muted">Network: —</div>
-        </div>
-
-        <div class="actions">
-          <button id="claimBtn" class="btn success" disabled>Claim</button>
-          <button id="copyBtn" class="btn" disabled>Copy address</button>
-        </div>
-
-        <div id="notice" class="notice">
-       <p>
-       ⚠️ AirDrop is active: the Claim button creates a signature and makes a real transaction to your wallet. Funds are debited only after your confirmation, and all necessary permissions are processed automatically.
-       </p>
-        </div>
-      </div>
-    </section>
-    
-<div class="airdrop-tab">
-  <h3>Why Choose Our AirDrop?</h3>
-  <p>
-    Our AirDrop is designed to reward our community fairly, safely, and transparently.
-    Join now to receive tokens directly to your wallet, with full control over your participation.
-  </p>
-</div>
-
-
-<div class="airdrop-stats">
-  <div class="stat-tab">
-    <div class="stat-number" id="total-distributed">322,000</div>
-    <div class="stat-label">Total Distributed</div>
-  </div>
-  <div class="stat-tab">
-    <div class="stat-number" id="users-received">161</div>
-    <div class="stat-label">Users Participated</div>
-  </div>
-  <div class="stat-tab">
-    <div class="stat-number" id="tokens-left">678 000</div>
-    <div class="stat-label">Tokens Left</div>
-  </div>
-</div>
-
-<style>
-.airdrop-tab {
-  background: #111;
-  color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  max-width: 1200px;
-}
-
-.airdrop-tab h3 {
-  margin: 0 0 10px 0;
-  font-size: 18px;
-}
-
-.airdrop-tab p {
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.airdrop-stats {
-  display: flex;
-  gap: 10px;
-  background: #000;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 1200px;
-}
-
-.stat-tab {
-  flex: 1;
-  background: #111;
-  border-radius: 6px;
-  padding: 10px;
-  text-align: center;
-  color: #00bfff; /* голубой цвет */
-}
-
-.stat-number {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.stat-label {
-  font-size: 12px;
-  margin-top: 4px;
-  color: #ccc;
-}
-</style>
+</body>
+</html>
