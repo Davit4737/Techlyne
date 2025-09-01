@@ -1,252 +1,250 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Crypto Sandbox — Fixed Controls & Mode Switch</title>
-
-<!-- Chart.js v3 + financial plugin + luxon adapter -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
-
+<title>Crypto Sandbox — Long & Short, Liquidation, Sim</title>
+<!-- Lightweight Charts (TradingView-like) -->
+<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-  :root{--bg:#071024;--card:#0f1724;--muted:#9fb0d3;--green:#39d353;--red:#ff6b6b}
-  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#e6eef8}
-  .wrap{max-width:1150px;margin:14px auto;padding:14px}
-  h1{margin:0 0 12px;text-align:center;font-weight:600}
-  .grid{display:grid;grid-template-columns:1fr 360px;gap:14px}
-  .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.45)}
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-  input[type=range], select, button{width:100%;padding:8px;border-radius:8px;border:0;background:#0b1320;color:#e6eef8}
-  .row{display:flex;gap:8px}
-  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-  .stat{background:#071022;padding:8px;border-radius:8px;text-align:center}
-  .stat b{display:block;font-size:16px;margin-top:6px}
-  .buttons{display:flex;gap:8px;margin-top:8px}
-  button.buy{background:linear-gradient(90deg,#1b7bff,#00c1ff);font-weight:700}
-  button.sell{background:linear-gradient(90deg,#ff5b5b,#ff8f5b);font-weight:700}
-  .small{font-size:12px;color:var(--muted)}
-  canvas{width:100%;height:480px;display:block}
-  .preset-buttons{display:flex;gap:6px;margin-top:6px}
-  .preset-buttons button{flex:1;padding:8px}
-  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+:root{
+  --bg:#08101a; --panel:#0c1722; --muted:#9fb0d3; --up:#2ecc71; --down:#ff5b5b; --accent:#00c1ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#e8f4ff}
+.wrap{max-width:1280px;margin:12px auto;padding:12px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.title{font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:12px}
+.panel{background:linear-gradient(180deg,var(--panel),#06121a);padding:12px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.btn{border:0;border-radius:8px;padding:8px 10px;background:#0b1520;color:#e8f4ff;cursor:pointer;font-weight:700}
+.btn.primary{background:linear-gradient(90deg,#1b7bff,#00c1ff)}
+.btn.danger{background:linear-gradient(90deg,#ff5b5b,#ff9a5b)}
+.small{font-size:13px;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.input, select{border-radius:8px;padding:8px;border:0;background:#07121a;color:#e8f4ff}
+.canvas{height:520px;border-radius:8px;overflow:hidden}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.stat{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.table th,.table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.table th{color:var(--muted);font-weight:700}
+.bad{color:#ff8b8b}.ok{color:#7ef29a}
+.controls-block{background:rgba(255,255,255,0.01);padding:8px;border-radius:8px;margin-top:8px}
+.footer{margin-top:10px;font-size:12px;color:var(--muted)}
+.smallinput{width:100px;padding:6px;border-radius:6px;border:0;background:#07121a;color:#e8f4ff}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Crypto Sandbox — Controls Fixed</h1>
-    <div class="grid">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="small">OHLC + Line (mixed)</div>
-          <div class="small" id="timeLabel">--:--:--</div>
-        </div>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="title">Crypto Sandbox — Long / Short / Liquidation (sim)</div>
+      <div class="small">Горячие клавиши: B=Buy(long) · S=Sell/Close long · Shift+S=Open short · H=hand-move (режим рисования отключён)</div>
+    </div>
+    <div class="small">Никаких надписей прямо на свечах — только аккуратные ценовые линии</div>
+  </div>
 
-        <div style="margin-top:8px">
-          <canvas id="chartCanvas"></canvas>
-        </div>
+  <div class="grid">
+    <!-- Left: chart -->
+    <div class="panel">
+      <div class="tools">
+        <select id="mode" class="input">
+          <option value="candles">Candles</option>
+          <option value="line">Line</option>
+          <option value="area">Area</option>
+        </select>
+        <select id="tf" class="input">
+          <option value="1">1s</option><option value="5" selected>5s</option><option value="15">15s</option>
+          <option value="60">1m</option><option value="300">5m</option><option value="900">15m</option>
+          <option value="3600">1h</option><option value="86400">1d</option>
+        </select>
 
-        <div style="margin-top:10px" class="small">
-          Use BUY / SELL or presets. Change chart mode with selector or quick buttons.
+        <div style="flex:1"></div>
+
+        <div class="small" style="align-self:center">Leverage</div>
+        <select id="leverage" class="input" style="max-width:90px">
+          <option>1</option><option>2</option><option selected>5</option><option>10</option><option>25</option><option>50</option>
+        </select>
+      </div>
+
+      <div id="chart" class="canvas"></div>
+
+      <div class="row" style="margin-top:8px;align-items:center">
+        <div class="small">Price: <b id="price">$—</b></div>
+        <div style="width:16px"></div>
+        <div class="small">Unrealized PnL: <b id="upnl">$0 (0%)</b></div>
+        <div style="flex:1"></div>
+
+        <input id="orderSize" type="number" value="100" min="1" class="smallinput" />
+        <button id="openLong" class="btn primary">Open Long</button>
+        <button id="openShort" class="btn danger">Open Short</button>
+        <button id="closePos" class="btn">Close (FIFO)</button>
+      </div>
+
+      <div class="controls-block">
+        <div class="row" style="gap:12px">
+          <label class="small">Liquidity (A reserve):</label>
+          <input id="liquidity" type="range" min="200" max="200000" step="50" value="10000" style="flex:1">
+          <span id="liqVal" class="small">10000</span>
+        </div>
+        <div class="row" style="gap:12px;margin-top:6px">
+          <label class="small">Supply (tokens):</label>
+          <input id="supply" type="number" class="smallinput" value="100000">
+          <label class="small" style="margin-left:12px">Manual price (for testing):</label>
+          <input id="priceManual" type="range" min="0.0001" max="10" step="0.0001" value="1" style="flex:1">
+          <span id="pmVal" class="small">1.0000</span>
         </div>
       </div>
 
-      <div class="card">
-        <div>
-          <label>Liquidity (reserve A, base): <span id="liqVal">1000</span></label>
-          <input id="liquidity" type="range" min="200" max="20000" step="50" value="1000">
-          <div class="row" style="margin-top:6px">
-            <button id="applyLiqBtn">Apply Liquidity</button>
-            <button id="resetLiqBtn">Reset</button>
-          </div>
-        </div>
+      <div class="footer">Как открыть Short: нажми <b>Open Short</b> или удерживай Shift+S. Позиции показываются как ценовые линии. Линии показывают цену входа + PnL в тултипе.</div>
+    </div>
 
-        <hr style="border:none;height:10px">
-
-        <div>
-          <label>Buy amount (base): <span id="buyVal">100</span></label>
-          <input id="buyAmount" type="range" min="1" max="5000" step="1" value="100">
-          <div class="preset-buttons">
-            <button id="presetBuy1">x1</button>
-            <button id="presetBuy5">x5</button>
-            <button id="presetBuy10">x10</button>
-          </div>
+    <!-- Right: controls & positions -->
+    <div class="panel">
+      <div class="col">
+        <div class="stat-grid">
+          <div class="stat"><div class="small">Market Cap</div><b id="mcap">—</b></div>
+          <div class="stat"><div class="small">Supply</div><b id="supplyVal">100000</b></div>
         </div>
 
         <div style="margin-top:10px">
-          <label>Sell amount (tokens): <span id="sellVal">100</span></label>
-          <input id="sellAmount" type="range" min="1" max="5000" step="1" value="100">
-          <div class="preset-buttons">
-            <button id="presetSell1">x1</button>
-            <button id="presetSell5">x5</button>
-            <button id="presetSell10">x10</button>
+          <div class="small">Open positions</div>
+          <table class="table" id="posTable">
+            <thead><tr><th>#</th><th>Side</th><th>Size ($)</th><th>Entry</th><th>Qty</th><th>UPnL $</th><th>UPnL %</th><th>LiQ</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="small">Realized PnL: <b id="rpnl">$0.00</b></div>
+          <div class="small" style="margin-top:6px">Trade log</div>
+          <table class="table" id="txTable"><thead><tr><th>Time</th><th>Side</th><th>Size $</th><th>Price</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div style="margin-top:10px" class="controls-block">
+          <div class="row">
+            <label class="small">Time multiplier:</label>
+            <input id="timeMult" type="range" min="1" max="200000" value="1500" style="flex:1">
+            <span id="tmVal" class="small">1500x</span>
           </div>
-        </div>
-
-        <div class="buttons" style="margin-top:10px">
-          <button class="buy" id="buyBtn">BUY</button>
-          <button class="sell" id="sellBtn">SELL</button>
-        </div>
-
-        <hr style="border:none;height:10px">
-
-        <div>
-          <label>Chart mode:</label>
-          <select id="chartMode">
-            <option value="candlestick">Candles</option>
-            <option value="line">Line</option>
-          </select>
           <div class="row" style="margin-top:6px">
-            <button id="showCandlesBtn">Candles</button>
-            <button id="showLineBtn">Line</button>
+            <label class="small">Market activity (trades per candle):</label>
+            <input id="activity" type="range" min="0" max="50" value="4" style="flex:1">
+            <span id="actVal" class="small">4</span>
           </div>
         </div>
 
-        <div class="stat-grid">
-          <div class="stat"><div class="small">Price</div><b id="price">1.000000</b></div>
-          <div class="stat"><div class="small">Market Cap</div><b id="mcap">10000</b></div>
-          <div class="stat"><div class="small">Reserve A (base)</div><b id="reserveA">1000</b></div>
-          <div class="stat"><div class="small">Reserve B (token)</div><b id="reserveB">1000</b></div>
-          <div class="stat"><div class="small">Queued trades</div><b id="queueCount">0</b></div>
-          <div class="stat"><div class="small">Candles</div><b id="candlesCount">0</b></div>
-        </div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
-/* Revised working engine:
-   - one Chart instance, two datasets (candles + line), toggle visibility
-   - BUY/SELL apply immediately (and also go into queue if you want engine to process them per tick)
-   - liquidity slider applied by "Apply Liquidity" button to avoid accidental breaking
-   - preset buttons available
-   - robust event wiring and UI updates
+/*
+Crypto Sandbox — single-file implementation
+Features:
+- Lightweight-charts candlesticks
+- Open Long / Open Short positions (isolated margin simulation)
+- Position entries shown as price lines; UPnL and liquidation price displayed
+- Manual controls: liquidity, supply, manual price slider (for tests)
+- Test buys/sells via AMM affect simulated price
+- No textual labels on candles themselves
 */
 
-// DOM
-const ctx = document.getElementById('chartCanvas').getContext('2d');
-const timeLabel = document.getElementById('timeLabel');
+// Short notes: This is a simulation tool. Liquidation formula is a simple isolated-margin model:
+//   maintenance = 0.005 (0.5%); leverage L => approx liq_long = entry * (1 - (1 / L) + maintenance)
+//   liq_short = entry * (1 + (1 / L) - maintenance)
+// It's not an exchange-grade calc — purely for demo/visualization.
 
-const liquidityEl = document.getElementById('liquidity');
-const liqValEl = document.getElementById('liqVal');
-const applyLiqBtn = document.getElementById('applyLiqBtn');
-const resetLiqBtn = document.getElementById('resetLiqBtn');
+const lc = window.LightweightCharts;
 
-const buyAmountEl = document.getElementById('buyAmount');
-const buyValEl = document.getElementById('buyVal');
-const sellAmountEl = document.getElementById('sellAmount');
-const sellValEl = document.getElementById('sellVal');
-const buyBtn = document.getElementById('buyBtn');
-const sellBtn = document.getElementById('sellBtn');
-
-const presetBuy1 = document.getElementById('presetBuy1');
-const presetBuy5 = document.getElementById('presetBuy5');
-const presetBuy10 = document.getElementById('presetBuy10');
-const presetSell1 = document.getElementById('presetSell1');
-const presetSell5 = document.getElementById('presetSell5');
-const presetSell10 = document.getElementById('presetSell10');
-
-const chartModeSelect = document.getElementById('chartMode');
-const showCandlesBtn = document.getElementById('showCandlesBtn');
-const showLineBtn = document.getElementById('showLineBtn');
-
+// DOM refs
+const chartEl = document.getElementById('chart');
+const modeSel = document.getElementById('mode');
+const tfSel = document.getElementById('tf');
+const orderSizeEl = document.getElementById('orderSize');
+const openLongBtn = document.getElementById('openLong');
+const openShortBtn = document.getElementById('openShort');
+const closePosBtn = document.getElementById('closePos');
 const priceEl = document.getElementById('price');
-const mcapEl = document.getElementById('mcap');
-const reserveAEl = document.getElementById('reserveA');
-const reserveBEl = document.getElementById('reserveB');
-const queueCountEl = document.getElementById('queueCount');
-const candlesCountEl = document.getElementById('candlesCount');
+const upnlEl = document.getElementById('upnl');
+const posTableBody = document.querySelector('#posTable tbody');
+const txTbody = document.querySelector('#txTable tbody');
+const rpnlEl = document.getElementById('rpnl');
 
-// state
-let liquidity = Number(liquidityEl.value);
-let reserveA = liquidity;   // base reserve
-let reserveB = liquidity;   // token reserve (start price 1)
-let k = reserveA * reserveB;
-let supply = 10000;
+const liqRange = document.getElementById('liquidity'), liqVal = document.getElementById('liqVal');
+const supplyInput = document.getElementById('supply'), supplyVal = document.getElementById('supplyVal');
+const pmRange = document.getElementById('priceManual'), pmVal = document.getElementById('pmVal');
 
-let price = reserveA / reserveB;
+const timeMultRange = document.getElementById('timeMult'), tmVal = document.getElementById('tmVal');
+const activityRange = document.getElementById('activity'), actVal = document.getElementById('actVal');
+const leverageSel = document.getElementById('leverage');
 
-const MAX_POINTS = 120;
-let ohlc = [];    // stored candles (finalized)
-let lineData = []; // close points
-let currentCandle = null;
+let maintenance = 0.005; // 0.5% maintenance margin for liq calc
 
-// helper to format time
-function now(){ return Date.now(); }
-function fmtTime(ts){ return luxon.DateTime.fromMillis(ts).toFormat('HH:mm:ss'); }
-
-// initialize seed
-(function seed(){
-  const t0 = Date.now() - 15*1000;
-  let p = price;
-  for(let i=0;i<12;i++){
-    const ts = t0 + i*1000;
-    const jitter = (Math.random()-0.5)*0.01;
-    p = +(p*(1 + jitter));
-    const o = p;
-    ohlc.push({x: ts, o: o, h: o*(1+0.001), l: o*(1-0.001), c: o});
-    lineData.push({x: ts, y: o});
-  }
-  currentCandle = { x: Date.now(), o: p, h: p, l: p, c: p };
-})();
-
-// Chart datasets
-const candleDataset = { label: 'OHLC', data: ohlc, color:{ up: '#39d353', down: '#ff6b6b' }, parsing:false };
-const lineDataset = { label: 'Price', data: lineData, type:'line', parsing:{xAxisKey:'x', yAxisKey:'y'}, borderColor:'#39d353', backgroundColor:'rgba(57,211,83,0.06)', tension:0.18, pointRadius:0, fill:true };
-
-// Create chart once
-const chart = new Chart(ctx, {
-  type: 'candlestick',
-  data: { datasets: [candleDataset, lineDataset] },
-  options: {
-    animation: { duration: 200 },
-    plugins: { legend:{ display:true } },
-    scales: {
-      x: { type:'time', time:{ unit:'second', tooltipFormat:'HH:mm:ss' }, ticks:{ color:'#9fb0d3' } },
-      y: { title:{ display:true, text:'Price (base per token)', color:'#9fb0d3' }, ticks:{ color:'#9fb0d3' } }
-    }
-  }
+// Chart init
+const chart = lc.createChart(chartEl, {
+  width: chartEl.clientWidth,
+  height: chartEl.clientHeight,
+  layout: { background: { type: lc.ColorType.Solid, color: '#08101a' }, textColor: '#e8f4ff' },
+  grid: { vertLines:{color:'#0f1a23'}, horzLines:{color:'#0f1a23'} },
+  rightPriceScale:{ borderColor:'#0f1a23' }, timeScale:{ borderColor:'#0f1a23' }
 });
+const candleSeries = chart.addCandlestickSeries({ upColor:'#2ecc71', downColor:'#ff5b5b', wickVisible:true, borderVisible:false });
+const lineSeries = chart.addLineSeries({ color:'#2ecc71', visible:false });
 
-// utility: update UI stats
-function refreshUI(){
-  price = reserveA / reserveB;
-  priceEl.textContent = price.toFixed(6);
-  mcapEl.textContent = (price * supply).toFixed(2);
-  reserveAEl.textContent = reserveA.toFixed(6);
-  reserveBEl.textContent = reserveB.toFixed(6);
-  liqValEl.textContent = liquidity;
-  queueCountEl.textContent = '—';
-  candlesCountEl.textContent = ohlc.length;
-  timeLabel.textContent = fmtTime(Date.now());
-}
+// Resize handling
+window.addEventListener('resize', ()=> chart.applyOptions({ width: chartEl.clientWidth, height: chartEl.clientHeight }));
 
-// candle helpers
-function pushCandle(ts, open, high, low, close){
-  const obj = { x: ts, o: open, h: high, l: low, c: close };
-  ohlc.push(obj);
-  lineData.push({ x: ts, y: close });
-  if(ohlc.length > MAX_POINTS) ohlc.shift();
-  if(lineData.length > MAX_POINTS) lineData.shift();
-}
-function updateCurrentCandle(newPrice){
-  if(!currentCandle){
-    currentCandle = { x: Date.now(), o: newPrice, h: newPrice, l: newPrice, c: newPrice };
-    return;
+// Simulation state (AMM-ish)
+let liquidity = Number(liqRange.value);
+liquidity = Math.max(1, liquidity);
+let reserveA = liquidity, reserveB = liquidity;
+let k = reserveA * reserveB;
+let supply = Number(supplyInput.value);
+let price = 1.0;
+let virtualNow = Date.now();
+let tfSec = Number(tfSel.value);
+let timeMultiplier = Number(timeMultRange.value);
+let activity = Number(activityRange.value);
+let lastReal = performance.now();
+let accMs = 0;
+const MAX_CANDLES = 600;
+
+liqVal.textContent = liquidity;
+supplyVal.textContent = supply;
+pmVal.textContent = (1.0).toFixed(4);
+tmVal.textContent = timeMultiplier + 'x';
+actVal.textContent = activity;
+
+// Candles history
+let candles = [];
+let currentCandle = null;
+function seed(){
+  let p = 1.0;
+  const start = virtualNow - 180*tfSec*1000;
+  for(let i=0;i<180;i++){
+    const t = Math.floor((start + i*tfSec*1000)/1000);
+    const o = +(p*(1 + (Math.random()-0.5)*0.006));
+    const c = +(o*(1 + (Math.random()-0.5)*0.006));
+    const h = Math.max(o,c)*(1 + Math.random()*0.004);
+    const l = Math.min(o,c)*(1 - Math.random()*0.004);
+    candles.push({ time: t, open: o, high: h, low: l, close: c });
+    p = c;
   }
-  currentCandle.h = Math.max(currentCandle.h, newPrice);
-  currentCandle.l = Math.min(currentCandle.l, newPrice);
-  currentCandle.c = newPrice;
-  currentCandle.x = Date.now();
+  currentCandle = { time: Math.floor(virtualNow/1000), open: p, high:p, low:p, close:p };
+  price = p;
+  candleSeries.setData(candles);
 }
+seed();
 
-// AMM ops (constant product)
-function recalcK(){ k = reserveA * reserveB; }
-function buyBase(amountBase){
+// utility: AMM constant product swap (simple)
+function recalcK(){ k = reserveA * reserveB; price = reserveA / reserveB; }
+function buyBase(amountBase){ // you give base A to buy token B: A increases, B decreases
   if(amountBase <= 0) return 0;
-  const A = reserveA; const B = reserveB;
+  const A = reserveA, B = reserveB;
   const newA = A + amountBase;
   const newB = k / newA;
   const tokensOut = B - newB;
@@ -254,9 +252,9 @@ function buyBase(amountBase){
   reserveA = newA; reserveB = newB; recalcK();
   return tokensOut;
 }
-function sellToken(amountToken){
+function sellToken(amountToken){ // you sell token B to get base A
   if(amountToken <= 0) return 0;
-  const A = reserveA; const B = reserveB;
+  const A = reserveA, B = reserveB;
   const newB = B + amountToken;
   const newA = k / newB;
   const baseOut = A - newA;
@@ -265,140 +263,298 @@ function sellToken(amountToken){
   return baseOut;
 }
 
-// apply immediate trade and update chart/state
-function applyBuyImmediate(amountBase){
-  const out = buyBase(amountBase);
-  const newP = reserveA / reserveB;
-  updateCurrentCandle(newP);
-  refreshChartDatasets();
-  refreshUI();
-  return out;
-}
-function applySellImmediate(amountToken){
-  const out = sellToken(amountToken);
-  const newP = reserveA / reserveB;
-  updateCurrentCandle(newP);
-  refreshChartDatasets();
-  refreshUI();
-  return out;
+// update visuals
+function updateCandleLive(){
+  currentCandle.close = price;
+  currentCandle.high = Math.max(currentCandle.high, price);
+  currentCandle.low = Math.min(currentCandle.low, price);
+  candleSeries.update(currentCandle);
+  lineSeries.update({ time: currentCandle.time, value: currentCandle.close });
 }
 
-// update chart data references and redraw
-function refreshChartDatasets(){
-  // display finalized ohlc plus currentCandle (not yet pushed) for live preview
-  const displayOHLC = ohlc.slice();
-  if(currentCandle) displayOHLC.push(Object.assign({}, currentCandle));
-  chart.data.datasets[0].data = displayOHLC;
-  const displayLine = lineData.slice();
-  if(currentCandle) displayLine.push({ x: currentCandle.x, y: currentCandle.c });
-  chart.data.datasets[1].data = displayLine;
-  chart.update();
+// Positions & PnL
+// We'll simulate isolated positions with chosen leverage L and size in $ (not margin).  
+// For long: qty = size / entryPrice. Unrealized PnL = (price - entry)*qty.
+// For short: qty = size / entryPrice (we treat as borrowed notional). Unrealized PnL = (entry - price)*qty.
+// Liquidation (simple isolated model): liq_long = entry*(1 - (1/L) + maintenance), liq_short = entry*(1 + (1/L) - maintenance)
+let openPositions = []; // { id, side:'long'|'short', sizeUSD, entryPrice, qty, leverage, entryTime, priceLine }
+let realizedPnL = 0;
+let nextPosId = 1;
+
+function openPosition(side, sizeUSD, leverage){
+  const entry = price;
+  const qty = sizeUSD / entry; // token units (base not used)
+  const id = nextPosId++;
+  const pos = { id, side, sizeUSD, entryPrice: entry, qty, leverage, entryTime: Date.now(), priceLine:null };
+  // create price line
+  const color = side==='long' ? '#00c1ff' : '#ff9a8a';
+  pos.priceLine = candleSeries.createPriceLine({ price: entry, color: color, lineWidth:1, axisLabelVisible:true, title: `${side.toUpperCase()} #${id} ${entry.toFixed(4)}` });
+  openPositions.push(pos);
+  pushTx(side==='long' ? 'OPEN LONG' : 'OPEN SHORT', sizeUSD, entry);
+  updatePositionsUI();
 }
 
-// Wiring events — robust and immediate
-
-// liquidity apply + reset
-applyLiqBtn.addEventListener('click', ()=>{
-  liquidity = Number(liquidityEl.value);
-  // keep price stable: set reserveA = liquidity, reserveB = reserveA / price
-  reserveA = liquidity;
-  reserveB = reserveA / price;
-  recalcK();
-  refreshUI();
-  refreshChartDatasets();
-});
-resetLiqBtn.addEventListener('click', ()=>{
-  liquidityEl.value = 1000;
-  liquidity = 1000;
-  reserveA = 1000; reserveB = 1000; recalcK();
-  refreshUI(); refreshChartDatasets();
-});
-
-// buy/sell ranges show values
-buyAmountEl.addEventListener('input', ()=> buyValEl.textContent = buyAmountEl.value);
-sellAmountEl.addEventListener('input', ()=> sellValEl.textContent = sellAmountEl.value);
-
-// preset buttons
-presetBuy1.addEventListener('click', ()=> { buyAmountEl.value = Number(buyAmountEl.value) * 1; buyValEl.textContent = buyAmountEl.value; });
-presetBuy5.addEventListener('click', ()=> { buyAmountEl.value = Math.max(1, Math.round(Number(buyAmountEl.value) * 5)); buyValEl.textContent = buyAmountEl.value; });
-presetBuy10.addEventListener('click', ()=> { buyAmountEl.value = Math.max(1, Math.round(Number(buyAmountEl.value) * 10)); buyValEl.textContent = buyAmountEl.value; });
-presetSell1.addEventListener('click', ()=> { sellAmountEl.value = Number(sellAmountEl.value) * 1; sellValEl.textContent = sellAmountEl.value; });
-presetSell5.addEventListener('click', ()=> { sellAmountEl.value = Math.max(1, Math.round(Number(sellAmountEl.value) * 5)); sellValEl.textContent = sellAmountEl.value; });
-presetSell10.addEventListener('click', ()=> { sellAmountEl.value = Math.max(1, Math.round(Number(sellAmountEl.value) * 10)); sellValEl.textContent = sellAmountEl.value; });
-
-// buy/sell buttons: apply immediately and show small flash on chart by updating current candle
-buyBtn.addEventListener('click', ()=>{
-  const amt = Number(buyAmountEl.value);
-  const tokensOut = applyBuyImmediate(amt);
-  // push a small temporary point into lineData for visibility
-  // (already done by updateCurrentCandle + refreshChart)
-});
-sellBtn.addEventListener('click', ()=>{
-  const amt = Number(sellAmountEl.value);
-  const baseOut = applySellImmediate(amt);
-});
-
-// chart mode select + quick buttons
-function setChartMode(mode){
-  if(mode === 'line'){
-    chart.data.datasets[0].hidden = true; // hide candles
-    chart.data.datasets[1].hidden = false;
-  } else {
-    chart.data.datasets[0].hidden = false;
-    chart.data.datasets[1].hidden = true;
-  }
-  chart.update();
-}
-chartModeSelect.addEventListener('change', ()=> setChartMode(chartModeSelect.value));
-showCandlesBtn.addEventListener('click', ()=> { chartModeSelect.value = 'candlestick'; setChartMode('candlestick'); });
-showLineBtn.addEventListener('click', ()=> { chartModeSelect.value = 'line'; setChartMode('line'); });
-
-// simple loop to update UI time and push currentCandle periodically (simulate ticks)
-// We will finalize a candle every 5 seconds for visible effect (you can change)
-let candleDuration = 5000; // ms
-let lastCandleFlip = Date.now();
-function engineLoop(){
-  const t = Date.now();
-
-  // every tick, reflect small natural drift (micro random noise)
-  if(Math.random() < 0.15){
-    // micro random tiny trade
-    const micro = (Math.random()-0.5) * 0.001 * reserveA;
-    if(Math.random() < 0.5) buyBase(Math.abs(micro));
-    else sellToken(Math.abs(micro));
-    const liveP = reserveA / reserveB;
-    updateCurrentCandle(liveP);
-  }
-
-  // if candle time exceeded, finalize currentCandle and start new one
-  if(t - lastCandleFlip >= candleDuration){
-    // finalize: push currentCandle into ohlc
-    if(currentCandle){
-      pushCandle(currentCandle.x, currentCandle.o, currentCandle.h, currentCandle.l, currentCandle.c);
+function closePositionFIFO(sizeUSD){
+  // Close using FIFO: reduce openPositions from start
+  let toCloseUSD = sizeUSD;
+  while(toCloseUSD > 0 && openPositions.length){
+    const pos = openPositions[0];
+    const posValue = pos.qty * price; // current notional
+    const closeUSD = Math.min(toCloseUSD, pos.sizeUSD);
+    // proportion of the position being closed:
+    const frac = closeUSD / pos.sizeUSD;
+    const qtyClose = pos.qty * frac;
+    // PnL for quantity closed:
+    let pnl = 0;
+    if(pos.side === 'long') pnl = (price - pos.entryPrice) * qtyClose;
+    else pnl = (pos.entryPrice - price) * qtyClose;
+    realizedPnL += pnl;
+    // shrink position
+    pos.sizeUSD -= closeUSD;
+    pos.qty -= qtyClose;
+    if(pos.sizeUSD <= 1e-8 || pos.qty <= 1e-12){
+      // remove
+      try{ candleSeries.removePriceLine(pos.priceLine); }catch(e){}
+      openPositions.shift();
+    } else {
+      // update price line title
+      try{ candleSeries.removePriceLine(pos.priceLine); }catch(e){}
+      const color2 = pos.side==='long' ? '#00c1ff' : '#ff9a8a';
+      pos.priceLine = candleSeries.createPriceLine({ price: pos.entryPrice, color: color2, lineWidth:1, axisLabelVisible:true, title:`${pos.side.toUpperCase()} #${pos.id} ${pos.entryPrice.toFixed(4)} • size $${pos.sizeUSD.toFixed(2)}` });
+      break; // if we partially closed, stop
     }
-    // start fresh candle with open = last close
-    const lastClose = currentCandle ? currentCandle.c : (reserveA / reserveB);
-    currentCandle = { x: Date.now(), o: lastClose, h: lastClose, l: lastClose, c: lastClose };
-    lastCandleFlip = t;
+    toCloseUSD -= closeUSD;
+    updatePositionsUI();
+  }
+  updatePositionsUI();
+  pushTx('CLOSE', sizeUSD, price);
+}
+
+// Helpers: PnL & liq calc
+function computeUnrealized(pos){
+  if(pos.side==='long'){
+    const pnl = (price - pos.entryPrice) * pos.qty;
+    const base = pos.entryPrice * pos.qty;
+    const pct = base>0 ? (pnl / base * 100) : 0;
+    // liquidation:
+    const L = pos.leverage || 1;
+    const liq = pos.entryPrice * (1 - (1 / L) + maintenance);
+    return { pnl, pct, liq };
+  } else {
+    const pnl = (pos.entryPrice - price) * pos.qty;
+    const base = pos.entryPrice * pos.qty;
+    const pct = base>0 ? (pnl / base * 100) : 0;
+    const L = pos.leverage || 1;
+    const liq = pos.entryPrice * (1 + (1 / L) - maintenance);
+    return { pnl, pct, liq };
+  }
+}
+
+// UI update
+function updatePositionsUI(){
+  // table
+  posTableBody.innerHTML = '';
+  openPositions.forEach((pos, idx)=>{
+    const u = computeUnrealized(pos);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${pos.id}</td><td>${pos.side}</td><td>$${pos.sizeUSD.toFixed(2)}</td><td>$${pos.entryPrice.toFixed(6)}</td>
+      <td>${pos.qty.toFixed(6)}</td>
+      <td style="color:${u.pnl>=0? '#7ef29a':'#ff8b8b'}">${u.pnl.toFixed(2)}</td>
+      <td style="color:${u.pct>=0? '#7ef29a':'#ff8b8b'}">${u.pct.toFixed(2)}%</td>
+      <td>$${u.liq.toFixed(6)}</td>`;
+    posTableBody.appendChild(tr);
+    // update price line title with real-time PnL
+    try{ candleSeries.removePriceLine(pos.priceLine); }catch(e){}
+    const color2 = pos.side==='long' ? '#00c1ff' : '#ff9a8a';
+    pos.priceLine = candleSeries.createPriceLine({
+      price: pos.entryPrice,
+      color: color2,
+      lineWidth: 1,
+      axisLabelVisible: true,
+      title: `${pos.side.toUpperCase()} #${pos.id} ${pos.entryPrice.toFixed(4)} • UPnL ${u.pnl>=0?'+':''}${u.pnl.toFixed(2)}$`
+    });
+  });
+  // UPnL badge
+  let totUnreal = 0, base=0;
+  openPositions.forEach(p => { const u = computeUnrealized(p); totUnreal += u.pnl; base += p.entryPrice * p.qty; });
+  upnlEl.textContent = `${totUnreal>=0?'+':''}$${totUnreal.toFixed(2)} (${base>0? ((totUnreal/base*100).toFixed(2)+'%') : '0%'})`;
+  upnlEl.style.color = totUnreal>=0 ? '#7ef29a' : '#ff8b8b';
+  rpnlEl.textContent = (realizedPnL>=0?'+':'') + '$' + realizedPnL.toFixed(2);
+}
+
+// Transaction log
+function pushTx(side, size, p){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${new Date().toLocaleTimeString()}</td><td style="color:${side.includes('LONG')||side==='OPEN LONG'?'#7ef29a':'#ff8b8b'}">${side}</td><td>$${Number(size).toFixed(2)}</td><td>$${p.toFixed(6)}</td>`;
+  txTbody.prepend(tr);
+  while(txTbody.children.length>300) txTbody.removeChild(txTbody.lastChild);
+}
+
+// Controls wiring
+liquidationChange = () => {
+  liquidity = Number(liqRange.value); liqVal.textContent = liquidity; reserveA = liquidity; reserveB = liquidity / price; recalcK(); updateDepth();
+};
+liqRange.addEventListener('input', liquidationChange);
+
+supplyInput.addEventListener('input', ()=>{
+  supply = Number(supplyInput.value); supplyVal.textContent = supply;
+  updateMcap();
+});
+
+pmRange.addEventListener('input', ()=>{
+  const manualP = Number(pmRange.value);
+  price = manualP;
+  pmVal.textContent = manualP.toFixed(4);
+  reserveB = k / reserveA; recalcK();
+  updateCandleLive();
+  updatePositionsUI();
+  updateMcap();
+});
+tfSel.addEventListener('change', ()=> tfSec = Number(tfSel.value));
+modeSel.addEventListener('change', ()=>{
+  const v = modeSel.value;
+  if(v==='candles'){ candleSeries.applyOptions({ visible:true }); lineSeries.applyOptions({ visible:false }); }
+  else { candleSeries.applyOptions({ visible:false }); lineSeries.applyOptions({ visible:true }); lineSeries.setData(candles.concat([currentCandle]).map(c=>({time:c.time, value:c.close}))); }
+});
+
+timeMultRange.addEventListener('input', ()=>{ timeMultiplier = Number(timeMultRange.value); tmVal.textContent = timeMultiplier + 'x'; });
+activityRange.addEventListener('input', ()=>{ activity = Number(activityRange.value); actVal.textContent = activity; });
+
+// Depth update (synthetic)
+function updateDepth(){
+  // not displayed separately, but we keep reserves consistent
+  reserveB = k / reserveA;
+  recalcK();
+}
+
+// Open/close handlers
+openLongBtn.addEventListener('click', ()=>{
+  const size = Math.max(0, Number(orderSizeEl.value) || 0);
+  const L = Number(leverageSel.value)||1;
+  if(size <= 0) return alert('Введите размер позиции > 0');
+  openPosition('long', size, L);
+  updatePositionsUI();
+});
+openShortBtn.addEventListener('click', ()=>{
+  const size = Math.max(0, Number(orderSizeEl.value) || 0);
+  const L = Number(leverageSel.value)||1;
+  if(size <= 0) return alert('Введите размер позиции > 0');
+  openPosition('short', size, L);
+  updatePositionsUI();
+});
+closePosBtn.addEventListener('click', ()=>{
+  const size = Math.max(0, Number(orderSizeEl.value) || 0);
+  if(size <= 0) return alert('Введите размер закрытия > 0');
+  closePositionFIFO(size);
+  updatePositionsUI();
+});
+
+// keyboard: B opens long, Shift+S opens short, S closes (sell)
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'b' || e.key === 'B') openLongBtn.click();
+  if((e.key === 's' || e.key === 'S') && e.shiftKey) openShortBtn.click();
+  else if(e.key === 's' || e.key === 'S') closePosBtn.click();
+});
+
+// Engine: price evolution + AMM trades for activity
+function microNoise(){
+  // small random walk plus occasional shock
+  const drift = (Math.random()-0.5) * 0.0006;
+  const shock = Math.random() < 0.02 ? (Math.random()-0.5) * 0.03 : 0;
+  price = Math.max(0.0000001, price * (1 + drift + shock));
+}
+
+// simulate random trades that affect AMM slightly
+function randomAMMEvent(){
+  if(Math.random() < 0.5){
+    const amt = Math.random() * reserveA * (0.0005 + Math.random() * 0.01);
+    buyBase(amt);
+  } else {
+    const t = Math.random() * reserveB * (0.0005 + Math.random() * 0.01);
+    sellToken(t);
+  }
+  // update internal price (reserveA/reserveB)
+  recalcK();
+  price = reserveA / reserveB;
+}
+
+// finalize candle
+function finalizeCandle(){
+  candles.push({ time: currentCandle.time, open: currentCandle.open, high: currentCandle.high, low: currentCandle.low, close: currentCandle.close });
+  if(candles.length > MAX_CANDLES) candles.shift();
+  currentCandle = { time: Math.floor(virtualNow/1000), open: price, high: price, low: price, close: price };
+  candleSeries.setData(candles.concat([currentCandle]));
+  lineSeries.setData(candles.concat([currentCandle]).map(c=>({time:c.time, value:c.close})));
+}
+
+// engine loop
+function engineLoop(){
+  const now = performance.now();
+  const dt = Math.max(0, now - lastReal);
+  lastReal = now;
+  const dv = dt * timeMultiplier;
+  virtualNow += dv;
+  accMs += dv;
+
+  // live price walk
+  microNoise();
+
+  // small AMM noise occasionally
+  if(Math.random() < 0.15) randomAMMEvent();
+
+  // update current candle live
+  currentCandle.close = price;
+  currentCandle.high = Math.max(currentCandle.high, price);
+  currentCandle.low = Math.min(currentCandle.low, price);
+  candleSeries.update(currentCandle);
+  lineSeries.update({ time: currentCandle.time, value: currentCandle.close });
+
+  if(accMs >= tfSec * 1000){
+    // simulate activity
+    for(let i=0;i<activity;i++) randomAMMEvent();
+    finalizeCandle();
+    accMs = 0;
   }
 
-  // update display datasets and UI
-  refreshChartDatasets();
-  refreshUI();
+  // refresh UI
+  priceEl.textContent = '$' + price.toFixed(6);
+  updatePositionsUI();
+  updateMcap();
 
   requestAnimationFrame(engineLoop);
 }
-
-// start simulation loop
-setChartMode('candlestick');
-refreshUI(); refreshChartDatasets();
 requestAnimationFrame(engineLoop);
 
-// keyboard shortcuts
-document.addEventListener('keydown', (e)=>{
-  if(e.key === 'b' || e.key === 'B') buyBtn.click();
-  if(e.key === 's' || e.key === 'S') sellBtn.click();
-});
+// mcap
+function updateMcap(){ document.getElementById('mcap').textContent = '$' + (price * supply).toFixed(2); }
+
+// initial UI
+updatePositionsUI();
+updateMcap();
+updateDepth();
+
+// helper: openPosition uses openPosition above
+function openPosition(side, sizeUSD, leverage){
+  const entry = price;
+  const qty = sizeUSD / entry;
+  const id = nextPosId++;
+  const pos = { id, side, sizeUSD, entryPrice: entry, qty, leverage, entryTime: Date.now(), priceLine: null };
+  // show price line
+  const color = side === 'long' ? '#00c1ff' : '#ff9a8a';
+  pos.priceLine = candleSeries.createPriceLine({ price: entry, color: color, lineWidth: 1, axisLabelVisible: true, title: `${side.toUpperCase()} #${id} ${entry.toFixed(4)}` });
+  openPositions.push(pos);
+  pushTx(side==='long' ? 'OPEN LONG' : 'OPEN SHORT', sizeUSD, entry);
+  updatePositionsUI();
+  return pos;
+}
+
+// small defensive: ensure overlay labels not drawn on candles (we use price lines only)
+// Done: we never set markers with text on candles.
+
+// Final instructions (user-visible)
+console.info('Sandbox loaded: B=open long, Shift+S=open short, S=close (FIFO). Use manual price slider or let engine run.');
+
+// End of script
 </script>
 </body>
 </html>
