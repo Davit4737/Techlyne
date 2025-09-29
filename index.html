@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ApexForge — Services</title><meta name="description" content="Professional Web & Web3 services — manual frontend, security, audits."><style>:root{
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Voryx — Services</title><meta name="description" content="Professional Web & Web3 services — manual frontend, security, audits."><style>:root{
   --bg:#061226;
   --card:#081426;
   --muted:#9aa4b2;
@@ -55,11 +55,29 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
 .scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
 .codeglyph{position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
-@media(max-width:900px){.two-col{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start;gap:14px}.hero{flex-direction:column;align-items:flex-start}}</style></head>
+@media(max-width:900px){.two-col{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start;gap:14px}.hero{flex-direction:column;align-items:flex-start}}
+/* additional mobile optimizations requested */
+@media(max-width:600px){
+  body{padding:12px}
+  h1{font-size:20px}
+  .hero{padding:16px}
+  .right{width:100%}
+  .grid{grid-template-columns:1fr}
+  .card{padding:12px}
+  .logo svg{width:48px;height:48px}
+  nav{gap:6px}
+  .btn{padding:8px 10px;font-size:14px}
+  .btn-ghost{padding:7px 9px;font-size:14px}
+  .scene-overlay{height:120px}
+
+
+}
+
+</style></head>
 <body>
   <div class="container" role="main">
     <header>
-      <div class="brand" aria-label="ApexForge"><div class="logo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="220" height="64" viewBox="0 0 440 128" role="img" aria-label="ApexForge logo">
+      <div class="brand" aria-label="Voryx"><div class="logo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="220" height="64" viewBox="0 0 440 128" role="img" aria-label="Voryx logo">
   <defs>
     <linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#4dd0e1"/></linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.45"/></filter>
@@ -71,10 +89,10 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
     <circle cx="76" cy="76" r="10" fill="url(#lg)"/>
   </g>
   <g transform="translate(140,78)">
-    <text x="0" y="-12" font-family="Inter, Roboto, Arial" font-weight="800" font-size="36" fill="#e6eef6">ApexForge</text>
+    <text x="0" y="-12" font-family="Inter, Roboto, Arial" font-weight="800" font-size="36" fill="#e6eef6">Voryx</text>
     <text x="0" y="20" font-family="Inter, Roboto, Arial" font-weight="500" font-size="14" fill="#9aa4b2">Web & Web3 — Manual development</text>
   </g>
-</svg></div><div><div style="font-size:14px" id="brand-name">ApexForge</div><div class="muted" style="margin-top:2px" id="brand-sub">Manual development • Integrations • Security</div></div></div>
+</svg></div><div><div style="font-size:14px" id="brand-name">Voryx</div><div class="muted" style="margin-top:2px" id="brand-sub">Manual development • Integrations • Security</div></div></div>
       <nav>
         <a href="index.html" class="btn-ghost" data-i18n="packages">Home</a>
         <a href="services.html" class="btn-ghost" data-i18n="packages">Services</a>
@@ -109,7 +127,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
     <section aria-labelledby="packages" style="margin-top:18px">
       <h2 id="packages" style="margin:8px 0 6px" data-i18n="packages">Packages</h2>
       <div class="grid" id="packages-grid">
-        <!-- packages -->
+       
         <article class="card" aria-labelledby="p1"><div class="title-row"><h3 id="p1" data-i18n="landing">Lending Website (Landing)</h3><div class="price">$79</div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 2 days</div><ul><li>Single-page responsive landing</li><li>Header, CTA, benefits, FAQ, contact via Telegram</li><li>Webhook → Telegram</li><li>Analytics, optimisation, SSL, deploy</li><li>1 round of revisions, source delivery</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Landing" data-price="79">Order</button><button class="btn-ghost">Details</button></div></article>
 
         <article class="card" aria-labelledby="p2"><div class="title-row"><h3 id="p2" data-i18n="website">Website (Standard)</h3><div class="price">$229</div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 4 days</div><ul><li>Up to 5 pages (Home, Services, Cases, Contacts)</li><li>Forms → Telegram/CRM</li><li>SEO, responsive, 2 rounds of revisions</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Standard" data-price="229">Order</button><button class="btn-ghost">Details</button></div></article>
@@ -144,18 +162,17 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
         <div style="margin-top:10px;display:flex;gap:8px"><button id="open-tg" class="btn" data-i18n="open_tg">Open Telegram</button><button id="contact-modal" class="btn-ghost" data-i18n="order">Order via form</button></div>
         <div style="margin-top:10px" class="small" id="contact-status"></div>
         <div style="margin-top:12px" class="small">Also available: <strong data-i18n="security_addon">Security add-on</strong></div>
-        <div style="margin-top:8px"><button class="btn" id="buy-security-addon">Buy — $49</button></div>
+      
       </aside>
     </section>
 
-    <footer style="margin-top:22px">© ApexForge — Manual development</footer>
+    <footer style="margin-top:22px">© Voryx — Manual development</footer>
   </div>
 
-  <div class="modal" id="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h3 id="modal-title">Order — Telegram</h3>
-    <form id="modal-form"><div class="field"><label for="m-name">Name</label><input id="m-name" required /></div><div class="field"><label for="m-contact">Telegram (handle)</label><input id="m-contact" placeholder="@client" required /></div><div class="field"><label for="m-package">Package</label><input id="m-package" readonly /></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="submit" class="btn" data-i18n="order">Send</button><button type="button" id="modal-close" class="close-btn">Close</button></div><div id="m-status" class="small" style="margin-top:8px"></div></form></div></div>
+  <!-- MODAL REMOVED AS REQUESTED -->
 
 <script>
-/* particles + falling glyphs */
+/* particles + falling glyphs (unchanged) */
 (function(){
   const parent = document.getElementById('scene-overlay');
   const canvas = document.createElement('canvas');
@@ -182,7 +199,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
   frame();
 })();
 
-/* hover burst */
+/* hover burst (unchanged) */
 (function(){
   function burstAt(x,y,parent){
     const c=document.createElement('canvas'); c.width=160; c.height=160; c.style.position='absolute'; c.style.left=(x-80)+'px'; c.style.top=(y-80)+'px'; c.style.pointerEvents='none'; parent.appendChild(c);
@@ -200,31 +217,47 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
   });
 })();
 
-/* contact: copy handle, open tg, modal without backend */
+/* contact: copy handle, open tg, order buttons now copy message + open Telegram (modal removed) */
 (function(){
-  const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), modal=document.getElementById('modal');
-  copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); document.getElementById('contact-status').textContent='Handle copied'; }catch(e){ document.getElementById('contact-status').textContent='Copy failed'; } });
+  const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
+  copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
   openBtn.addEventListener('click', ()=> window.open('https://t.me/Off_David77','_blank'));
-  function openModal(pkg, price){ document.getElementById('m-package').value = pkg + (price ? (' — $'+price) : ''); modal.classList.add('open'); document.getElementById('m-name').focus(); }
-  document.querySelectorAll('[data-package]').forEach(btn=> btn.addEventListener('click',(e)=> openModal(e.currentTarget.dataset.package, e.currentTarget.dataset.price)));
-  document.getElementById('btn-order-landing').addEventListener('click', ()=> openModal('Landing',79));
-  document.getElementById('btn-contact').addEventListener('click', ()=> openModal('Custom'));
-  document.getElementById('modal-close').addEventListener('click', ()=> modal.classList.remove('open'));
-  modal.addEventListener('click',(e)=>{ if(e.target===modal) modal.classList.remove('open'); });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') modal.classList.remove('open'); });
 
-  document.getElementById('modal-form').addEventListener('submit', async (ev)=>{
-    ev.preventDefault();
-    const name=document.getElementById('m-name').value.trim(); const contact=document.getElementById('m-contact').value.trim(); const pkg=document.getElementById('m-package').value;
-    const msg = `Order from ${name}\nContact: ${contact}\nPackage: ${pkg}`;
-    try{ await navigator.clipboard.writeText(msg); document.getElementById('m-status').textContent='Order copied to clipboard. Open Telegram and paste the message.'; window.open('https://t.me/Off_David77','_blank'); setTimeout(()=> modal.classList.remove('open'),900); }
-    catch(e){ document.getElementById('m-status').textContent='Copy failed — open Telegram and paste manually.'; }
+  // When user clicks an Order button -> copy prepared message and open Telegram (mobile-optimized behavior)
+  function handleOrderClick(pkg, price){
+    const priceText = price ? (' — $' + price) : '';
+    const msg = `Order: ${pkg}${priceText}\nContact: @Off_David77\nSource: ${location.href}`;
+    navigator.clipboard.writeText(msg).then(()=>{
+      contactStatus.textContent = 'Message copied to clipboard — opening Telegram...';
+      window.open('https://t.me/Off_David77','_blank');
+    }).catch(()=>{
+      contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.';
+      window.open('https://t.me/Off_David77','_blank');
+    });
+  }
+
+  document.querySelectorAll('[data-package]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const pkg = e.currentTarget.dataset.package || 'Custom';
+      const price = e.currentTarget.dataset.price || '';
+      handleOrderClick(pkg, price);
+    });
   });
 
-  document.getElementById('buy-security-addon').addEventListener('click', ()=> openModal('Security Add-on', '49' ));
+  const landingBtn = document.getElementById('btn-order-landing');
+  if(landingBtn){
+    landingBtn.addEventListener('click', ()=> handleOrderClick('Landing', '79'));
+  }
+
+  const contactModalBtn = document.getElementById('contact-modal');
+  if(contactModalBtn){
+    contactModalBtn.addEventListener('click', ()=> handleOrderClick('Custom', ''));
+  }
+
+  // removed modal-related code as requested
 })();
 
-/* language switching by navigator.language */
+/* language switching by navigator.language (unchanged) */
 (function(){
   const translations = {"en": {"packages": "Packages", "quick_start": "Quick start", "contact_channel": "Primary contact \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "Security Package", "security_addon": "Security Add\u2011on \u2014 $49", "smart": "Smart Contracts & Audit", "faq_title": "FAQ \u2014 short", "contact_title": "Contact \u2014 Telegram", "order": "Order", "details": "Details", "open_tg": "Open Telegram", "copy_tg": "Copy handle", "how_time": "How deadlines are counted?", "how_pay": "Payment?", "tech": "Technologies?", "security_q": "Security?"}, "ru": {"packages": "\u041f\u0430\u043a\u0435\u0442\u044b", "quick_start": "\u0411\u044b\u0441\u0442\u0440\u044b\u0439 \u0441\u0442\u0430\u0440\u0442", "contact_channel": "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u0430\u043d\u0430\u043b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u041f\u0430\u043a\u0435\u0442 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438", "security_addon": "\u0414\u043e\u043f. \u043f\u0430\u043a\u0435\u0442 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u2014 $49", "smart": "\u0421\u043c\u0430\u0440\u0442\u2011\u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u044b \u0438 \u0430\u0443\u0434\u0438\u0442 (\u0446\u0435\u043d\u044b \u043f\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u0443)", "faq_title": "FAQ \u2014 \u043a\u0440\u0430\u0442\u043a\u043e", "contact_title": "\u041a\u043e\u043d\u0442\u0430\u043a\u0442 \u2014 Telegram", "order": "\u0417\u0430\u043a\u0430\u0437\u0430\u0442\u044c", "details": "\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u0435\u0435", "open_tg": "\u041e\u0442\u043a\u0440\u044b\u0442\u044c Telegram", "copy_tg": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c", "how_time": "\u041a\u0430\u043a \u0441\u0447\u0438\u0442\u0430\u044e\u0442\u0441\u044f \u0441\u0440\u043e\u043a\u0438?", "how_pay": "\u041e\u043f\u043b\u0430\u0442\u0430?", "tech": "\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0438?", "security_q": "\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c?"}, "hy": {"packages": "\u0553\u0561\u0569\u0565\u0569\u0576\u0565\u0580", "quick_start": "\u0531\u0574\u057a\u0561\u0563\u056c\u056d\u0561\u0575\u056b\u0576 \u0574\u0565\u056f\u0576\u0561\u0580\u056f", "contact_channel": "\u0540\u0561\u0572\u0578\u0580\u0564\u0561\u056f\u0581\u0578\u0582\u0569\u0575\u0561\u0576 \u0578\u0582\u0572\u056b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0561\u0576 \u0583\u0561\u0569\u0565\u0569", "security_addon": "\u0531\u057e\u0565\u056c. \u0561\u0576\u057e\u057f\u0561\u0576\u0563. \u0583\u0561\u0569\u0565\u0569 \u2014 $49", "smart": "\u053d\u0565\u056ciega \u057a\u0561\u0575\u0574\u0561\u0576\u0561\u0563\u0580\u0565\u0580 \u0587 \u0561\u0578\u0582\u0564\u056b\u057f (\u0563\u0576\u0565\u0580\u0568 \u0568\u057d\u057f \u0570\u0561\u0580\u0581\u0574\u0561\u0576)", "faq_title": "\u0540\u0561\u0573\u0561\u056d\u0561\u056f\u056b \u0570\u0561\u0580\u0581\u0565\u0580", "contact_title": "\u053f\u0561\u057a \u2014 Telegram", "order": "\u054a\u0561\u057f\u057e\u056b\u0580\u0565\u056c", "details": "\u0531\u057e\u0565\u056c\u056b\u0576", "open_tg": "\u0532\u0561\u0581\u0565\u056c Telegram", "copy_tg": "\u054a\u0561\u057f\u0573\u0565\u0576\u0565\u056c", "how_time": "\u053b\u0576\u0579\u057a\u0565\u057d \u0570\u0561\u0577\u057e\u057e\u0578\u0582\u0574 \u056a\u0561\u0574\u0561\u0576\u0561\u056f\u0568?", "how_pay": "\u054e\u0573\u0561\u0580\u0578\u0582\u0574?", "tech": "\u054f\u0565\u056d\u0576\u0578\u056c\u0578\u0563\u056b\u0561\u0576\u0565\u0580?", "security_q": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0578\u0582\u0576?"}};
   function apply(lang){ if(!translations[lang]) lang='en'; document.querySelectorAll('[data-i18n]').forEach(el=>{ const key=el.getAttribute('data-i18n'); if(translations[lang][key]) el.textContent = translations[lang][key]; }); document.getElementById('contact-line').textContent = translations[lang]['contact_channel']; }
