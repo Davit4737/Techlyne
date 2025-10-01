@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Techlyne — Services (responsive)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Techlyne — Services</title>
   <meta name="description" content="Professional Web & Web3 services — manual frontend, security, audits.">
   <style>
 :root{
@@ -21,12 +21,12 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:linear-gradient(180deg,#041021,#061226);color:#e6eef6;padding:28px 18px;display:flex;justify-content:center;align-items:flex-start; -webkit-text-size-adjust:100%;}
+body{margin:0;background:linear-gradient(180deg,#041021,#061226);color:#e6eef6;padding:28px 18px;display:flex;justify-content:center;align-items:flex-start;}
 .container{width:100%;max-width:var(--maxw);padding-bottom:60px}
 header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:0.2px;font-size:18px}
 .logo svg{width:62px;height:62px}
-nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+nav{display:flex; gap:10px; align-items:center;}
 .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 30px rgba(45,118,138,0.08);transition:transform .18s ease, box-shadow .18s ease, filter .12s ease;}
 .btn:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(45,118,138,0.12);filter:brightness(1.03)}
 .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:9px 12px;border-radius:10px;transition:all .18s ease}
@@ -58,20 +58,19 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
 .lang-switch{display:flex;gap:8px;align-items:center}
 .lang-switch button{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
 .lang-switch button.active{background:rgba(255,255,255,0.03);color:#e6eef6;border-color:rgba(125,211,252,0.18)}
-.scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;min-height:80px}
+.scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
 .codeglyph{position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
 
-/* Neon circular logo styles (Techlyne) - responsive */
+/* Neon circular logo styles (Techlyne) */
 .logo.logo-neon {
-  width: 80px;
-  height: 80px;
+  width: 110px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   margin-right: 8px; /* spacing between logo and brand text */
-  flex: 0 0 auto;
 }
 .logo-ring{
   width: 100%;
@@ -95,31 +94,53 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
     inset 0 0 12px rgba(255,255,255,0.02);
   transition: transform .18s ease, box-shadow .18s ease;
 }
-.logo-ring::before{ content:""; position:absolute; inset:-18%; border-radius:50%; background: radial-gradient(closest-side, rgba(125,211,252,0.08), transparent 40%); pointer-events:none; mix-blend-mode:screen; }
-.logo-ring::after{ content:""; position:absolute; inset:8px; border-radius:50%; background: rgba(2,6,23,0.55); pointer-events:none; box-shadow: inset 0 8px 34px rgba(0,0,0,0.5); }
+.logo-ring::before{
+  content:"";
+  position:absolute;
+  inset:-18%;
+  border-radius:50%;
+  background: radial-gradient(closest-side, rgba(125,211,252,0.08), transparent 40%);
+  pointer-events:none;
+  mix-blend-mode:screen;
+}
+.logo-ring::after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  background: rgba(2,6,23,0.55);
+  pointer-events:none;
+  box-shadow: inset 0 8px 24px rgba(0,0,0,0.5);
+}
 .logo-img{
   position:relative;
-  width:125px;
-  height:125px;
+  width: calc(100% - 22px);
+  height: calc(100% - 22px);
   border-radius:50%;
-  object-fit:cover;
+  object-fit: cover;
   display:block;
   z-index:2;
   transform: scale(1);
   transition: transform .18s ease, box-shadow .18s ease;
   box-shadow: 0 6px 18px rgba(2,6,23,0.5);
   border: 1px solid rgba(255,255,255,0.03);
-  max-width:127px; /* desktop cap */
 }
-
-/* hero right column wrapper (was inline width:380px) */
-.hero-right{width:100%;max-width:380px;flex:0 0 auto}
+.logo.logo-neon:hover .logo-ring{
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 10px 30px rgba(77,208,225,0.10),
+    0 0 48px rgba(217,107,255,0.12),
+    inset 0 0 16px rgba(255,255,255,0.03);
+}
+.logo.logo-neon:hover .logo-img{
+  transform: scale(1.06);
+  box-shadow: 0 10px 34px rgba(2,6,23,0.6);
+}
 
 @media(max-width:900px){
   .two-col{grid-template-columns:1fr}
   header{flex-direction:column;align-items:flex-start;gap:14px}
   .hero{flex-direction:column;align-items:flex-start}
-  .hero-right{max-width:100%}
 }
 /* additional mobile optimizations requested */
 @media(max-width:600px){
@@ -129,12 +150,11 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
   .right{width:100%}
   .grid{grid-template-columns:1fr}
   .card{padding:12px}
-  .logo.logo-neon{width:64px;height:64px}
-  .logo-img{max-width:64px}
+  .logo svg{width:48px;height:48px}
   nav{gap:6px}
   .btn{padding:8px 10px;font-size:14px}
   .btn-ghost{padding:7px 9px;font-size:14px}
-  .scene-overlay{min-height:120px}
+  .scene-overlay{height:120px}
 }
   </style>
 </head>
@@ -145,7 +165,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
         <!-- Neon circular logo -->
         <div class="logo logo-neon" aria-hidden="true" title="Techlyne">
           <div class="logo-ring">
-            <img src="./img/photo_2025-10-01_20-26-04.jpg" alt="Techlyne logo" class="logo-img" />
+            <img src="./img/a.jpg" alt="Techlyne logo" class="logo-img" />
           </div>
         </div>
 
@@ -171,7 +191,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
         <div class="features" aria-hidden="true"><div class="chip">Clean code</div><div class="chip">Responsive</div><div class="chip">Security</div><div class="chip">Support</div></div>
       </div>
 
-      <div class="hero-right">
+      <div style="width:380px">
         <div style="padding:14px;border-radius:12px;z-index:2;position:relative;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:700" data-i18n="quick_start">Quick start</div><div class="badge">Landing $79</div></div>
           <div class="small" id="contact-line">Primary contact — Telegram @Off_David77</div>
@@ -224,6 +244,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
         <div style="margin-top:10px;display:flex;gap:8px"><button id="open-tg" class="btn" data-i18n="open_tg">Open Telegram</button><button id="contact-modal" class="btn-ghost" data-i18n="order">Order via form</button></div>
         <div style="margin-top:10px" class="small" id="contact-status"></div>
         <div style="margin-top:12px" class="small">Also available: <strong data-i18n="security_addon">Security add-on</strong></div>
+      
       </aside>
     </section>
 
@@ -233,67 +254,52 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
   <!-- MODAL REMOVED AS REQUESTED -->
 
 <script>
-/* particles + falling glyphs - improved canvas DPI handling */
+/* particles + falling glyphs (unchanged) */
 (function(){
   const parent = document.getElementById('scene-overlay');
   const canvas = document.createElement('canvas');
   canvas.style.width='100%'; canvas.style.height='100%';
   parent.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  function resizeCanvas(){
-    const rect = parent.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  const w = ()=>canvas.clientWidth, h = ()=>canvas.clientHeight;
+  let w=canvas.width=parent.clientWidth, h=canvas.height=parent.clientHeight;
+  window.addEventListener('resize', ()=>{ w=canvas.width=parent.clientWidth; h=canvas.height=parent.clientHeight; });
   const P = [];
-  for(let i=0;i<60;i++) P.push({x:Math.random()*w(),y:Math.random()*h(),vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:1+Math.random()*2,t:Math.random()*6});
+  for(let i=0;i<60;i++) P.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:1+Math.random()*2,t:Math.random()*6});
   const glyphs = [];
   const codes = ['<>','{ }','0x','()</>','//','=>','const','let','fn','0/1','<>/'];
-  function spawnGlyph(){ glyphs.push({x:Math.random()*w(),y:-10,vy:0.3+Math.random()*0.6,txt:codes[Math.floor(Math.random()*codes.length)],alpha:0.9,scale:0.8+Math.random()*0.8}); }
+  function spawnGlyph(){ glyphs.push({x:Math.random()*w,y:-10,vy:0.3+Math.random()*0.6,txt:codes[Math.floor(Math.random()*codes.length)],alpha:0.9,scale:0.8+Math.random()*0.8}); }
   setInterval(spawnGlyph, 1600);
   function frame(){
-    const cw = canvas.width, ch = canvas.height; // in device px, but ctx transform handles scaling
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const g=ctx.createLinearGradient(0,0,canvas.clientWidth,canvas.clientHeight); g.addColorStop(0,'rgba(77,208,225,0.015)'); g.addColorStop(1,'rgba(125,211,252,0.008)'); ctx.fillStyle=g; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-    for(let p of P){ p.x+=p.vx; p.y+=p.vy; p.t+=0.01; if(p.x<0) p.x=canvas.clientWidth; if(p.x>canvas.clientWidth) p.x=0; if(p.y<0) p.y=canvas.clientHeight; if(p.y>canvas.clientHeight) p.y=0; const rr=p.r+Math.sin(p.t)*0.6; ctx.beginPath(); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.arc(p.x,p.y,rr,0,Math.PI*2); ctx.fill(); }
+    ctx.clearRect(0,0,w,h);
+    const g=ctx.createLinearGradient(0,0,w,h); g.addColorStop(0,'rgba(77,208,225,0.015)'); g.addColorStop(1,'rgba(125,211,252,0.008)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    for(let p of P){ p.x+=p.vx; p.y+=p.vy; p.t+=0.01; if(p.x<0) p.x=w; if(p.x>w) p.x=0; if(p.y<0) p.y=h; if(p.y>h) p.y=0; const rr=p.r+Math.sin(p.t)*0.6; ctx.beginPath(); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.arc(p.x,p.y,rr,0,Math.PI*2); ctx.fill(); }
     for(let i=0;i<P.length;i++){ for(let j=i+1;j<P.length;j++){ const a=P[i], b=P[j]; const dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy); if(d<120){ ctx.strokeStyle='rgba(125,211,252,'+((120-d)/140*0.12)+')'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); } } }
     ctx.font='13px monospace'; ctx.textBaseline='top';
-    for(let i=glyphs.length-1;i>=0;i--){ const gyl=glyphs[i]; gyl.y += gyl.vy; gyl.alpha -= 0.0005; ctx.globalAlpha = Math.max(0, gyl.alpha); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.fillText(gyl.txt, gyl.x, gyl.y); ctx.globalAlpha = 1; if(gyl.y > canvas.clientHeight + 40 || gyl.alpha <= 0) glyphs.splice(i,1); }
+    for(let i=glyphs.length-1;i>=0;i--){ const gyl=glyphs[i]; gyl.y += gyl.vy; gyl.alpha -= 0.0005; ctx.globalAlpha = Math.max(0, gyl.alpha); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.fillText(gyl.txt, gyl.x, gyl.y); ctx.globalAlpha = 1; if(gyl.y > h + 40 || gyl.alpha <= 0) glyphs.splice(i,1); }
     requestAnimationFrame(frame);
   }
   frame();
 })();
 
-/* hover burst (keeps behavior but more robust on mobile) */
+/* hover burst (unchanged) */
 (function(){
   function burstAt(x,y,parent){
     const c=document.createElement('canvas'); c.width=160; c.height=160; c.style.position='absolute'; c.style.left=(x-80)+'px'; c.style.top=(y-80)+'px'; c.style.pointerEvents='none'; parent.appendChild(c);
     const ctx=c.getContext('2d'); let t=0;
-    function anim(){ t+=1; ctx.clearRect(0,0,c.width,c.height); for(let i=0;i<8;i++){ const ang=(i/8)*Math.PI*2; const rad= t*2 + i*4; const px=80+Math.cos(ang)*rad; const py=80+Math.sin(ang)*rad; ctx.fillStyle='rgba(125,211,252,'+Math.max(0,(1 - t/30))+')'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); } if(t<40) requestAnimationFrame(anim); else try{ parent.removeChild(c); }catch(e){}
-    }
+    function anim(){ t+=1; ctx.clearRect(0,0,c.width,c.height); for(let i=0;i<8;i++){ const ang=(i/8)*Math.PI*2; const rad= t*2 + i*4; const px=80+Math.cos(ang)*rad; const py=80+Math.sin(ang)*rad; ctx.fillStyle='rgba(125,211,252,'+Math.max(0,(1 - t/30))+')'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); } if(t<40) requestAnimationFrame(anim); else parent.removeChild(c); }
     anim();
   }
   document.querySelectorAll('.btn-hover-burst').forEach(btn=>{
     btn.addEventListener('mouseenter',(e)=>{
       const rect=btn.getBoundingClientRect(); const x=e.clientX-rect.left; const y=e.clientY-rect.top;
-      // attach parent relative to button to avoid absolute page coords issues on mobile
       const parent=document.createElement('div'); parent.style.position='absolute'; parent.style.left=rect.left+'px'; parent.style.top=rect.top+'px'; parent.style.width=rect.width+'px'; parent.style.height=rect.height+'px'; parent.style.pointerEvents='none'; document.body.appendChild(parent);
-      burstAt(x, y, parent);
+      burstAt(x+rect.left - rect.left, y+rect.top - rect.top, parent);
       setTimeout(()=>{ try{ document.body.removeChild(parent); }catch{} },1200);
     });
-    // also support touch: small visual feedback
-    btn.addEventListener('touchstart',(e)=>{ const rect=btn.getBoundingClientRect(); burstAt(rect.width/2, rect.height/2, btn); });
   });
 })();
 
-/* contact handlers (unchanged) */
+/* contact: copy handle, open tg, order buttons now copy message + open Telegram (modal removed) */
 (function(){
   const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
   copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
@@ -332,7 +338,7 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
 
 /* language switching by navigator.language (unchanged) */
 (function(){
-  const translations = {"en": {"packages": "Packages", "quick_start": "Quick start", "contact_channel": "Primary contact — Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "Security Package", "security_addon": "Security Add‑on — $49", "smart": "Smart Contracts & Audit", "faq_title": "FAQ — short", "contact_title": "Contact — Telegram", "order": "Order", "details": "Details", "open_tg": "Open Telegram", "copy_tg": "Copy handle", "how_time": "How deadlines are counted?", "how_pay": "Payment?", "tech": "Technologies?", "security_q": "Security?"}, "ru": {"packages": "\u041f\u0430\u043a\u0435\u0442\u044b", "quick_start": "\u0411\u044b\u0441\u0442\u0440\u044b\u0439 \u0441\u0442\u0430\u0440\u0442", "contact_channel": "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u0430\u043d\u0430\u043b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u041f\u0430\u043a\u0435\u0442 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438", "security_addon": "\u0414\u043e\u043f. \u043f\u0430\u043a\u0435\u0442 \u0431\u0435\\u0437\\u043e\\u043f\\u0430\\u0441\\u043d\\u043e\\u0441\\u0442\\u0438 \u2014 $49", "smart": "\u0421\u043c\u0430\u0440\\u0442\u2011\u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u044b \u0438 \u0430\u0443\u0434\u0438\u0442 (\u0446\u0435\u043d\u044b \u043f\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u0443)", "faq_title": "FAQ — \u043a\u0440\u0430\u0442\\u043a\\u043e", "contact_title": "\u041a\\u043e\\u043d\\u0442\\u0430\\u043a\\u0442 — Telegram", "order": "\u0417\\u0430\\u043a\\u0430\\u0437\\u0430\\u0442\\u044c", "details": "\u041f\\u043e\\u0434\\u0440\\u043e\\u0431\\u043d\\u0435\\u0435", "open_tg": "\u041e\\u0442\\u043a\\u0440\\u044b\\u0442\\u044c Telegram", "copy_tg": "\u041a\\u043e\\u043f\\u0438\\u0440\\u043e\\u0432\\u0430\\u0442\\u044c", "how_time": "\u041a\u0430\u043a \u0441\u0447\u0438\u0442\u0430\u044e\u0442\u0441\u044f \u0441\u0440\u043e\u043a\u0438?", "how_pay": "\u041e\u043f\u043b\u0430\u0442\u0430?", "tech": "\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0438?", "security_q": "\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c?"}, "hy": {"packages": "\u0553\u0561\u0569\u0565\u0569\u0576\u0565\u0580", "quick_start": "\u0531\u0574\u057a\u0561\u0563\u056c\u056d\u0561\u0575\u056b\u0576 \u0574\u0565\u056f\u0576\u0561\u0580\u056f", "contact_channel": "\u0540\u0561\u0572\u0578\u0580\u0564\u0561\u056f\u0581\u0578\u0582\u0569\u0575\u0561\u0576 \u0578\u0582\u0572\u056b — Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0561\u0576 \u0583\u0561\u0569\u0565\u0569", "security_addon": "\u0531\u057e\u0565\u056c. \u0561\u0576\u057e\u057f\u0561\u0576\u0563. \u0583\u0561\u0569\u0565\u0569 — $49", "smart": "\u053d\u0565\u056ciega \u057a\u0561\u0575\u0574\u0561\u0576\u0561\u0563\u0580\u0565\u0580 \u0587 \u0561\u0578\u0582\u0564\u056b\u057f (\u0563\u0576\u0565\u0580\u0568 \u0568\u057d\u057f \u0570\u0561\u0580\u0581\u0574\u0561\u0576)", "faq_title": "\u0540\u0561\u0573\u0561\u056d\u0561\u056f\u056b \u0570\u0561\u0580\u0581\u0565\u0580", "contact_title": "\u053f\u0561\u057a — Telegram", "order": "\u054a\u0561\u057f\u057e\u056b\u0580\u0565\u056c", "details": "\u0531\u057e\u0565\u056c\u056b\u0576", "open_tg": "\u0532\u0561\u0581\u0565\u056c Telegram", "copy_tg": "\u054a\u0561\u057f\u0573\u0565\u0576\u0565\u056c", "how_time": "\u053b\u0576\u0579\u057a\u0565\u057d \u0570\u0561\u0574\u0561\u0576\u0561\u056f\u0568?", "how_pay": "\u054e\u0573\u0561\u0580\u0578\u0582\u0574?", "tech": "\u054f\u0565\u056d\u0578\u056c\u0578\u0563\u056b\u0561\u0576\u0565\u0580?", "security_q": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0578\u0582\u0576?"}};
+  const translations = {"en": {"packages": "Packages", "quick_start": "Quick start", "contact_channel": "Primary contact \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "Security Package", "security_addon": "Security Add\u2011on \u2014 $49", "smart": "Smart Contracts & Audit", "faq_title": "FAQ \u2014 short", "contact_title": "Contact \u2014 Telegram", "order": "Order", "details": "Details", "open_tg": "Open Telegram", "copy_tg": "Copy handle", "how_time": "How deadlines are counted?", "how_pay": "Payment?", "tech": "Technologies?", "security_q": "Security?"}, "ru": {"packages": "\u041f\u0430\u043a\u0435\u0442\u044b", "quick_start": "\u0411\u044b\u0441\u0442\u0440\u044b\u0439 \u0441\u0442\u0430\u0440\u0442", "contact_channel": "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u0430\u043d\u0430\u043b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u041f\u0430\u043a\u0435\u0442 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438", "security_addon": "\u0414\u043e\u043f. \u043f\u0430\u043a\u0435\u0442 \u0431\u0435\\u0437\\u043e\\u043f\\u0430\\u0441\\u043d\\u043e\\u0441\\u0442\\u0438 \u2014 $49", "smart": "\u0421\u043c\u0430\u0440\\u0442\u2011\\u043a\\u043e\\u043d\\u0442\\u0440\\u0430\\u043a\\u0442\\u044b \\u0438 \\u0430\\u0443\\u0434\\u0438\\u0442 (\\u0446\\u0435\\u043d\\u044b \\u043f\\u043e \\u0437\\u0430\\u043f\\u0440\\u043e\\u0441\\u0443)", "faq_title": "FAQ \u2014 \u043a\u0440\u0430\u0442\\u043a\\u043e", "contact_title": "\u041a\\u043e\\u043d\\u0442\\u0430\\u043a\\u0442 \u2014 Telegram", "order": "\u0417\\u0430\\u043a\\u0430\\u0437\\u0430\\u0442\\u044c", "details": "\u041f\\u043e\\u0434\\u0440\\u043e\\u0431\\u043d\\u0435\\u0435", "open_tg": "\u041e\\u0442\\u043a\\u0440\\u044b\\u0442\\u044c Telegram", "copy_tg": "\u041a\\u043e\\u043f\\u0438\\u0440\\u043e\\u0432\\u0430\\u0442\\u044c", "how_time": "\u041a\\u0430\\u043a \\u0441\\u0447\\u0438\\u0442\\u0430\\u044e\\u0442\\u0441\\u044f \\u0441\\u0440\\u043e\\u043a\\u0438?", "how_pay": "\u041e\\u043f\\u043b\\u0430\\u0442\\u0430?", "tech": "\u0422\\u0435\\u0445\\u043d\\u043e\\u043b\\u043e\\u0433\\u0438\\u0438?", "security_q": "\u0411\\u0435\\u0437\\u043e\\u043f\\u0430\\u0441\\u043d\\u043e\\u0441\\u0442\\u044c?"}, "hy": {"packages": "\\u0553\\u0561\\u0569\\u0565\\u0569\\u0576\\u0565\\u0580", "quick_start": "\\u0531\\u0574\\u057a\\u0561\\u0563\\u056c\\u056d\\u0561\\u0575\\u056b\\u0576 \\u0574\\u0565\\u056f\\u0576\\u0561\\u0580\\u056f", "contact_channel": "\\u0540\\u0561\\u0572\\u0578\\u0580\\u0564\\u0561\\u056f\\u0581\\u0578\\u0582\\u0569\\u0575\\u0561\\u0576 \\u0578\\u0582\\u0572\\u056b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\\u0531\\u0576\\u057e\\u057f\\u0561\\u0576\\u0563\\u0578\\u0582\\u0569\\u0575\\u0561\\u0576 \\u0583\\u0561\\u0569\\u0565\\u0569", "security_addon": "\\u0531\\u057e\\u0565\\u056c. \\u0561\\u0576\\u057e\\u057f\\u0561\\u0576\\u0563. \\u0583\\u0561\\u0569\\u0565\\u0569 \u2014 $49", "smart": "\\u053d\\u0565\\u056ciega \\u057a\\u0561\\u0575\\u0574\\u0561\\u0576\\u0561\\u0563\\u0580\\u0565\\u0580 \\u0587 \\u0561\\u0578\\u0582\\u0564\\u056b\\u057f (\\u0563\\u0576\\u0565\\u0580\\u0568 \\u0568\\u057d\\u057f \\u0570\\u0561\\u0580\\u0581\\u0574\\u0561\\u0576)", "faq_title": "\\u0540\\u0561\\u0573\\u0561\\u056d\\u0561\\u056f\\u056b \\u0570\\u0561\\u0580\\u0581\\u0565\\u0580", "contact_title": "\\u053f\\u0561\\u057a \u2014 Telegram", "order": "\\u054a\\u0561\\u057f\\u057e\\u056b\\u0580\\u0565\\u056c", "details": "\\u0531\\u057e\\u0565\\u056c\\u056b\\u0576", "open_tg": "\\u0532\\u0561\\u0581\\u0565\\u056c Telegram", "copy_tg": "\\u054a\\u0561\\u057f\\u0573\\u0565\\u0576\\u0565\\u056c", "how_time": "\\u053b\\u0576\\u0579\\u057a\\u0565\\u057d \\u0570\\u0561\\u0574\\u0561\\u0576\\u0561\\u056f\\u0568?", "how_pay": "\\u054e\\u0573\\u0561\\u0580\\u0578\\u0582\\u0574?", "tech": "\\u054f\\u0565\\u056d\\u0578\\u056c\\u0578\\u0563\\u056b\\u0561\\u0576\\u0565\\u0580?", "security_q": "\\u0531\\u0576\\u057e\\u057f\\u0561\\u0576\\u0563\\u0578\\u0582\\u0569\\u0575\\u0578\\u0582\\u0576?"}};
   function apply(lang){ if(!translations[lang]) lang='en'; document.querySelectorAll('[data-i18n]').forEach(el=>{ const key=el.getAttribute('data-i18n'); if(translations[lang][key]) el.textContent = translations[lang][key]; }); document.getElementById('contact-line').textContent = translations[lang]['contact_channel']; }
   document.getElementById('lang-en').addEventListener('click', ()=> apply('en'));
   document.getElementById('lang-ru').addEventListener('click', ()=> apply('ru'));
