@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Services — ApexForge</title><style>:root{
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Services — Techlyne</title><style>:root{
   --bg:#061226;
   --card:#081426;
   --muted:#9aa4b2;
@@ -18,6 +18,43 @@ body{margin:0;background:linear-gradient(180deg,#041021,#061226);color:#e6eef6;p
 header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:0.2px;font-size:18px}
 .logo svg{width:62px;height:62px}
+
+/* Neon circular logo styles (copied from home) */
+.logo.logo-neon {
+  width: 80px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-right: 8px;
+  flex: 0 0 auto;
+}
+.logo-ring{
+  width: 100px;
+  height: 84px;
+  border-radius: 50%;
+  padding: 6px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.logo-img{
+  position:relative;
+  width:95px;
+  height:95px;
+  border-radius:50%;
+  object-fit:cover;
+  display:block;
+  z-index:2;
+  transform: scale(1);
+  transition: transform .18s ease, box-shadow .18s ease;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  border: 1px solid rgba(255,255,255,0.03);
+  max-width:127px; /* desktop cap */
+}
 nav{display:flex; gap:10px; align-items:center;}
 .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 30px rgba(45,118,138,0.08);transition:transform .18s ease, box-shadow .18s ease, filter .12s ease;}
 .btn:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(45,118,138,0.12);filter:brightness(1.03)}
@@ -53,19 +90,29 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
 .scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
 .codeglyph{position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
-@media(max-width:900px){.two-col{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start;gap:14px}.hero{flex-direction:column;align-items:flex-start}}</style></head><body><div class="container"><header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div class="brand"><svg xmlns="http://www.w3.org/2000/svg" width="220" height="64" viewBox="0 0 440 128" role="img" aria-label="ApexForge logo">
-  <defs>
-    <linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#4dd0e1"/></linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.45"/></filter>
-  </defs>
-  <rect x="8" y="8" width="112" height="112" rx="18" fill="#02121a" />
-  <g filter="url(#shadow)">
-    <path d="M34 92 L86 40" stroke="url(#lg)" stroke-width="10" stroke-linecap="round" />
-    <circle cx="44" cy="44" r="10" fill="url(#lg)"/>
-    <circle cx="76" cy="76" r="10" fill="url(#lg)"/>
-  </g>
-  <g transform="translate(140,78)">
-    <text x="0" y="-12" font-family="Inter, Roboto, Arial" font-weight="800" font-size="36" fill="#e6eef6">oryx</text>
-    <text x="0" y="20" font-family="Inter, Roboto, Arial" font-weight="500" font-size="14" fill="#9aa4b2">Web & Web3 — Manual development</text>
-  </g>
-</svg><div style="margin-left:12px"><div style="font-weight:800">ApexForge</div><div class="muted"> </div></div></div><nav><a href="index.html" class="btn-ghost">Home</a></nav></header><main><h1>Services</h1><section class="card" style="margin-top:12px"><h3>Lending Website (Landing)</h3><p class="small">Single-page responsive landing, Telegram-based contact, analytics, optimisation, SSL, deploy, 1 revision.</p></section><section class="card" style="margin-top:12px"><h3>Website (Standard)</h3><p class="small">Up to 5 pages, forms to Telegram/CRM, SEO, responsive, 2 revisions.</p></section><section class="card" style="margin-top:12px"><h3>Premium Website</h3><p class="small">Up to 10 pages, bespoke design. Includes full Security Package (diagnostics, Cloudflare/WAF, CSP, headers, hardening). 3 revisions, 14 days support.</p></section><section class="card" style="margin-top:12px"><h3>Web3 Website</h3><p class="small">MetaMask / WalletConnect integration, UI for contract interaction, presale UI (frontend).</p></section><section class="card" style="margin-top:12px"><h3 id="smart">Smart Contracts & Audit</h3><p class="small">Development and audit available — pricing upon request due to variability.</p></section><section class="card" style="margin-top:12px"><h3>Security Add‑on</h3><p class="small">Standalone add‑on: deep diagnostics, WAF/Cloudflare setup, CSP, headers, pen‑test scenarios. Price: $49.</p></section></main><footer style="margin-top:18px" class="small">© ApexForge</footer></div></body></html>
+@media(max-width:900px){.two-col{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start;gap:14px}.hero{flex-direction:column;align-items:flex-start}}</style></head><body><div class="container"><header>
+      <div class="brand" aria-label="Techlyne">
+        <!-- Neon circular logo -->
+        <div class="logo logo-neon" aria-hidden="true" title="Techlyne">
+          <div class="logo-ring">
+            <img src="./img/photo_2025-10-01_20-26-04-Photoroom.png" alt="Techlyne logo" class="logo-img" />
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:14px" id="brand-name">Techlyne</div>
+          <div class="muted" style="margin-top:2px" id="brand-sub">Manual development • Integrations • Security</div>
+        </div>
+      </div>
+
+      <nav>
+        <a href="index.html" class="btn-ghost" data-i18n="packages">Home</a>
+        <a href="services.html" class="btn-ghost" data-i18n="packages">Services</a>
+        
+      </nav>
+    </header><main><h1>Services</h1><section class="card" style="margin-top:12px"><h3>Lending Website (Landing)</h3><p class="small">Single-page responsive landing, Telegram-based contact, analytics, optimisation, SSL, deploy, 1 revision.</p></section><section class="card" style="margin-top:12px"><h3>Website (Standard)</h3><p class="small">Up to 5 pages, forms to Telegram/CRM, SEO, responsive, 2 revisions.</p></section><section class="card" style="margin-top:12px"><h3>Premium Website</h3><p class="small">Up to 10 pages, bespoke design. Includes full Security Package (diagnostics, Cloudflare/WAF, CSP, headers, hardening). 3 revisions, 14 days support.</p></section><section class="card" style="margin-top:12px"><h3>Web3 Website</h3><p class="small">MetaMask / WalletConnect integration, UI for contract interaction, presale UI (frontend).</p></section>
+
+<!-- E-commerce section added as requested -->
+<section class="card" style="margin-top:12px"><h3>E‑commerce Store</h3><p class="small">Full online store (products, categories, cart), payment gateway (Stripe/cards), admin panel for products & orders, analytics, SEO, deployment. Term: 7–10 days. </p></section>
+
+<section class="card" style="margin-top:12px"><h3 id="smart">Smart Contracts & Audit</h3><p class="small">Development and audit available — pricing upon request due to variability.</p></section><section class="card" style="margin-top:12px"><h3>Security Add‑on</h3><p class="small">Standalone add‑on: deep diagnostics, WAF/Cloudflare setup, CSP, headers, pen‑test scenarios. Price: $49.</p></section></main><footer style="margin-top:18px" class="small">© Techlyne</footer></div></body></html>
