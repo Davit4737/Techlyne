@@ -278,7 +278,7 @@ a{
   });
 })();
 
-/* contact handlers (unchanged) */
+
 (function(){
   const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
   copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
