@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Techlyne — Services (responsive)</title>
+  <title>Techlyne</title>
   <meta name="description" content="Professional Web & Web3 services — manual frontend, security, audits.">
   <style>
 :root{
@@ -25,8 +25,44 @@ body{margin:0;background:linear-gradient(180deg,#041021,#061226);color:#e6eef6;p
 .container{width:100%;max-width:var(--maxw);padding-bottom:60px}
 header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:0.2px;font-size:18px}
-.logo svg{width:62px;height:62px}
+
+.logo.logo-neon{width:80px;height:10px;display:flex;align-items:center;justify-content:center;padding:0;margin-right:8px;flex:0 0 auto}
+.logo-ring{
+  width:67px;
+  height:64px;
+  border-radius:50%;
+  padding:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 6px 18px rgba(2,6,23,0.5);
+}
+a{
+  text-decoration: none;
+}
+.logo-img{
+  /* restored */
+  position:relative;
+  width:95px;
+  height:95px;
+  border-radius:50%;
+  object-fit:cover;
+  display:block;
+  z-index:2;
+  transform: scale(1);
+  transition: transform .18s ease, box-shadow .18s ease;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  border: 1px solid rgba(255,255,255,0.03);
+  max-width:127px; /* desktop cap */
+}
+
 nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.lang-switch{display:flex;gap:8px;align-items:center;margin-left:8px}
+.lang-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer;font-weight:700}
+.lang-btn.active{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;border-color:transparent;box-shadow:0 6px 18px rgba(45,118,138,0.08)}
 .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 30px rgba(45,118,138,0.08);transition:transform .18s ease, box-shadow .18s ease, filter .12s ease;}
 .btn:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(45,118,138,0.12);filter:brightness(1.03)}
 .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:9px 12px;border-radius:10px;transition:all .18s ease}
@@ -42,11 +78,10 @@ p.lead{margin:0 0 14px;color:var(--muted);font-size:15px;line-height:1.45}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:20px}
 .card{background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.03);transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;cursor:default;overflow:hidden}
 .card:hover{ transform: translateY(-8px); box-shadow: 0 18px 48px rgba(2,6,23,0.6); border-color: rgba(125,211,252,0.12) }
-.card .title-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.price{font-weight:800;font-size:18px;color:var(--accent2)}
-.price .orig{font-weight:600;color:var(--muted);text-decoration:line-through;font-size:13px;margin-right:8px}
+.card .title-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.price{font-weight:800;font-size:18px;color:var(--accent2);display:flex;align-items:center;gap:8px}
+.price .orig{font-weight:600;color:var(--muted);text-decoration:line-through;font-size:13px}
 .badge-discount{background:rgba(217,107,255,0.12);color:#d96bff;padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px}
-ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
 .small{font-size:13px;color:var(--muted)}
 a.button-link{display:inline-block;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;font-weight:700;text-decoration:none;transition:transform .12s ease,box-shadow .12s ease}
 a.button-link:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(45,118,138,0.12)}
@@ -57,55 +92,9 @@ a.button-link:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(45,11
 .contact{background:var(--card);padding:18px;border-radius:12px;position:sticky;top:24px;height:max-content}
 input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
 .close-btn{background:#fff;color:#041021;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-.lang-switch{display:flex;gap:8px;align-items:center}
-.lang-switch button{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
-.lang-switch button.active{background:rgba(255,255,255,0.03);color:#e6eef6;border-color:rgba(125,211,252,0.18)}
 .scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;min-height:80px}
 .codeglyph{position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
-
-/* Neon circular logo styles (Techlyne) - responsive */
-.logo.logo-neon {
-  width: 80px;
-  height: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin-right: 8px;
-  flex: 0 0 auto;
-}
-.logo-ring{
-  width: 100px;
-  height: 84px;
-  border-radius: 50%;
-  padding: 6px; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-.logo-img{
-  position:relative;
-  width:95px;
-  height:95px;
-  border-radius:50%;
-  object-fit:cover;
-  display:block;
-  z-index:2;
-  transform: scale(1);
-  transition: transform .18s ease, box-shadow .18s ease;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
-  border: 1px solid rgba(255,255,255,0.03);
-  max-width:127px; /* desktop cap */
-}
-a{
-  text-decoration: none;
-}
-
-/* hero right column wrapper (was inline width:380px) */
-.hero-right{width:100%;max-width:380px;flex:0 0 auto}
 
 @media(max-width:900px){
   .two-col{grid-template-columns:1fr}
@@ -121,7 +110,8 @@ a{
   .right{width:100%}
   .grid{grid-template-columns:1fr}
   .card{padding:12px}
-  .logo.logo-neon{width:76px;height:95px}
+  .logo-ring{width:76px;height:64px}
+  .logo-img{width:72px;height:72px}
   nav{gap:6px}
   .btn{padding:8px 10px;font-size:14px}
   .btn-ghost{padding:7px 9px;font-size:14px}
@@ -133,7 +123,6 @@ a{
   <div class="container" role="main">
     <header>
       <div class="brand" aria-label="Techlyne">
-        <!-- Neon circular logo -->
         <div class="logo logo-neon" aria-hidden="true" title="Techlyne">
           <div class="logo-ring">
             <img src="./img/photo_2025-10-01_20-26-04-Photoroom.png" alt="Techlyne logo" class="logo-img" />
@@ -141,29 +130,48 @@ a{
         </div>
 
         <div>
-          <div style="font-size:14px" id="brand-name">Techlyne</div>
-          <div class="muted" style="margin-top:2px" id="brand-sub">Manual development • Integrations • Security</div>
+          <div style="font-size:14px" id="brand-name" data-i18n="brand_name">Techlyne</div>
+          <div class="muted" style="margin-top:2px" id="brand-sub" data-i18n="brand_sub">Manual development • Integrations • Security</div>
         </div>
       </div>
 
       <nav>
-        <a href="index.html" class="btn-ghost" data-i18n="packages">Home</a>
-        <a href="services.html" class="btn-ghost" data-i18n="packages">Services</a>
-       
-        
+        <a href="index.html" class="btn-ghost" data-i18n="nav_home">Home</a>
+        <a href="services.html" class="btn-ghost" data-i18n="nav_services">Services</a>
+
+        <div class="lang-switch" role="tablist" aria-label="Language switch">
+          <button id="lang-en" class="lang-btn" aria-pressed="false">EN</button>
+          <button id="lang-ru" class="lang-btn" aria-pressed="false">RU</button>
+          <button id="lang-hy" class="lang-btn" aria-pressed="false">HY</button>
+        </div>
+
+        <button class="btn" id="btn-contact" style="margin-left:8px" data-i18n="contact_btn">Contact</button>
       </nav>
     </header>
 
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-left">
         <div class="eyebrow" data-i18n="quick_start">Quick start</div>
-        <h1 id="hero-title">Professional websites and Web3 integrations</h1>
-        <p class="lead" id="hero-lead">Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.</p>
-        <div class="features" aria-hidden="true"><div class="chip">Clean code</div><div class="chip">Responsive</div><div class="chip">Security</div><div class="chip">Support</div></div>
+        <h1 id="hero-title" data-i18n="hero_title">Professional websites and Web3 integrations</h1>
+        <p class="lead" id="hero-lead" data-i18n="hero_lead">
+          Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.
+        </p>
+
+        <div class="features" aria-hidden="true">
+          <div class="chip" data-i18n="feat1">Clean code</div>
+          <div class="chip" data-i18n="feat2">Responsive</div>
+          <div class="chip" data-i18n="feat3">Security</div>
+          <div class="chip" data-i18n="feat4">Support</div>
+        </div>
       </div>
+
       <div class="hero-right">
         <div style="padding:14px;border-radius:12px;z-index:2;position:relative;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:700" data-i18n="quick_start">Quick start</div><div class="badge"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700" data-i18n="quick_start_small">Quick start</div>
+            <div class="badge"></div>
+          </div>
+        
 
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" id="btn-order-landing" data-i18n="order">Order</button>
@@ -179,46 +187,175 @@ a{
     <section aria-labelledby="packages" style="margin-top:18px">
       <h2 id="packages" style="margin:8px 0 6px" data-i18n="packages">Packages</h2>
       <div class="grid" id="packages-grid">
-       
-        <article class="card" aria-labelledby="p1"><div class="title-row"><h3 id="p1" data-i18n="landing">Landing Website</h3><div class="price"><span class="orig">$79</span>$55 <br><span class="badge-discount">30% off</span></div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 2 days</div><ul><li>Single-page responsive landing</li><li>Header, CTA, benefits, FAQ,</li><li>Analytics, optimisation, SSL, deploy</li><li>1 round of revisions, source delivery</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Landing" data-price="55">Order</button><button class="btn-ghost">Details</button></div></article>
 
-        <article class="card" aria-labelledby="p2"><div class="title-row"><h3 id="p2" data-i18n="website">Website (Standard)</h3><div class="price"><span class="orig">$229</span>$160 <span class="badge-discount">30% off</span></div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 4 days</div><ul><li>Up to 5 pages (Home, Services, Cases, Contacts)</li><li>Forms → Telegram/CRM</li><li>SEO, responsive, 2 rounds of revisions</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Standard" data-price="160">Order</button><button class="btn-ghost">Details</button></div></article>
+        <article class="card" aria-labelledby="p1">
+          <div class="title-row">
+            <h3 id="p1" data-i18n="landing">Landing Website (Landing)</h3>
+            <div class="price" aria-hidden="true">
+              <span class="orig">$79</span>
+              <span class="price-value">$55</span>
+              <span class="badge-discount" aria-hidden="true">30% off</span>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_landing">Term: 2 days</div>
+          <ul>
+            <li data-i18n="li_l1">Single-page responsive landing</li>
+            <li data-i18n="li_l2">Header, CTA, benefits, FAQ, contact via Telegram</li>
+            <li data-i18n="li_l3">Webhook → Telegram</li>
+            <li data-i18n="li_l4">Analytics, optimisation, SSL, deploy</li>
+            <li data-i18n="li_l5">1 round of revisions, source delivery</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Landing" data-price="55" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
 
-        <article class="card" aria-labelledby="p3"><div class="title-row"><h3 id="p3" data-i18n="premium">Premium Website</h3><div class="price"><span class="orig">$449</span>$225 <span class="badge-discount">50% off</span></div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 7 days</div><ul><li>Up to 10 pages, bespoke design, measured animations</li><li><strong data-i18n="security">Security Package</strong> included: diagnostics, Cloudflare/WAF, CSP, headers, hardening</li><li>CMS on request, SEO, 3 rounds, 14 days support</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Premium" data-price="225">Order</button><button class="btn-ghost">Details</button></div></article>
+        <article class="card" aria-labelledby="p2">
+          <div class="title-row">
+            <h3 id="p2" data-i18n="website">Website (Standard)</h3>
+            <div class="price" aria-hidden="true">
+              <span class="orig">$229</span>
+              <span class="price-value">$160</span>
+              <span class="badge-discount" aria-hidden="true">30% off</span>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_standard">Term: 4 days</div>
+          <ul>
+            <li data-i18n="li_w1">Up to 5 pages (Home, Services, Cases, Contacts)</li>
+            <li data-i18n="li_w2">Forms → Telegram/CRM</li>
+            <li data-i18n="li_w3">SEO, responsive, 2 rounds of revisions</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Standard" data-price="160" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
 
-        <article class="card" aria-labelledby="p4"><div class="title-row"><h3 id="p4" data-i18n="web3">Web3 Website (Frontend + Integration)</h3><div class="price"><span class="orig">$599</span>$300 <span class="badge-discount">50% off</span></div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 7 days</div><ul><li>Wallets: MetaMask / WalletConnect</li><li>Auth via wallet, token balance display</li><li>UI for contract interaction (read/write)</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Web3" data-price="300">Order</button><button class="btn-ghost">Details</button></div></article>
+        <article class="card" aria-labelledby="p3">
+          <div class="title-row">
+            <h3 id="p3" data-i18n="premium">Premium Website</h3>
+            <div class="price" aria-hidden="true">
+              <span class="orig">$449</span>
+              <span class="price-value">$225</span>
+              <span class="badge-discount" aria-hidden="true">50% off</span>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_premium">Term: 7 days</div>
+          <ul>
+            <li data-i18n="li_p1">Up to 10 pages, bespoke design, measured animations</li>
+            <li data-i18n="li_p2"><strong data-i18n="security">Security Package</strong> included: diagnostics, Cloudflare/WAF, CSP, headers, hardening</li>
+            <li data-i18n="li_p3">CMS on request, SEO, 3 rounds, 14 days support</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Premium" data-price="225" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
 
-        <article class="card" aria-labelledby="p-ecom"><div class="title-row"><h3 id="p-ecom">E‑commerce Store</h3><div class="price"><span class="orig">$500</span>$250 <span class="badge-discount">50% off</span></div></div><div class="small" style="margin-top:6px;font-weight:600">Term: 7–10 days (depends on catalogue)</div><ul><li>Full online store (products, categories, cart)</li><li>Payment gateway integration (Stripe / Cards)</li><li>Admin panel: products, orders, basic inventory</li><li>Analytics, SEO, deployment, 7 days support</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Ecommerce" data-price="450">Order</button><button class="btn-ghost">Details</button></div></article>
+        <article class="card" aria-labelledby="p4">
+          <div class="title-row">
+            <h3 id="p4" data-i18n="web3">Web3 Website (Frontend + Integration)</h3>
+            <div class="price" aria-hidden="true">
+              <span class="orig">$599</span>
+              <span class="price-value">$300</span>
+              <span class="badge-discount" aria-hidden="true">50% off</span>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_web3">Term: 7 days</div>
+          <ul>
+            <li data-i18n="li_web31">Wallets: MetaMask / WalletConnect</li>
+            <li data-i18n="li_web32">Auth via wallet, token balance display</li>
+            <li data-i18n="li_web33">UI for contract interaction (read/write)</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Web3" data-price="300" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
 
-        <article class="card" aria-labelledby="p5"><div class="title-row"><h3 id="p5" data-i18n="security">Security Package</h3><div class="price">Included in Premium.</div></div><div class="small" style="margin-top:6px;font-weight:600">Deep diagnostics & hardening</div><ul><li>Automated scanning + manual check</li><li>Cloudflare / WAF setup, rate-limiting</li><li>CSP, security headers, input validation</li><li>Pen-test scenarios & remediation plan</li></ul><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-hover-burst" data-package="Security" data-price="included">Order</button><button class="btn-ghost">Details</button></div></article>
+        <article class="card" aria-labelledby="p-ecom">
+          <div class="title-row">
+            <h3 id="p-ecom" data-i18n="ecom">E-commerce Store</h3>
+            <div class="price" aria-hidden="true">
+              <span class="orig">$500</span>
+              <span class="price-value">$250</span>
+              <span class="badge-discount" aria-hidden="true">50% off</span>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_ecom">Term: 7–10 days (depends on catalogue)</div>
+          <ul>
+            <li data-i18n="li_e1">Full online store (products, categories, cart)</li>
+            <li data-i18n="li_e2">Payment gateway integration (Stripe / Cards)</li>
+            <li data-i18n="li_e3">Admin panel: products, orders, basic inventory</li>
+            <li data-i18n="li_e4">Analytics, SEO, deployment, 7 days support</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Ecommerce" data-price="450" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="p5">
+          <div class="title-row">
+            <h3 id="p5" data-i18n="security">Security Package</h3>
+            <div class="price" aria-hidden="true"><span class="price-value" data-i18n="included">Included in Premium.</span></div>
+          </div>
+          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_security">Deep diagnostics & hardening</div>
+          <ul>
+            <li data-i18n="li_s1">Automated scanning + manual check</li>
+            <li data-i18n="li_s2">Cloudflare / WAF setup, rate-limiting</li>
+            <li data-i18n="li_s3">CSP, security headers, input validation</li>
+            <li data-i18n="li_s4">Pen-test scenarios & remediation plan</li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-hover-burst" data-package="Security" data-price="included" data-i18n="order">Order</button>
+            <button class="btn-ghost" data-i18n="details">Details</button>
+          </div>
+        </article>
 
       </div>
     </section>
 
     <div class="cta-strip" role="region" aria-live="polite">
-      <div><div style="font-weight:700" data-i18n="smart">Smart Contracts & Audit</div><div class="small">Development and audit — pricing upon request</div></div>
-      <div style="display:flex;gap:8px"><a class="btn" href="services.html#smart" data-i18n="details">Learn more</a></div>
+      <div>
+        <div style="font-weight:700" data-i18n="smart">Smart Contracts & Audit</div>
+        <div class="small" data-i18n="smart_sub">Development and audit — pricing upon request</div>
+      </div>
+      <div style="display:flex;gap:8px"><a class="btn" href="services.html#smart" data-i18n="learn_more">Learn more</a></div>
     </div>
 
     <section class="two-col" aria-label="FAQ and contact">
       <div class="faq" aria-labelledby="faq-title">
         <h4 id="faq-title" data-i18n="faq_title">FAQ — short</h4>
-        <div class="faq-item"><strong data-i18n="how_time">How deadlines are counted?</strong><div class="small">From receipt of materials and prepayment.</div></div>
-        <div class="faq-item"><strong data-i18n="how_pay">Payment?</strong><div class="small">50% up front, 50% on delivery.</div></div>
-        <div class="faq-item"><strong data-i18n="tech">Technologies?</strong><div class="small">Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.</div></div>
-        <div class="faq-item"><strong data-i18n="security_q">Security?</strong><div class="small">Basic hardening included; deep audit is separate.</div></div>
+
+        <div class="faq-item">
+          <strong data-i18n="how_time">How deadlines are counted?</strong>
+          <div class="small" data-i18n="how_time_sub">From receipt of materials and prepayment.</div>
+        </div>
+
+        <div class="faq-item">
+          <strong data-i18n="how_pay">Payment?</strong>
+          <div class="small" data-i18n="how_pay_sub">50% up front, 50% on delivery.</div>
+        </div>
+
+        <div class="faq-item">
+          <strong data-i18n="tech">Technologies?</strong>
+          <div class="small" data-i18n="tech_sub">Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.</div>
+        </div>
+
+        <div class="faq-item">
+          <strong data-i18n="security_q">Security?</strong>
+          <div class="small" data-i18n="security_q_sub">Basic hardening included; deep audit is separate.</div>
+        </div>
       </div>
 
-     
     </section>
 
-    <footer style="margin-top:22px">© Techlyne — Manual development</footer>
+    <footer style="margin-top:22px" data-i18n="footer">© Techlyne — Manual development</footer>
   </div>
 
-  <!-- MODAL REMOVED AS REQUESTED -->
-
-<script>
-/* particles + falling glyphs - improved canvas DPI handling */
+  <script>
 (function(){
   const parent = document.getElementById('scene-overlay');
   const canvas = document.createElement('canvas');
@@ -244,7 +381,7 @@ a{
   function spawnGlyph(){ glyphs.push({x:Math.random()*w(),y:-10,vy:0.3+Math.random()*0.6,txt:codes[Math.floor(Math.random()*codes.length)],alpha:0.9,scale:0.8+Math.random()*0.8}); }
   setInterval(spawnGlyph, 1600);
   function frame(){
-    const cw = canvas.width, ch = canvas.height; // in device px, but ctx transform handles scaling
+    const cw = canvas.width, ch = canvas.height;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     const g=ctx.createLinearGradient(0,0,canvas.clientWidth,canvas.clientHeight); g.addColorStop(0,'rgba(77,208,225,0.015)'); g.addColorStop(1,'rgba(125,211,252,0.008)'); ctx.fillStyle=g; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
     for(let p of P){ p.x+=p.vx; p.y+=p.vy; p.t+=0.01; if(p.x<0) p.x=canvas.clientWidth; if(p.x>canvas.clientWidth) p.x=0; if(p.y<0) p.y=canvas.clientHeight; if(p.y>canvas.clientHeight) p.y=0; const rr=p.r+Math.sin(p.t)*0.6; ctx.beginPath(); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.arc(p.x,p.y,rr,0,Math.PI*2); ctx.fill(); }
@@ -256,77 +393,172 @@ a{
   frame();
 })();
 
-/* hover burst (keeps behavior but more robust on mobile) */
 (function(){
   function burstAt(x,y,parent){
     const c=document.createElement('canvas'); c.width=160; c.height=160; c.style.position='absolute'; c.style.left=(x-80)+'px'; c.style.top=(y-80)+'px'; c.style.pointerEvents='none'; parent.appendChild(c);
     const ctx=c.getContext('2d'); let t=0;
-    function anim(){ t+=1; ctx.clearRect(0,0,c.width,c.height); for(let i=0;i<8;i++){ const ang=(i/8)*Math.PI*2; const rad= t*2 + i*4; const px=80+Math.cos(ang)*rad; const py=80+Math.sin(ang)*rad; ctx.fillStyle='rgba(125,211,252,'+Math.max(0,(1 - t/30))+')'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); } if(t<40) requestAnimationFrame(anim); else try{ parent.removeChild(c); }catch(e){}
-    }
+    function anim(){ t+=1; ctx.clearRect(0,0,c.width,c.height); for(let i=0;i<8;i++){ const ang=(i/8)*Math.PI*2; const rad= t*2 + i*4; const px=80+Math.cos(ang)*rad; const py=80+Math.sin(ang)*rad; ctx.fillStyle='rgba(125,211,252,'+Math.max(0,(1 - t/30))+')'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); } if(t<40) requestAnimationFrame(anim); else try{ parent.removeChild(c); }catch(e){} }
     anim();
   }
   document.querySelectorAll('.btn-hover-burst').forEach(btn=>{
     btn.addEventListener('mouseenter',(e)=>{
       const rect=btn.getBoundingClientRect(); const x=e.clientX-rect.left; const y=e.clientY-rect.top;
-      // attach parent relative to button to avoid absolute page coords issues on mobile
       const parent=document.createElement('div'); parent.style.position='absolute'; parent.style.left=rect.left+'px'; parent.style.top=rect.top+'px'; parent.style.width=rect.width+'px'; parent.style.height=rect.height+'px'; parent.style.pointerEvents='none'; document.body.appendChild(parent);
       burstAt(x, y, parent);
       setTimeout(()=>{ try{ document.body.removeChild(parent); }catch{} },1200);
     });
-    // also support touch: small visual feedback
     btn.addEventListener('touchstart',(e)=>{ const rect=btn.getBoundingClientRect(); burstAt(rect.width/2, rect.height/2, btn); });
   });
 })();
 
-
 (function(){
   const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
-  copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
-  openBtn.addEventListener('click', ()=> window.open('https://t.me/Off_David77','_blank'));
+  if(copyBtn) copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
+  if(openBtn) openBtn.addEventListener('click', ()=> window.open('https://t.me/Off_David77','_blank'));
 
   function handleOrderClick(pkg, price){
     const priceText = price ? (' — $' + price) : '';
     const msg = `Order: ${pkg}${priceText}\nContact: @Off_David77\nSource: ${location.href}`;
-    navigator.clipboard.writeText(msg).then(()=>{
-      contactStatus.textContent = 'Message copied to clipboard — opening Telegram...';
-      window.open('https://t.me/Off_David77','_blank');
-    }).catch(()=>{
-      contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.';
-      window.open('https://t.me/Off_David77','_blank');
-    });
+    navigator.clipboard.writeText(msg).then(()=>{ contactStatus.textContent = 'Message copied to clipboard — opening Telegram...'; window.open('https://t.me/Off_David77','_blank'); }).catch(()=>{ contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.'; window.open('https://t.me/Off_David77','_blank'); });
   }
 
   document.querySelectorAll('[data-package]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      const pkg = e.currentTarget.dataset.package || 'Custom';
-      const price = e.currentTarget.dataset.price || '';
-      handleOrderClick(pkg, price);
-    });
+    btn.addEventListener('click', (e)=>{ const pkg = e.currentTarget.dataset.package || 'Custom'; const price = e.currentTarget.dataset.price || ''; handleOrderClick(pkg, price); });
   });
 
   const landingBtn = document.getElementById('btn-order-landing');
-  if(landingBtn){
-    landingBtn.addEventListener('click', ()=> handleOrderClick('Landing', '55'));
-  }
-
+  if(landingBtn) landingBtn.addEventListener('click', ()=> handleOrderClick('Landing', '55'));
   const contactModalBtn = document.getElementById('contact-modal');
-  if(contactModalBtn){
-    contactModalBtn.addEventListener('click', ()=> handleOrderClick('Custom', ''));
-  }
+  if(contactModalBtn) contactModalBtn.addEventListener('click', ()=> handleOrderClick('Custom', ''));
 })();
 
-/* language switching by navigator.language (unchanged) */
 (function(){
-  const translations = {"en": {"packages": "Packages", "quick_start": "Quick start", "contact_channel": "Primary contact — Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "Security Package", "security_addon": "Security Add‑on — $49", "smart": "Smart Contracts & Audit", "faq_title": "FAQ — short", "contact_title": "Contact — Telegram", "order": "Order", "details": "Details", "open_tg": "Open Telegram", "copy_tg": "Copy handle", "how_time": "How deadlines are counted?", "how_pay": "Payment?", "tech": "Technologies?", "security_q": "Security?"}, "ru": {"packages": "\u041f\u0430\u043a\u0435\u0442\u044b", "quick_start": "\u0411\u044b\u0441\u0442\u0440\u044b\u0439 \u0441\u0442\u0430\u0440\u0442", "contact_channel": "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043a\u0430\u043d\u0430\u043b \u2014 Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u041f\u0430\u043a\u0435\u0442 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438", "security_addon": "\u0414\u043e\u043f. \u043f\u0430\u043a\u0435\u0442 \u0431\u0435\\u0437\\u043e\\u043f\\u0430\\u0441\\u043d\\u043e\\u0441\\u0442\\u0438 \u2014 $49", "smart": "\u0421\u043c\u0430\u0440\u0442\u2011\u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u044b \u0438 \u0430\u0443\u0434\u0438\u0442 (\u0446\u0435\u043d\u044b \u043f\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u0443)", "faq_title": "FAQ — \u043a\u0440\u0430\u0442\\u043a\\u043e", "contact_title": "\u041a\\u043e\\u043d\\u0442\\u0430\\u043a\\u0442 — Telegram", "order": "\u0417\\u0430\\u043a\\u0430\\u0437\\u0430\\u0442\\u044c", "details": "\u041f\\u043e\\u0434\\u0440\\u043e\\u0431\\u043d\\u0435\\u0435", "open_tg": "\u041e\u0442\u043a\u0440\u044b\u0442\u044c Telegram", "copy_tg": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c", "how_time": "\u041a\u0430\u043a \u0441\u0447\u0438\u0442\u0430\u044e\u0442\u0441\u044f \u0441\u0440\u043e\u043a\u0438?", "how_pay": "\u041e\u043f\u043b\u0430\u0442\u0430?", "tech": "\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0438?", "security_q": "\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c?"}, "hy": {"packages": "\u0553\u0561\u0569\u0565\u0569\u0576\u0565\u0580", "quick_start": "\u0531\u0574\u057a\u0561\u0563\u056c\u056d\u0561\u0575\u056b\u0576 \u0574\u0565\u056f\u0576\u0561\u0580\u056f", "contact_channel": "\u0540\u0561\u0572\u0578\u0580\u0564\u0561\u056f\u0581\u0578\u0582\u0569\u0575\u0561\u0576 \u0578\u0582\u0572\u056b — Telegram @Off_David77", "landing": "Lending Website (Landing)", "website": "Website (Standard)", "premium": "Premium Website", "web3": "Web3 Website (Frontend + Integration)", "security": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0561\u0576 \u0583\u0561\u0569\u0565\u0569", "security_addon": "\u0531\u057e\u0565\u056c. \u0561\u0576\u057e\u057f\u0561\u0576\u0563. \u0583\u0561\u0569\u0565\u0569 — $49", "smart": "\u053d\u0565\u056ciega \u057a\u0561\u0575\u0574\u0561\u0576\u0561\u0563\u0580\u0565\u0580 \u0587 \u0561\u0578\u0582\u0564\u056b\u057f (\u0563\u0576\u0565\u0580\u0568 \u0568\u057d\u057f \u0570\u0561\u0580\u0581\u0574\u0561\u0576)", "faq_title": "\u0540\u0561\u0573\u0561\u056d\u0561\u056f\u056b \u0570\u0561\u0580\u0581\u0565\u0580", "contact_title": "\u053f\u0561\u057a — Telegram", "order": "\u054a\u0561\u057f\u057e\u056b\u0580\u0565\u056c", "details": "\u0531\u057e\u0565\u056c\u056b\u0576", "open_tg": "\u0532\u0561\u0581\u0565\u056c Telegram", "copy_tg": "\u054a\u0561\u057f\u0573\u0565\u0576\u0565\u056c", "how_time": "\u053b\u0576\u0579\u057a\u0565\u057d \u0570\u0561\u0574\u0561\u0576\u0561\u056f\u0568?", "how_pay": "\u054e\u0573\u0561\u0580\u0578\u0582\u0574?", "tech": "\u054f\u0565\u056d\u0578\u056c\u0578\u0563\u056b\u0561\u0576\u0565\u0580?", "security_q": "\u0531\u0576\u057e\u057f\u0561\u0576\u0563\u0578\u0582\u0569\u0575\u0578\u0582\u0576?"}};
-  function apply(lang){ if(!translations[lang]) lang='en'; document.querySelectorAll('[data-i18n]').forEach(el=>{ const key=el.getAttribute('data-i18n'); if(translations[lang][key]) el.textContent = translations[lang][key]; }); document.getElementById('contact-line').textContent = translations[lang]['contact_channel']; }
-  document.getElementById('lang-en').addEventListener('click', ()=> apply('en'));
-  document.getElementById('lang-ru').addEventListener('click', ()=> apply('ru'));
-  document.getElementById('lang-hy').addEventListener('click', ()=> apply('hy'));
-  let userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-  if(userLang.startsWith('ru') || userLang.startsWith('uk')) apply('ru');
-  else if(userLang.startsWith('hy')) apply('hy');
-  else apply('en');
+  const translations = {
+    "en": {
+      "brand_name":"Techlyne",
+      "brand_sub":"Manual development • Integrations • Security",
+      "nav_home":"Home",
+      "nav_services":"Services",
+      "contact_btn":"Contact",
+      "quick_start":"Quick start",
+      "quick_start_small":"Quick start",
+      "hero_title":"Professional websites and Web3 integrations",
+      "hero_lead":"Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.",
+      "feat1":"Clean code","feat2":"Responsive","feat3":"Security","feat4":"Support",
+      "contact_channel":"Primary contact — Telegram @Off_David77",
+      "packages":"Packages",
+      "landing":"Landing Website","term_landing":"Term: 2 days",
+      "li_l1":"Single-page responsive landing","li_l2":"Header, CTA, benefits, FAQ, contact via Telegram","li_l3":"Webhook → Telegram","li_l4":"Analytics, optimisation, SSL, deploy","li_l5":"1 round of revisions, source delivery",
+      "website":"Website (Standard)","term_standard":"Term: 4 days","li_w1":"Up to 5 pages (Home, Services, Cases, Contacts)","li_w2":"Forms → Telegram/CRM","li_w3":"SEO, responsive, 2 rounds of revisions",
+      "premium":"Premium Website","term_premium":"Term: 7 days","li_p1":"Up to 10 pages, bespoke design, measured animations","li_p2":"Security Package","li_p3":"CMS on request, SEO, 3 rounds, 14 days support",
+      "web3":"Web3 Website (Frontend + Integration)","term_web3":"Term: 7 days","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Auth via wallet, token balance display","li_web33":"UI for contract interaction (read/write)",
+      "ecom":"E-commerce Store","term_ecom":"Term: 7–10 days (depends on catalogue)","li_e1":"Full online store (products, categories, cart)","li_e2":"Payment gateway integration (Stripe / Cards)","li_e3":"Admin panel: products, orders, basic inventory","li_e4":"Analytics, SEO, deployment, 7 days support",
+      "security":"Security Package","included":"Included in Premium.","term_security":"Deep diagnostics & hardening","li_s1":"Automated scanning + manual check","li_s2":"Cloudflare / WAF setup, rate-limiting","li_s3":"CSP, security headers, input validation","li_s4":"Pen-test scenarios & remediation plan",
+      "smart":"Smart Contracts & Audit","smart_sub":"Development and audit — pricing upon request","learn_more":"Learn more",
+      "faq_title":"FAQ — short","how_time":"How deadlines are counted?","how_time_sub":"From receipt of materials and prepayment.","how_pay":"Payment?","how_pay_sub":"50% up front, 50% on delivery.","tech":"Technologies?","tech_sub":"Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.","security_q":"Security?","security_q_sub":"Basic hardening included; deep audit is separate.",
+      "contact_title":"Contact — Telegram","contact_note":"Buttons copy the handle and open Telegram. Email is hidden — contact via Telegram.",
+      "label_tg":"Telegram","copy_tg":"Copy handle","open_tg":"Open Telegram","order":"Order","details":"Details","footer":"© Techlyne — Manual development","security_addon":"Also available: <strong>Security add-on</strong>"
+    },
+    "ru": {
+      "brand_name":"Techlyne",
+      "brand_sub":"Ручная разработка • Интеграции • Безопасность",
+      "nav_home":"Главная",
+      "nav_services":"Услуги",
+      "contact_btn":"Контакт",
+      "quick_start":"Быстрый старт",
+      "quick_start_small":"Быстрый старт",
+      "hero_title":"Профессиональные сайты и Web3-интеграции",
+      "hero_lead":"Ручной frontend, Web3-интеграции и аудиты безопасности. Формальный, надёжный дизайн — под клиента.",
+      "feat1":"Чистый код","feat2":"Адаптивность","feat3":"Безопасность","feat4":"Поддержка",
+      "contact_channel":"Основной контакт — Telegram @Off_David77",
+      "packages":"Пакеты",
+      "landing":"Лендинг (Landing)","term_landing":"Срок: 2 дня",
+      "li_l1":"Одностраничный адаптивный лендинг","li_l2":"Хедер, CTA, преимущества, FAQ, связь через Telegram","li_l3":"Webhook → Telegram","li_l4":"Аналитика, оптимизация, SSL, деплой","li_l5":"1 раунд правок, передача исходников",
+      "website":"Веб-сайт (Стандарт)","term_standard":"Срок: 4 дня","li_w1":"До 5 страниц (Главная, Услуги, Кейсы, Контакты)","li_w2":"Формы → Telegram/CRM","li_w3":"SEO, адаптив, 2 раунда правок",
+      "premium":"Премиум-сайт","term_premium":"Срок: 7 дней","li_p1":"До 10 страниц, дизайн на заказ, аккуратные анимации","li_p2":"Пакет безопасности","li_p3":"CMS по запросу, SEO, 3 раунда, 14 дней поддержки",
+      "web3":"Web3 сайт (Фронтенд + Интеграция)","term_web3":"Срок: 7 дней","li_web31":"Кошельки: MetaMask / WalletConnect","li_web32":"Авторизация через кошелёк, отображение баланса токена","li_web33":"UI для взаимодействия с контрактом (read/write)",
+      "ecom":"Интернет-магазин","term_ecom":"Срок: 7–10 дней (зависит от каталога)","li_e1":"Полный магазин (товары, категории, корзина)","li_e2":"Интеграция платёжных систем (Stripe / карты)","li_e3":"Админ: товары, заказы, базовый учёт","li_e4":"Аналитика, SEO, деплой, 7 дней поддержки",
+      "security":"Пакет безопасности","included":"Включено в Премиум.","term_security":"Глубокая диагностика и усиление","li_s1":"Автосканирование + ручная проверка","li_s2":"Настройка Cloudflare / WAF, rate-limit","li_s3":"CSP, security headers, валидация вводимых данных","li_s4":"Сценарии pentest и план исправлений",
+      "smart":"Смарт-контракты и аудит","smart_sub":"Разработка и аудит — цены по запросу","learn_more":"Узнать подробнее",
+      "faq_title":"FAQ — коротко","how_time":"Как считаются сроки?","how_time_sub":"Считается от получения материалов и предоплаты.","how_pay":"Оплата?","how_pay_sub":"50% аванс, 50% при сдаче.","tech":"Технологии?","tech_sub":"Ручной HTML/CSS/JS, фреймворки по запросу. Web3 через ethers.js.","security_q":"Безопасность?","security_q_sub":"Базовое усиление включено; глубокий аудит отдельно.",
+      "contact_title":"Контакт — Telegram","contact_note":"Кнопки копируют хэндл и открывают Telegram. Почта скрыта — связаться через Telegram.",
+      "label_tg":"Telegram","copy_tg":"Копировать","open_tg":"Открыть Telegram","order":"Заказать","details":"Подробнее","footer":"© Techlyne — Ручная разработка","security_addon":"Также доступно: <strong>Доп. пакет безопасности</strong>"
+    },
+    "hy": {
+      "brand_name":"Techlyne",
+      "brand_sub":"Ձեռքբովանդակության մշակում • Ինտեգրացիաներ • Անվտանգություն",
+      "nav_home":"Գլխավոր",
+      "nav_services":"Ծառայությունները",
+      "contact_btn":"Կապ",
+      "quick_start":"Արագ սկսում",
+      "quick_start_small":"Արագ սկսում",
+      "hero_title":"Մասնագիտական կայքեր և Web3 ինտեգրացիաներ",
+      "hero_lead":"Ձեռքով frontend, Web3 ինտեգրացիաներ և անվտանգության աուդիտներ։ Հստակ, հուսալի դիզայն՝ հաճախորդի համար։",
+      "feat1":"Մաքուր կոդ","feat2":"Պատասխանատու","feat3":"Անվտանգություն","feat4":"Ուղորդում",
+      "packages":"Փաթեթներ",
+      "landing":"Landing կայք","term_landing":"Վաղաժամկետը՝ 2 օր",
+      "li_l1":"Միանվագ պատասխանատու ленդինգ","li_l2":"Ղեկավար, CTA, առավելություններ, FAQ, կապ Telegram-ով","li_l3":"Webhook → Telegram","li_l4":"Անալիտիկա, օպտիմիզացիա, SSL, դեպլոյ","li_l5":"1 փուլի վերանայում, աղբյուրների փոխանցում",
+      "website":"Կայք (Ստանդարտ)","term_standard":"Վաղաժամկետը՝ 4 օր","li_w1":"Մինչև 5 էջ (Գլխավոր, Ծառայություններ, Կեյսեր, Կապեր)","li_w2":"Ֆորմաներ → Telegram/CRM","li_w3":"SEO, պատասխանատու, 2 փուլ վերանայում",
+      "premium":"Պրեմիում կայք","term_premium":"Վաղաժամկետը՝ 7 օր","li_p1":"Մինչև 10 էջ, bespoke դիզայն, հանգիստ անիմացիաներ","li_p2":"Անվտանգության փաթեթ","li_p3":"CMS խնդրանքով, SEO, 3 փուլի, 14 օր աջակցություն",
+      "web3":"Web3 կայք (Frontend + Ինտեգրում)","term_web3":"Վաղաժամկետը՝ 7 օր","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Ամփոփում՝ wallet-ով, token-ի հաշվարկ","li_web33":"UI համար contract interaction (read/write)",
+      "ecom":"Էլեկտրոնային խանութ","term_ecom":"Վաղաժամկետը՝ 7–10 օր (կախված կատালոգից)","li_e1":"Ամբողջական խանութ (ապրանքներ, կատեգորիաներ, զամբյուղ)","li_e2":"Payment gateway ինտեգրում (Stripe / քարտեր)","li_e3":"Ադմին պանել՝ ապրանք, պատվերներ, հիմնական ինվենտար","li_e4":"Անալիտիկա, SEO, դեպլոյ, 7 օր աջակցության",
+      "security":"Անվտանգության փաթեթ","included":"Ընդգրկված է պրեմիումում։","term_security":"Խորքային ախտորոշում և ամրացում","li_s1":"Ավտոմատ սկանավորում + ձեռքի ստուգում","li_s2":"Cloudflare / WAF կարգավորում, rate-limit","li_s3":"CSP, անվտանգության հեդերներ, մուտքային վալիդացիա","li_s4":"Pen-test սցենարներ և վերականգման պլան",
+      "smart":"Սմարթ կոնտրակտներ և աուդիտ","smart_sub":"Ծրագրում և աուդիտ — գները ըստ հարցման","learn_more":"Իմանալ ավելին",
+      "faq_title":"ՀՏՀ — կարճ","how_time":"Ինչպես հաշվարկվում են ժամկետները?","how_time_sub":"Հաշվում է նյութերի ստացումից և նախնական վճարից։","how_pay":"Վճարում?","how_pay_sub":"50% նախապես, 50% առաքման պահին։","tech":"Տեխնոլոգիաներ?","tech_sub":"Ձեռնարկ HTML/CSS/JS, framework-ներ ըստ հարցի. Web3՝ через ethers.js.","security_q":"Անվտանգություն?","security_q_sub":"Հիմնական ամրացումը ներառված է; խորքային աուդիտը առանձին է։",
+      "contact_title":"Կապ — Telegram","contact_note":"Կոճակները պատճենում են հենդլը և բացում Telegram։ Էլ.փոստը թաքնված է — կապվեք Telegram-ով։",
+      "label_tg":"Telegram","copy_tg":"Պատճենել","open_tg":"Բացել Telegram","order":" Պատվիրել","details":"Մանրամասներ","footer":"© Techlyne — Ձեռքով մշակված","security_addon":"Հավելյալ հասանելի է: <strong>Անվտանգության Լրացում</strong>"
+    }
+  };
+
+  function apply(lang){
+    if(!translations[lang]) lang='en';
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n');
+      if(!key) return;
+      const txt = translations[lang][key];
+      if(typeof txt === 'undefined') return;
+      if(el.children.length === 0){
+        if(key === 'security_addon'){
+          el.innerHTML = translations[lang][key];
+        } else {
+          el.textContent = txt;
+        }
+      } else {
+        for(const node of el.childNodes){
+          if(node.nodeType === Node.TEXT_NODE){
+            if(node.textContent.trim().length>0){
+              node.textContent = ' ' + txt;
+              break;
+            }
+          }
+        }
+      }
+    });
+
+    document.querySelectorAll('.lang-btn').forEach(b=>{
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed','false');
+    });
+    const btn = document.getElementById('lang-' + lang);
+    if(btn){ btn.classList.add('active'); btn.setAttribute('aria-pressed','true'); }
+    try{ localStorage.setItem('site_lang', lang); }catch(e){}
+  }
+
+  ['en','ru','hy'].forEach(code=>{
+    const el = document.getElementById('lang-'+code);
+    if(el) el.addEventListener('click', ()=> apply(code));
+  });
+
+  let saved = null;
+  try{ saved = localStorage.getItem('site_lang'); }catch(e){}
+  if(saved && translations[saved]) apply(saved);
+  else {
+    let userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    if(userLang.startsWith('ru') || userLang.startsWith('uk')) apply('ru');
+    else if(userLang.startsWith('hy')) apply('hy');
+    else apply('en');
+  }
 })();
-</script>
+  </script>
 </body>
 </html>
