@@ -40,9 +40,6 @@ header{display:flex;justify-content:space-between;align-items:center;gap:16px;ma
   border:1px solid rgba(255,255,255,0.03);
   box-shadow:0 6px 18px rgba(2,6,23,0.5);
 }
-a{
-  text-decoration: none;
-}
 .logo-img{
   /* restored */
   position:relative;
@@ -93,7 +90,7 @@ a.button-link:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(45,11
 input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
 .close-btn{background:#fff;color:#041021;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
 .scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;min-height:80px}
-.codeglyph{position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
+.codeglyph{position:absolute;left=0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
 
 @media(max-width:900px){
@@ -457,7 +454,13 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
       "smart":"Smart Contracts & Audit","smart_sub":"Development and audit — pricing upon request","learn_more":"Learn more",
       "faq_title":"FAQ — short","how_time":"How deadlines are counted?","how_time_sub":"From receipt of materials and prepayment.","how_pay":"Payment?","how_pay_sub":"50% up front, 50% on delivery.","tech":"Technologies?","tech_sub":"Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.","security_q":"Security?","security_q_sub":"Basic hardening included; deep audit is separate.",
       "contact_title":"Contact — Telegram","contact_note":"Buttons copy the handle and open Telegram. Email is hidden — contact via Telegram.",
-      "label_tg":"Telegram","copy_tg":"Copy handle","open_tg":"Open Telegram","order":"Order","details":"Details","footer":"© Techlyne — Manual development","security_addon":"Also available: <strong>Security add-on</strong>"
+      "label_tg":"Telegram","copy_tg":"Copy handle","open_tg":"Open Telegram","order":"Order","details":"Details","footer":"© Techlyne — Manual development","security_addon":"Also available: <strong>Security add-on</strong>",
+      /* popover translations */
+      "order_pop_title":"Choose contact method",
+      "order_pop_desc":"How would you like to place the order?",
+      "order_pop_btn_tg":"Write in Telegram",
+      "order_pop_btn_form":"Open form",
+      "order_pop_note":"Message will be copied to clipboard for convenience."
     },
     "ru": {
       "brand_name":"Techlyne",
@@ -482,7 +485,13 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
       "smart":"Смарт-контракты и аудит","smart_sub":"Разработка и аудит — цены по запросу","learn_more":"Узнать подробнее",
       "faq_title":"FAQ — коротко","how_time":"Как считаются сроки?","how_time_sub":"Считается от получения материалов и предоплаты.","how_pay":"Оплата?","how_pay_sub":"50% аванс, 50% при сдаче.","tech":"Технологии?","tech_sub":"Ручной HTML/CSS/JS, фреймворки по запросу. Web3 через ethers.js.","security_q":"Безопасность?","security_q_sub":"Базовое усиление включено; глубокий аудит отдельно.",
       "contact_title":"Контакт — Telegram","contact_note":"Кнопки копируют хэндл и открывают Telegram. Почта скрыта — связаться через Telegram.",
-      "label_tg":"Telegram","copy_tg":"Копировать","open_tg":"Открыть Telegram","order":"Заказать","details":"Подробнее","footer":"© Techlyne — Ручная разработка","security_addon":"Также доступно: <strong>Доп. пакет безопасности</strong>"
+      "label_tg":"Telegram","copy_tg":"Копировать","open_tg":"Открыть Telegram","order":"Заказать","details":"Подробнее","footer":"© Techlyne — Ручная разработка","security_addon":"Также доступно: <strong>Доп. пакет безопасности</strong>",
+      /* popover translations */
+      "order_pop_title":"Выберите способ связи",
+      "order_pop_desc":"Как вы хотите оформить заказ?",
+      "order_pop_btn_tg":"Написать в Telegram",
+      "order_pop_btn_form":"На форму",
+      "order_pop_note":"Сообщение автоматически копируется в буфер."
     },
     "hy": {
       "brand_name":"Techlyne",
@@ -501,12 +510,18 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
       "website":"Կայք (Ստանդարտ)","term_standard":"Վաղաժամկետը՝ 4 օր","li_w1":"Մինչև 5 էջ (Գլխավոր, Ծառայություններ, Կեյսեր, Կապեր)","li_w2":"Ֆորմաներ → Telegram/CRM","li_w3":"SEO, պատասխանատու, 2 փուլ վերանայում",
       "premium":"Պրեմիում կայք","term_premium":"Վաղաժամկետը՝ 7 օր","li_p1":"Մինչև 10 էջ, bespoke դիզայն, հանգիստ անիմացիաներ","li_p2":"Անվտանգության փաթեթ","li_p3":"CMS խնդրանքով, SEO, 3 փուլի, 14 օր աջակցություն",
       "web3":"Web3 կայք (Frontend + Ինտեգրում)","term_web3":"Վաղաժամկետը՝ 7 օր","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Ամփոփում՝ wallet-ով, token-ի հաշվարկ","li_web33":"UI համար contract interaction (read/write)",
-      "ecom":"Էլեկտրոնային խանութ","term_ecom":"Վաղաժամկետը՝ 7–10 օր (կախված կատালոգից)","li_e1":"Ամբողջական խանութ (ապրանքներ, կատեգորիաներ, զամբյուղ)","li_e2":"Payment gateway ինտեգրում (Stripe / քարտեր)","li_e3":"Ադմին պանել՝ ապրանք, պատվերներ, հիմնական ինվենտար","li_e4":"Անալիտիկա, SEO, դեպլոյ, 7 օր աջակցության",
+      "ecom":"Էլեկտրոնային խանութ","term_ecom":"Վաղաժամկետը՝ 7–10 օր (կախված կատալոգից)","li_e1":"Ամբողջական խանութ (ապրանքներ, կատեգորիաներ, զամբյուղ)","li_e2":"Payment gateway ինտեգրում (Stripe / քարտեր)","li_e3":"Ադմին պանել՝ ապրանք, պատվերներ, հիմնական ինվենտար","li_e4":"Անալիտիկա, SEO, դեպլոյ, 7 օր աջակցության",
       "security":"Անվտանգության փաթեթ","included":"Ընդգրկված է պրեմիումում։","term_security":"Խորքային ախտորոշում և ամրացում","li_s1":"Ավտոմատ սկանավորում + ձեռքի ստուգում","li_s2":"Cloudflare / WAF կարգավորում, rate-limit","li_s3":"CSP, անվտանգության հեդերներ, մուտքային վալիդացիա","li_s4":"Pen-test սցենարներ և վերականգման պլան",
       "smart":"Սմարթ կոնտրակտներ և աուդիտ","smart_sub":"Ծրագրում և աուդիտ — գները ըստ հարցման","learn_more":"Իմանալ ավելին",
       "faq_title":"ՀՏՀ — կարճ","how_time":"Ինչպես հաշվարկվում են ժամկետները?","how_time_sub":"Հաշվում է նյութերի ստացումից և նախնական վճարից։","how_pay":"Վճարում?","how_pay_sub":"50% նախապես, 50% առաքման պահին։","tech":"Տեխնոլոգիաներ?","tech_sub":"Ձեռնարկ HTML/CSS/JS, framework-ներ ըստ հարցի. Web3՝ через ethers.js.","security_q":"Անվտանգություն?","security_q_sub":"Հիմնական ամրացումը ներառված է; խորքային աուդիտը առանձին է։",
       "contact_title":"Կապ — Telegram","contact_note":"Կոճակները պատճենում են հենդլը և բացում Telegram։ Էլ.փոստը թաքնված է — կապվեք Telegram-ով։",
-      "label_tg":"Telegram","copy_tg":"Պատճենել","open_tg":"Բացել Telegram","order":" Պատվիրել","details":"Մանրամասներ","footer":"© Techlyne — Ձեռքով մշակված","security_addon":"Հավելյալ հասանելի է: <strong>Անվտանգության Լրացում</strong>"
+      "label_tg":"Telegram","copy_tg":"Պատճենել","open_tg":"Բացել Telegram","order":" Պատվիրել","details":"Մանրամասներ","footer":"© Techlyne — Ձեռքով մշակված","security_addon":"Հավելյալ հասանելի է: <strong>Անվտանգության Լրացում</strong>",
+      /* popover translations */
+      "order_pop_title":"Ընտրեք կապի եղանակը",
+      "order_pop_desc":"Ինչպես ցանկանում եք պատվիրել?",
+      "order_pop_btn_tg":"Написать в Telegram", /* kept RU text if needed */
+      "order_pop_btn_form":"Բեռնել ձևը",
+      "order_pop_note":"Հաղորդագրությունը ավտոմատ պատճենվում է չանհատականության համար."
     }
   };
 
@@ -558,7 +573,200 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,2
     else if(userLang.startsWith('hy')) apply('hy');
     else apply('en');
   }
+
+  // expose translations for other scripts (popover) in minimal way
+  try { window.siteTranslations = translations; } catch(e) { /* ignore */ }
+
 })();
   </script>
+
+<style>
+/* Popover styles */
+.order-popover {
+  position: absolute;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 320px;
+  background: linear-gradient(180deg, rgba(2,6,23,0.98), rgba(4,18,34,0.95));
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+  padding: 12px;
+  border-radius: 10px;
+  color: #e6eef6;
+  font-size: 14px;
+  backdrop-filter: blur(6px);
+}
+.order-popover .title { font-weight:700; margin-bottom:8px; }
+.order-popover .row { display:flex; gap:8px; margin-top:8px; }
+.order-popover .btn-pop {
+  flex:1;
+  padding:8px 10px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-weight:700;
+}
+.btn-pop-tg { background: linear-gradient(90deg,var(--accent1,var(--accent1, #4dd0e1)),var(--accent2,var(--accent2, #7dd3fc))); color:#02222b; }
+.btn-pop-form { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted,#9aa4b2); }
+.order-popover .note { font-size:12px; color: rgba(255,255,255,0.6); margin-top:8px; }
+</style>
+
+<script>
+(function(){
+  const JOTFORM = 'https://form.jotform.com/252745154703052';
+  const TG_HANDLE = '@Off_David77';
+  const TG_LINK = 'https://t.me/Off_David77';
+
+  // Create popover element once (content will be rendered dynamically)
+  const pop = document.createElement('div');
+  pop.className = 'order-popover';
+  pop.style.display = 'none';
+  document.body.appendChild(pop);
+
+  // render popover content according to language
+  function getCurrentSiteLang(){
+    try{
+      const s = localStorage.getItem('site_lang');
+      if(s) return s;
+    }catch(e){}
+    const userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    if(userLang.startsWith('ru') || userLang.startsWith('uk')) return 'ru';
+    if(userLang.startsWith('hy')) return 'hy';
+    return 'en';
+  }
+
+  function renderPopover(lang){
+    const t = (window.siteTranslations && window.siteTranslations[lang]) ? window.siteTranslations[lang] : (window.siteTranslations && window.siteTranslations['en']) ? window.siteTranslations['en'] : {
+      order_pop_title: 'Choose contact method',
+      order_pop_desc: 'How would you like to place the order?',
+      order_pop_btn_tg: 'Write in Telegram',
+      order_pop_btn_form: 'Open form',
+      order_pop_note: 'Message will be copied to clipboard for convenience.'
+    };
+    // safe escaping is not necessary for these small strings, but we use textContent where possible
+    pop.innerHTML = `
+      <div class="title">${t.order_pop_title || 'Choose contact method'}</div>
+      <div class="desc">${t.order_pop_desc || 'How would you like to place the order?'}</div>
+      <div class="row">
+        <button class="btn-pop btn-pop-tg" type="button">${t.order_pop_btn_tg || 'Write in Telegram'}</button>
+        <button class="btn-pop btn-pop-form" type="button">${t.order_pop_btn_form || 'Open form'}</button>
+      </div>
+      <div class="note">${t.order_pop_note || 'Message will be copied to clipboard for convenience.'}</div>
+    `;
+  }
+
+  // Close popover when clicking outside
+  function hidePop() {
+    pop.style.display = 'none';
+    currentTarget = null;
+  }
+  document.addEventListener('click', (e)=>{
+    if(pop.style.display === 'none') return;
+    if(!pop.contains(e.target) && !e.target.closest('[data-package]') && e.target.id !== 'btn-order-landing'){
+      hidePop();
+    }
+  }, {capture:true});
+
+  // keyboard Escape closes
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') hidePop(); });
+
+  // Prepare message for clipboard (uses package & price if available)
+  function buildMessage(pkg, price){
+    let priceText = price ? (' — $' + price) : '';
+    return `Order: ${pkg}${priceText}\nContact: ${TG_HANDLE}\nSource: ${location.href}`;
+  }
+
+  // Actions (delegated because buttons are rerendered)
+  pop.addEventListener('click', async (e)=>{
+    const target = e.target;
+    if(target.classList.contains('btn-pop-tg')){
+      if(!currentTarget) return;
+      const pkg = currentTarget.dataset.package || 'Custom';
+      const price = currentTarget.dataset.price || '';
+      const msg = buildMessage(pkg, price);
+      try {
+        await navigator.clipboard.writeText(msg);
+      } catch(e){}
+      window.open(TG_LINK, '_blank');
+      hidePop();
+    } else if(target.classList.contains('btn-pop-form')){
+      window.open(JOTFORM, '_blank');
+      hidePop();
+    }
+  });
+
+  // Positioning helper
+  function showPopoverFor(target){
+    // render in current language
+    const lang = getCurrentSiteLang();
+    renderPopover(lang);
+
+    const rect = target.getBoundingClientRect();
+    // measure after render to get offsetWidth
+    pop.style.left = '-9999px';
+    pop.style.top = '-9999px';
+    pop.style.display = 'block';
+    // small positioning guard
+    requestAnimationFrame(()=>{
+      const pageX = rect.left + window.scrollX;
+      const pageY = rect.bottom + window.scrollY + 10; // 10px gap
+      const left = Math.min(pageX, window.scrollX + window.innerWidth - pop.offsetWidth - 12);
+      pop.style.left = left + 'px';
+      pop.style.top = pageY + 'px';
+    });
+  }
+
+  // Track which button invoked the popover
+  let currentTarget = null;
+
+  // Attach to all [data-package] buttons and the primary landing order button if present
+  function wireButtons(){
+    // buttons that already have data-package
+    document.querySelectorAll('[data-package]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        e.preventDefault();
+        currentTarget = btn;
+        pop.style.display='block';
+        pop.style.left='-9999px';
+        pop.style.top='-9999px';
+        requestAnimationFrame(()=> showPopoverFor(btn));
+      });
+    });
+
+    const landing = document.getElementById('btn-order-landing');
+    if(landing){
+      landing.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        e.preventDefault();
+        // create a synthetic data attributes so popover can build message
+        landing.dataset.package = landing.dataset.package || 'Landing';
+        landing.dataset.price = landing.dataset.price || '55';
+        currentTarget = landing;
+        pop.style.display='block';
+        pop.style.left='-9999px';
+        pop.style.top='-9999px';
+        requestAnimationFrame(()=> showPopoverFor(landing));
+      });
+    }
+  }
+
+  // init
+  wireButtons();
+
+  // optional: update popover content when language changes via the visible language buttons
+  // we detect clicks on language buttons and update localStorage (apply already does that) — no extra required.
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      // if pop is visible, re-render to new language
+      if(pop.style.display === 'block'){
+        renderPopover(getCurrentSiteLang());
+      }
+    });
+  });
+
+})();
+</script>
+
 </body>
 </html>
