@@ -88,7 +88,7 @@ a.button-link:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(45,11
 input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
 .close-btn{background:#fff;color:#041021;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
 .scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;min-height:80px}
-.codeglyph{position:absolute;left=0;top:0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
+.codeglyph{position:absolute;left=0;top=0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
 .btn-hover-burst{position:relative;overflow:visible}
 
 @media(max-width:900px){
@@ -182,6 +182,31 @@ a{
       </div>
     </section>
 
+    <section aria-labelledby="advantages" class="advantages-simple" style="margin-top:18px">
+      <h2 id="advantages" data-i18n="advantages_title">Our advantages</h2>
+      <p class="small" data-i18n="advantages_sub">Why clients choose us</p>
+
+      <div class="adv-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:12px;align-items:start">
+        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
+          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">⚡</div>
+          <h3 data-i18n="adv_heading1">Build High-Performance Websites That Convert</h3>
+          <p class="small" data-i18n="adv_text1">From responsive websites to Web3 features and security hardening — we deliver clean code, real integration, and peace of mind.</p>
+        </div>
+
+        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
+          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">🎯</div>
+          <h3 data-i18n="adv_heading2">Transform Clicks into Clients</h3>
+          <p class="small" data-i18n="adv_text2">We design and develop high-converting landing pages that capture attention, drive engagement, and maximize ROI for your campaigns.</p>
+        </div>
+
+        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
+          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">🔧</div>
+          <h3 data-i18n="adv_heading3">Your One-Stop Partner for Website Development</h3>
+          <p class="small" data-i18n="adv_text3">From strategy and wireframing to launch and optimization, we handle every step of building your online presence — tailored for your goals.</p>
+        </div>
+      </div>
+    </section>
+
     <section aria-labelledby="packages" style="margin-top:18px">
       <h2 id="packages" style="margin:8px 0 6px" data-i18n="packages">Packages</h2>
       <div class="grid" id="packages-grid">
@@ -205,7 +230,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Landing" data-price="55" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -226,7 +251,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Standard" data-price="160" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -247,7 +272,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Premium" data-price="225" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -268,7 +293,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Web3" data-price="300" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -290,7 +315,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Ecommerce" data-price="450" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -308,7 +333,7 @@ a{
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-hover-burst" data-package="Security" data-price="included" data-i18n="order">Order</button>
-            <button class="btn-ghost" data-i18n="details">Details</button>
+            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
           </div>
         </article>
 
@@ -412,12 +437,12 @@ a{
 (function(){
   const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
   if(copyBtn) copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
-  if(openBtn) openBtn.addEventListener('click', ()=> window.open('https://t.me/Off_David77','_blank'));
+  if(openBtn) openBtn.addEventListener('click', ()=> window.open('https://t.me/Techlynn','_blank'));
 
   function handleOrderClick(pkg, price){
     const priceText = price ? (' — $' + price) : '';
-    const msg = `Order: ${pkg}${priceText}\nContact: @Off_David77\nSource: ${location.href}`;
-    navigator.clipboard.writeText(msg).then(()=>{ contactStatus.textContent = 'Message copied to clipboard — opening Telegram...'; window.open('https://t.me/Off_David77','_blank'); }).catch(()=>{ contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.'; window.open('https://t.me/Off_David77','_blank'); });
+    const msg = `Order: ${pkg}${priceText}\nContact: @Techlynn\nSource: ${location.href}`;
+    navigator.clipboard.writeText(msg).then(()=>{ contactStatus.textContent = 'Message copied to clipboard — opening Telegram...'; window.open('https://t.me/Techlynn','_blank'); }).catch(()=>{ contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.'; window.open('https://t.me/Techlynn','_blank'); });
   }
 
   document.querySelectorAll('[data-package]').forEach(btn=>{
@@ -443,8 +468,18 @@ a{
       "hero_title":"Professional websites and Web3 integrations",
       "hero_lead":"Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.",
       "feat1":"Clean code","feat2":"Responsive","feat3":"Security","feat4":"Support",
-      "contact_channel":"Primary contact — Telegram @Off_David77",
+      "contact_channel":"Primary contact — Telegram @Techlynn",
       "packages":"Packages",
+      "advantages_title":"Our advantages",
+      "advantages_sub":"Why clients choose us",
+      "adv_tab1":"Performance","adv_tab2":"Conversions","adv_tab3":"Full-service",
+      "adv_heading1":"Build High-Performance Websites That Convert",
+      "adv_text1":"From responsive websites to Web3 features and security hardening — we deliver clean code, real integration, and peace of mind.",
+      "adv_heading2":"Transform Clicks into Clients",
+      "adv_text2":"We design and develop high-converting landing pages that capture attention, drive engagement, and maximize ROI for your campaigns.",
+      "adv_heading3":"Your One-Stop Partner for Website Development",
+      "adv_text3":"From strategy and wireframing to launch and optimization, we handle every step of building your online presence — tailored for your goals.",
+      "adv_button":"Get Started Today",
       "landing":"Landing Website","term_landing":"Term: 2 days",
       "li_l1":"Single-page responsive landing","li_l2":"Header, CTA, benefits, FAQ, contact via Telegram","li_l3":"Webhook → Telegram","li_l4":"Analytics, optimisation, SSL, deploy","li_l5":"1 round of revisions, source delivery",
       "website":"Website (Standard)","term_standard":"Term: 4 days","li_w1":"Up to 5 pages (Home, Services, Cases, Contacts)","li_w2":"Forms → Telegram/CRM","li_w3":"SEO, responsive, 2 rounds of revisions",
@@ -473,8 +508,18 @@ a{
       "hero_title":"Профессиональные сайты и Web3-интеграции",
       "hero_lead":"Ручной frontend, Web3-интеграции и аудиты безопасности. Формальный, надёжный дизайн — под клиента.",
       "feat1":"Чистый код","feat2":"Адаптивность","feat3":"Безопасность","feat4":"Поддержка",
-      "contact_channel":"Основной контакт — Telegram @Off_David77",
+      "contact_channel":"Основной контакт — Telegram @Techlynn",
       "packages":"Пакеты",
+      "advantages_title":"Наши преимущества",
+      "advantages_sub":"Почему клиенты выбирают нас",
+      "adv_tab1":"Производительность","adv_tab2":"Конверсии","adv_tab3":"Полный сервис",
+      "adv_heading1":"Создаём быстрые сайты, которые конвертируют",
+      "adv_text1":"От адаптивных сайтов до Web3‑функций и усиления безопасности — мы делаем чистый код, настоящие интеграции и спокойствие для вас.",
+      "adv_heading2":"Превращаем клики в клиентов",
+      "adv_text2":"Мы проектируем и разрабатываем лендинги с высокой конверсией, которые привлекают внимание, повышают вовлечённость и максимизируют ROI кампаний.",
+      "adv_heading3":"Ваш универсальный партнёр по разработке сайтов",
+      "adv_text3":"От стратегии и прототипов до запуска и оптимизации — мы делаем каждый шаг для вашей онлайн‑презентации, под ваши цели.",
+      "adv_button":"Начать сейчас",
       "landing":"Лендинг (Landing)","term_landing":"Срок: 2 дня",
       "li_l1":"Одностраничный адаптивный лендинг","li_l2":"Хедер, CTA, преимущества, FAQ, связь через Telegram","li_l3":"Webhook → Telegram","li_l4":"Аналитика, оптимизация, SSL, деплой","li_l5":"1 раунд правок, передача исходников",
       "website":"Веб-сайт (Стандарт)","term_standard":"Срок: 4 дня","li_w1":"До 5 страниц (Главная, Услуги, Кейсы, Контакты)","li_w2":"Формы → Telegram/CRM","li_w3":"SEO, адаптив, 2 раунда правок",
@@ -504,10 +549,20 @@ a{
       "hero_lead":"Ձեռքով frontend, Web3 ինտեգրացիաներ և անվտանգության աուդիտներ։ Հստակ, հուսալի դիզայն՝ հաճախորդի համար։",
       "feat1":"Մաքուր կոդ","feat2":"Պատասխանատու","feat3":"Անվտանգություն","feat4":"Ուղորդում",
       "packages":"Փաթեթներ",
+      "advantages_title":"Մեր առավելությունները",
+      "advantages_sub":"Ո՞րն են պատճառները որ հաճախորդները ընտրում են մեզ",
+      "adv_tab1":"Արդյունք","adv_tab2":"Կոնվերսիաներ","adv_tab3":"Ամբողջական ծառայություն",
+      "adv_heading1":"Սահմանենք արագ, հզոր կայքեր, որոնք համալիրով կոնվերտ են",
+      "adv_text1":"Անդադրող կայքերից մինչև Web3 ֆունկցիաներ և անվտանգության ամրացում — մենք ապահովում ենք մաքուր կոդ, իրական ինտեգրացիաներ և մտքի հանգստություն։",
+      "adv_heading2":"Անցումները՝ հաճախորդների մեջ",
+      "adv_text2":"Մենք նախագծում և մշակում ենք բարձր կոնվերտացվող լենդինգներ, որոնք գրավում են ուշադրությունը, բարձրացնում ներգրավվածությունը և մեծացնում ROI-ն։",
+      "adv_heading3":"Ձեր մեկ կանգառային գործընկերը կայքերի զարգացման համար",
+      "adv_text3":"Ստրատեգիայից և հսկողությունից մինչև գործարկում և օպտիմիզացում՝ մենք զբաղվում ենք յուրաքանչյուր քայլով՝ ըստ ձեր նպատակների։",
+      "adv_button":"Սկսել հիմա",
       "landing":"Landing կայք","term_landing":"Վաղաժամկետը՝ 2 օր",
       "li_l1":"Միանվագ պատասխանատու ленդինգ","li_l2":"Ղեկավար, CTA, առավելություններ, FAQ, կապ Telegram-ով","li_l3":"Webhook → Telegram","li_l4":"Անալիտիկա, օպտիմիզացիա, SSL, դեպլոյ","li_l5":"1 փուլի վերանայում, աղբյուրների փոխանցում",
       "website":"Կայք (Ստանդարտ)","term_standard":"Վաղաժամկետը՝ 4 օր","li_w1":"Մինչև 5 էջ (Գլխավոր, Ծառայություններ, Կեյսեր, Կապեր)","li_w2":"Ֆորմաներ → Telegram/CRM","li_w3":"SEO, պատասխանատու, 2 փուլ վերանայում",
-      "premium":"Պրեմիում կայք","term_premium":"Վաղաժամկետը՝ 7 օր","li_p1":"Մինչև 10 էջ, bespoke դիզայն, հանգիստ անիմացիաներ","li_p2":"Անվտանգության փաթեթ","li_p3":"CMS խնդրանքով, SEO, 3 փուլի, 14 օր աջակցություն",
+      "premium":"Պրեմիում կայք","term_premium":"Վաղաժամկետը՝ 7 օր","li_p1":"Մինչև 10 էջ, bespoke դիզայն, հանգիստ անիմացիաներ","li_p2":"Անվտանգության փաթեթ","li_p3":"CMS խնդրանքով, SEO, 3 փուլի, 14 օր աջակցության",
       "web3":"Web3 կայք (Frontend + Ինտեգրում)","term_web3":"Վաղաժամկետը՝ 7 օր","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Ամփոփում՝ wallet-ով, token-ի հաշվարկ","li_web33":"UI համար contract interaction (read/write)",
       "ecom":"Էլեկտրոնային խանութ","term_ecom":"Վաղաժամկետը՝ 7–10 օր (կախված կատալոգից)","li_e1":"Ամբողջական խանութ (ապրանքներ, կատեգորիաներ, զամբյուղ)","li_e2":"Payment gateway ինտեգրում (Stripe / քարտեր)","li_e3":"Ադմին պանել՝ ապրանք, պատվերներ, հիմնական ինվենտար","li_e4":"Անալիտիկա, SEO, դեպլոյ, 7 օր աջակցության",
       "security":"Անվտանգության փաթեթ","included":"Ընդգրկված է պրեմիումում։","term_security":"Խորքային ախտորոշում և ամրացում","li_s1":"Ավտոմատ սկանավորում + ձեռքի ստուգում","li_s2":"Cloudflare / WAF կարգավորում, rate-limit","li_s3":"CSP, անվտանգության հեդերներ, մուտքային վալիդացիա","li_s4":"Pen-test սցենարներ և վերականգման պլան",
@@ -539,8 +594,8 @@ a{
       } else {
         for(const node of el.childNodes){
           if(node.nodeType === Node.TEXT_NODE){
-            if(node.textContent.trim().length>0){
-              node.textContent = ' ' + txt;
+            if(node.nodeContent && node.nodeContent.trim().length>0){
+              node.nodeContent = ' ' + txt;
               break;
             }
           }
@@ -609,8 +664,8 @@ a{
 <script>
 (function(){
   const JOTFORM = 'https://form.jotform.com/252745154703052';
-  const TG_HANDLE = '@Off_David77';
-  const TG_LINK = 'https://t.me/Off_David77';
+  const TG_HANDLE = '@Techlynn';
+  const TG_LINK = 'https://t.me/Techlynn';
 
   const pop = document.createElement('div');
   pop.className = 'order-popover';
