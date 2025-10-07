@@ -318,5 +318,44 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
   else apply('en');
 })();
 </script>
+
+<script>
+(function(){
+  // Убирает index.html из текущего URL без перезагрузки
+  try{
+    if (location.pathname.endsWith('index.html')) {
+      const newPath = location.pathname.replace(/index\.html$/, '') || '/';
+      history.replaceState(null, document.title, newPath + location.search + location.hash);
+    }
+  }catch(e){ }
+
+
+  function normalizeLinks(){
+    document.querySelectorAll('a[href]').forEach(a=>{
+      try{
+        const href = a.getAttribute('href');
+       
+        if(!href) return;
+      
+        const m = href.match(/(^.*index\.html)([#?].*)?$/);
+        if(m){
+          const base = m[1].replace(/index\.html$/, '');
+          const suffix = m[2] || '';
+     
+          a.setAttribute('href', (base === '' ? '/' : base) + suffix);
+        }
+      }catch(e){}
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', normalizeLinks);
+  } else {
+    normalizeLinks();
+  }
+})();
+</script>
+
+  
 </body>
 </html>
