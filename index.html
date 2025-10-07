@@ -803,6 +803,12 @@ a{
 })();
 </script>
 
+<script>
+if (location.pathname.endsWith('index.html')) {
+  const base = location.pathname.slice(0, -'index.html'.length) || '/';
+  location.replace(base + location.search + location.hash);
+}
+</script>
 
 
 
