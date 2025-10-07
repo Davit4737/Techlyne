@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Services — Techlyn</title>
+<title>Services — Techlyne</title>
 <style>
 :root{
   --bg:#061226;
@@ -99,14 +99,9 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
   nav{gap:8px;flex-wrap:wrap}
 }
 </style>
-
-<link rel="icon" type="image/png" href="/img/photo_2025-10-01_20-26-04-Photoroom.png">
-<link rel="apple-touch-icon" href="/img/photo_2025-10-01_20-26-04-Photoroom.png">
-
 </head>
 <body>
 <div class="container">
-  
   <header>
     <div class="brand" aria-label="Techlyne">
       <div class="logo logo-neon" aria-hidden="true" title="Techlyne">
@@ -137,7 +132,7 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
 
     <section class="card" style="margin-top:12px">
       <div class="title-row">
-        <h3 data-i18n="landing">Landing</h3>
+        <h3 data-i18n="landing">Lending Website (Landing)</h3>
         <div class="price" aria-hidden="true">
           <span class="orig">$79</span>
           <span class="price-value">$55</span>
@@ -210,18 +205,18 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
     </section>
   </main>
 
-  <footer style="margin-top:18px" class="small" data-i18n="footer">© Techlyn</footer>
+  <footer style="margin-top:18px" class="small" data-i18n="footer">© Techlyne</footer>
 </div>
 
 <script>
 (function(){
   const translations = {
     "en": {
-      "brand_name":"Techlyn",
+      "brand_name":"Techlyne",
       "brand_sub":"Manual development • Integrations • Security",
       "nav_home":"Home",
       "page_title":"Services",
-      "landing":"Landing Website",
+      "landing":"Lending Website (Landing)",
       "land_desc":"Single-page responsive landing, Telegram-based contact, analytics, optimisation, SSL, deploy, 1 revision.",
       "website":"Website (Standard)",
       "web_desc":"Up to 5 pages, forms to Telegram/CRM, SEO, responsive, 2 revisions.",
@@ -235,10 +230,10 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
       "smart_desc":"Development and audit available — pricing upon request.",
       "security_addon_title":"Security Add-on",
       "security_addon_desc":"Standalone add-on: deep diagnostics, WAF/Cloudflare setup, CSP, headers, pen-test scenarios. Price: $49.",
-      "footer":"© Techlyn"
+      "footer":"© Techlyne"
     },
     "ru": {
-      "brand_name":"Techlyn",
+      "brand_name":"Techlyne",
       "brand_sub":"Ручная разработка • Интеграции • Безопасность",
       "nav_home":"Главная",
       "page_title":"Услуги",
@@ -256,10 +251,10 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
       "smart_desc":"Разработка и аудит — цены по запросу.",
       "security_addon_title":"Доп. пакет безопасности",
       "security_addon_desc":"Глубокая диагностика, настройка WAF/Cloudflare, CSP, заголовки безопасности, сценарии pentest. Цена: $49.",
-      "footer":"© Techlyn"
+      "footer":"© Techlyne"
     },
     "hy": {
-      "brand_name":"Techlyn",
+      "brand_name":"Techlyne",
       "brand_sub":"Ձեռքով մշակում • Ինտեգրացիաներ • Անվտանգություն",
       "nav_home":"Գլխավոր",
       "page_title":"Ծառայություններ",
@@ -277,7 +272,7 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
       "smart_desc":"Ծրագրում և աուդիտ — գները՝ ըստ հարցման.",
       "security_addon_title":"Անվտանգության Լրացում",
       "security_addon_desc":"Խորաֆիկ ախտորոշում, WAF/Cloudflare կարգավորում, CSP և անվտանգության հեդերներ։ Գին՝ $49.",
-      "footer":"© Techlyn"
+      "footer":"© Techlyne"
     }
   };
 
@@ -318,44 +313,5 @@ ul{margin:10px 0 0;padding-left:18px;color:var(--muted);line-height:1.5}
   else apply('en');
 })();
 </script>
-
-<script>
-(function(){
-  // Убирает index.html из текущего URL без перезагрузки
-  try{
-    if (location.pathname.endsWith('index.html')) {
-      const newPath = location.pathname.replace(/index\.html$/, '') || '/';
-      history.replaceState(null, document.title, newPath + location.search + location.hash);
-    }
-  }catch(e){ }
-
-
-  function normalizeLinks(){
-    document.querySelectorAll('a[href]').forEach(a=>{
-      try{
-        const href = a.getAttribute('href');
-       
-        if(!href) return;
-      
-        const m = href.match(/(^.*index\.html)([#?].*)?$/);
-        if(m){
-          const base = m[1].replace(/index\.html$/, '');
-          const suffix = m[2] || '';
-     
-          a.setAttribute('href', (base === '' ? '/' : base) + suffix);
-        }
-      }catch(e){}
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', normalizeLinks);
-  } else {
-    normalizeLinks();
-  }
-})();
-</script>
-
-  
 </body>
 </html>
