@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>
+if (location.pathname.endsWith('index.html')) {
+  const base = location.pathname.slice(0, -'index.html'.length) || '/';
+  location.replace(base + location.search + location.hash);
+}
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Services — Techlyn</title>
