@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Market Sandbox — Smooth Candles</title>
+  <title>Market Sandbox — Pro (Pan/Zoom + Tools)</title>
   <style>
     :root{
       --bg:#0b0f14;
@@ -115,7 +115,7 @@
       background: rgba(159,176,195,.12);
       color:#e7eef7;
       border:1px solid rgba(159,176,195,.35);
-      transition: transform .06s ease;
+      transition: transform .06s ease, opacity .15s ease;
     }
     .btn:active{transform: translateY(1px);}
     .btn.good{background: rgba(61,220,151,.16); color: #bdf8de; border:1px solid rgba(61,220,151,.45);}
@@ -123,6 +123,7 @@
     .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
     .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
     .btn.small{padding:8px 10px; border-radius:10px; font-size:12px; font-weight:800;}
+    .btn.tiny{padding:7px 9px; border-radius:10px; font-size:12px; font-weight:800;}
 
     .row{display:flex; gap:10px; align-items:center;}
     .row.wrap{flex-wrap:wrap;}
@@ -159,7 +160,19 @@
       font-size:12px;
     }
     .miniField input{width:90px; padding:8px 8px; border-radius:10px; font-size:12px;}
-    .miniField select{width:120px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .miniField select{width:140px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      color: var(--muted);
+      font-size:12px;
+      user-select:none;
+      cursor:pointer;
+    }
+    .toggle input{width:auto; transform: translateY(1px);}
 
     .chartWrap{height: 520px; padding: 10px 12px 12px;}
     canvas{
@@ -169,6 +182,8 @@
       border-radius:12px;
       border:1px solid rgba(34,48,68,.7);
       background: rgba(5,8,12,.65);
+      cursor: crosshair;
+      touch-action: none;
     }
 
     table{width:100%; border-collapse:collapse; font-size:12px;}
@@ -232,13 +247,35 @@
       overflow:auto;
       padding-bottom: 16px;
     }
+    .toolRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .toolBtn{
+      padding:7px 10px;
+      border-radius:10px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      color: var(--muted);
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+    }
+    .toolBtn.active{
+      border-color: rgba(100,181,255,.75);
+      color: #d4ebff;
+      background: rgba(100,181,255,.10);
+    }
 
     @media (max-width: 1220px){
       main{grid-template-columns: 1fr;}
       .rightSticky,.leftSticky{position:static; height:auto;}
       .chartWrap{height:420px;}
       .miniField input{width:110px;}
-      .miniField select{width:140px;}
+      .miniField select{width:160px;}
     }
   </style>
 </head>
@@ -247,8 +284,8 @@
 <header>
   <div class="row">
     <div class="title">
-      <h1>Market Sandbox — Smooth Candles 🕹️</h1>
-      <div class="sub">Плавно (60 FPS) + симуляция микротиками + таймфреймы. Без TP/SL — только контроль.</div>
+      <h1>Market Sandbox — Pro 🕹️</h1>
+      <div class="sub">Пан/зум графика + инструменты (линии/боксы/зоны). Свечи плавно, без TP/SL.</div>
     </div>
 
     <div class="row wrap">
@@ -264,7 +301,7 @@
   <!-- LEFT -->
   <div class="leftSticky">
     <section class="card">
-      <h2>Лимитки и уровни <small>чистый control</small></h2>
+      <h2>Лимитки и уровни <small>control</small></h2>
       <div class="content grid">
 
         <div class="grid cols2">
@@ -334,12 +371,14 @@
           <button class="btn" id="flatten">🧯 Flatten (mkt)</button>
         </div>
 
-        <div class="hint"><span class="mono">Flatten</span> — просто “обнулить” позицию маркетом.</div>
+        <div class="hint">
+          Пан/зум — на графике. Если включён <b>Auto-follow</b>, он будет держать цену “в конце”.
+        </div>
       </div>
     </section>
 
     <section class="card" style="margin-top:14px">
-      <h2>Движок рынка <small>плавность и TF</small></h2>
+      <h2>Движок рынка <small>smooth + TF</small></h2>
       <div class="content grid">
         <div class="grid cols2">
           <label>Volatility (1–20)
@@ -379,7 +418,7 @@
             </select>
           </label>
           <label>Свечей на экране
-            <input id="maxBars" type="number" step="10" min="60" value="220" />
+            <input id="visibleBars" type="number" step="5" min="20" max="600" value="140" />
           </label>
         </div>
 
@@ -387,30 +426,43 @@
           <button class="btn neutral" id="pause">⏸️ Pause</button>
           <button class="btn neutral" id="reset">🔁 Reset</button>
         </div>
-
-        <div class="hint">
-          <b>Sim ticks/sec</b> — насколько плавно/быстро двигается цена. <br/>
-          <b>Таймфрейм</b> — сколько “тик-обновлений” собираем в одну свечу. ✅
-        </div>
       </div>
     </section>
   </div>
 
   <!-- CENTER -->
   <section class="card">
-    <h2>График (свечи) <small>market рядом</small></h2>
+    <h2>График (пан/зум + инструменты) <small>как терминал</small></h2>
 
     <div class="chartTopBar">
       <div class="left">
         <button class="btn good" id="buyMktTop">⬆️ Buy Market</button>
         <button class="btn bad" id="sellMktTop">⬇️ Sell Market</button>
-
         <div class="miniField">qty <input id="qtyTop" type="number" step="1" min="1" value="1" /></div>
         <div class="miniField">slip <input id="slipTop" type="number" step="1" min="0" value="1" /></div>
+
+        <div class="toggle" id="followWrap" title="Если включено — график держится на последней свече">
+          <input id="follow" type="checkbox" checked />
+          <span>Auto-follow</span>
+        </div>
       </div>
 
       <div class="right">
-        <div class="miniField mono">B=Buy S=Sell Space=Pause C=CancelAll F=Flatten</div>
+        <div class="miniField">
+          Tool
+          <select id="tool">
+            <option value="pan">Pan</option>
+            <option value="select">Select</option>
+            <option value="line">Line</option>
+            <option value="box">Box</option>
+            <option value="zone">Zone</option>
+            <option value="hline">HLine</option>
+            <option value="vline">VLine</option>
+          </select>
+        </div>
+        <button class="btn tiny" id="delShape">Delete</button>
+        <button class="btn tiny" id="clearShapes">Clear</button>
+        <div class="miniField mono" title="Колесо — зум. Drag — пан. Shift+drag — пан даже в инструментах.">Wheel=Zoom Drag=Pan</div>
       </div>
     </div>
 
@@ -425,7 +477,10 @@
         <div class="stat"><div class="k">Net Position</div><div class="v" id="stPos">0</div></div>
         <div class="stat"><div class="k">Avg Price</div><div class="v" id="stAvg">—</div></div>
         <div class="stat"><div class="k">Flow (recent)</div><div class="v" id="stFlow">0</div></div>
-        <div class="stat"><div class="k">Active Limits</div><div class="v" id="stLimits">0</div></div>
+        <div class="stat"><div class="k">Visible window</div><div class="v" id="stWin">—</div></div>
+      </div>
+      <div class="hint" style="margin-top:10px">
+        Подсказки: <b>Wheel</b> — зум; <b>Drag</b> — пан; если рисуешь и хочешь быстро панить — держи <b>Shift</b> и тащи.
       </div>
     </div>
   </section>
@@ -458,7 +513,7 @@
         <div class="log" id="log"></div>
         <div class="row wrap" style="margin-top:10px">
           <button class="btn small" id="clearLog">🧽 Clear log</button>
-          <span class="hint">Клик по ордеру — отмена.</span>
+          <span class="hint">Клик по ордеру — отмена. Select → Delete для фигур.</span>
         </div>
       </div>
     </section>
@@ -474,34 +529,49 @@
 
   const state = {
     symbol: "NQ (sim)",
-
     tickSize: 0.25,
     spreadTicks: 1,
     volatility: 8,
     liquidity: 10,
     impact: 8,
-
-    simHz: 60,          // сим-обновлений в секунду
+    simHz: 60,
     paused: false,
 
     price: 17000,
     velocity: 0,
     flow: 0,
-    flowDecay: 0.94,    // чуть медленнее, чтобы было “живее”
+    flowDecay: 0.94,
 
     pos: 0,
     avg: null,
 
-    // свечи
-    bars: [],               // {o,h,l,c}
-    maxBars: 220,
-    barTicks: 12,           // будет выставляться из TF
+    // bars (absolute index)
+    bars: [],               // {idx,o,h,l,c}
+    lastBarIdx: 0,
+    barTicks: 300,          // set by TF
     _barCounter: 0,
     _curBar: null,
 
-    // лимитки
+    // limits
     nextOrderId: 1,
     limits: [], // {id, side, price, qty, left, createdAt}
+
+    // view (pan/zoom)
+    visibleBars: 140,       // number of bars visible
+    rightOffset: 0,         // how many bars back from the end (0 = last)
+    follow: true,           // auto-follow
+
+    // drawing tools
+    shapes: [],             // {id,type,a:{idx,price},b:{idx,price}, ...}
+    nextShapeId: 1,
+    selectedShapeId: null,
+    activeTool: "pan",
+
+    // interaction
+    dragging: false,
+    dragMode: null,         // "pan" | "draw"
+    dragStart: null,
+    tempShape: null,
   };
 
   $("sym").textContent = state.symbol;
@@ -609,7 +679,6 @@
       const canFill = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
       if (!canFill) continue;
 
-      // partial fill
       const baseChunk = Math.max(1, Math.round(o.qty * (21 - liq) / 20));
       const chunk = Math.min(o.left, baseChunk);
 
@@ -621,32 +690,51 @@
     if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
   }
 
-  function updateCandlesWithPrice(p) {
+  function timeframeToBarTicks(tf, simHz) {
+    // barTicks = how many sim ticks per bar
+    if (tf === "1s") return Math.max(2, Math.round(1 * simHz));
+    if (tf === "5s") return Math.max(2, Math.round(5 * simHz));
+    if (tf === "15s") return Math.max(2, Math.round(15 * simHz));
+    if (tf === "1m") return Math.max(2, Math.round(60 * simHz));
+    if (tf === "5m") return Math.max(2, Math.round(300 * simHz));
+    return Math.max(2, Math.round(5 * simHz));
+  }
+
+  function ensureCurrentBar() {
     if (!state._curBar) {
-      state._curBar = { o:p, h:p, l:p, c:p };
+      state._curBar = { idx: state.lastBarIdx + 1, o: state.price, h: state.price, l: state.price, c: state.price };
       state._barCounter = 0;
-      return;
     }
+  }
+
+  function updateBarsWithPrice(p) {
+    ensureCurrentBar();
     state._curBar.h = Math.max(state._curBar.h, p);
     state._curBar.l = Math.min(state._curBar.l, p);
     state._curBar.c = p;
 
     state._barCounter++;
     if (state._barCounter >= state.barTicks) {
+      // close bar
+      state.lastBarIdx = state._curBar.idx;
       state.bars.push(state._curBar);
-      if (state.bars.length > state.maxBars) state.bars.shift();
-      state._curBar = { o:p, h:p, l:p, c:p };
+      // keep a lot, but not infinite
+      if (state.bars.length > 5000) state.bars.shift();
+
+      // start next
+      state._curBar = { idx: state.lastBarIdx + 1, o: p, h: p, l: p, c: p };
       state._barCounter = 0;
+
+      // if follow enabled, keep window at the end
+      if (state.follow) state.rightOffset = 0;
     }
   }
 
-  // ===== Smooth sim tick (small step)
+  // ===== Smooth simulation step
   function stepSimulationOnce() {
-    // decay flow
     state.flow *= state.flowDecay;
 
     const vol = clamp(state.volatility, 1, 20);
-    // gaussian-ish
     const r = (Math.random()+Math.random()+Math.random()+Math.random()-2);
     const noise = r * (vol * state.tickSize * 0.18);
 
@@ -654,25 +742,77 @@
     const liq = clamp(state.liquidity, 1, 20);
     const pressure = (state.flow) * (imp * state.tickSize * 0.045) * (1 / (liq * 0.40));
 
-    // smoother velocity
     state.velocity = (state.velocity * 0.92) + noise + pressure;
-
-    // smoother price update
     state.price = roundTo(state.price + state.velocity, state.tickSize);
 
-    updateCandlesWithPrice(state.price);
+    updateBarsWithPrice(state.price);
     matchLimits();
   }
 
-  // ===== Chart (candles)
+  // ===== Canvas + Pan/Zoom + Tools
   const canvas = $("chart");
   const ctx = canvas.getContext("2d");
 
-  function drawChart() {
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0,0,w,h);
+  function getAllBarsForRender() {
+    // include unfinished bar at end
+    const arr = state.bars.slice();
+    if (state._curBar) arr.push(state._curBar);
+    return arr;
+  }
 
-    // grid
+  function getWindowBars() {
+    const bars = getAllBarsForRender();
+    const n = bars.length;
+    if (n === 0) return {bars:[], startIdx:0, endIdx:0};
+
+    const vis = clamp(state.visibleBars, 20, 600);
+    const end = Math.max(0, n - 1 - state.rightOffset);
+    const start = Math.max(0, end - vis + 1);
+    return { bars: bars.slice(start, end + 1), startPos: start, endPos: end, total: n };
+  }
+
+  function computePriceRange(windowBars) {
+    let min = Infinity, max = -Infinity;
+    for (const b of windowBars) { min = Math.min(min, b.l); max = Math.max(max, b.h); }
+    for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
+
+    // include shapes in range so they don't disappear vertically (optional but nice)
+    for (const s of state.shapes) {
+      if (s.a?.price != null) { min = Math.min(min, s.a.price); max = Math.max(max, s.a.price); }
+      if (s.b?.price != null) { min = Math.min(min, s.b.price); max = Math.max(max, s.b.price); }
+    }
+
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
+      min = state.price - 50 * state.tickSize;
+      max = state.price + 50 * state.tickSize;
+    }
+    const pad = (max-min) * 0.12 + state.tickSize * 20;
+    return { min: min - pad, max: max + pad };
+  }
+
+  // coordinate transforms
+  function makeTransform(windowBars, startPos, endPos, pr, w, h) {
+    const n = windowBars.length;
+    const candleW = Math.max(3, Math.floor(w / (n + 10)));
+    const gap = Math.max(1, Math.floor(candleW * 0.35));
+    const step = candleW + gap;
+    const totalW = step * n;
+    const xStart = Math.max(6, Math.floor((w - totalW) / 2));
+
+    const yOf = (price) => h - ((price - pr.min) / (pr.max - pr.min)) * h;
+    const priceOfY = (y) => pr.min + (1 - y / h) * (pr.max - pr.min);
+
+    const xOfIndexInWindow = (i) => xStart + i * step + candleW/2;
+    const idxAtX = (x) => {
+      const rel = (x - xStart);
+      const i = Math.round(rel / step);
+      return clamp(i, 0, n-1);
+    };
+
+    return { candleW, gap, step, xStart, yOf, priceOfY, xOfIndexInWindow, idxAtX };
+  }
+
+  function drawGrid(w,h){
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgba(34,48,68,0.55)";
     for (let i=1;i<8;i++){
@@ -683,19 +823,11 @@
       const x = (w/12)*i;
       ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
     }
+  }
 
-    if (!state.bars || state.bars.length < 2) return;
-
-    let min = Infinity, max = -Infinity;
-    for (const b of state.bars) { min = Math.min(min, b.l); max = Math.max(max, b.h); }
-    // include current unfinished bar for nicer view
-    if (state._curBar) { min = Math.min(min, state._curBar.l); max = Math.max(max, state._curBar.h); }
-    for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
-
-    const pad = (max-min) * 0.12 + state.tickSize * 20;
-    min -= pad; max += pad;
-
-    const yOf = (p) => h - ((p - min) / (max - min)) * h;
+  function drawCandles(windowBars, tf, w,h){
+    const { candleW, gap, step, xStart, yOf } = tf;
+    const n = windowBars.length;
 
     // bid/ask band
     const {bid, ask} = getBidAsk();
@@ -703,19 +835,8 @@
     ctx.fillStyle = "rgba(159,176,195,0.08)";
     ctx.fillRect(0, Math.min(yBid,yAsk), w, Math.abs(yBid-yAsk));
 
-    // render bars + current bar (as last)
-    const bars = [...state.bars];
-    if (state._curBar) bars.push(state._curBar);
-
-    const n = bars.length;
-    const candleW = Math.max(3, Math.floor(w / (n + 10)));
-    const gap = Math.max(1, Math.floor(candleW * 0.35));
-    const step = candleW + gap;
-    const totalW = step * n;
-    const xStart = Math.max(6, Math.floor((w - totalW) / 2));
-
     for (let i=0; i<n; i++) {
-      const b = bars[i];
+      const b = windowBars[i];
       const x = xStart + i * step;
       const yO = yOf(b.o), yH = yOf(b.h), yL = yOf(b.l), yC = yOf(b.c);
       const up = b.c >= b.o;
@@ -737,8 +858,10 @@
       ctx.fillRect(x, bodyTop, candleW, bodyH);
       ctx.strokeRect(x, bodyTop, candleW, bodyH);
     }
+  }
 
-    // limits
+  function drawLimits(tf, w){
+    const { yOf } = tf;
     for (const o of state.limits) {
       const y = yOf(o.price);
       ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
@@ -749,21 +872,232 @@
       ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
       ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, 10, y - 6);
     }
+  }
 
-    // labels
+  function inWindowIdx(idx, winFirstIdx, winLastIdx) {
+    return idx >= winFirstIdx && idx <= winLastIdx;
+  }
+
+  function drawShapes(tf, windowBars){
+    const { yOf, xOfIndexInWindow } = tf;
+    if (!windowBars.length) return;
+
+    const winFirstIdx = windowBars[0].idx;
+    const winLastIdx  = windowBars[windowBars.length-1].idx;
+
+    function toX(idx){
+      const i = idx - winFirstIdx;
+      if (i < 0 || i >= windowBars.length) return null;
+      return xOfIndexInWindow(i);
+    }
+
+    for (const s of state.shapes) {
+      const selected = (s.id === state.selectedShapeId);
+      const aIn = s.a && inWindowIdx(s.a.idx, winFirstIdx, winLastIdx);
+      const bIn = s.b && inWindowIdx(s.b.idx, winFirstIdx, winLastIdx);
+
+      ctx.lineWidth = selected ? 2.5 : 2;
+
+      if (s.type === "hline" && s.a) {
+        const y = yOf(s.a.price);
+        ctx.strokeStyle = selected ? "rgba(100,181,255,0.95)" : "rgba(100,181,255,0.65)";
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+        continue;
+      }
+      if (s.type === "vline" && s.a && aIn) {
+        const x = toX(s.a.idx);
+        ctx.strokeStyle = selected ? "rgba(255,207,91,0.95)" : "rgba(255,207,91,0.65)";
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+        continue;
+      }
+
+      if (!s.a || !s.b) continue;
+      if (!aIn && !bIn) continue; // both outside window
+
+      const x1 = toX(clamp(s.a.idx, winFirstIdx, winLastIdx));
+      const x2 = toX(clamp(s.b.idx, winFirstIdx, winLastIdx));
+      if (x1 == null || x2 == null) continue;
+
+      const y1 = yOf(s.a.price);
+      const y2 = yOf(s.b.price);
+
+      if (s.type === "line") {
+        ctx.strokeStyle = selected ? "rgba(159,176,195,0.95)" : "rgba(159,176,195,0.65)";
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      } else if (s.type === "box" || s.type === "zone") {
+        const left = Math.min(x1,x2);
+        const top  = Math.min(y1,y2);
+        const w = Math.abs(x2-x1);
+        const h = Math.abs(y2-y1);
+
+        ctx.strokeStyle = selected ? "rgba(159,176,195,0.95)" : "rgba(159,176,195,0.65)";
+        ctx.strokeRect(left, top, w, h);
+
+        if (s.type === "zone") {
+          ctx.fillStyle = selected ? "rgba(100,181,255,0.10)" : "rgba(100,181,255,0.07)";
+          ctx.fillRect(left, top, w, h);
+        }
+      }
+    }
+
+    // temp shape preview
+    if (state.tempShape) {
+      const s = state.tempShape;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,4]);
+      ctx.strokeStyle = "rgba(100,181,255,0.75)";
+      if (s.type === "hline" && s.a) {
+        const y = yOf(s.a.price);
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+      } else if (s.type === "vline" && s.a) {
+        const aIn2 = inWindowIdx(s.a.idx, winFirstIdx, winLastIdx);
+        if (aIn2) {
+          const x = toX(s.a.idx);
+          ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+        }
+      } else if (s.a && s.b) {
+        const x1 = toX(clamp(s.a.idx, winFirstIdx, winLastIdx));
+        const x2 = toX(clamp(s.b.idx, winFirstIdx, winLastIdx));
+        if (x1 != null && x2 != null) {
+          const y1 = yOf(s.a.price), y2 = yOf(s.b.price);
+          if (s.type === "line") {
+            ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+          } else {
+            const left = Math.min(x1,x2);
+            const top  = Math.min(y1,y2);
+            const w = Math.abs(x2-x1);
+            const h = Math.abs(y2-y1);
+            ctx.strokeRect(left, top, w, h);
+            if (s.type === "zone") {
+              ctx.fillStyle = "rgba(100,181,255,0.06)";
+              ctx.fillRect(left, top, w, h);
+            }
+          }
+        }
+      }
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawLabels(pr){
     ctx.fillStyle = "rgba(159,176,195,0.85)";
     ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-    ctx.fillText(`max ${max.toFixed(2)}`, 10, 16);
-    ctx.fillText(`min ${min.toFixed(2)}`, 10, h - 10);
+    ctx.fillText(`max ${pr.max.toFixed(2)}`, 10, 16);
+    ctx.fillText(`min ${pr.min.toFixed(2)}`, 10, canvas.height - 10);
 
-    // last marker at current price
-    const yLast = yOf(state.price);
+    const yLast = (canvas.height - ((state.price - pr.min) / (pr.max - pr.min)) * canvas.height);
     ctx.fillStyle = "rgba(100,181,255,0.95)";
     ctx.beginPath();
-    ctx.arc(w-10, yLast, 4, 0, Math.PI*2);
+    ctx.arc(canvas.width-10, yLast, 4, 0, Math.PI*2);
     ctx.fill();
   }
 
+  function drawChart() {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    drawGrid(w,h);
+
+    const win = getWindowBars();
+    const windowBars = win.bars;
+
+    if (windowBars.length < 2) return;
+
+    const pr = computePriceRange(windowBars);
+    const tf = makeTransform(windowBars, win.startPos, win.endPos, pr, w, h);
+
+    drawCandles(windowBars, tf, w, h);
+    drawShapes(tf, windowBars);
+    drawLimits(tf, w);
+    drawLabels(pr);
+
+    // show window indices
+    const firstIdx = windowBars[0].idx;
+    const lastIdx = windowBars[windowBars.length-1].idx;
+    $("stWin").textContent = `${firstIdx} → ${lastIdx} (offset ${state.rightOffset})`;
+  }
+
+  // hit test shapes (simple)
+  function distPointToSegment(px,py, x1,y1, x2,y2){
+    const dx = x2-x1, dy = y2-y1;
+    if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
+    const t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy);
+    const tt = clamp(t, 0, 1);
+    const cx = x1 + tt*dx, cy = y1 + tt*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+
+  function pickShapeAt(x,y){
+    const win = getWindowBars();
+    const windowBars = win.bars;
+    if (windowBars.length < 2) return null;
+
+    const pr = computePriceRange(windowBars);
+    const tf = makeTransform(windowBars, win.startPos, win.endPos, pr, canvas.width, canvas.height);
+
+    const winFirstIdx = windowBars[0].idx;
+    const winLastIdx  = windowBars[windowBars.length-1].idx;
+
+    const yOf = tf.yOf;
+    const xOf = (idx) => {
+      const i = idx - winFirstIdx;
+      if (i < 0 || i >= windowBars.length) return null;
+      return tf.xOfIndexInWindow(i);
+    };
+
+    // iterate reversed so "topmost" last drawn gets priority
+    for (let i = state.shapes.length - 1; i >= 0; i--) {
+      const s = state.shapes[i];
+      if (s.type === "hline" && s.a) {
+        const yy = yOf(s.a.price);
+        if (Math.abs(y - yy) < 6) return s.id;
+      } else if (s.type === "vline" && s.a && inWindowIdx(s.a.idx, winFirstIdx, winLastIdx)) {
+        const xx = xOf(s.a.idx);
+        if (xx != null && Math.abs(x - xx) < 6) return s.id;
+      } else if (s.a && s.b) {
+        const aIdx = clamp(s.a.idx, winFirstIdx, winLastIdx);
+        const bIdx = clamp(s.b.idx, winFirstIdx, winLastIdx);
+        const x1 = xOf(aIdx), x2 = xOf(bIdx);
+        if (x1 == null || x2 == null) continue;
+        const y1 = yOf(s.a.price), y2 = yOf(s.b.price);
+
+        if (s.type === "line") {
+          const d = distPointToSegment(x,y, x1,y1, x2,y2);
+          if (d < 7) return s.id;
+        } else if (s.type === "box" || s.type === "zone") {
+          const left = Math.min(x1,x2), right = Math.max(x1,x2);
+          const top = Math.min(y1,y2), bottom = Math.max(y1,y2);
+          // near border or inside (zone)
+          const inside = (x >= left && x <= right && y >= top && y <= bottom);
+          const nearBorder =
+            (Math.abs(x-left)<6 || Math.abs(x-right)<6) && y>=top-6 && y<=bottom+6 ||
+            (Math.abs(y-top)<6 || Math.abs(y-bottom)<6) && x>=left-6 && x<=right+6;
+          if (nearBorder || (inside && s.type === "zone")) return s.id;
+        }
+      }
+    }
+    return null;
+  }
+
+  function canvasToChartPoint(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
+
+    const win = getWindowBars();
+    const windowBars = win.bars;
+    if (windowBars.length < 2) return {x,y, idx:null, price:null};
+
+    const pr = computePriceRange(windowBars);
+    const tf = makeTransform(windowBars, win.startPos, win.endPos, pr, canvas.width, canvas.height);
+
+    const i = tf.idxAtX(x);
+    const idx = windowBars[i].idx;
+    const price = roundTo(tf.priceOfY(y), state.tickSize);
+    return {x,y, idx, price, tf, windowBars, pr};
+  }
+
+  // ===== UI: stats + orders
   function renderOrdersTable() {
     const body = $("ordersBody");
     body.innerHTML = "";
@@ -773,7 +1107,7 @@
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
       tr.title = "Нажми чтобы отменить";
-      tr.addEventListener("click", () => cancelOrder(o.id));
+      tr.addEventListener("click", () => { cancelOrder(o.id); });
 
       const sideTag = o.side === "buy"
         ? `<span class="tag buy">BUY</span>`
@@ -801,7 +1135,6 @@
     $("stPos").textContent = String(state.pos);
     $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(2);
     $("stFlow").textContent = state.flow.toFixed(2);
-    $("stLimits").textContent = String(state.limits.length);
   }
 
   function syncTopFromLeft() {
@@ -821,18 +1154,6 @@
     return Math.max(0, Math.floor(s));
   }
 
-  // ===== Timeframe mapping
-  function timeframeToBarTicks(tf, simHz) {
-    // Смысл: сколько сим-тиков = 1 бар.
-    // 1s = simHz тиков; 5s=5*simHz; 15s=15*simHz; 1m=60*simHz; 5m=300*simHz
-    if (tf === "1s") return Math.max(2, Math.round(1 * simHz));
-    if (tf === "5s") return Math.max(2, Math.round(5 * simHz));
-    if (tf === "15s") return Math.max(2, Math.round(15 * simHz));
-    if (tf === "1m") return Math.max(2, Math.round(60 * simHz));
-    if (tf === "5m") return Math.max(2, Math.round(300 * simHz));
-    return Math.max(2, Math.round(5 * simHz));
-  }
-
   function applySettingsFromUI() {
     state.tickSize = Number($("tick").value) || 0.25;
     state.spreadTicks = Math.max(0, Number($("spread").value || 0));
@@ -840,33 +1161,253 @@
     state.liquidity = clamp(Number($("liq").value || 10), 1, 20);
     state.impact = clamp(Number($("impact").value || 8), 0, 20);
     state.simHz = clamp(Number($("simHz").value || 60), 5, 120);
-    state.maxBars = Math.max(60, Math.floor(Number($("maxBars").value || 220)));
+
+    state.visibleBars = clamp(Number($("visibleBars").value || 140), 20, 600);
 
     const tf = $("timeframe").value;
     state.barTicks = timeframeToBarTicks(tf, state.simHz);
 
-    // trim bars
-    if (state.bars.length > state.maxBars) state.bars = state.bars.slice(state.bars.length - state.maxBars);
+    state.follow = $("follow").checked;
 
     syncTopFromLeft();
   }
 
-  function renderAll() {
-    applySettingsFromUI();
-    renderStats();
-    renderOrdersTable();
-    drawChart();
+  // ===== Tool actions
+  function setTool(name){
+    state.activeTool = name;
+    $("tool").value = name;
+    // cursor hint
+    canvas.style.cursor = (name === "pan") ? "grab" : "crosshair";
   }
 
-  // ===== Buttons
-  function buyMarket() { syncLeftFromTop(); marketOrder("buy", getQty(), getSlip()); }
-  function sellMarket() { syncLeftFromTop(); marketOrder("sell", getQty(), getSlip()); }
+  function addShape(shape){
+    shape.id = state.nextShapeId++;
+    state.shapes.push(shape);
+    state.selectedShapeId = shape.id;
+  }
 
-  $("buyMktTop").addEventListener("click", () => { buyMarket(); renderAll(); });
-  $("sellMktTop").addEventListener("click", () => { sellMarket(); renderAll(); });
+  function deleteSelectedShape(){
+    if (state.selectedShapeId == null) return;
+    const before = state.shapes.length;
+    state.shapes = state.shapes.filter(s => s.id !== state.selectedShapeId);
+    if (state.shapes.length !== before) {
+      log(`🗑️ Deleted shape id=${state.selectedShapeId}`, "warn");
+    }
+    state.selectedShapeId = null;
+  }
+
+  function clearShapes(){
+    const n = state.shapes.length;
+    state.shapes = [];
+    state.selectedShapeId = null;
+    log(`🧽 Cleared shapes (${n})`, "warn");
+  }
+
+  // ===== Pan/Zoom logic
+  function clampOffset(){
+    const all = getAllBarsForRender();
+    const n = all.length;
+    if (n <= 1) { state.rightOffset = 0; return; }
+    const maxOffset = Math.max(0, n - 1); // can go all the way to first
+    state.rightOffset = clamp(state.rightOffset, 0, maxOffset);
+  }
+
+  function zoomAt(focalIdx, direction){
+    // direction: +1 zoom out, -1 zoom in
+    const oldVis = state.visibleBars;
+    const factor = (direction < 0) ? 0.85 : 1.18;
+    const newVis = clamp(Math.round(oldVis * factor), 20, 600);
+    if (newVis === oldVis) return;
+
+    const win = getWindowBars();
+    const bars = win.bars;
+    if (!bars.length) { state.visibleBars = newVis; return; }
+
+    const firstIdx = bars[0].idx;
+    const lastIdx  = bars[bars.length-1].idx;
+
+    // keep focalIdx at same relative position in window
+    const rel = (focalIdx - firstIdx) / Math.max(1, (lastIdx - firstIdx));
+    state.visibleBars = newVis;
+
+    // recompute offset so that new window keeps focal
+    const all = getAllBarsForRender();
+    const n = all.length;
+    const endIdx = lastIdx; // keep end for now
+    const newStartTarget = Math.round(focalIdx - rel * (newVis - 1));
+    const newEndTarget = newStartTarget + (newVis - 1);
+
+    // translate target end into rightOffset against end of series
+    // find position of newEndTarget in all bars; if not exact, clamp by idx range
+    const allFirstIdx = all[0].idx;
+    const allLastIdx = all[all.length-1].idx;
+    const endIdxClamped = clamp(newEndTarget, allFirstIdx, allLastIdx);
+
+    const offset = Math.max(0, allLastIdx - endIdxClamped);
+    state.rightOffset = offset;
+
+    // if user is zooming, stop follow (unless they explicitly re-enable)
+    state.follow = $("follow").checked;
+    if (state.follow) {
+      // follow means always 0
+      state.rightOffset = 0;
+    }
+    clampOffset();
+  }
+
+  function panByBars(deltaBars){
+    // positive deltaBars => move window left (older) => increase offset
+    state.rightOffset = Math.max(0, state.rightOffset + deltaBars);
+    if (state.rightOffset > 0) {
+      // user left the live edge
+      $("follow").checked = false;
+      state.follow = false;
+    }
+    clampOffset();
+  }
+
+  // ===== Canvas events (mouse)
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    applySettingsFromUI();
+
+    const pt = canvasToChartPoint(e.clientX, e.clientY);
+    const focalIdx = pt.idx ?? (getAllBarsForRender().slice(-1)[0]?.idx ?? 0);
+
+    const dir = (e.deltaY > 0) ? +1 : -1;
+    zoomAt(focalIdx, dir);
+  }, { passive:false });
+
+  canvas.addEventListener("mousedown", (e) => {
+    applySettingsFromUI();
+    const pt = canvasToChartPoint(e.clientX, e.clientY);
+    if (pt.idx == null) return;
+
+    state.dragging = true;
+    const tool = state.activeTool;
+
+    // Shift always forces pan
+    const forcePan = e.shiftKey;
+
+    if (tool === "pan" || forcePan) {
+      state.dragMode = "pan";
+      canvas.style.cursor = "grabbing";
+      state.dragStart = { x: pt.x, y: pt.y, rightOffset: state.rightOffset };
+      return;
+    }
+
+    if (tool === "select") {
+      const picked = pickShapeAt(pt.x, pt.y);
+      state.selectedShapeId = picked;
+      // if nothing picked, keep null
+      return;
+    }
+
+    // draw tools
+    state.dragMode = "draw";
+    state.dragStart = { idx: pt.idx, price: pt.price, x: pt.x, y: pt.y };
+
+    if (tool === "hline") {
+      state.tempShape = { type: "hline", a: { idx: pt.idx, price: pt.price }, b: null };
+      // finalize immediately
+      addShape({ type:"hline", a:{ idx: pt.idx, price: pt.price }, b:null });
+      state.tempShape = null;
+      state.dragging = false;
+      state.dragMode = null;
+      return;
+    }
+    if (tool === "vline") {
+      state.tempShape = { type: "vline", a: { idx: pt.idx, price: pt.price }, b: null };
+      addShape({ type:"vline", a:{ idx: pt.idx, price: pt.price }, b:null });
+      state.tempShape = null;
+      state.dragging = false;
+      state.dragMode = null;
+      return;
+    }
+
+    state.tempShape = { type: tool, a: { idx: pt.idx, price: pt.price }, b: { idx: pt.idx, price: pt.price } };
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!state.dragging) return;
+    applySettingsFromUI();
+
+    const rect = canvas.getBoundingClientRect();
+    const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+    if (!inside) return;
+
+    const pt = canvasToChartPoint(e.clientX, e.clientY);
+    if (pt.idx == null) return;
+
+    if (state.dragMode === "pan" && state.dragStart) {
+      // translate mouse dx into bars
+      const win = getWindowBars();
+      const windowBars = win.bars;
+      if (windowBars.length < 2) return;
+
+      const pr = computePriceRange(windowBars);
+      const tf = makeTransform(windowBars, win.startPos, win.endPos, pr, canvas.width, canvas.height);
+
+      const dx = pt.x - state.dragStart.x;
+      const barsDelta = Math.round(-dx / tf.step); // dragging right shows older => increase offset
+      state.rightOffset = Math.max(0, state.dragStart.rightOffset + barsDelta);
+
+      if (state.rightOffset > 0) {
+        $("follow").checked = false;
+        state.follow = false;
+      }
+      clampOffset();
+      return;
+    }
+
+    if (state.dragMode === "draw" && state.tempShape) {
+      state.tempShape.b = { idx: pt.idx, price: pt.price };
+      return;
+    }
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (!state.dragging) return;
+    const wasPan = (state.dragMode === "pan");
+    state.dragging = false;
+    state.dragMode = null;
+    state.dragStart = null;
+    if (wasPan) canvas.style.cursor = (state.activeTool === "pan") ? "grab" : "crosshair";
+
+    if (state.tempShape) {
+      const s = state.tempShape;
+      // finalize shapes that need b
+      if ((s.type === "line" || s.type === "box" || s.type === "zone") && s.a && s.b) {
+        addShape({ type:s.type, a:s.a, b:s.b });
+        log(`✏️ Added ${s.type.toUpperCase()} id=${state.selectedShapeId}`, "warn");
+      }
+      state.tempShape = null;
+    }
+  });
+
+  // ===== UI wiring
+  function buyMarket() { syncLeftFromTop(); marketOrder("buy", getQty(), getSlip()); }
+  function sellMarket(){ syncLeftFromTop(); marketOrder("sell", getQty(), getSlip()); }
+
+  $("buyMktTop").addEventListener("click", () => buyMarket());
+  $("sellMktTop").addEventListener("click", () => sellMarket());
 
   $("qtyTop").addEventListener("input", syncLeftFromTop);
   $("slipTop").addEventListener("input", syncLeftFromTop);
+
+  $("followWrap").addEventListener("click", (e) => {
+    // allow clicking wrapper
+    if (e.target.tagName !== "INPUT") $("follow").checked = !$("follow").checked;
+    state.follow = $("follow").checked;
+    if (state.follow) state.rightOffset = 0;
+  });
+
+  $("tool").addEventListener("change", () => {
+    setTool($("tool").value);
+  });
+
+  $("delShape").addEventListener("click", () => deleteSelectedShape());
+  $("clearShapes").addEventListener("click", () => clearShapes());
 
   $("placeLimit").addEventListener("click", () => {
     const side = $("limitSide").value;
@@ -874,7 +1415,6 @@
     const price = Number($("limitPrice").value || 0);
     if (!Number.isFinite(price) || price <= 0) { log("⚠️ Введи цену лимитки (> 0).", "warn"); return; }
     placeLimit(side, price, qty);
-    renderAll();
   });
 
   $("placeLadder").addEventListener("click", () => {
@@ -885,14 +1425,13 @@
     let start = Number($("ladderStart").value || 0);
     if (!Number.isFinite(start) || start <= 0) { start = state.price; $("ladderStart").value = start.toFixed(2); }
     placeLadder(side, start, levels, step, qtyPer);
-    renderAll();
   });
 
-  $("cancelAll").addEventListener("click", () => { cancelAll(); renderAll(); });
-  $("flatten").addEventListener("click", () => { flatten(); renderAll(); });
+  $("cancelAll").addEventListener("click", () => cancelAll());
+  $("flatten").addEventListener("click", () => flatten());
 
-  $("shiftUp").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) { shiftAll(Math.abs(pts)); renderAll(); } });
-  $("shiftDn").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) { shiftAll(-Math.abs(pts)); renderAll(); } });
+  $("shiftUp").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) shiftAll(Math.abs(pts)); });
+  $("shiftDn").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) shiftAll(-Math.abs(pts)); });
 
   $("clearLog").addEventListener("click", () => $("log").innerHTML = "");
 
@@ -909,30 +1448,46 @@
     state.pos = 0;
     state.avg = null;
     state.limits = [];
+    state.shapes = [];
+    state.selectedShapeId = null;
+
     state.bars = [];
-    state._curBar = { o: state.price, h: state.price, l: state.price, c: state.price };
+    state.lastBarIdx = 0;
+    state._curBar = null;
     state._barCounter = 0;
+
+    state.rightOffset = 0;
+    $("follow").checked = true;
+    state.follow = true;
 
     $("limitPrice").value = state.price.toFixed(2);
     $("ladderStart").value = state.price.toFixed(2);
-    $("qty").value = "1"; $("slip").value = "1";
-    $("qtyTop").value = "1"; $("slipTop").value = "1";
 
     log("🔁 Reset done", "warn");
-    renderAll();
   });
 
   // ===== Hotkeys
   window.addEventListener("keydown", (e) => {
     if (e.target && ["INPUT","SELECT"].includes(e.target.tagName)) return;
+
     if (e.key === " ") { e.preventDefault(); $("pause").click(); }
-    if (e.key.toLowerCase() === "b") { buyMarket(); renderAll(); }
-    if (e.key.toLowerCase() === "s") { sellMarket(); renderAll(); }
-    if (e.key.toLowerCase() === "c") { $("cancelAll").click(); }
-    if (e.key.toLowerCase() === "f") { $("flatten").click(); }
+    if (e.key.toLowerCase() === "b") buyMarket();
+    if (e.key.toLowerCase() === "s") sellMarket();
+    if (e.key.toLowerCase() === "c") $("cancelAll").click();
+    if (e.key.toLowerCase() === "f") $("flatten").click();
+    if (e.key === "Delete" || e.key === "Backspace") deleteSelectedShape();
+
+    // quick tool switches
+    if (e.key.toLowerCase() === "p") setTool("pan");
+    if (e.key.toLowerCase() === "l") setTool("line");
+    if (e.key.toLowerCase() === "x") setTool("box");
+    if (e.key.toLowerCase() === "z") setTool("zone");
+    if (e.key.toLowerCase() === "h") setTool("hline");
+    if (e.key.toLowerCase() === "v") setTool("vline");
+    if (e.key.toLowerCase() === "e") setTool("select");
   });
 
-  // ===== Smooth main loop (rAF)
+  // ===== Main loop (rAF)
   let lastTs = performance.now();
   let acc = 0;
 
@@ -942,20 +1497,20 @@
 
     applySettingsFromUI();
 
-    // fixed step
     const step = 1 / state.simHz;
     if (!state.paused) {
       acc += dt;
-      // safety: avoid spiral if tab lag
       acc = Math.min(acc, 0.25);
-
       while (acc >= step) {
         stepSimulationOnce();
         acc -= step;
       }
     }
 
-    // render every frame for smooth feel
+    // follow
+    if (state.follow) state.rightOffset = 0;
+    clampOffset();
+
     renderStats();
     renderOrdersTable();
     drawChart();
@@ -965,21 +1520,19 @@
 
   // init
   function init() {
-    state._curBar = { o: state.price, h: state.price, l: state.price, c: state.price };
-    state._barCounter = 0;
-    state.bars = [];
-
     $("limitPrice").value = state.price.toFixed(2);
     $("ladderStart").value = state.price.toFixed(2);
-
-    renderAll();
-    log("Готово. Теперь движение плавное, TF есть. 😈", "warn");
+    setTool("pan");
+    log("Готово: пан/зум + инструменты. Колесо — зум, drag — пан. 😈", "warn");
     requestAnimationFrame(loop);
   }
 
-  // react to settings changes
-  ["vol","liq","impact","simHz","tick","spread","timeframe","maxBars"].forEach(id => {
-    $(id).addEventListener("change", renderAll);
+  // changes
+  ["vol","liq","impact","simHz","tick","spread","timeframe","visibleBars","follow"].forEach(id => {
+    $(id).addEventListener("change", () => {
+      applySettingsFromUI();
+      if (state.follow) state.rightOffset = 0;
+    });
   });
 
   init();
