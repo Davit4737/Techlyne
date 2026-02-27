@@ -160,8 +160,8 @@
       user-select:none;
       white-space:nowrap;
     }
-    .miniField input{width:86px; padding:8px 8px; border-radius:10px; font-size:12px;}
-    .miniField select{width:220px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .miniField input{width:92px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .miniField select{width:190px; padding:8px 8px; border-radius:10px; font-size:12px;}
 
     .toggle{
       display:flex; align-items:center; gap:8px;
@@ -199,7 +199,15 @@
       color: rgba(212,235,255,.98);
     }
 
-    .chartWrap{height: 680px; padding: 10px 12px 12px;}
+    /* RESIZABLE like TV panel */
+    .chartWrap{
+      height: 680px;
+      padding: 10px 12px 12px;
+      resize: vertical;
+      overflow: hidden;
+      min-height: 340px;
+      max-height: calc(100vh - 220px);
+    }
     canvas{
       width:100%;
       height:100%;
@@ -282,7 +290,7 @@
     }
     .overlayHelp.open{display:flex;}
     .helpCard{
-      max-width: 820px;
+      max-width: 860px;
       width: 100%;
       border-radius: 16px;
       border:1px solid rgba(34,48,68,.95);
@@ -312,7 +320,7 @@
       .rightSticky,.leftSticky{position:static; height:auto;}
       .chartWrap{height:420px;}
       .miniField input{width:110px;}
-      .miniField select{width:240px;}
+      .miniField select{width:210px;}
       body.simple .leftSticky, body.simple .rightSticky{ display:none; }
     }
   </style>
@@ -324,11 +332,12 @@
     <div class="title">
       <h1>Market Sandbox — TV-like Chart 📈</h1>
       <div class="sub">
-        Drag=pan (TV) • Wheel=zoom (anchor) • Ctrl+Click=Limit • Alt+Click=Cancel near • <span class="kbd">?</span>=help
+        Wheel=X zoom (anchor) • <b>Shift+Wheel=Y zoom</b> • Drag=X pan • <b>Shift+Drag=Y pan</b> • Ctrl+Click=Limit • Alt+Click=Cancel • <span class="kbd">?</span>=help
       </div>
     </div>
     <div class="row wrap">
       <div class="pill">Инструмент: <b id="sym">NQ (sim)</b></div>
+      <div class="pill">Сессия: <b id="hdrSess">—</b></div>
       <div class="pill">Цена: <b id="hdrPrice">—</b></div>
       <div class="pill">Позиция: <b id="hdrPos">0</b></div>
       <div class="pill">Flow: <b id="hdrFlow">0</b></div>
@@ -385,7 +394,7 @@
         </div>
 
         <div class="hint">
-          ПК-хак: <span class="kbd">Ctrl+ЛКМ</span> по графику = Buy Limit по цене, <span class="kbd">Ctrl+ПКМ</span> = Sell Limit.
+          <span class="kbd">Ctrl+ЛКМ</span> по графику = Buy Limit, <span class="kbd">Ctrl+ПКМ</span> = Sell Limit.
           <span class="kbd">Alt+клик</span> = отменить ближайшую лимитку.
         </div>
       </div>
@@ -395,25 +404,26 @@
       <h2>Движок рынка <small>sessions</small></h2>
       <div class="content grid">
         <div class="grid cols2">
-          <label>Сессия
+          <label>Session preset
             <select id="session">
-              <option value="premarket_asia">Premarket Asia</option>
-              <option value="london" selected>London</option>
-              <option value="ny_killzone">NY Killzone</option>
-              <option value="ny">New York</option>
+              <option value="asia">Premarket Asia</option>
+              <option value="london">London</option>
+              <option value="nykz" selected>NY Killzone</option>
+              <option value="nyrth">NY RTH</option>
+              <option value="after">Afterhours</option>
             </select>
           </label>
           <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="10" /></label>
         </div>
 
         <div class="grid cols2">
-          <label>Base ticks/sec (5–120)<input id="simHzBase" type="number" step="1" min="5" max="120" value="60" /></label>
-          <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
+          <label>Base ticks/sec (10–160)<input id="simHzBase" type="number" step="1" min="10" max="160" value="60" /></label>
+          <label>Right space (bars)<input id="futureBars" type="number" step="5" min="0" max="300" value="40" /></label>
         </div>
 
         <div class="grid cols2">
           <label>Tick size<input id="tick" type="number" step="0.01" min="0.01" value="0.25" /></label>
-          <label>Future space (bars)<input id="futureBars" type="number" step="1" min="0" max="200" value="40" /></label>
+          <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
         </div>
 
         <div class="grid cols2">
@@ -427,7 +437,7 @@
               <option value="15m">15m</option>
             </select>
           </label>
-          <label>Свечей на экране<input id="visibleBars" type="number" step="5" min="20" max="600" value="140" /></label>
+          <label>Свечей на экране<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></label>
         </div>
 
         <div class="grid cols2">
@@ -435,8 +445,9 @@
           <button class="btn neutral" id="reset">🔁 Reset</button>
         </div>
 
-        <!-- hidden but used for TV-like vertical pan state -->
-        <input id="yPan" type="hidden" value="0" />
+        <div class="hint">
+          Сессии меняют “характер” рынка (шум/спред/агрессия). Liquidity убрана полностью. История прогревается автоматически (не пусто).
+        </div>
       </div>
     </section>
   </div>
@@ -456,6 +467,11 @@
         <div class="toggle" id="followWrap" title="Hotkey: F">
           <input id="follow" type="checkbox" checked />
           <span>Auto-follow</span>
+        </div>
+
+        <div class="toggle" id="autoYWrap" title="Double-click chart to toggle too">
+          <input id="autoY" type="checkbox" checked />
+          <span>Auto Y</span>
         </div>
 
         <div class="speedGroup" title="Speed presets">
@@ -488,12 +504,12 @@
 
       <div class="right">
         <div class="miniField mono">
-          Drag=Pan (TV) • Shift+Drag=Y only • Ctrl+Drag=X only • Wheel=Zoom • Ctrl+Click=Limit • Alt+Click=Cancel
+          Drag=X pan • Shift+Drag=Y pan • Wheel=X zoom • Shift+Wheel=Y zoom • Ctrl+Click=Limit • Alt+Click=Cancel
         </div>
       </div>
     </div>
 
-    <div class="chartWrap">
+    <div class="chartWrap" id="chartWrap">
       <canvas id="chart"></canvas>
     </div>
 
@@ -508,8 +524,7 @@
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
       </div>
       <div class="hint" style="margin-top:10px">
-        Инструменты рисования: Trend/Rect = 2 клика, HLine = 1 клик, Eraser = клик по объекту.
-        Это sandbox (не бэктест): моторика/решения/лимитки/панорамирование.
+        Рисование: Trend/Rect = 2 клика, HLine = 1 клик, Eraser = клик по объекту.
       </div>
     </div>
   </section>
@@ -562,15 +577,15 @@
       <div class="helpItem"><b>C</b> = Cancel All • <b>X</b> = Flatten</div>
       <div class="helpItem"><b>Ctrl+Z</b> = Undo drawing</div>
       <div class="helpItem"><b>1-5</b> = Tools (Cursor/Trend/Rect/HLine/Eraser)</div>
-      <div class="helpItem"><b>Drag</b> = Pan (TV) • <b>Shift+Drag</b> = Y only • <b>Ctrl+Drag</b> = X only</div>
       <div class="helpItem"><b>Ctrl+Click</b> chart = Place Limit (LMB=BUY, RMB=SELL)</div>
       <div class="helpItem"><b>Alt+Click</b> chart = Cancel nearest limit by price</div>
+      <div class="helpItem"><b>Wheel</b> = X zoom (anchor) • <b>Shift+Wheel</b> = Y zoom (anchor)</div>
+      <div class="helpItem"><b>Drag</b> = X pan • <b>Shift+Drag</b> = Y pan (empty space вверх/вниз)</div>
       <div class="helpItem"><b>+</b>/<b>-</b> = qty +/-</div>
       <div class="helpItem"><b>?</b> = open/close help</div>
     </div>
     <div class="hint" style="margin-top:10px">
-      Future space справа регулируется: “Future space (bars)”.
-      Вниз “в пустоту” можно панорамировать бесконечно (TV-style Y pan).
+      Это sandbox (не бэктест): тренировка реакции, лимиток, моторики, панорамирования.
     </div>
   </div>
 </div>
@@ -581,27 +596,29 @@
   const now = () => new Date().toLocaleTimeString();
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const roundTo = (x, step) => Math.round(x / step) * step;
+  const lerp = (a,b,t) => a + (b-a)*t;
 
   const SESSIONS = {
-    premarket_asia: { name: "Premarket Asia", volatility: 4,  flowDecay: 0.965, spreadTicks: 2, baseSimHz: 40 },
-    london:         { name: "London",         volatility: 7,  flowDecay: 0.955, spreadTicks: 1, baseSimHz: 60 },
-    ny_killzone:    { name: "NY Killzone",    volatility: 11, flowDecay: 0.94,  spreadTicks: 1, baseSimHz: 75 },
-    ny:             { name: "New York",       volatility: 9,  flowDecay: 0.945, spreadTicks: 1, baseSimHz: 70 },
+    asia:   { name:"Premarket Asia", vol: 3.2, spread: 2, impact: 7,  simHz: 45, fill: 0.55 },
+    london: { name:"London",         vol: 6.0, spread: 1, impact: 9,  simHz: 60, fill: 0.70 },
+    nykz:   { name:"NY Killzone",    vol: 9.2, spread: 1, impact: 11, simHz: 75, fill: 0.85 },
+    nyrth:  { name:"NY RTH",         vol: 7.0, spread: 1, impact: 10, simHz: 65, fill: 0.80 },
+    after:  { name:"Afterhours",     vol: 4.2, spread: 2, impact: 8,  simHz: 45, fill: 0.60 },
   };
 
   const state = {
     symbol: "NQ (sim)",
+
     tickSize: 0.25,
     spreadTicks: 1,
 
-    // replaced: volatility is now from session presets (still stored here)
-    volatility: 8,
-    impact: 10,
-    session: "london",
+    // regime params (smoothed)
+    p: { vol: 9.2, impact: 11, simHzBase: 75, fillProb: 0.85 },
+    target: { vol: 9.2, impact: 11, simHzBase: 75, fillProb: 0.85 },
+    sessionKey: "nykz",
 
-    baseSimHz: 60,
     speedMul: 1,
-    simHz: 60,
+    simHz: 75,
 
     paused: false,
 
@@ -622,17 +639,22 @@
     nextOrderId: 1,
     limits: [],
 
-    visibleBars: 140,
-    rightOffset: 0,      // can be negative to view "future space"
-    futureBars: 40,      // how much future emptiness to allow
+    // X navigation
+    visibleBars: 160,
+    rightOffset: 0,      // TV-like: drag right -> increase -> go to past
+    futureBars: 40,      // empty space to the right
+
     follow: true,
 
-    // vertical pan in price units (lets you look into emptiness below/above)
-    yPan: 0,
+    // Y navigation (TV-like)
+    autoY: true,
+    yScale: 1.0,         // >1 zoom out, <1 zoom in
+    yOffset: 0.0,        // price units
 
     pointers: new Map(),
     panStart: null,
     pinchStart: null,
+    yPanStart: null,
 
     geo: null,
 
@@ -657,6 +679,30 @@
     if (kind === "bad")  line.style.color = "#ffd0d7";
     if (kind === "warn") line.style.color = "#ffe8b2";
     el.prepend(line);
+  }
+
+  function setSession(key, soft=true) {
+    const s = SESSIONS[key] || SESSIONS.nykz;
+    state.sessionKey = key;
+    $("hdrSess").textContent = s.name;
+
+    // apply target params (smooth)
+    state.target.vol = s.vol;
+    state.target.fillProb = s.fill;
+    state.target.impact = clamp(Number($("impact").value || s.impact), 0, 20);
+    state.target.simHzBase = clamp(Number($("simHzBase").value || s.simHz), 10, 160);
+
+    // also suggest spread default (but user can override in input)
+    if (!soft) {
+      $("spread").value = String(s.spread);
+      state.spreadTicks = s.spread;
+    } else {
+      // if user didn't touch spread much, still gently keep session feel
+      const cur = Number($("spread").value || state.spreadTicks);
+      if (!Number.isFinite(cur)) $("spread").value = String(s.spread);
+    }
+
+    statsDirty = true;
   }
 
   function getBidAsk() {
@@ -759,49 +805,48 @@
     return false;
   }
 
-  // liquidity removed: we fill partial using a simple deterministic chunk
   function matchLimits() {
     const { bid, ask } = getBidAsk();
-    const filledIds = [];
 
+    const filledIds = [];
     for (const o of state.limits) {
       if (o.left <= 0) { filledIds.push(o.id); continue; }
+
       const canFill = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
       if (!canFill) continue;
 
-      // chunk depends on session volatility a bit (more active -> more fills)
-      const vol = clamp(state.volatility, 1, 20);
-      const baseChunk = Math.max(1, Math.round(o.qty * (0.35 + (vol/20)*0.55)));
-      const chunk = Math.min(o.left, baseChunk);
+      // Liquidity removed: fill probability + partial fill feel
+      const prob = clamp(state.p.fillProb, 0.2, 0.98);
+      if (Math.random() > prob) continue;
 
-      o.left -= chunk;
-      applyFill(o.side, chunk, o.price, `limit id=${o.id}`);
+      const chunk = Math.max(1, Math.floor(Math.max(1, o.qty) * (0.35 + 0.45 * prob)));
+      const fillQty = Math.min(o.left, chunk);
+
+      o.left -= fillQty;
+      applyFill(o.side, fillQty, o.price, `limit id=${o.id}`);
       ordersDirty = true;
 
       if (o.left <= 0) filledIds.push(o.id);
     }
-
     if (filledIds.length) {
       state.limits = state.limits.filter(o => !filledIds.includes(o.id));
       ordersDirty = true;
     }
   }
 
-  function timeframeToBarTicks(tf, hzBase) {
-    // IMPORTANT FIX: bar duration depends on BASE Hz, not speed-multiplied Hz
-    const simHz = hzBase;
-    if (tf === "1s")  return Math.max(2, Math.round(1   * simHz));
-    if (tf === "5s")  return Math.max(2, Math.round(5   * simHz));
-    if (tf === "15s") return Math.max(2, Math.round(15  * simHz));
-    if (tf === "1m")  return Math.max(2, Math.round(60  * simHz));
-    if (tf === "5m")  return Math.max(2, Math.round(300 * simHz));
+  function timeframeToBarTicks(tf, simHz) {
+    if (tf === "1s") return Math.max(2, Math.round(1 * simHz));
+    if (tf === "5s") return Math.max(2, Math.round(5 * simHz));
+    if (tf === "15s") return Math.max(2, Math.round(15 * simHz));
+    if (tf === "1m") return Math.max(2, Math.round(60 * simHz));
+    if (tf === "5m") return Math.max(2, Math.round(300 * simHz));
     if (tf === "15m") return Math.max(2, Math.round(900 * simHz));
     return Math.max(2, Math.round(5 * simHz));
   }
 
   function ensureCurrentBar() {
     if (!state._curBar) {
-      state._curBar = { idx: state.lastBarIdx + 1, o: state.price, h: state.price, l: state.price, c: state.price, empty:false };
+      state._curBar = { idx: state.lastBarIdx + 1, o: state.price, h: state.price, l: state.price, c: state.price };
       state._barCounter = 0;
     }
   }
@@ -816,26 +861,50 @@
     if (state._barCounter >= state.barTicks) {
       state.lastBarIdx = state._curBar.idx;
       state.bars.push(state._curBar);
-      if (state.bars.length > 5000) state.bars.shift();
+      if (state.bars.length > 8000) state.bars.shift();
 
-      state._curBar = { idx: state.lastBarIdx + 1, o: p, h: p, l: p, c: p, empty:false };
+      state._curBar = { idx: state.lastBarIdx + 1, o: p, h: p, l: p, c: p };
       state._barCounter = 0;
 
       if (state.follow) state.rightOffset = 0;
     }
   }
 
+  function smoothParams() {
+    // smooth to avoid jumps when switching sessions/settings
+    const t = 0.03; // ~ feels like TV smooth
+    state.p.vol = lerp(state.p.vol, state.target.vol, t);
+    state.p.impact = lerp(state.p.impact, state.target.impact, t);
+    state.p.simHzBase = lerp(state.p.simHzBase, state.target.simHzBase, t);
+    state.p.fillProb = lerp(state.p.fillProb, state.target.fillProb, t);
+  }
+
   function stepSimulationOnce() {
+    smoothParams();
+
     state.flow *= state.flowDecay;
 
-    const vol = clamp(state.volatility, 1, 20);
+    const vol = clamp(state.p.vol, 1.0, 16.0);
+
+    // 4-sum approx normal
     const r = (Math.random()+Math.random()+Math.random()+Math.random()-2);
-    const noise = r * (vol * state.tickSize * 0.18);
 
-    const imp = clamp(state.impact, 0, 20);
-    const pressure = (state.flow) * (imp * state.tickSize * 0.045);
+    // noise tuned to avoid insane startup jumps
+    const noise = r * (vol * state.tickSize * 0.14);
 
-    state.velocity = (state.velocity * 0.92) + noise + pressure;
+    const imp = clamp(state.p.impact, 0, 20);
+
+    // flow impact (simple)
+    const pressure = (state.flow) * (imp * state.tickSize * 0.035);
+
+    // mild mean-reversion to avoid runaway
+    const meanRevert = (17000 - state.price) * (0.000002 * vol);
+
+    state.velocity = (state.velocity * 0.86) + noise + pressure + meanRevert;
+
+    const maxVel = vol * state.tickSize * 3.2;
+    state.velocity = clamp(state.velocity, -maxVel, maxVel);
+
     state.price = roundTo(state.price + state.velocity, state.tickSize);
 
     statsDirty = true;
@@ -844,52 +913,53 @@
     matchLimits();
   }
 
-  // ===== bars window
+  // ===== bars for render
   function getAllBarsForRender() {
     const arr = state.bars.slice();
     if (state._curBar) arr.push(state._curBar);
     return arr;
   }
 
-  // include "future empty bars" when rightOffset is negative
-  function getWindowBars() {
-    const real = getAllBarsForRender();
-    const n = real.length;
-    if (n === 0) return {bars:[], total:0, startPos:0, endPos:0, firstIdx:0, lastRealIdx:0};
-
-    const vis = clamp(state.visibleBars, 20, 600);
-    const lastRealIdx = real[real.length-1].idx;
-
-    // end position in "virtual timeline"
-    // rightOffset > 0 = looking back
-    // rightOffset < 0 = looking into future space
-    const endVirtual = (n - 1) - state.rightOffset; // can be > n-1 (future)
-    const startVirtual = endVirtual - (vis - 1);
-
-    const bars = [];
-    for (let i = startVirtual; i <= endVirtual; i++) {
-      if (i >= 0 && i <= n - 1) {
-        bars.push(real[i]);
-      } else if (i > n - 1) {
-        // future emptiness: create placeholder bars with growing idx
-        const di = i - (n - 1);
-        bars.push({ idx: lastRealIdx + di, empty:true });
-      } else {
-        // before start of history (rare): placeholder
-        bars.push({ idx: real[0].idx - (Math.abs(i)), empty:true });
-      }
-    }
-
-    return { bars, total: n, startPos: startVirtual, endPos: endVirtual, firstIdx: bars[0].idx, lastRealIdx };
+  function clampOffset() {
+    const all = getAllBarsForRender();
+    const n = all.length;
+    const maxOff = Math.max(0, (n - 1) + state.futureBars);
+    state.rightOffset = clamp(state.rightOffset, 0, maxOff);
   }
 
-  function computePriceRange(windowBars) {
+  function getWindowBarsVirtual() {
+    const all = getAllBarsForRender();
+    const n = all.length;
+
+    const vis = clamp(state.visibleBars, 20, 700);
+
+    // end position in "virtual index space" (can exceed last bar => empty future)
+    const lastPos = Math.max(0, n - 1);
+    const endPos = (lastPos + state.futureBars) - state.rightOffset;
+
+    const startPos = endPos - vis + 1;
+
+    return { all, n, vis, startPos, endPos };
+  }
+
+  function computeAutoPriceRange(vwin) {
+    const all = vwin.all;
+    const n = vwin.n;
+
     let min = Infinity, max = -Infinity;
-    for (const b of windowBars) {
-      if (b.empty) continue;
+
+    const start = Math.ceil(vwin.startPos);
+    const end   = Math.floor(vwin.endPos);
+
+    for (let pos = start; pos <= end; pos++) {
+      if (pos < 0 || pos >= n) continue; // empty
+      const b = all[pos];
+      if (!b) continue;
       min = Math.min(min, b.l);
       max = Math.max(max, b.h);
     }
+
+    // include limits in autoscale, like before
     for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
 
     if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
@@ -897,12 +967,20 @@
       max = state.price + 50 * state.tickSize;
     }
 
-    // apply vertical pan (allows looking into emptiness below/above)
-    min += state.yPan;
-    max += state.yPan;
-
     const pad = (max-min) * 0.12 + state.tickSize * 20;
     return { min: min - pad, max: max + pad };
+  }
+
+  function computeViewPriceRange(autoRange) {
+    if (state.autoY) return autoRange;
+
+    const c = (autoRange.min + autoRange.max) / 2 + state.yOffset;
+    const half = ((autoRange.max - autoRange.min) / 2) * clamp(state.yScale, 0.20, 12.0);
+
+    const min = c - half;
+    const max = c + half;
+
+    return { min, max };
   }
 
   function niceStep(range, targetTicks=8) {
@@ -934,7 +1012,7 @@
   }
   window.addEventListener("resize", resizeCanvasToDisplaySize);
 
-  function buildGeo(windowBars, pr) {
+  function buildGeo(vwin, pr) {
     const rect = canvas.getBoundingClientRect();
     const w = rect.width, h = rect.height;
 
@@ -948,11 +1026,11 @@
     const plotY0 = topPad;
     const plotY1 = h - bottomPad;
 
-    const n = windowBars.length;
-    const candleW = Math.max(3, Math.floor((plotX1 - plotX0) / (n + 10)));
+    const candleW = Math.max(3, Math.floor((plotX1 - plotX0) / (vwin.vis + 10)));
     const gap = Math.max(1, Math.floor(candleW * 0.35));
     const step = candleW + gap;
-    const totalW = step * n;
+
+    const totalW = step * vwin.vis;
     const xStart = plotX0 + Math.max(6, Math.floor(((plotX1 - plotX0) - totalW) / 2));
 
     const yOf = (p) => {
@@ -960,18 +1038,19 @@
       return clamp(yy, plotY0, plotY1);
     };
 
-    const firstIdx = windowBars[0].idx;
-    const lastIdx  = windowBars[windowBars.length-1].idx;
-
-    const xOfIdx = (idx) => {
-      const span = Math.max(1, lastIdx - firstIdx);
-      const t = (idx - firstIdx) / span;
-      return plotX0 + t * (plotX1 - plotX0);
+    const posOfX = (x) => {
+      const i = Math.round((x - xStart) / step);
+      return clamp(i, 0, vwin.vis-1) + vwin.startPos;
     };
 
-    const stepPxScreen = step;
+    const xOfPos = (pos) => {
+      const i = pos - vwin.startPos;
+      return xStart + i * step;
+    };
 
-    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,plotY0,plotY1,candleW,gap,step,totalW,xStart,yOf,stepPxScreen,xOfIdx };
+    const pricePerPx = (pr.max - pr.min) / Math.max(10, (plotY1 - plotY0));
+
+    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,plotY0,plotY1,candleW,gap,step,totalW,xStart,yOf,posOfX,xOfPos,pricePerPx };
   }
 
   function canvasPointFromClient(e) {
@@ -985,12 +1064,12 @@
     return roundTo(p, state.tickSize);
   }
 
-  function idxFromX(x, win, geo) {
-    const n = win.bars.length;
-    if (n < 2) return null;
-    const i = Math.round((x - geo.xStart) / geo.step);
-    const ii = clamp(i, 0, n-1);
-    return win.bars[ii].idx;
+  function idxFromX(x, vwin, geo) {
+    const pos = geo.posOfX(x);
+    const i = Math.round(pos);
+    const all = vwin.all;
+    if (i < 0 || i >= vwin.n) return null;
+    return all[i].idx;
   }
 
   // ===== drawings
@@ -1007,9 +1086,21 @@
     return Math.hypot(px-cx, py-cy);
   }
 
-  function hitTestDrawing(pt, win, pr, geo) {
-    const firstIdx = win.bars[0].idx;
-    const lastIdx  = win.bars[win.bars.length-1].idx;
+  function hitTestDrawing(pt, vwin, pr, geo) {
+    const start = Math.ceil(vwin.startPos);
+    const end   = Math.floor(vwin.endPos);
+
+    const all = vwin.all;
+    let firstIdx = null, lastIdx = null;
+
+    for (let pos = start; pos <= end; pos++) {
+      if (pos < 0 || pos >= vwin.n) continue;
+      const b = all[pos];
+      if (!firstIdx) firstIdx = b.idx;
+      lastIdx = b.idx;
+    }
+    if (firstIdx == null || lastIdx == null) return -1;
+
     const px = pt.x, py = pt.y;
 
     for (let k = state.drawings.length-1; k>=0; k--) {
@@ -1019,15 +1110,15 @@
         if (Math.abs(py - y) <= 6 && px >= geo.plotX0 && px <= geo.plotX1) return k;
       }
       if (d.type === "trend") {
-        const x1 = geo.xOfIdx(d.x1);
+        const x1 = geo.xOfPos(findPosByIdx(d.x1, vwin));
         const y1 = geo.yOf(d.y1);
-        const x2 = geo.xOfIdx(d.x2);
+        const x2 = geo.xOfPos(findPosByIdx(d.x2, vwin));
         const y2 = geo.yOf(d.y2);
         if (distPointToSegment(px,py,x1,y1,x2,y2) <= 7) return k;
       }
       if (d.type === "rect") {
-        const x1 = geo.xOfIdx(d.x1);
-        const x2 = geo.xOfIdx(d.x2);
+        const x1 = geo.xOfPos(findPosByIdx(d.x1, vwin));
+        const x2 = geo.xOfPos(findPosByIdx(d.x2, vwin));
         const y1 = geo.yOf(d.y1);
         const y2 = geo.yOf(d.y2);
         const l = Math.min(x1,x2), r = Math.max(x1,x2);
@@ -1044,6 +1135,16 @@
     return -1;
   }
 
+  function findPosByIdx(idx, vwin) {
+    // find bar position in all[] by bar.idx
+    const all = vwin.all;
+    // quick try using last window scan - acceptable for sandbox
+    for (let pos = 0; pos < vwin.n; pos++) {
+      if (all[pos].idx === idx) return pos;
+    }
+    return vwin.n - 1;
+  }
+
   // ===== draw
   function drawChart() {
     resizeCanvasToDisplaySize();
@@ -1053,12 +1154,12 @@
 
     ctx.clearRect(0,0,w,h);
 
-    const win = getWindowBars();
-    const windowBars = win.bars;
-    if (windowBars.length < 2) return;
+    const vwin = getWindowBarsVirtual();
+    if (vwin.n < 2) return;
 
-    const pr = computePriceRange(windowBars);
-    const geo = buildGeo(windowBars, pr);
+    const autoRange = computeAutoPriceRange(vwin);
+    const pr = computeViewPriceRange(autoRange);
+    const geo = buildGeo(vwin, pr);
     state.geo = geo;
 
     if (!cachedFontBody) cachedFontBody = "12px " + getComputedStyle(document.body).fontFamily;
@@ -1069,11 +1170,11 @@
     ctx.fillStyle = "rgba(5,8,12,0.35)";
     ctx.fillRect(geo.plotX0, geo.plotY0, geo.plotX1-geo.plotX0, geo.plotY1-geo.plotY0);
 
-    // left scale background
+    // left scale background (always visible)
     ctx.fillStyle = "rgba(11,15,20,0.55)";
     ctx.fillRect(0, 0, geo.leftPad, h);
 
-    // border
+    // border line
     ctx.strokeStyle = "rgba(34,48,68,0.9)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1103,33 +1204,27 @@
 
     // vertical guides
     ctx.strokeStyle = "rgba(34,48,68,0.35)";
-    for (let i=0; i<windowBars.length; i+= Math.max(5, Math.round(windowBars.length/10))) {
+    const every = Math.max(8, Math.round(vwin.vis/10));
+    for (let i=0; i<vwin.vis; i+= every) {
       const x = geo.xStart + i * geo.step + geo.candleW/2;
       ctx.beginPath(); ctx.moveTo(x, geo.plotY0); ctx.lineTo(x, geo.plotY1); ctx.stroke();
     }
 
-    // bid/ask band (only if within real timeline; still okay visually)
+    // bid/ask band
     const {bid, ask} = getBidAsk();
     const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
     ctx.fillStyle = "rgba(159,176,195,0.08)";
     ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
 
-    // candles (skip empty future bars)
-    for (let i=0; i<windowBars.length; i++) {
-      const b = windowBars[i];
-      const x = geo.xStart + i * geo.step;
+    // candles (draw only where bars exist)
+    const startPosInt = Math.ceil(vwin.startPos);
+    const endPosInt = Math.floor(vwin.endPos);
 
-      if (b.empty) {
-        // draw faint placeholder vertical tick
-        ctx.strokeStyle = "rgba(159,176,195,0.10)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x + geo.candleW/2, geo.plotY0);
-        ctx.lineTo(x + geo.candleW/2, geo.plotY1);
-        ctx.stroke();
-        continue;
-      }
+    for (let pos = startPosInt; pos <= endPosInt; pos++) {
+      if (pos < 0 || pos >= vwin.n) continue; // empty future/past
+      const b = vwin.all[pos];
 
+      const x = geo.xOfPos(pos);
       const yO = geo.yOf(b.o), yH = geo.yOf(b.h), yL = geo.yOf(b.l), yC = geo.yOf(b.c);
       const up = b.c >= b.o;
 
@@ -1164,7 +1259,7 @@
       ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, geo.plotX0 + 10, y - 10);
     }
 
-    // drawings
+    // drawings (use idx->pos mapping)
     for (const d of state.drawings) {
       if (d.type === "hline") {
         const y = geo.yOf(d.p);
@@ -1173,19 +1268,19 @@
         ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
       }
       if (d.type === "trend") {
-        const x1 = geo.xOfIdx(d.x1);
-        const y1 = geo.yOf(d.y1);
-        const x2 = geo.xOfIdx(d.x2);
-        const y2 = geo.yOf(d.y2);
+        const p1 = findPosByIdx(d.x1, vwin);
+        const p2 = findPosByIdx(d.x2, vwin);
+        const x1 = geo.xOfPos(p1), y1 = geo.yOf(d.y1);
+        const x2 = geo.xOfPos(p2), y2 = geo.yOf(d.y2);
         ctx.strokeStyle = "rgba(100,181,255,0.85)";
         ctx.lineWidth = 2.0;
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       }
       if (d.type === "rect") {
-        const x1 = geo.xOfIdx(d.x1);
-        const x2 = geo.xOfIdx(d.x2);
-        const y1 = geo.yOf(d.y1);
-        const y2 = geo.yOf(d.y2);
+        const p1 = findPosByIdx(d.x1, vwin);
+        const p2 = findPosByIdx(d.x2, vwin);
+        const x1 = geo.xOfPos(p1), x2 = geo.xOfPos(p2);
+        const y1 = geo.yOf(d.y1), y2 = geo.yOf(d.y2);
         const l = Math.min(x1,x2), r = Math.max(x1,x2);
         const t = Math.min(y1,y2), b = Math.max(y1,y2);
         ctx.fillStyle = "rgba(100,181,255,0.10)";
@@ -1202,19 +1297,19 @@
       ctx.save();
       ctx.globalAlpha = 0.9;
       if (p.type === "trend") {
-        const x1 = geo.xOfIdx(p.x1);
-        const y1 = geo.yOf(p.y1);
-        const x2 = geo.xOfIdx(state.cross.idx);
-        const y2 = geo.yOf(state.cross.price);
+        const p1 = findPosByIdx(p.x1, vwin);
+        const p2 = findPosByIdx(state.cross.idx, vwin);
+        const x1 = geo.xOfPos(p1), y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfPos(p2), y2 = geo.yOf(state.cross.price);
         ctx.strokeStyle = "rgba(100,181,255,0.65)";
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       }
       if (p.type === "rect") {
-        const x1 = geo.xOfIdx(p.x1);
-        const y1 = geo.yOf(p.y1);
-        const x2 = geo.xOfIdx(state.cross.idx);
-        const y2 = geo.yOf(state.cross.price);
+        const p1 = findPosByIdx(p.x1, vwin);
+        const p2 = findPosByIdx(state.cross.idx, vwin);
+        const x1 = geo.xOfPos(p1), y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfPos(p2), y2 = geo.yOf(state.cross.price);
         const l = Math.min(x1,x2), r = Math.max(x1,x2);
         const t = Math.min(y1,y2), b = Math.max(y1,y2);
         ctx.fillStyle = "rgba(100,181,255,0.08)";
@@ -1226,7 +1321,7 @@
       ctx.restore();
     }
 
-    // last price label
+    // last price label (left)
     const yLast = geo.yOf(state.price);
     ctx.fillStyle = "rgba(100,181,255,0.20)";
     ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
@@ -1269,7 +1364,7 @@
       ctx.fillText(lab, bx + 7, by + 10);
     }
 
-    $("stWin").textContent = `${windowBars[0].idx} → ${windowBars[windowBars.length-1].idx} (offset ${state.rightOffset})`;
+    $("stWin").textContent = `pos ${vwin.startPos.toFixed(0)} → ${vwin.endPos.toFixed(0)} (rightOff ${state.rightOffset.toFixed(0)}, future ${state.futureBars})`;
   }
 
   // ===== UI (throttled)
@@ -1305,6 +1400,7 @@
     $("hdrFlow").textContent = state.flow.toFixed(2);
     $("hdrPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
     $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
+    $("hdrSess").textContent = (SESSIONS[state.sessionKey] || SESSIONS.nykz).name;
 
     $("stLast").textContent = state.price.toFixed(2);
     $("stBA").textContent = `${bid.toFixed(2)} / ${ask.toFixed(2)}`;
@@ -1337,112 +1433,116 @@
     return Math.max(0, Math.floor(s));
   }
 
-  function applySessionPreset() {
-    const s = SESSIONS[state.session] || SESSIONS.london;
-    state.volatility = s.volatility;
-    state.flowDecay = s.flowDecay;
-
-    // apply spread + baseHz defaults unless user changed them manually
-    const curSpread = Number($("spread").value || state.spreadTicks);
-    if (!Number.isFinite(curSpread) || curSpread < 0) $("spread").value = String(s.spreadTicks);
-
-    const curHz = Number($("simHzBase").value || state.baseSimHz);
-    if (!Number.isFinite(curHz) || curHz < 5) $("simHzBase").value = String(s.baseSimHz);
-  }
-
   function applySettingsFromUI() {
     state.tickSize = Number($("tick").value) || 0.25;
-    state.spreadTicks = Math.max(0, Number($("spread").value || 0));
-    state.impact = clamp(Number($("impact").value || 10), 0, 20);
+    state.spreadTicks = Math.max(0, Number($("spread").value || 1));
 
-    state.session = $("session").value;
-    applySessionPreset();
-
-    state.baseSimHz  = clamp(Number($("simHzBase").value || 60), 5, 120);
-    state.simHz      = clamp(state.baseSimHz * state.speedMul, 5, 600);
-
-    state.visibleBars = clamp(Number($("visibleBars").value || 140), 20, 600);
-    state.barTicks = timeframeToBarTicks($("timeframe").value, state.baseSimHz);
-
-    state.futureBars = clamp(Number($("futureBars").value || 40), 0, 200);
+    state.visibleBars = clamp(Number($("visibleBars").value || 160), 20, 700);
+    state.futureBars = clamp(Number($("futureBars").value || 40), 0, 300);
 
     state.follow = $("follow").checked;
-    state.tool = $("tool").value;
+    state.autoY = $("autoY").checked;
 
-    state.yPan = Number($("yPan").value || 0) || 0;
+    state.target.impact = clamp(Number($("impact").value || 10), 0, 20);
+    state.target.simHzBase = clamp(Number($("simHzBase").value || 60), 10, 160);
+
+    state.simHz = clamp(state.p.simHzBase * state.speedMul, 10, 600);
+    state.barTicks = timeframeToBarTicks($("timeframe").value, state.simHz);
+
+    state.tool = $("tool").value;
 
     syncTopFromLeft();
   }
 
-  function clampOffset() {
-    // allow rightOffset to be negative (future space)
-    const real = getAllBarsForRender();
-    const n = real.length;
-    if (n <= 1) { state.rightOffset = 0; return; }
-    const maxBack = Math.max(0, n - 1);
-    const minFuture = -Math.max(0, state.futureBars);
-    state.rightOffset = clamp(state.rightOffset, minFuture, maxBack);
-  }
-
-  function stepPxScreen() {
-    if (!state.geo) return 8;
-    return Math.max(2, state.geo.stepPxScreen);
-  }
-
-  // ===== Wheel zoom (anchor to cursor)
+  // ===== Wheel zoom (X, anchor to cursor) + Shift Wheel (Y)
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     applySettingsFromUI();
-
-    const winBefore = getWindowBars();
-    if (winBefore.bars.length < 3) return;
 
     const rect = canvas.getBoundingClientRect();
     const xCss = (e.clientX - rect.left);
     const xFrac = clamp(xCss / rect.width, 0, 1);
 
-    const dir = (e.deltaY > 0) ? +1 : -1;
-    const factor = (dir < 0) ? 0.85 : 1.18;
+    const vwinBefore = getWindowBarsVirtual();
+    if (vwinBefore.n < 3) return;
 
+    const dir = (e.deltaY > 0) ? +1 : -1;
+
+    // Shift+Wheel => Y zoom
+    if (e.shiftKey) {
+      const autoRange = computeAutoPriceRange(vwinBefore);
+      const viewRange = computeViewPriceRange(autoRange);
+      const geo = state.geo ?? buildGeo(vwinBefore, viewRange);
+
+      const pt = canvasPointFromClient(e);
+      const anchorPrice = priceFromY(pt.y, viewRange, geo);
+
+      const factor = (dir < 0) ? 0.88 : 1.14;
+
+      if (state.autoY) { state.autoY = false; $("autoY").checked = false; }
+
+      const oldScale = state.yScale;
+      const newScale = clamp(oldScale * factor, 0.20, 12.0);
+
+      // keep anchorPrice under cursor: adjust yOffset based on scale change
+      // compute current center (autoRange center + yOffset)
+      const c0 = (autoRange.min + autoRange.max) / 2 + state.yOffset;
+      const half0 = ((autoRange.max - autoRange.min) / 2) * oldScale;
+
+      // anchor fraction in current view
+      const t = (anchorPrice - (c0 - half0)) / (2*half0);
+
+      const half1 = ((autoRange.max - autoRange.min) / 2) * newScale;
+      const min1 = anchorPrice - t * (2*half1);
+      const c1 = min1 + half1;
+
+      state.yScale = newScale;
+      state.yOffset = c1 - (autoRange.min + autoRange.max) / 2;
+      return;
+    }
+
+    // normal wheel => X zoom
+    const factor = (dir < 0) ? 0.85 : 1.18;
     const oldVis = state.visibleBars;
-    const newVis = clamp(Math.round(oldVis * factor), 20, 600);
+    const newVis = clamp(Math.round(oldVis * factor), 20, 700);
     if (newVis === oldVis) return;
 
+    // turning off follow for manual nav
     $("follow").checked = false;
     state.follow = false;
 
-    const anchorIndexInWindow = Math.round(xFrac * (winBefore.bars.length - 1));
-    const anchorBarIdx = winBefore.bars[anchorIndexInWindow].idx;
+    // anchor by virtual position
+    const endPos = vwinBefore.endPos;
+    const anchorPos = vwinBefore.startPos + xFrac * (vwinBefore.vis - 1);
 
     state.visibleBars = newVis;
     $("visibleBars").value = String(newVis);
 
-    // compute new end so anchor stays under cursor
-    // we approximate by shifting offset relative to real bars only
-    const allReal = getAllBarsForRender();
-    const n = allReal.length;
+    // keep anchorPos under cursor => set rightOffset accordingly
+    const endTarget = anchorPos + (1 - xFrac) * (newVis - 1);
+    const lastPos = Math.max(0, vwinBefore.n - 1);
+    const maxPos = lastPos + state.futureBars;
+    const endClamped = clamp(endTarget, -999999, maxPos); // allow slightly before start (blank left) feel
 
-    // find anchor position in real bars if exists, else clamp to last
-    let anchorPos = allReal.findIndex(b => b.idx === anchorBarIdx);
-    if (anchorPos < 0) anchorPos = n - 1;
-
-    const endTarget = anchorPos + Math.round((1 - xFrac) * (newVis - 1));
-    const end = clamp(endTarget, 0, n - 1);
-    state.rightOffset = ((n - 1) - end);
-
+    state.rightOffset = (lastPos + state.futureBars) - endClamped;
     clampOffset();
   }, { passive:false });
 
+  // prevent context menu (we use RMB for SELL limit)
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // ===== Pointer events: pan + pinch + tap-to-draw + quick limit
+  // ===== Pointer events: X pan + Y pan + pinch zoom
   let tapCandidate = null;
+
+  function stepPxScreen() {
+    if (!state.geo) return 8;
+    return Math.max(2, state.geo.step);
+  }
 
   canvas.addEventListener("pointerdown", (e) => {
     canvas.setPointerCapture(e.pointerId);
     state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    // if follow enabled, disable on interaction (TV behavior)
     if (state.follow) { $("follow").checked = false; state.follow = false; }
 
     tapCandidate = {
@@ -1451,18 +1551,35 @@
       t: performance.now(),
       ctrl: e.ctrlKey,
       alt: e.altKey,
+      shift: e.shiftKey,
       button: e.button
     };
 
     if (state.pointers.size === 1) {
       canvas.style.cursor = "grabbing";
-      state.panStart = {
-        x: e.clientX,
-        y: e.clientY,
-        rightOffset: state.rightOffset,
-        yPan: state.yPan,
-        stepPx: stepPxScreen()
-      };
+
+      // Shift => Y pan mode
+      if (e.shiftKey) {
+        const vwin = getWindowBarsVirtual();
+        const autoRange = computeAutoPriceRange(vwin);
+        const viewRange = computeViewPriceRange(autoRange);
+        const geo = state.geo ?? buildGeo(vwin, viewRange);
+
+        if (state.autoY) { state.autoY = false; $("autoY").checked = false; }
+
+        state.yPanStart = {
+          y: e.clientY,
+          yOffset: state.yOffset,
+          pricePerPx: geo.pricePerPx,
+          autoCenter: (autoRange.min + autoRange.max)/2
+        };
+        state.panStart = null;
+      } else {
+        // X pan mode (TV-like)
+        state.panStart = { x: e.clientX, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+        state.yPanStart = null;
+      }
+
       state.pinchStart = null;
       state.cross.on = true;
     } else if (state.pointers.size === 2) {
@@ -1470,6 +1587,7 @@
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       state.pinchStart = { dist, visibleBars: state.visibleBars };
       state.panStart = null;
+      state.yPanStart = null;
       state.cross.on = false;
     }
   });
@@ -1480,62 +1598,45 @@
 
     applySettingsFromUI();
 
-    // pinch zoom
+    // pinch (2 fingers)
     if (state.pointers.size === 2 && state.pinchStart) {
       const pts = [...state.pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       const ratio = dist / Math.max(1, state.pinchStart.dist);
-      const newVis = clamp(Math.round(state.pinchStart.visibleBars / ratio), 20, 600);
+      const newVis = clamp(Math.round(state.pinchStart.visibleBars / ratio), 20, 700);
       state.visibleBars = newVis;
       $("visibleBars").value = String(newVis);
       return;
     }
 
-    // ===== TradingView-like pan (default X+Y together)
+    // Y pan (Shift+Drag)
+    if (state.pointers.size === 1 && state.yPanStart) {
+      const dy = e.clientY - state.yPanStart.y;
+      // drag up => show higher prices => offset increases
+      state.yOffset = state.yPanStart.yOffset + (-dy) * state.yPanStart.pricePerPx;
+      return;
+    }
+
+    // X pan (TV-like)
     if (state.pointers.size === 1 && state.panStart) {
       const dx = e.clientX - state.panStart.x;
-      const dy = e.clientY - state.panStart.y;
-
-      const win = getWindowBars();
-      if (win.bars.length >= 2) {
-        const pr = computePriceRange(win.bars);
-        const geo = state.geo ?? buildGeo(win.bars, pr);
-        const ptsPerPx = (pr.max - pr.min) / Math.max(1, (geo.plotY1 - geo.plotY0));
-
-        // yPan updates in price units (allows emptiness down/up)
-        const newYPan = state.panStart.yPan + (dy * ptsPerPx);
-
-        // x pan in bars
-        const barsDelta = Math.round(-dx / Math.max(2, state.panStart.stepPx));
-        const newOffset = state.panStart.rightOffset + barsDelta;
-
-        // Axis lock:
-        // Shift = only Y
-        // Ctrl  = only X
-        if (e.shiftKey && !e.ctrlKey) {
-          state.yPan = roundTo(newYPan, state.tickSize);
-          $("yPan").value = String(state.yPan.toFixed(2));
-        } else if (e.ctrlKey && !e.shiftKey) {
-          state.rightOffset = newOffset;
-          clampOffset();
-        } else {
-          // default: both axes
-          state.yPan = roundTo(newYPan, state.tickSize);
-          $("yPan").value = String(state.yPan.toFixed(2));
-          state.rightOffset = newOffset;
-          clampOffset();
-        }
-      }
+      // TV-like: drag right => go to past (rightOffset increases)
+      const barsDelta = Math.round(dx / Math.max(2, state.panStart.stepPx));
+      state.rightOffset = state.panStart.rightOffset + barsDelta;
+      clampOffset();
     }
 
     // crosshair update
     const pt = canvasPointFromClient(e);
-    const win = getWindowBars();
-    if (win.bars.length >= 2) {
-      const pr = computePriceRange(win.bars);
-      const geo = state.geo ?? buildGeo(win.bars, pr);
-      const idx = idxFromX(pt.x, win, geo);
+    const vwin = getWindowBarsVirtual();
+    if (vwin.n >= 2) {
+      const autoRange = computeAutoPriceRange(vwin);
+      const pr = computeViewPriceRange(autoRange);
+      const geo = state.geo ?? buildGeo(vwin, pr);
+
+      const idx = idxFromX(pt.x, vwin, geo);
       const price = priceFromY(pt.y, pr, geo);
+
       state.cross.x = pt.x;
       state.cross.y = pt.y;
       state.cross.idx = idx;
@@ -1545,17 +1646,18 @@
   });
 
   function handleTap(clientX, clientY, mods) {
-    const win = getWindowBars();
-    if (win.bars.length < 2) return;
+    const vwin = getWindowBarsVirtual();
+    if (vwin.n < 2) return;
 
-    const pr = computePriceRange(win.bars);
-    const geo = state.geo ?? buildGeo(win.bars, pr);
+    const autoRange = computeAutoPriceRange(vwin);
+    const pr = computeViewPriceRange(autoRange);
+    const geo = state.geo ?? buildGeo(vwin, pr);
 
     const pt = canvasPointFromClient({ clientX, clientY });
 
     if (pt.x < geo.plotX0 || pt.x > geo.plotX1 || pt.y < geo.plotY0 || pt.y > geo.plotY1) return;
 
-    const idx = idxFromX(pt.x, win, geo);
+    const idx = idxFromX(pt.x, vwin, geo);
     const price = priceFromY(pt.y, pr, geo);
     if (idx == null) return;
 
@@ -1572,7 +1674,7 @@
 
     // Drawing tools
     if (state.tool === "erase") {
-      const k = hitTestDrawing(pt, win, pr, geo);
+      const k = hitTestDrawing(pt, vwin, pr, geo);
       if (k >= 0) state.drawings.splice(k, 1);
       state.pending = null;
       return;
@@ -1610,21 +1712,25 @@
       canvas.style.cursor = "grab";
       state.panStart = null;
       state.pinchStart = null;
+      state.yPanStart = null;
       if (state.tool !== "cursor") state.cross.on = false;
     } else if (state.pointers.size === 1) {
       const only = [...state.pointers.values()][0];
-      state.panStart = {
-        x: only.x,
-        y: only.y,
-        rightOffset: state.rightOffset,
-        yPan: state.yPan,
-        stepPx: stepPxScreen()
-      };
+      state.panStart = { x: only.x, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+      state.yPanStart = null;
       state.pinchStart = null;
     }
   }
   canvas.addEventListener("pointerup", pointerUpCommon);
   canvas.addEventListener("pointercancel", pointerUpCommon);
+
+  // Double-click toggles AutoY
+  canvas.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    state.autoY = !state.autoY;
+    $("autoY").checked = state.autoY;
+    if (state.autoY) { state.yScale = 1.0; state.yOffset = 0.0; }
+  });
 
   // ===== Buttons / UI
   function buyMarket() { syncLeftFromTop(); marketOrder("buy", getQty(), getSlip()); }
@@ -1639,6 +1745,12 @@
     if (e.target.tagName !== "INPUT") $("follow").checked = !$("follow").checked;
     state.follow = $("follow").checked;
     if (state.follow) state.rightOffset = 0;
+  });
+
+  $("autoYWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("autoY").checked = !$("autoY").checked;
+    state.autoY = $("autoY").checked;
+    if (state.autoY) { state.yScale = 1.0; state.yOffset = 0.0; }
   });
 
   $("tool").addEventListener("change", () => {
@@ -1670,7 +1782,6 @@
 
   $("cancelAll").addEventListener("click", cancelAll);
   $("flatten").addEventListener("click", flatten);
-
   $("clearLog").addEventListener("click", () => $("log").innerHTML = "");
 
   $("pause").addEventListener("click", () => {
@@ -1678,6 +1789,29 @@
     $("pause").textContent = state.paused ? "▶️ Resume" : "⏸️ Pause";
     log(state.paused ? "⏸️ Market paused" : "▶️ Market resumed", "warn");
   });
+
+  function seedHistory(targetBars=240) {
+    // warm up so chart is not empty + less "before/after open" shock
+    state.bars = [];
+    state.lastBarIdx = 0;
+    state._curBar = null;
+    state._barCounter = 0;
+
+    const savePaused = state.paused;
+    state.paused = true;
+
+    // create enough ticks to form targetBars
+    ensureCurrentBar();
+    const ticksNeed = Math.max(1, targetBars) * state.barTicks;
+
+    // start with tiny velocity to avoid spike
+    state.velocity *= 0.1;
+
+    for (let i=0; i<ticksNeed; i++) stepSimulationOnce();
+
+    // keep current forming bar too
+    state.paused = savePaused;
+  }
 
   $("reset").addEventListener("click", () => {
     state.price = 17000;
@@ -1687,28 +1821,31 @@
     state.avg = null;
 
     state.limits = [];
-    state.bars = [];
-    state.lastBarIdx = 0;
-    state._curBar = null;
-    state._barCounter = 0;
+    state.nextOrderId = 1;
 
     state.rightOffset = 0;
-    state.yPan = 0;
-    $("yPan").value = "0";
-
     $("follow").checked = true;
     state.follow = true;
 
     state.drawings = [];
     state.pending = null;
 
+    // reset Y
+    state.autoY = true;
+    $("autoY").checked = true;
+    state.yScale = 1.0;
+    state.yOffset = 0.0;
+
     $("limitPrice").value = state.price.toFixed(2);
     $("ladderStart").value = state.price.toFixed(2);
+
+    applySettingsFromUI();
+    seedHistory(240);
 
     ordersDirty = true;
     statsDirty = true;
 
-    log("🔁 Reset done", "warn");
+    log("🔁 Reset done (history warmed)", "warn");
   });
 
   $("stepTick").addEventListener("click", () => {
@@ -1741,16 +1878,26 @@
   $("closeHelp").addEventListener("click", closeHelp);
   helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) closeHelp(); });
 
+  // session selector
+  $("session").addEventListener("change", () => {
+    setSession($("session").value, true);
+    // optional: small re-warm to reflect new regime without empty start
+    applySettingsFromUI();
+    seedHistory(200);
+    log(`Session changed → ${(SESSIONS[state.sessionKey]||SESSIONS.nykz).name}`, "warn");
+  });
+
   // settings listeners
-  ["session","impact","simHzBase","tick","spread","timeframe","visibleBars","futureBars","follow"].forEach(id => {
+  ["impact","simHzBase","tick","spread","timeframe","visibleBars","futureBars","follow","autoY"].forEach(id => {
     $(id).addEventListener("change", () => {
       applySettingsFromUI();
       if (state.follow) state.rightOffset = 0;
+      if (id === "timeframe") { seedHistory(220); }
       statsDirty = true;
     });
   });
 
-  // Hotkeys (sandbox)
+  // Hotkeys
   window.addEventListener("keydown", (e) => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
@@ -1782,22 +1929,26 @@
     if (k === "5") { $("tool").value="erase";  $("tool").dispatchEvent(new Event("change")); return; }
   });
 
-  // ===== UI throttle (10 fps for DOM)
+  // ===== UI throttle (DOM)
   setInterval(() => {
     if (statsDirty) { renderStats(); statsDirty = false; }
     if (ordersDirty) { renderOrdersTable(); ordersDirty = false; }
   }, 100);
 
   function init() {
-    // default session preset
-    $("session").value = state.session;
-    applySettingsFromUI();
-
     $("limitPrice").value = state.price.toFixed(2);
     $("ladderStart").value = state.price.toFixed(2);
 
+    // initial session
+    $("session").value = state.sessionKey;
+    setSession(state.sessionKey, false);
+
+    applySettingsFromUI();
     resizeCanvasToDisplaySize();
-    log("Готово: TV-like pan (X+Y) + future space + infinite vertical emptiness. Liquidity removed.", "warn");
+
+    seedHistory(240);
+
+    log("Готово: TV-like pan/zoom + пустота справа/снизу (Shift-pan) + sessions вместо vol.", "warn");
   }
 
   let lastTs = performance.now();
@@ -1808,6 +1959,9 @@
     lastTs = ts;
 
     applySettingsFromUI();
+
+    state.simHz = clamp(state.p.simHzBase * state.speedMul, 10, 600);
+    state.barTicks = timeframeToBarTicks($("timeframe").value, state.simHz);
 
     const step = 1 / state.simHz;
     if (!state.paused) {
