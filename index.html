@@ -3,341 +3,653 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Market Sandbox — Clean</title>
+  <title>Market Sandbox — TV-like Chart (Sandbox PC)</title>
   <style>
     :root{
-      --bg:#070b10; --panel:#0d1320; --panel2:#0b111b;
-      --text:#e7eef7; --muted:#9fb0c3; --line:#223044;
-      --good:#3ddc97; --bad:#ff5b6e; --blue:#64b5ff; --warn:#ffcf5b;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 14px;
+      --bg:#0b0f14; --text:#e7eef7; --muted:#9fb0c3; --line:#223044;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 14px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:var(--sans); color:var(--text);
-      background: radial-gradient(1200px 800px at 10% 10%, #0e1830 0%, var(--bg) 45%) fixed;
+      margin:0; font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 10% 10%, #101a2a 0%, var(--bg) 45%) fixed;
+      color:var(--text);
+    }
+
+    header{
+      padding:12px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,36,.88), rgba(11,15,20,.58));
+      position:sticky; top:0; z-index:4;
+      backdrop-filter: blur(8px);
+    }
+    header .row{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      max-width:1480px; margin:0 auto;
+      flex-wrap:wrap;
+    }
+    .title{display:flex; flex-direction:column; gap:2px;}
+    .title h1{font-size:16px; margin:0; font-weight:900; letter-spacing:.2px;}
+    .title .sub{font-size:12px; color:var(--muted); line-height:1.25;}
+
+    .pill{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 10px;
+      background: rgba(17,24,36,.75);
+      border:1px solid rgba(34,48,68,.9);
+      border-radius:999px;
+      box-shadow: var(--shadow);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text); font-weight:900}
+
+    main{
+      max-width:1480px; margin:0 auto; padding:14px;
+      display:grid; grid-template-columns: 360px 1fr 360px;
+      gap:14px;
+    }
+    body.simple main{ grid-template-columns: 1fr; }
+    body.simple .leftSticky, body.simple .rightSticky{ display:none; }
+
+    .card{
+      background: linear-gradient(180deg, rgba(17,24,36,.92), rgba(15,22,32,.84));
+      border:1px solid rgba(34,48,68,.9);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
       overflow:hidden;
     }
-
-    .topbar{
-      position:fixed; inset:0 0 auto 0; height:64px;
-      display:flex; align-items:center; gap:10px;
+    .card h2{
+      margin:0;
       padding:10px 12px;
-      background: linear-gradient(180deg, rgba(13,19,32,.92), rgba(7,11,16,.70));
-      border-bottom:1px solid rgba(34,48,68,.85);
-      backdrop-filter: blur(10px);
-      z-index:5;
+      font-size:13px;
+      letter-spacing:.2px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+      color:#dce8f7;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
-    .brand{
-      display:flex; flex-direction:column; gap:2px; padding-right:8px;
-      min-width: 220px;
-    }
-    .brand .t{font-weight:900; letter-spacing:.2px; font-size:14px;}
-    .brand .s{color:var(--muted); font-size:12px; line-height:1.1}
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(34,48,68,.9);
-      background: rgba(11,15,20,.45);
-      box-shadow: var(--shadow);
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-      user-select:none;
-    }
-    .chip b{color:var(--text); font-weight:900; font-family:var(--mono)}
-    .grow{flex:1}
-    .row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+    .card h2 small{color:var(--muted); font-weight:800; font-size:11px;}
+    .card .content{padding:10px;}
 
-    .btn{
-      border:none; cursor:pointer; user-select:none;
-      padding:9px 12px; border-radius:12px;
-      background: rgba(159,176,195,.10);
-      border:1px solid rgba(159,176,195,.28);
-      color:rgba(231,238,247,.96);
-      font-weight:900; letter-spacing:.2px;
-      transition: transform .06s ease, filter .15s ease;
-      display:inline-flex; align-items:center; gap:8px;
-      white-space:nowrap;
-    }
-    .btn:hover{filter:brightness(1.08)}
-    .btn:active{transform:translateY(1px)}
-    .btn.good{background: rgba(61,220,151,.16); border-color: rgba(61,220,151,.45); color:#bdf8de;}
-    .btn.bad{background: rgba(255,91,110,.14); border-color: rgba(255,91,110,.45); color:#ffd0d7;}
-    .btn.blue{background: rgba(100,181,255,.14); border-color: rgba(100,181,255,.50); color:#d4ebff;}
-    .btn.warn{background: rgba(255,207,91,.12); border-color: rgba(255,207,91,.38); color:#ffe8b2;}
-    .btn.small{padding:8px 10px; border-radius:11px; font-size:12px;}
+    .grid{display:grid; gap:10px;}
+    .grid.cols2{grid-template-columns:1fr 1fr;}
+    .grid.cols3{grid-template-columns:1fr 1fr 1fr;}
 
-    .field{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(34,48,68,.85);
-      background: rgba(11,15,20,.40);
-      color:var(--muted);
-      font-size:12px;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .field input{
-      width:72px;
-      padding:7px 8px;
+    label{display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted);}
+
+    input, select, button{font-family:inherit;}
+    input, select{
+      width:100%;
+      padding:9px 10px;
       border-radius:10px;
       border:1px solid rgba(34,48,68,.9);
-      background: rgba(7,11,16,.55);
+      background: rgba(11,15,20,.55);
       color: var(--text);
       outline:none;
-      font-family: var(--mono);
-      font-size:12px;
     }
-    .field input:focus{
+    input:focus, select:focus{
       border-color: rgba(100,181,255,.55);
       box-shadow: 0 0 0 3px rgba(100,181,255,.12);
     }
 
-    .speed{
-      display:inline-flex; gap:6px; padding:6px;
+    .btn{
+      border:none;
       border-radius:12px;
-      border:1px solid rgba(34,48,68,.85);
-      background: rgba(11,15,20,.40);
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+      letter-spacing:.2px;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      white-space:nowrap;
+      background: rgba(159,176,195,.12);
+      color:#e7eef7;
+      border:1px solid rgba(159,176,195,.35);
+      transition: transform .06s ease, filter .15s ease;
     }
-    .speed button{
+    .btn:hover{filter: brightness(1.08);}
+    .btn:active{transform: translateY(1px);}
+    .btn.good{background: rgba(61,220,151,.16); color: #bdf8de; border:1px solid rgba(61,220,151,.45);}
+    .btn.bad{background: rgba(255,91,110,.14); color: #ffd0d7; border:1px solid rgba(255,91,110,.45);}
+    .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
+    .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
+    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px;}
+
+    .row{display:flex; gap:10px; align-items:center;}
+    .row.wrap{flex-wrap:wrap;}
+
+    .sep{height:1px; background: rgba(34,48,68,.7); margin: 12px 0;}
+    .mono{font-family:var(--mono)}
+    .muted{color:var(--muted)}
+    .hint{font-size:12px; color: var(--muted); line-height:1.35;}
+
+    .stat{
+      display:flex; flex-direction:column; gap:2px;
+      padding:9px 10px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      min-width: 0;
+    }
+    .stat .k{font-size:11px; color:var(--muted);}
+    .stat .v{font-family:var(--mono); font-size:13px; font-weight:900; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+    .chartTopBar{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+    }
+    .chartTopBar .left{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .chartTopBar .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
+    .miniField{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      color: var(--muted);
+      font-size:12px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .miniField input{width:86px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .miniField select{width:180px; padding:8px 8px; border-radius:10px; font-size:12px;}
+
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      color: var(--muted);
+      font-size:12px;
+      user-select:none;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .toggle input{width:auto; transform: translateY(1px);}
+
+    .speedGroup{
+      display:flex; align-items:center; gap:6px;
+      padding:6px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+    }
+    .speedBtn{
       border:none; cursor:pointer;
       padding:7px 10px;
       border-radius:10px;
+      font-weight:900; font-size:12px;
       background: rgba(159,176,195,.10);
       border:1px solid rgba(159,176,195,.25);
       color: rgba(231,238,247,.92);
-      font-weight:900;
-      font-size:12px;
     }
-    .speed button.active{
+    .speedBtn.active{
       background: rgba(100,181,255,.16);
       border-color: rgba(100,181,255,.55);
       color: rgba(212,235,255,.98);
     }
 
-    .stage{
-      position:fixed;
-      inset:64px 0 0 0;
-      padding: 10px 12px 12px;
-    }
+    .chartWrap{height: 680px; padding: 10px 12px 12px;}
     canvas{
       width:100%;
       height:100%;
       display:block;
-      border-radius: 16px;
-      border:1px solid rgba(34,48,68,.85);
-      background: rgba(5,8,12,.72);
-      box-shadow: var(--shadow);
-      touch-action:none;
-      cursor:grab;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(5,8,12,.65);
+      touch-action: none;
+      cursor: grab;
     }
 
-    .hintDock{
-      position:fixed;
-      left:12px;
-      bottom:12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      z-index:6;
+    table{width:100%; border-collapse:collapse; font-size:12px;}
+    thead th{
+      text-align:left; color: var(--muted); font-size:11px; font-weight:900;
+      padding:10px 8px; border-bottom:1px solid rgba(34,48,68,.7);
+      position: sticky; top: 0;
+      background: rgba(15,22,32,.96);
+      backdrop-filter: blur(6px);
+      z-index: 1;
     }
-    .hint{
-      padding:8px 10px;
-      border-radius: 12px;
-      border:1px solid rgba(34,48,68,.85);
-      background: rgba(11,15,20,.45);
+    tbody td{
+      padding:9px 8px; border-bottom:1px solid rgba(34,48,68,.35);
+      vertical-align:top; font-family: var(--mono);
+    }
+    tbody tr:hover{background: rgba(100,181,255,.06);}
+
+    .tag{
+      font-family: var(--mono);
+      font-size:11px;
+      padding:3px 6px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,68,.8);
+      background: rgba(11,15,20,.35);
       color: var(--muted);
-      font-size:12px;
-      user-select:none;
-      backdrop-filter: blur(8px);
     }
+    .tag.buy{border-color: rgba(61,220,151,.45); color:#bdf8de; background: rgba(61,220,151,.10);}
+    .tag.sell{border-color: rgba(255,91,110,.45); color:#ffd0d7; background: rgba(255,91,110,.10);}
+
+    .log{
+      height: 240px;
+      overflow:auto;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      padding:10px;
+      font-family: var(--mono);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .log div{padding:3px 0; border-bottom:1px dashed rgba(34,48,68,.35);}
+    .log div:last-child{border-bottom:none;}
+
+    .rightSticky,.leftSticky{
+      position:sticky; top:74px;
+      height: calc(100vh - 88px);
+      overflow:auto;
+      padding-bottom: 16px;
+    }
+
     .kbd{
       font-family: var(--mono);
-      padding: 1px 6px;
+      font-size: 11px;
+      padding: 2px 6px;
       border-radius: 8px;
-      border:1px solid rgba(34,48,68,.95);
-      background: rgba(7,11,16,.65);
-      color: rgba(231,238,247,.96);
-      margin: 0 2px;
-      white-space:nowrap;
+      border:1px solid rgba(34,48,68,.9);
+      background: rgba(11,15,20,.55);
+      color: rgba(231,238,247,.95);
     }
 
-    .toast{
-      position:fixed;
-      right:12px;
-      bottom:12px;
-      width:min(520px, calc(100vw - 24px));
-      max-height: 40vh;
-      overflow:auto;
-      border-radius: 16px;
-      border:1px solid rgba(34,48,68,.85);
-      background: rgba(11,15,20,.45);
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow);
-      font-family: var(--mono);
-      font-size:12px;
-      color: rgba(231,238,247,.92);
-      padding:10px;
-      z-index:7;
+    .overlayHelp{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      z-index: 10;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
     }
-    .toast .line{padding:4px 0; border-bottom:1px dashed rgba(34,48,68,.40);}
-    .toast .line:last-child{border-bottom:none;}
-    .g{color:#bdf8de}
-    .r{color:#ffd0d7}
-    .y{color:#ffe8b2}
+    .overlayHelp.open{display:flex;}
+    .helpCard{
+      max-width: 820px;
+      width: 100%;
+      border-radius: 16px;
+      border:1px solid rgba(34,48,68,.95);
+      background: linear-gradient(180deg, rgba(17,24,36,.96), rgba(11,15,20,.92));
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .helpGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .helpItem{
+      border:1px solid rgba(34,48,68,.7);
+      border-radius: 12px;
+      background: rgba(11,15,20,.35);
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .helpItem b{ color: var(--text); }
+
+    @media (max-width: 1220px){
+      main{grid-template-columns: 1fr;}
+      .rightSticky,.leftSticky{position:static; height:auto;}
+      .chartWrap{height:420px;}
+      .miniField input{width:110px;}
+      .miniField select{width:210px;}
+      body.simple .leftSticky, body.simple .rightSticky{ display:none; }
+    }
   </style>
 </head>
+
 <body>
-
-  <div class="topbar">
-    <div class="brand">
-      <div class="t">Market Sandbox — Clean 📈</div>
-      <div class="s">Плавный pan/zoom, не пусто, без advanced. Ctrl+Click=Limit, Alt+Click=Cancel near.</div>
+<header>
+  <div class="row">
+    <div class="title">
+      <h1>Market Sandbox — TV-like Chart 📈</h1>
+      <div class="sub">
+        Sandbox (рефлексы): Wheel=zoom (по курсору), Drag=pan, Ctrl+Click=Limit, Alt+Click=Cancel near, <span class="kbd">?</span>=help
+      </div>
     </div>
-
-    <div class="row">
-      <button class="btn good" id="buyBtn" title="B">⬆ Buy</button>
-      <button class="btn bad" id="sellBtn" title="S">⬇ Sell</button>
-
-      <div class="field">qty <input id="qty" type="number" min="1" step="1" value="1"></div>
-      <div class="field">slip <input id="slip" type="number" min="0" step="1" value="1"></div>
-
-      <button class="btn warn" id="flattenBtn" title="X">🧯 Flatten</button>
-      <button class="btn" id="cancelAllBtn" title="C">🧹 Cancel</button>
+    <div class="row wrap">
+      <div class="pill">Инструмент: <b id="sym">NQ (sim)</b></div>
+      <div class="pill">Цена: <b id="hdrPrice">—</b></div>
+      <div class="pill">Позиция: <b id="hdrPos">0</b></div>
+      <div class="pill">Flow: <b id="hdrFlow">0</b></div>
+      <div class="pill">uPnL: <b id="hdrPnL">—</b></div>
+      <div class="pill">Speed: <b id="hdrSpeed">1.0x</b></div>
     </div>
+  </div>
+</header>
 
-    <div class="grow"></div>
+<main>
+  <!-- LEFT -->
+  <div class="leftSticky">
+    <section class="card">
+      <h2>Ордера <small>mkt + limit</small></h2>
+      <div class="content grid">
+        <div class="grid cols2">
+          <label>Кол-во (qty)<input id="qty" type="number" step="1" min="1" value="1" /></label>
+          <label>Проскальзывание (ticks)<input id="slip" type="number" step="1" min="0" value="1" /></label>
+        </div>
 
-    <div class="row">
-      <button class="btn blue small" id="pauseBtn" title="Space">⏸ Pause</button>
-      <button class="btn blue small" id="stepBtn" title="Step 1 tick (paused)">⏭ Step</button>
+        <div class="sep"></div>
 
-      <div class="speed" title="Speed: 1..5">
-        <button class="active" data-sp="0.5">0.5x</button>
-        <button data-sp="1">1x</button>
-        <button data-sp="2">2x</button>
-        <button data-sp="5">5x</button>
-        <button data-sp="10">10x</button>
+        <div class="grid cols2">
+          <label>Тип лимитки
+            <select id="limitSide">
+              <option value="buy">Limit Buy</option>
+              <option value="sell">Limit Sell</option>
+            </select>
+          </label>
+          <label>Цена лимитки<input id="limitPrice" type="number" step="0.25" value="0" /></label>
+        </div>
+        <button class="btn neutral" id="placeLimit">➕ Поставить Limit</button>
+
+        <div class="sep"></div>
+
+        <div class="grid cols3">
+          <label>Лестница: side
+            <select id="ladderSide"><option value="buy">Buy ladder</option><option value="sell">Sell ladder</option></select>
+          </label>
+          <label>Levels<input id="ladderLevels" type="number" step="1" min="1" value="8" /></label>
+          <label>Step (pts)<input id="ladderStep" type="number" step="0.25" min="0.25" value="5" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Start price<input id="ladderStart" type="number" step="0.25" value="0" /></label>
+          <label>Qty per level<input id="ladderQty" type="number" step="1" min="1" value="1" /></label>
+        </div>
+        <button class="btn warn" id="placeLadder">🪜 Поставить лестницу</button>
+
+        <div class="sep"></div>
+
+        <div class="grid cols2">
+          <button class="btn" id="cancelAll">🧹 Cancel All</button>
+          <button class="btn" id="flatten">🧯 Flatten (mkt)</button>
+        </div>
+
+        <div class="hint">
+          ПК-хак: <span class="kbd">Ctrl+ЛКМ</span> по графику = Buy Limit по цене, <span class="kbd">Ctrl+ПКМ</span> = Sell Limit.
+          <span class="kbd">Alt+клик</span> = отменить ближайшую лимитку.
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px">
+      <h2>Движок рынка <small>sandbox params</small></h2>
+      <div class="content grid">
+        <div class="grid cols2">
+          <label>Volatility (1–20)<input id="vol" type="number" step="1" min="1" max="20" value="8" /></label>
+          <label>Liquidity (1–20)<input id="liq" type="number" step="1" min="1" max="20" value="10" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
+          <label>Base ticks/sec (5–120)<input id="simHzBase" type="number" step="1" min="5" max="120" value="60" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Tick size<input id="tick" type="number" step="0.01" min="0.01" value="0.25" /></label>
+          <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
+        </div>
+
+        <div class="grid cols2">
+          <label>Таймфрейм (сим)
+            <select id="timeframe">
+              <option value="1s">1s</option>
+              <option value="5s" selected>5s</option>
+              <option value="15s">15s</option>
+              <option value="1m">1m</option>
+              <option value="5m">5m</option>
+              <option value="15m">15m</option>
+            </select>
+          </label>
+          <label>Свечей на экране<input id="visibleBars" type="number" step="5" min="20" max="600" value="140" /></label>
+        </div>
+
+        <div class="grid cols2">
+          <button class="btn neutral" id="pause">⏸️ Pause</button>
+          <button class="btn neutral" id="reset">🔁 Reset</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CENTER -->
+  <section class="card">
+    <h2>График <small>Sandbox mode</small></h2>
+
+    <div class="chartTopBar">
+      <div class="left">
+        <button class="btn good" id="buyMktTop" title="Hotkey: B">⬆️ Buy MKT</button>
+        <button class="btn bad" id="sellMktTop" title="Hotkey: S">⬇️ Sell MKT</button>
+
+        <div class="miniField">qty <input id="qtyTop" type="number" step="1" min="1" value="1" /></div>
+        <div class="miniField">slip <input id="slipTop" type="number" step="1" min="0" value="1" /></div>
+
+        <div class="toggle" id="followWrap" title="Hotkey: F">
+          <input id="follow" type="checkbox" checked />
+          <span>Auto-follow</span>
+        </div>
+
+        <div class="speedGroup" title="Speed presets">
+          <button class="speedBtn active" data-speed="0.5">0.5x</button>
+          <button class="speedBtn" data-speed="1">1x</button>
+          <button class="speedBtn" data-speed="2">2x</button>
+          <button class="speedBtn" data-speed="5">5x</button>
+          <button class="speedBtn" data-speed="10">10x</button>
+        </div>
+
+        <button class="btn small neutral" id="stepTick" title="Step 1 tick (works when paused)">⏭ Step</button>
+
+        <div class="miniField">
+          Tool
+          <select id="tool" title="Hotkeys: 1-5">
+            <option value="cursor" selected>Cursor</option>
+            <option value="trend">Trendline</option>
+            <option value="rect">Rectangle zone</option>
+            <option value="hline">Horizontal line</option>
+            <option value="erase">Eraser (tap item)</option>
+          </select>
+        </div>
+
+        <button class="btn small" id="undo" title="Ctrl+Z">↩ Undo</button>
+        <button class="btn small" id="clearDraw">🧼 Clear</button>
+
+        <button class="btn small neutral" id="toggleMode" title="Toggle Simple/Advanced">🧩 Simple</button>
+        <button class="btn small" id="openHelp" title="Hotkey: ?">❔ Help</button>
       </div>
 
-      <button class="btn small" id="followBtn" title="F">🎯 Follow: ON</button>
-      <button class="btn small" id="resetBtn" title="R">🔁 Reset</button>
+      <div class="right">
+        <div class="miniField mono">
+          Ctrl+Click=Limit • Alt+Click=Cancel near • Wheel=Zoom (anchor) • Drag=Pan
+        </div>
+      </div>
+    </div>
 
-      <div class="chip">Last: <b id="hudLast">—</b></div>
-      <div class="chip">Pos: <b id="hudPos">0</b></div>
-      <div class="chip">uPnL: <b id="hudPnL">—</b></div>
-      <div class="chip">Speed: <b id="hudSp">1.0x</b></div>
+    <div class="chartWrap">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="content">
+      <div class="row wrap">
+        <div class="stat"><div class="k">Last</div><div class="v" id="stLast">—</div></div>
+        <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
+        <div class="stat"><div class="k">Net Pos</div><div class="v" id="stPos">0</div></div>
+        <div class="stat"><div class="k">Avg</div><div class="v" id="stAvg">—</div></div>
+        <div class="stat"><div class="k">Flow</div><div class="v" id="stFlow">0</div></div>
+        <div class="stat"><div class="k">uPnL</div><div class="v" id="stPnL">—</div></div>
+        <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
+      </div>
+      <div class="hint" style="margin-top:10px">
+        Инструменты рисования: Trend/Rect = 2 клика, HLine = 1 клик, Eraser = клик по объекту. (Не бэктест, просто тренажёр рук и реакции.)
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <div class="rightSticky">
+    <section class="card">
+      <h2>Активные лимитки <small>click → cancel</small></h2>
+      <div class="content" style="padding:0">
+        <div style="max-height:320px; overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px">Side</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Left</th>
+                <th style="width:90px">ID</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px">
+      <h2>Лог <small>fills/cancel</small></h2>
+      <div class="content">
+        <div class="log" id="log"></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn small" id="clearLog">🧽 Clear log</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Help overlay -->
+<div class="overlayHelp" id="helpOverlay">
+  <div class="helpCard">
+    <div class="row" style="justify-content:space-between; align-items:center;">
+      <div style="font-weight:900;">Hotkeys / Controls</div>
+      <button class="btn small" id="closeHelp">✖ Close</button>
+    </div>
+    <div class="helpGrid">
+      <div class="helpItem"><b>B</b> = Buy Market • <b>S</b> = Sell Market</div>
+      <div class="helpItem"><b>Space</b> = Pause/Resume • <b>Step</b> = 1 tick on pause</div>
+      <div class="helpItem"><b>F</b> = Auto-follow on/off</div>
+      <div class="helpItem"><b>C</b> = Cancel All • <b>X</b> = Flatten</div>
+      <div class="helpItem"><b>Ctrl+Z</b> = Undo drawing</div>
+      <div class="helpItem"><b>1-5</b> = Tools (Cursor/Trend/Rect/HLine/Eraser)</div>
+      <div class="helpItem"><b>Ctrl+Click</b> chart = Place Limit (LMB=BUY, RMB=SELL)</div>
+      <div class="helpItem"><b>Alt+Click</b> chart = Cancel nearest limit by price</div>
+      <div class="helpItem"><b>+</b>/<b>-</b> = qty +/-</div>
+      <div class="helpItem"><b>?</b> = open/close help</div>
+    </div>
+    <div class="hint" style="margin-top:10px">
+      Это sandbox: цель — скорость решений/моторика/работа с лимитками и панорамированием, без “исторических прогонов”.
     </div>
   </div>
-
-  <div class="stage">
-    <canvas id="cv"></canvas>
-  </div>
-
-  <div class="hintDock">
-    <div class="hint">
-      Drag = pan • Wheel = zoom (по курсору) • Shift+Wheel = скролл • DoubleClick = reset view
-    </div>
-    <div class="hint">
-      <span class="kbd">B</span>/<span class="kbd">S</span> market • <span class="kbd">Space</span> pause • <span class="kbd">F</span> follow •
-      <span class="kbd">C</span> cancel • <span class="kbd">X</span> flatten • <span class="kbd">R</span> reset • <span class="kbd">1..5</span> speed
-    </div>
-    <div class="hint">
-      <span class="kbd">Ctrl+LMB</span> Buy Limit • <span class="kbd">Ctrl+RMB</span> Sell Limit • <span class="kbd">Alt+Click</span> cancel nearest
-    </div>
-  </div>
-
-  <div class="toast" id="log"></div>
+</div>
 
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  const cv = $("cv");
-  const ctx = cv.getContext("2d", { alpha: true });
-
-  const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
-  const roundTo = (x, step) => Math.round(x/step)*step;
   const now = () => new Date().toLocaleTimeString();
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const roundTo = (x, step) => Math.round(x / step) * step;
 
   const state = {
-    // market
-    tick: 0.25,
+    symbol: "NQ (sim)",
+    tickSize: 0.25,
     spreadTicks: 1,
-    vol: 8,
-    liq: 10,
+    volatility: 8,
+    liquidity: 10,
     impact: 8,
 
-    baseHz: 60,
-    speed: 1,
+    baseSimHz: 60,
+    speedMul: 1,
+    simHz: 60,
+
     paused: false,
 
     price: 17000,
-    v: 0,
+    velocity: 0,
     flow: 0,
     flowDecay: 0.94,
 
-    // position
     pos: 0,
     avg: null,
 
-    // limits
-    nextId: 1,
+    bars: [],
+    lastBarIdx: 0,
+    barTicks: 300,
+    _barCounter: 0,
+    _curBar: null,
+
+    nextOrderId: 1,
     limits: [],
 
-    // candles
-    barSeconds: 5,
-    barTicks: 300,
-    curBar: null,
-    curTicks: 0,
-    bars: [],
-
-    // camera (TV-like)
+    visibleBars: 140,
+    rightOffset: 0,
     follow: true,
-    barsPerScreen: 160,
-    center: 0, // float bar index center
 
-    // interaction
-    dragging: false,
-    dragStart: null,
-    cross: { on:false, x:0, y:0, idx:null, price:null }
+    pointers: new Map(),
+    panStart: null,
+    pinchStart: null,
+
+    geo: null,
+
+    cross: { on:false, x:0, y:0, idx:null, price:null },
+
+    tool: "cursor",
+    drawings: [],
+    pending: null,
   };
 
-  // ========= LOG
-  function log(msg, cls="") {
+  $("sym").textContent = state.symbol;
+
+  let ordersDirty = true;
+  let statsDirty  = true;
+  let cachedFontBody = null;
+
+  function log(msg, kind="") {
     const el = $("log");
     const line = document.createElement("div");
-    line.className = "line " + cls;
-    line.textContent = `[${now()}] ${msg}`;
+    line.innerHTML = `<span class="muted">[${now()}]</span> ${msg}`;
+    if (kind === "good") line.style.color = "#bdf8de";
+    if (kind === "bad")  line.style.color = "#ffd0d7";
+    if (kind === "warn") line.style.color = "#ffe8b2";
     el.prepend(line);
-    // keep last 40
-    while (el.children.length > 40) el.removeChild(el.lastChild);
   }
 
-  // ========= MARKET HELPERS
-  function simHz() { return clamp(state.baseHz * state.speed, 5, 600); }
-
-  function bidAsk() {
-    const spread = state.spreadTicks * state.tick;
-    return { bid: state.price - spread/2, ask: state.price + spread/2 };
+  function getBidAsk() {
+    const spread = state.spreadTicks * state.tickSize;
+    const mid = state.price;
+    return { bid: mid - spread/2, ask: mid + spread/2 };
   }
 
-  function upnl() {
+  function computeUPnL() {
     if (!state.pos || state.avg == null) return null;
     return (state.price - state.avg) * state.pos;
   }
 
-  function applyFill(side, qty, fillPrice, reason) {
+  function applyFill(side, qty, fillPrice, reason="") {
     const oldPos = state.pos;
     const newPos = oldPos + (side === "buy" ? qty : -qty);
 
     if (oldPos === 0) state.avg = fillPrice;
     else if (Math.sign(oldPos) === Math.sign(newPos) && newPos !== 0) {
-      const oldAbs = Math.abs(oldPos), newAbs = Math.abs(newPos);
+      const oldAbs = Math.abs(oldPos);
+      const newAbs = Math.abs(newPos);
       const addQty = newAbs - oldAbs;
       if (addQty > 0) state.avg = (state.avg * oldAbs + fillPrice * addQty) / newAbs;
     } else if (newPos === 0) state.avg = null;
@@ -346,700 +658,1030 @@
     state.pos = newPos;
     state.flow += (side === "buy" ? qty : -qty);
 
-    log(`${side.toUpperCase()} ${qty} @ ${fillPrice.toFixed(2)} (${reason})`, side === "buy" ? "g" : "r");
+    statsDirty = true;
+
+    const tag = side === "buy" ? "🟢" : "🔴";
+    log(`${tag} FILLED <span class="mono">${side.toUpperCase()}</span> qty=<span class="mono">${qty}</span> @ <span class="mono">${fillPrice.toFixed(2)}</span> <span class="muted">(${reason})</span>`,
+      side === "buy" ? "good" : "bad"
+    );
   }
 
-  function market(side, qty, slipTicks) {
-    const { bid, ask } = bidAsk();
-    const slip = slipTicks * state.tick;
+  function marketOrder(side, qty, slipTicks) {
+    const { bid, ask } = getBidAsk();
+    const slip = slipTicks * state.tickSize;
     const fill = side === "buy" ? (ask + slip) : (bid - slip);
-    applyFill(side, qty, fill, "MKT");
+    applyFill(side, qty, fill, "market");
   }
 
   function placeLimit(side, price, qty) {
-    price = roundTo(price, state.tick);
-    const id = state.nextId++;
-    state.limits.push({ id, side, price, qty, left: qty });
-    log(`+ LIMIT ${side.toUpperCase()} ${qty} @ ${price.toFixed(2)} (id=${id})`, "y");
+    price = roundTo(price, state.tickSize);
+    const id = state.nextOrderId++;
+    state.limits.push({ id, side, price, qty, left: qty, createdAt: Date.now() });
+    ordersDirty = true;
+    log(`➕ LIMIT <span class="mono">${side.toUpperCase()}</span> qty=<span class="mono">${qty}</span> @ <span class="mono">${price.toFixed(2)}</span> <span class="muted">(id=${id})</span>`, "warn");
+  }
+
+  function cancelOrder(id) {
+    const idx = state.limits.findIndex(o => o.id === id);
+    if (idx >= 0) {
+      const o = state.limits[idx];
+      state.limits.splice(idx, 1);
+      ordersDirty = true;
+      log(`✖ CANCEL id=<span class="mono">${id}</span> (${o.side} @ ${o.price.toFixed(2)}, left=${o.left})`, "warn");
+    }
   }
 
   function cancelAll() {
     const n = state.limits.length;
     state.limits = [];
-    log(`Cancel all (${n})`, "y");
+    ordersDirty = true;
+    log(`🧹 Cancel All (${n} orders)`, "warn");
   }
 
-  function cancelNearest(price) {
+  function flatten() {
+    if (state.pos === 0) { log("🧯 Flatten: позиция уже 0", "warn"); return; }
+    const qty = Math.abs(state.pos);
+    const side = state.pos > 0 ? "sell" : "buy";
+    marketOrder(side, qty, getSlip());
+    log("🧯 Flatten done", "warn");
+    statsDirty = true;
+  }
+
+  function placeLadder(side, start, levels, step, qtyPerLevel) {
+    start = roundTo(start, state.tickSize);
+    step = roundTo(Math.max(state.tickSize, step), state.tickSize);
+    for (let i = 0; i < levels; i++) {
+      const p = side === "buy" ? start - i * step : start + i * step;
+      placeLimit(side, p, qtyPerLevel);
+    }
+  }
+
+  function cancelNearestLimitByPrice(price) {
     if (!state.limits.length) return false;
     let best = null;
     for (const o of state.limits) {
       const d = Math.abs(o.price - price);
       if (!best || d < best.d) best = { d, id: o.id, price: o.price };
     }
-    const th = state.tick * 6;
-    if (best && best.d <= th) {
-      state.limits = state.limits.filter(o => o.id !== best.id);
-      log(`Cancel id=${best.id} near ${best.price.toFixed(2)}`, "y");
+    // threshold: 6 ticks max (sandbox comfort)
+    const maxDelta = state.tickSize * 6;
+    if (best && best.d <= maxDelta) {
+      cancelOrder(best.id);
       return true;
     }
     return false;
   }
 
-  function flatten() {
-    if (state.pos === 0) { log("Flatten: pos already 0", "y"); return; }
-    const qty = Math.abs(state.pos);
-    const side = state.pos > 0 ? "sell" : "buy";
-    market(side, qty, getSlip());
-    log("Flatten done", "y");
-  }
-
-  // ========= CANDLES
-  function timeframeTicks() {
-    return Math.max(2, Math.round(state.barSeconds * simHz()));
-  }
-
-  function ensureBar() {
-    if (!state.curBar) {
-      state.curBar = { o: state.price, h: state.price, l: state.price, c: state.price };
-      state.curTicks = 0;
-    }
-  }
-
-  function pushTickToBar(p) {
-    ensureBar();
-    state.curBar.h = Math.max(state.curBar.h, p);
-    state.curBar.l = Math.min(state.curBar.l, p);
-    state.curBar.c = p;
-
-    state.curTicks++;
-    const bt = timeframeTicks();
-    if (state.curTicks >= bt) {
-      state.bars.push(state.curBar);
-      if (state.bars.length > 6000) state.bars.shift();
-      state.curBar = { o: p, h: p, l: p, c: p };
-      state.curTicks = 0;
-
-      if (state.follow) state.center = state.bars.length - 1;
-    }
-  }
-
   function matchLimits() {
-    const { bid, ask } = bidAsk();
-    const liq = clamp(state.liq, 1, 20);
+    const { bid, ask } = getBidAsk();
+    const liq = clamp(state.liquidity, 1, 20);
 
-    const filled = [];
+    const filledIds = [];
     for (const o of state.limits) {
+      if (o.left <= 0) { filledIds.push(o.id); continue; }
       const canFill = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
-      if (!canFill || o.left <= 0) continue;
+      if (!canFill) continue;
 
-      // chunking: lower liquidity fills larger chunks (sandbox style)
       const baseChunk = Math.max(1, Math.round(o.qty * (21 - liq) / 20));
       const chunk = Math.min(o.left, baseChunk);
 
       o.left -= chunk;
-      applyFill(o.side, chunk, o.price, `LMT id=${o.id}`);
-      if (o.left <= 0) filled.push(o.id);
+      applyFill(o.side, chunk, o.price, `limit id=${o.id}`);
+      ordersDirty = true;
+
+      if (o.left <= 0) filledIds.push(o.id);
     }
-    if (filled.length) state.limits = state.limits.filter(o => !filled.includes(o.id));
+    if (filledIds.length) {
+      state.limits = state.limits.filter(o => !filledIds.includes(o.id));
+      ordersDirty = true;
+    }
   }
 
-  // ========= SIMULATION STEP
-  function stepOnce() {
+  function timeframeToBarTicks(tf, simHz) {
+    if (tf === "1s") return Math.max(2, Math.round(1 * simHz));
+    if (tf === "5s") return Math.max(2, Math.round(5 * simHz));
+    if (tf === "15s") return Math.max(2, Math.round(15 * simHz));
+    if (tf === "1m") return Math.max(2, Math.round(60 * simHz));
+    if (tf === "5m") return Math.max(2, Math.round(300 * simHz));
+    if (tf === "15m") return Math.max(2, Math.round(900 * simHz));
+    return Math.max(2, Math.round(5 * simHz));
+  }
+
+  function ensureCurrentBar() {
+    if (!state._curBar) {
+      state._curBar = { idx: state.lastBarIdx + 1, o: state.price, h: state.price, l: state.price, c: state.price };
+      state._barCounter = 0;
+    }
+  }
+
+  function updateBarsWithPrice(p) {
+    ensureCurrentBar();
+    state._curBar.h = Math.max(state._curBar.h, p);
+    state._curBar.l = Math.min(state._curBar.l, p);
+    state._curBar.c = p;
+
+    state._barCounter++;
+    if (state._barCounter >= state.barTicks) {
+      state.lastBarIdx = state._curBar.idx;
+      state.bars.push(state._curBar);
+      if (state.bars.length > 5000) state.bars.shift();
+
+      state._curBar = { idx: state.lastBarIdx + 1, o: p, h: p, l: p, c: p };
+      state._barCounter = 0;
+
+      if (state.follow) state.rightOffset = 0;
+    }
+  }
+
+  function stepSimulationOnce() {
     state.flow *= state.flowDecay;
 
-    const vol = clamp(state.vol, 1, 20);
+    const vol = clamp(state.volatility, 1, 20);
     const r = (Math.random()+Math.random()+Math.random()+Math.random()-2);
-    const noise = r * (vol * state.tick * 0.18);
+    const noise = r * (vol * state.tickSize * 0.18);
 
     const imp = clamp(state.impact, 0, 20);
-    const liq = clamp(state.liq, 1, 20);
-    const pressure = state.flow * (imp * state.tick * 0.045) * (1 / (liq * 0.40));
+    const liq = clamp(state.liquidity, 1, 20);
+    const pressure = (state.flow) * (imp * state.tickSize * 0.045) * (1 / (liq * 0.40));
 
-    state.v = (state.v * 0.92) + noise + pressure;
-    state.price = roundTo(state.price + state.v, state.tick);
+    state.velocity = (state.velocity * 0.92) + noise + pressure;
+    state.price = roundTo(state.price + state.velocity, state.tickSize);
 
-    pushTickToBar(state.price);
+    statsDirty = true;
+
+    updateBarsWithPrice(state.price);
     matchLimits();
   }
 
-  // ========= CAMERA / MAPPING
-  function barsAll() {
+  // ===== bars window
+  function getAllBarsForRender() {
     const arr = state.bars.slice();
-    if (state.curBar) arr.push(state.curBar);
+    if (state._curBar) arr.push(state._curBar);
     return arr;
   }
 
-  function getWindow(n) {
-    if (n <= 1) return { start:0, end:0 };
-    const bps = clamp(state.barsPerScreen, 30, 800);
-    const half = (bps - 1) / 2;
-
-    let center = state.center;
-    center = clamp(center, 0, n - 1);
-
-    let start = center - half;
-    let end   = center + half;
-
-    if (start < 0) { end -= start; start = 0; }
-    if (end > n - 1) { start -= (end - (n - 1)); end = n - 1; }
-    start = clamp(start, 0, n - 1);
-    end = clamp(end, 0, n - 1);
-
-    return { start, end, bps };
+  function getWindowBars() {
+    const bars = getAllBarsForRender();
+    const n = bars.length;
+    if (n === 0) return {bars:[], total:0, startPos:0, endPos:0};
+    const vis = clamp(state.visibleBars, 20, 600);
+    const end = Math.max(0, n - 1 - state.rightOffset);
+    const start = Math.max(0, end - vis + 1);
+    return { bars: bars.slice(start, end + 1), total:n, startPos:start, endPos:end };
   }
 
-  // ========= CANVAS RESIZE (HiDPI)
-  function resize() {
-    const r = cv.getBoundingClientRect();
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const w = Math.round(r.width * dpr);
-    const h = Math.round(r.height * dpr);
-    if (cv.width !== w || cv.height !== h) {
-      cv.width = w; cv.height = h;
-      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in css pixels
+  function computePriceRange(windowBars) {
+    let min = Infinity, max = -Infinity;
+    for (const b of windowBars) { min = Math.min(min, b.l); max = Math.max(max, b.h); }
+    for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
+      min = state.price - 50 * state.tickSize;
+      max = state.price + 50 * state.tickSize;
     }
+    const pad = (max-min) * 0.12 + state.tickSize * 20;
+    return { min: min - pad, max: max + pad };
   }
-  window.addEventListener("resize", resize);
 
-  // ========= RENDER
-  function niceStep(range, target=8) {
-    const raw = range / target;
+  function niceStep(range, targetTicks=8) {
+    const raw = range / targetTicks;
     const pow = Math.pow(10, Math.floor(Math.log10(raw)));
     const frac = raw / pow;
-    let nice;
-    if (frac <= 1) nice = 1;
-    else if (frac <= 2) nice = 2;
-    else if (frac <= 5) nice = 5;
-    else nice = 10;
-    return nice * pow;
+    let niceFrac;
+    if (frac <= 1) niceFrac = 1;
+    else if (frac <= 2) niceFrac = 2;
+    else if (frac <= 5) niceFrac = 5;
+    else niceFrac = 10;
+    return niceFrac * pow;
   }
 
-  function draw() {
-    resize();
+  // ===== HiDPI canvas
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d", { alpha: true });
 
-    const r = cv.getBoundingClientRect();
-    const W = r.width, H = r.height;
-
-    ctx.clearRect(0,0,W,H);
-
-    const leftPad = 76, rightPad = 16, topPad = 12, bottomPad = 28;
-    const x0 = leftPad, x1 = W - rightPad, y0 = topPad, y1 = H - bottomPad;
-    const plotW = x1 - x0, plotH = y1 - y0;
-
-    // background panels
-    ctx.fillStyle = "rgba(5,8,12,0.35)";
-    ctx.fillRect(x0, y0, plotW, plotH);
-    ctx.fillStyle = "rgba(11,15,20,0.50)";
-    ctx.fillRect(0, 0, leftPad, H);
-
-    // frame line
-    ctx.strokeStyle = "rgba(34,48,68,0.9)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(leftPad+0.5,0); ctx.lineTo(leftPad+0.5,H); ctx.stroke();
-
-    const all = barsAll();
-    const n = all.length;
-    if (n < 2) return;
-
-    // follow logic
-    if (state.follow) state.center = n - 1;
-
-    const win = getWindow(n);
-    const start = win.start, end = win.end;
-    const span = Math.max(1e-9, end - start);
-
-    // visible bars slice
-    const i0 = Math.floor(start);
-    const i1 = Math.ceil(end);
-    const vis = all.slice(i0, i1 + 1);
-
-    // price range
-    let pmin = Infinity, pmax = -Infinity;
-    for (const b of vis) { pmin = Math.min(pmin, b.l); pmax = Math.max(pmax, b.h); }
-    for (const o of state.limits) { pmin = Math.min(pmin, o.price); pmax = Math.max(pmax, o.price); }
-    pmin = Math.min(pmin, state.price);
-    pmax = Math.max(pmax, state.price);
-    if (!Number.isFinite(pmin) || !Number.isFinite(pmax) || pmin === pmax) {
-      pmin = state.price - 50*state.tick;
-      pmax = state.price + 50*state.tick;
+  function resizeCanvasToDisplaySize() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1)); // cap 2 for perf
+    const displayW = Math.round(rect.width * dpr);
+    const displayH = Math.round(rect.height * dpr);
+    if (canvas.width !== displayW || canvas.height !== displayH) {
+      canvas.width = displayW;
+      canvas.height = displayH;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS px
     }
-    const pad = (pmax - pmin) * 0.12 + state.tick * 20;
-    pmin -= pad; pmax += pad;
+  }
+  window.addEventListener("resize", resizeCanvasToDisplaySize);
 
-    const yOf = (p) => y1 - ((p - pmin)/(pmax - pmin)) * plotH;
-    const xOf = (idx) => x0 + ((idx - start)/span) * plotW;
+  function buildGeo(windowBars, pr) {
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
 
-    // grid + labels
-    ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+    const leftPad = 74;
+    const rightPad = 14;
+    const topPad = 10;
+    const bottomPad = 26;
+
+    const plotX0 = leftPad;
+    const plotX1 = w - rightPad;
+    const plotY0 = topPad;
+    const plotY1 = h - bottomPad;
+
+    const n = windowBars.length;
+    const candleW = Math.max(3, Math.floor((plotX1 - plotX0) / (n + 10)));
+    const gap = Math.max(1, Math.floor(candleW * 0.35));
+    const step = candleW + gap;
+    const totalW = step * n;
+    const xStart = plotX0 + Math.max(6, Math.floor(((plotX1 - plotX0) - totalW) / 2));
+
+    const yOf = (p) => {
+      const yy = plotY1 - ((p - pr.min) / (pr.max - pr.min)) * (plotY1 - plotY0);
+      return clamp(yy, plotY0, plotY1);
+    };
+
+    const xOfIdx = (idx, firstIdx, lastIdx) => {
+      const span = Math.max(1, lastIdx - firstIdx);
+      const t = (idx - firstIdx) / span;
+      return plotX0 + t * (plotX1 - plotX0);
+    };
+
+    const stepPxScreen = step;
+
+    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,plotY0,plotY1,candleW,gap,step,totalW,xStart,yOf,stepPxScreen,xOfIdx };
+  }
+
+  function canvasPointFromClient(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left), y: (e.clientY - r.top) };
+  }
+
+  function priceFromY(y, pr, geo) {
+    const t = (geo.plotY1 - y) / (geo.plotY1 - geo.plotY0);
+    const p = pr.min + t * (pr.max - pr.min);
+    return roundTo(p, state.tickSize);
+  }
+
+  function idxFromX(x, win, geo) {
+    const n = win.bars.length;
+    if (n < 2) return null;
+    const i = Math.round((x - geo.xStart) / geo.step);
+    const ii = clamp(i, 0, n-1);
+    return win.bars[ii].idx;
+  }
+
+  // ===== drawings
+  function pushDrawing(d){ state.drawings.push(d); }
+  function undoDrawing(){ if (state.pending) { state.pending=null; return; } state.drawings.pop(); }
+  function clearDrawings(){ state.pending=null; state.drawings=[]; }
+
+  function distPointToSegment(px,py, x1,y1, x2,y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
+    const t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy);
+    const tt = clamp(t, 0, 1);
+    const cx = x1 + tt*dx, cy = y1 + tt*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+
+  function hitTestDrawing(pt, win, pr, geo) {
+    const firstIdx = win.bars[0].idx;
+    const lastIdx  = win.bars[win.bars.length-1].idx;
+    const px = pt.x, py = pt.y;
+
+    for (let k = state.drawings.length-1; k>=0; k--) {
+      const d = state.drawings[k];
+      if (d.type === "hline") {
+        const y = geo.yOf(d.p);
+        if (Math.abs(py - y) <= 6 && px >= geo.plotX0 && px <= geo.plotX1) return k;
+      }
+      if (d.type === "trend") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y2 = geo.yOf(d.y2);
+        if (distPointToSegment(px,py,x1,y1,x2,y2) <= 7) return k;
+      }
+      if (d.type === "rect") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const y2 = geo.yOf(d.y2);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        const onEdge = (
+          (Math.abs(px-l)<=6 && py>=t && py<=b) ||
+          (Math.abs(px-r)<=6 && py>=t && py<=b) ||
+          (Math.abs(py-t)<=6 && px>=l && px<=r) ||
+          (Math.abs(py-b)<=6 && px>=l && px<=r)
+        );
+        if (onEdge) return k;
+      }
+    }
+    return -1;
+  }
+
+  // ===== draw
+  function drawChart() {
+    resizeCanvasToDisplaySize();
+
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+
+    ctx.clearRect(0,0,w,h);
+
+    const win = getWindowBars();
+    const windowBars = win.bars;
+    if (windowBars.length < 2) return;
+
+    const pr = computePriceRange(windowBars);
+    const geo = buildGeo(windowBars, pr);
+    state.geo = geo;
+
+    if (!cachedFontBody) cachedFontBody = "12px " + getComputedStyle(document.body).fontFamily;
+    ctx.font = cachedFontBody;
     ctx.textBaseline = "middle";
 
-    let step = niceStep(pmax - pmin, 8);
-    step = Math.max(state.tick, roundTo(step, state.tick));
-    const first = Math.floor(pmin / step) * step;
+    // plot background
+    ctx.fillStyle = "rgba(5,8,12,0.35)";
+    ctx.fillRect(geo.plotX0, geo.plotY0, geo.plotX1-geo.plotX0, geo.plotY1-geo.plotY0);
 
-    for (let p = first; p <= pmax + step; p += step) {
-      const pp = roundTo(p, state.tick);
-      const y = yOf(pp);
+    // left scale background
+    ctx.fillStyle = "rgba(11,15,20,0.55)";
+    ctx.fillRect(0, 0, geo.leftPad, h);
 
-      ctx.strokeStyle = "rgba(34,48,68,0.42)";
+    // border
+    ctx.strokeStyle = "rgba(34,48,68,0.9)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(geo.leftPad + 0.5, 0);
+    ctx.lineTo(geo.leftPad + 0.5, h);
+    ctx.stroke();
+
+    // grid + labels
+    let step = niceStep(pr.max - pr.min, 8);
+    step = Math.max(state.tickSize, roundTo(step, state.tickSize));
+    const startP = Math.floor(pr.min / step) * step;
+
+    for (let p = startP; p <= pr.max + step; p += step) {
+      const price = roundTo(p, state.tickSize);
+      const y = geo.yOf(price);
+
+      ctx.strokeStyle = "rgba(34,48,68,0.45)";
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
 
       ctx.fillStyle = "rgba(159,176,195,0.95)";
-      ctx.fillText(pp.toFixed(2), 8, y);
+      ctx.fillText(price.toFixed(2), 8, y);
     }
 
     // vertical guides
-    const vSteps = 10;
-    for (let k=1;k<vSteps;k++){
-      const x = x0 + (k/vSteps)*plotW;
-      ctx.strokeStyle = "rgba(34,48,68,0.30)";
-      ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y1); ctx.stroke();
-    }
-
-    // candles (dynamic width)
-    const barsPerScreen = win.bps;
-    const candleW = clamp(Math.floor(plotW / (barsPerScreen + 8)), 3, 16);
-    const gap = clamp(Math.floor(candleW*0.35), 1, 6);
-
-    // draw only integer bars inside range
-    const j0 = Math.max(0, Math.floor(start) - 2);
-    const j1 = Math.min(n-1, Math.ceil(end) + 2);
-    for (let i=j0;i<=j1;i++){
-      const b = all[i];
-      const xMid = xOf(i);
-      const x = xMid - candleW/2;
-
-      const yO = yOf(b.o), yH = yOf(b.h), yL = yOf(b.l), yC = yOf(b.c);
-      const up = b.c >= b.o;
-
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.moveTo(xMid, yH); ctx.lineTo(xMid, yL); ctx.stroke();
-
-      const top = Math.min(yO,yC);
-      const h = Math.max(2, Math.abs(yC - yO));
-      ctx.fillStyle = up ? "rgba(61,220,151,0.28)" : "rgba(255,91,110,0.26)";
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
-      ctx.fillRect(x, top, candleW, h);
-      ctx.strokeRect(x, top, candleW, h);
+    ctx.strokeStyle = "rgba(34,48,68,0.35)";
+    for (let i=0; i<windowBars.length; i+= Math.max(5, Math.round(windowBars.length/10))) {
+      const x = geo.xStart + i * geo.step + geo.candleW/2;
+      ctx.beginPath(); ctx.moveTo(x, geo.plotY0); ctx.lineTo(x, geo.plotY1); ctx.stroke();
     }
 
     // bid/ask band
-    const {bid, ask} = bidAsk();
-    const yB = yOf(bid), yA = yOf(ask);
+    const {bid, ask} = getBidAsk();
+    const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
     ctx.fillStyle = "rgba(159,176,195,0.08)";
-    ctx.fillRect(x0, Math.min(yB,yA), plotW, Math.abs(yB-yA));
+    ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
+
+    // candles
+    for (let i=0; i<windowBars.length; i++) {
+      const b = windowBars[i];
+      const x = geo.xStart + i * geo.step;
+      const yO = geo.yOf(b.o), yH = geo.yOf(b.h), yL = geo.yOf(b.l), yC = geo.yOf(b.c);
+      const up = b.c >= b.o;
+
+      ctx.strokeStyle = up ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x + geo.candleW/2, yH);
+      ctx.lineTo(x + geo.candleW/2, yL);
+      ctx.stroke();
+
+      const bodyTop = Math.min(yO, yC);
+      const bodyH = Math.max(2, Math.abs(yC - yO));
+      ctx.fillStyle = up ? "rgba(61,220,151,0.30)" : "rgba(255,91,110,0.28)";
+      ctx.strokeStyle = up ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
+      ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
+    }
 
     // limits
     for (const o of state.limits) {
-      const y = yOf(o.price);
-      ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+      const y = geo.yOf(o.price);
 
-      ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
-      ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, x0+10, y-10);
+      ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
+
+      ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
+      ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, geo.plotX0 + 10, y - 10);
     }
 
-    // avg line (if position)
-    if (state.pos !== 0 && state.avg != null) {
-      const y = yOf(state.avg);
-      ctx.strokeStyle = "rgba(255,207,91,0.55)";
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([6,6]);
-      ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,207,91,0.95)";
-      ctx.fillText(`AVG ${state.avg.toFixed(2)}`, x0+10, y+12);
+    // drawings
+    const firstIdx = windowBars[0].idx;
+    const lastIdx  = windowBars[windowBars.length-1].idx;
+
+    for (const d of state.drawings) {
+      if (d.type === "hline") {
+        const y = geo.yOf(d.p);
+        ctx.strokeStyle = "rgba(255,207,91,0.70)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+      }
+      if (d.type === "trend") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y2 = geo.yOf(d.y2);
+        ctx.strokeStyle = "rgba(100,181,255,0.85)";
+        ctx.lineWidth = 2.0;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      if (d.type === "rect") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const y2 = geo.yOf(d.y2);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        ctx.fillStyle = "rgba(100,181,255,0.10)";
+        ctx.strokeStyle = "rgba(100,181,255,0.70)";
+        ctx.lineWidth = 1.8;
+        ctx.fillRect(l,t,r-l,b-t);
+        ctx.strokeRect(l,t,r-l,b-t);
+      }
+    }
+
+    // pending preview
+    if (state.pending && state.cross.idx != null && state.cross.price != null) {
+      const p = state.pending;
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      if (p.type === "trend") {
+        const x1 = geo.xOfIdx(p.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfIdx(state.cross.idx, firstIdx, lastIdx);
+        const y2 = geo.yOf(state.cross.price);
+        ctx.strokeStyle = "rgba(100,181,255,0.65)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      if (p.type === "rect") {
+        const x1 = geo.xOfIdx(p.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfIdx(state.cross.idx, firstIdx, lastIdx);
+        const y2 = geo.yOf(state.cross.price);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        ctx.fillStyle = "rgba(100,181,255,0.08)";
+        ctx.strokeStyle = "rgba(100,181,255,0.55)";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(l,t,r-l,b-t);
+        ctx.strokeRect(l,t,r-l,b-t);
+      }
+      ctx.restore();
     }
 
     // last price label
-    const yLast = yOf(state.price);
-    ctx.fillStyle = "rgba(100,181,255,0.18)";
-    ctx.fillRect(0, yLast-12, leftPad, 24);
-    ctx.strokeStyle = "rgba(100,181,255,0.65)";
-    ctx.strokeRect(0.5, yLast-11.5, leftPad-1, 23);
-    ctx.fillStyle = "rgba(212,235,255,0.98)";
+    const yLast = geo.yOf(state.price);
+    ctx.fillStyle = "rgba(100,181,255,0.20)";
+    ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
+    ctx.strokeStyle = "rgba(100,181,255,0.70)";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad-1, 23);
+    ctx.fillStyle = "rgba(211,236,255,0.98)";
     ctx.fillText(state.price.toFixed(2), 8, yLast);
 
     // crosshair
-    if (state.cross.on) {
-      const cx = clamp(state.cross.x, x0, x1);
-      const cy = clamp(state.cross.y, y0, y1);
+    if (state.cross.on && state.cross.idx != null && state.cross.price != null) {
+      const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
+      const y = clamp(state.cross.y, geo.plotY0, geo.plotY1);
 
       ctx.strokeStyle = "rgba(159,176,195,0.55)";
       ctx.lineWidth = 1;
       ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(x0,cy); ctx.lineTo(x1,cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx,y0); ctx.lineTo(cx,y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, geo.plotY0); ctx.lineTo(x, geo.plotY1); ctx.stroke();
       ctx.setLineDash([]);
 
-      const cp = state.cross.price;
-      if (cp != null) {
-        ctx.fillStyle = "rgba(159,176,195,0.14)";
-        ctx.fillRect(0, cy-12, leftPad, 24);
-        ctx.strokeStyle = "rgba(159,176,195,0.55)";
-        ctx.strokeRect(0.5, cy-11.5, leftPad-1, 23);
-        ctx.fillStyle = "rgba(231,238,247,0.98)";
-        ctx.fillText(cp.toFixed(2), 8, cy);
-      }
+      // price label on left
+      ctx.fillStyle = "rgba(159,176,195,0.14)";
+      ctx.fillRect(0, y - 12, geo.leftPad, 24);
+      ctx.strokeStyle = "rgba(159,176,195,0.55)";
+      ctx.strokeRect(0.5, y - 11.5, geo.leftPad-1, 23);
+      ctx.fillStyle = "rgba(231,238,247,0.98)";
+      ctx.fillText(state.cross.price.toFixed(2), 8, y);
+
+      // idx label bottom
+      const lab = String(state.cross.idx);
+      const bw = ctx.measureText(lab).width + 14;
+      const bx = clamp(x - bw/2, geo.plotX0, geo.plotX1 - bw);
+      const by = geo.plotY1 + 2;
+      ctx.fillStyle = "rgba(11,15,20,0.75)";
+      ctx.fillRect(bx, by, bw, 20);
+      ctx.strokeStyle = "rgba(34,48,68,0.9)";
+      ctx.strokeRect(bx+0.5, by+0.5, bw-1, 19);
+      ctx.fillStyle = "rgba(231,238,247,0.95)";
+      ctx.fillText(lab, bx + 7, by + 10);
     }
 
-    // bottom index label (simple)
-    ctx.fillStyle = "rgba(159,176,195,0.85)";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(`bars: ${n} | view: ${Math.floor(start)} → ${Math.floor(end)}`, x0, H-10);
+    $("stWin").textContent = `${windowBars[0].idx} → ${windowBars[windowBars.length-1].idx} (offset ${state.rightOffset})`;
   }
 
-  // ========= UI
-  function getQty(){ return Math.max(1, Math.floor(Number($("qty").value || 1))); }
-  function getSlip(){ return Math.max(0, Math.floor(Number($("slip").value || 0))); }
-
-  function updateHUD() {
-    $("hudLast").textContent = state.price.toFixed(2);
-    $("hudPos").textContent = String(state.pos);
-    const p = upnl();
-    $("hudPnL").textContent = p == null ? "—" : p.toFixed(2);
-    $("hudSp").textContent = state.speed.toFixed(1) + "x";
-    $("followBtn").textContent = state.follow ? "🎯 Follow: ON" : "🎯 Follow: OFF";
-    $("pauseBtn").textContent = state.paused ? "▶ Resume" : "⏸ Pause";
+  // ===== UI (throttled)
+  function renderOrdersTable() {
+    const body = $("ordersBody");
+    body.innerHTML = "";
+    const orders = [...state.limits].sort((a,b) => a.price - b.price);
+    for (const o of orders) {
+      const tr = document.createElement("tr");
+      tr.style.cursor = "pointer";
+      tr.title = "Нажми чтобы отменить";
+      tr.addEventListener("click", () => cancelOrder(o.id));
+      const sideTag = o.side === "buy"
+        ? `<span class="tag buy">BUY</span>`
+        : `<span class="tag sell">SELL</span>`;
+      tr.innerHTML = `
+        <td>${sideTag}</td>
+        <td>${o.price.toFixed(2)}</td>
+        <td>${o.qty}</td>
+        <td>${o.left}</td>
+        <td>${o.id}</td>
+      `;
+      body.appendChild(tr);
+    }
   }
 
-  // ========= INTERACTION (PAN/ZOOM THAT ACTUALLY FEELS NORMAL)
-  function clientToCanvas(e) {
-    const r = cv.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height };
+  function renderStats() {
+    const { bid, ask } = getBidAsk();
+    const upnl = computeUPnL();
+
+    $("hdrPrice").textContent = state.price.toFixed(2);
+    $("hdrPos").textContent = String(state.pos);
+    $("hdrFlow").textContent = state.flow.toFixed(2);
+    $("hdrPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
+    $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
+
+    $("stLast").textContent = state.price.toFixed(2);
+    $("stBA").textContent = `${bid.toFixed(2)} / ${ask.toFixed(2)}`;
+    $("stPos").textContent = String(state.pos);
+    $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(2);
+    $("stFlow").textContent = state.flow.toFixed(2);
+    $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
   }
 
-  function crossFromPoint(pt) {
-    const r = cv.getBoundingClientRect();
-    const W = r.width, H = r.height;
+  function syncTopFromLeft() {
+    if (document.activeElement !== $("qtyTop")) $("qtyTop").value = $("qty").value;
+    if (document.activeElement !== $("slipTop")) $("slipTop").value = $("slip").value;
+  }
+  function syncLeftFromTop() {
+    $("qty").value = String(Math.max(1, Math.floor(Number($("qtyTop").value || 1))));
+    $("slip").value = String(Math.max(0, Math.floor(Number($("slipTop").value || 0))));
+  }
 
-    const leftPad = 76, rightPad = 16, topPad = 12, bottomPad = 28;
-    const x0 = leftPad, x1 = W - rightPad, y0 = topPad, y1 = H - bottomPad;
-    const plotW = x1 - x0;
+  function getQty() {
+    const q = Number($("qtyTop").value || $("qty").value || 1);
+    return Math.max(1, Math.floor(q));
+  }
+  function setQty(v) {
+    const x = Math.max(1, Math.floor(v));
+    $("qtyTop").value = String(x);
+    $("qty").value = String(x);
+  }
+  function getSlip() {
+    const s = Number($("slipTop").value || $("slip").value || 0);
+    return Math.max(0, Math.floor(s));
+  }
 
-    const all = barsAll();
+  function applySettingsFromUI() {
+    state.tickSize = Number($("tick").value) || 0.25;
+    state.spreadTicks = Math.max(0, Number($("spread").value || 0));
+    state.volatility = clamp(Number($("vol").value || 8), 1, 20);
+    state.liquidity  = clamp(Number($("liq").value || 10), 1, 20);
+    state.impact     = clamp(Number($("impact").value || 8), 0, 20);
+
+    state.baseSimHz  = clamp(Number($("simHzBase").value || 60), 5, 120);
+    state.simHz      = clamp(state.baseSimHz * state.speedMul, 5, 600);
+
+    state.visibleBars = clamp(Number($("visibleBars").value || 140), 20, 600);
+    state.barTicks = timeframeToBarTicks($("timeframe").value, state.simHz);
+
+    state.follow = $("follow").checked;
+    state.tool = $("tool").value;
+
+    syncTopFromLeft();
+  }
+
+  function clampOffset() {
+    const all = getAllBarsForRender();
     const n = all.length;
-    if (n < 2) return;
-
-    const win = getWindow(n);
-    const start = win.start, end = win.end;
-    const span = Math.max(1e-9, end - start);
-
-    const xClamped = clamp(pt.x, x0, x1);
-    const frac = (xClamped - x0) / plotW;
-    const idxFloat = start + frac * span;
-    const idx = Math.round(idxFloat);
-
-    // price is from current visible range (approx, good enough for limits)
-    // we recompute from visible bars (fast enough)
-    const i0 = Math.floor(start), i1 = Math.ceil(end);
-    const vis = all.slice(Math.max(0,i0), Math.min(n-1,i1) + 1);
-    let pmin = Infinity, pmax = -Infinity;
-    for (const b of vis) { pmin = Math.min(pmin, b.l); pmax = Math.max(pmax, b.h); }
-    for (const o of state.limits) { pmin = Math.min(pmin, o.price); pmax = Math.max(pmax, o.price); }
-    pmin = Math.min(pmin, state.price);
-    pmax = Math.max(pmax, state.price);
-    if (!Number.isFinite(pmin) || !Number.isFinite(pmax) || pmin === pmax) { pmin = state.price-50*state.tick; pmax = state.price+50*state.tick; }
-    const pad = (pmax - pmin) * 0.12 + state.tick * 20;
-    pmin -= pad; pmax += pad;
-
-    const cy = clamp(pt.y, y0, y1);
-    const t = (y1 - cy) / (y1 - y0);
-    const price = roundTo(pmin + t * (pmax - pmin), state.tick);
-
-    state.cross.on = true;
-    state.cross.x = pt.x;
-    state.cross.y = pt.y;
-    state.cross.idx = clamp(idx, 0, n-1);
-    state.cross.price = price;
+    if (n <= 1) { state.rightOffset = 0; return; }
+    const maxOffset = Math.max(0, n - 1);
+    state.rightOffset = clamp(state.rightOffset, 0, maxOffset);
   }
 
-  cv.addEventListener("pointerdown", (e) => {
-    cv.setPointerCapture(e.pointerId);
-    state.dragging = true;
-    const pt = clientToCanvas(e);
-
-    // any manual interaction turns follow off (TV behavior)
-    state.follow = false;
-
-    state.dragStart = {
-      x: pt.x,
-      center: state.center
-    };
-    cv.style.cursor = "grabbing";
-    crossFromPoint(pt);
-  });
-
-  cv.addEventListener("pointermove", (e) => {
-    const pt = clientToCanvas(e);
-    crossFromPoint(pt);
-
-    if (!state.dragging || !state.dragStart) return;
-
-    const r = cv.getBoundingClientRect();
-    const W = r.width;
-
-    const leftPad = 76, rightPad = 16;
-    const plotW = (W - rightPad) - leftPad;
-    if (plotW <= 50) return;
-
-    const all = barsAll();
-    const n = all.length;
-    const win = getWindow(n);
-    const spanBars = Math.max(1, win.bps - 1);
-
-    const dx = pt.x - state.dragStart.x;
-    const deltaBars = -dx / plotW * spanBars;
-
-    state.center = state.dragStart.center + deltaBars;
-    state.center = clamp(state.center, 0, Math.max(0, n-1));
-  });
-
-  function pointerUp() {
-    state.dragging = false;
-    state.dragStart = null;
-    cv.style.cursor = "grab";
+  function stepPxScreen() {
+    if (!state.geo) return 8;
+    return Math.max(2, state.geo.stepPxScreen);
   }
-  cv.addEventListener("pointerup", pointerUp);
-  cv.addEventListener("pointercancel", pointerUp);
 
-  // wheel zoom (ANCHOR TO CURSOR) + shift wheel pan
-  cv.addEventListener("wheel", (e) => {
+  // ===== Wheel zoom (anchor to cursor)
+  canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
+    applySettingsFromUI();
 
-    const pt = clientToCanvas(e);
-    const r = cv.getBoundingClientRect();
-    const W = r.width;
+    const winBefore = getWindowBars();
+    if (winBefore.bars.length < 3) return;
 
-    const leftPad = 76, rightPad = 16;
-    const x0 = leftPad, x1 = W - rightPad;
-    const plotW = x1 - x0;
+    const rect = canvas.getBoundingClientRect();
+    const xCss = (e.clientX - rect.left);
+    const xFrac = clamp(xCss / rect.width, 0, 1);
 
-    const all = barsAll();
-    const n = all.length;
-    if (n < 2) return;
+    const dir = (e.deltaY > 0) ? +1 : -1;
+    const factor = (dir < 0) ? 0.85 : 1.18;
 
-    // Shift+wheel = horizontal scroll (fast)
-    if (e.shiftKey) {
-      state.follow = false;
-      const dir = e.deltaY > 0 ? +1 : -1;
-      state.center += dir * (state.barsPerScreen * 0.10);
-      state.center = clamp(state.center, 0, n-1);
-      return;
-    }
+    const oldVis = state.visibleBars;
+    const newVis = clamp(Math.round(oldVis * factor), 20, 600);
+    if (newVis === oldVis) return;
 
-    // zoom x
-    const win = getWindow(n);
-    const start = win.start, end = win.end;
-    const span = Math.max(1e-9, end - start);
-
-    const xClamped = clamp(pt.x, x0, x1);
-    const frac = (xClamped - x0) / plotW;
-    const anchor = start + frac * span;
-
-    const zoomIn = e.deltaY < 0;
-    const factor = zoomIn ? 0.85 : 1.18;
-
-    const old = state.barsPerScreen;
-    let neu = Math.round(old * factor);
-    neu = clamp(neu, 30, 800);
-    if (neu === old) return;
-
+    $("follow").checked = false;
     state.follow = false;
-    state.barsPerScreen = neu;
 
-    // keep anchor under cursor
-    const newSpan = (neu - 1);
-    const newStart = anchor - frac * newSpan;
-    state.center = newStart + newSpan/2;
+    const anchorIndexInWindow = Math.round(xFrac * (winBefore.bars.length - 1));
+    const anchorBarIdx = winBefore.bars[anchorIndexInWindow].idx;
 
-    state.center = clamp(state.center, 0, n-1);
+    state.visibleBars = newVis;
+    $("visibleBars").value = String(newVis);
+
+    const all = getAllBarsForRender();
+    const n = all.length;
+    const anchorPos = all.findIndex(b => b.idx === anchorBarIdx);
+    if (anchorPos < 0) return;
+
+    const endTarget = anchorPos + Math.round((1 - xFrac) * (newVis - 1));
+    const end = clamp(endTarget, 0, n - 1);
+    state.rightOffset = clamp((n - 1) - end, 0, n - 1);
+
+    clampOffset();
   }, { passive:false });
 
-  // double click = reset view
-  cv.addEventListener("dblclick", () => {
-    state.barsPerScreen = 160;
-    state.follow = true;
-    state.center = Math.max(0, barsAll().length - 1);
-    log("View reset (follow ON)", "y");
+  // prevent context menu (we use RMB for SELL limit)
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // ===== Pointer events: pan + pinch + tap-to-draw + quick limit
+  let tapCandidate = null;
+
+  canvas.addEventListener("pointerdown", (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (state.follow) { $("follow").checked = false; state.follow = false; }
+
+    tapCandidate = {
+      id: e.pointerId,
+      x: e.clientX, y: e.clientY,
+      t: performance.now(),
+      ctrl: e.ctrlKey,
+      alt: e.altKey,
+      button: e.button
+    };
+
+    if (state.pointers.size === 1) {
+      canvas.style.cursor = "grabbing";
+      state.panStart = { x: e.clientX, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+      state.pinchStart = null;
+      state.cross.on = true;
+    } else if (state.pointers.size === 2) {
+      const pts = [...state.pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      state.pinchStart = { dist, visibleBars: state.visibleBars };
+      state.panStart = null;
+      state.cross.on = false;
+    }
   });
 
-  // right-click menu off (we use ctrl+RMB)
-  cv.addEventListener("contextmenu", (e) => e.preventDefault());
+  canvas.addEventListener("pointermove", (e) => {
+    if (!state.pointers.has(e.pointerId)) return;
+    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-  // Ctrl/Alt clicks for limits
-  cv.addEventListener("pointerup", (e) => {
-    // detect tap (not drag)
-    const pt = clientToCanvas(e);
-    const moved = state.dragStart ? Math.abs(pt.x - state.dragStart.x) : 999;
-    // if it was a drag, ignore quick actions
-    if (moved > 7) return;
+    applySettingsFromUI();
 
-    crossFromPoint(pt);
-    const p = state.cross.price;
-    if (p == null) return;
-
-    if (e.altKey) {
-      const ok = cancelNearest(p);
-      if (!ok) log("No limit near that price (Alt+Click)", "y");
+    // pinch
+    if (state.pointers.size === 2 && state.pinchStart) {
+      const pts = [...state.pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const ratio = dist / Math.max(1, state.pinchStart.dist);
+      const newVis = clamp(Math.round(state.pinchStart.visibleBars / ratio), 20, 600);
+      state.visibleBars = newVis;
+      $("visibleBars").value = String(newVis);
       return;
     }
-    if (e.ctrlKey) {
-      const side = (e.button === 2) ? "sell" : "buy";
-      placeLimit(side, p, getQty());
+
+    // pan
+    if (state.pointers.size === 1 && state.panStart) {
+      const dx = e.clientX - state.panStart.x;
+      const barsDelta = Math.round(-dx / Math.max(2, state.panStart.stepPx));
+      state.rightOffset = Math.max(0, state.panStart.rightOffset + barsDelta);
+      clampOffset();
+    }
+
+    // crosshair update
+    const pt = canvasPointFromClient(e);
+    const win = getWindowBars();
+    if (win.bars.length >= 2) {
+      const pr = computePriceRange(win.bars);
+      const geo = state.geo ?? buildGeo(win.bars, pr);
+      const idx = idxFromX(pt.x, win, geo);
+      const price = priceFromY(pt.y, pr, geo);
+      state.cross.x = pt.x;
+      state.cross.y = pt.y;
+      state.cross.idx = idx;
+      state.cross.price = price;
+      state.cross.on = true;
     }
   });
 
-  // ========= BUTTONS
-  $("buyBtn").addEventListener("click", () => market("buy", getQty(), getSlip()));
-  $("sellBtn").addEventListener("click", () => market("sell", getQty(), getSlip()));
-  $("cancelAllBtn").addEventListener("click", cancelAll);
-  $("flattenBtn").addEventListener("click", flatten);
+  function handleTap(clientX, clientY, mods) {
+    const win = getWindowBars();
+    if (win.bars.length < 2) return;
 
-  $("pauseBtn").addEventListener("click", () => {
+    const pr = computePriceRange(win.bars);
+    const geo = state.geo ?? buildGeo(win.bars, pr);
+
+    const pt = canvasPointFromClient({ clientX, clientY });
+
+    if (pt.x < geo.plotX0 || pt.x > geo.plotX1 || pt.y < geo.plotY0 || pt.y > geo.plotY1) return;
+
+    const idx = idxFromX(pt.x, win, geo);
+    const price = priceFromY(pt.y, pr, geo);
+    if (idx == null) return;
+
+    // Quick sandbox actions
+    if (mods && mods.alt) {
+      const ok = cancelNearestLimitByPrice(price);
+      if (!ok) log("⚠️ Нет лимитки рядом по цене (Alt+Click).", "warn");
+      return;
+    }
+    if (mods && mods.ctrl) {
+      const side = (mods.button === 2) ? "sell" : "buy";
+      placeLimit(side, price, getQty());
+      return;
+    }
+
+    // Drawing tools
+    if (state.tool === "erase") {
+      const k = hitTestDrawing(pt, win, pr, geo);
+      if (k >= 0) state.drawings.splice(k, 1);
+      state.pending = null;
+      return;
+    }
+    if (state.tool === "hline") {
+      pushDrawing({ type:"hline", p: price });
+      state.pending = null;
+      return;
+    }
+    if (state.tool === "trend") {
+      if (!state.pending) state.pending = { type:"trend", x1: idx, y1: price };
+      else { pushDrawing({ type:"trend", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
+      return;
+    }
+    if (state.tool === "rect") {
+      if (!state.pending) state.pending = { type:"rect", x1: idx, y1: price };
+      else { pushDrawing({ type:"rect", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
+      return;
+    }
+  }
+
+  function pointerUpCommon(e) {
+    if (state.pointers.has(e.pointerId)) state.pointers.delete(e.pointerId);
+
+    if (tapCandidate && tapCandidate.id === e.pointerId) {
+      const dt = performance.now() - tapCandidate.t;
+      const dx = Math.abs(e.clientX - tapCandidate.x);
+      const dy = Math.abs(e.clientY - tapCandidate.y);
+      const isTap = (dt < 260 && dx < 8 && dy < 8);
+      if (isTap) handleTap(e.clientX, e.clientY, tapCandidate);
+      tapCandidate = null;
+    }
+
+    if (state.pointers.size === 0) {
+      canvas.style.cursor = "grab";
+      state.panStart = null;
+      state.pinchStart = null;
+      if (state.tool !== "cursor") state.cross.on = false;
+    } else if (state.pointers.size === 1) {
+      const only = [...state.pointers.values()][0];
+      state.panStart = { x: only.x, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+      state.pinchStart = null;
+    }
+  }
+  canvas.addEventListener("pointerup", pointerUpCommon);
+  canvas.addEventListener("pointercancel", pointerUpCommon);
+
+  // ===== Buttons / UI
+  function buyMarket() { syncLeftFromTop(); marketOrder("buy", getQty(), getSlip()); }
+  function sellMarket(){ syncLeftFromTop(); marketOrder("sell", getQty(), getSlip()); }
+
+  $("buyMktTop").addEventListener("click", buyMarket);
+  $("sellMktTop").addEventListener("click", sellMarket);
+  $("qtyTop").addEventListener("input", syncLeftFromTop);
+  $("slipTop").addEventListener("input", syncLeftFromTop);
+
+  $("followWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("follow").checked = !$("follow").checked;
+    state.follow = $("follow").checked;
+    if (state.follow) state.rightOffset = 0;
+  });
+
+  $("tool").addEventListener("change", () => {
+    state.tool = $("tool").value;
+    state.pending = null;
+    if (state.tool === "cursor") state.cross.on = true;
+  });
+
+  $("undo").addEventListener("click", () => undoDrawing());
+  $("clearDraw").addEventListener("click", () => clearDrawings());
+
+  $("placeLimit").addEventListener("click", () => {
+    const side = $("limitSide").value;
+    const qty = getQty();
+    const price = Number($("limitPrice").value || 0);
+    if (!Number.isFinite(price) || price <= 0) { log("⚠️ Введи цену лимитки (> 0).", "warn"); return; }
+    placeLimit(side, price, qty);
+  });
+
+  $("placeLadder").addEventListener("click", () => {
+    const side = $("ladderSide").value;
+    const levels = Math.max(1, Math.floor(Number($("ladderLevels").value || 1)));
+    const step = Number($("ladderStep").value || state.tickSize);
+    const qtyPer = Math.max(1, Math.floor(Number($("ladderQty").value || 1)));
+    let start = Number($("ladderStart").value || 0);
+    if (!Number.isFinite(start) || start <= 0) { start = state.price; $("ladderStart").value = start.toFixed(2); }
+    placeLadder(side, start, levels, step, qtyPer);
+  });
+
+  $("cancelAll").addEventListener("click", cancelAll);
+  $("flatten").addEventListener("click", flatten);
+
+  $("clearLog").addEventListener("click", () => $("log").innerHTML = "");
+
+  $("pause").addEventListener("click", () => {
     state.paused = !state.paused;
-    log(state.paused ? "Paused" : "Resumed", "y");
+    $("pause").textContent = state.paused ? "▶️ Resume" : "⏸️ Pause";
+    log(state.paused ? "⏸️ Market paused" : "▶️ Market resumed", "warn");
   });
 
-  $("stepBtn").addEventListener("click", () => {
-    if (!state.paused) { log("Step works only when paused", "y"); return; }
-    stepOnce();
+  $("reset").addEventListener("click", () => {
+    state.price = 17000;
+    state.velocity = 0;
+    state.flow = 0;
+    state.pos = 0;
+    state.avg = null;
+
+    state.limits = [];
+    state.bars = [];
+    state.lastBarIdx = 0;
+    state._curBar = null;
+    state._barCounter = 0;
+
+    state.rightOffset = 0;
+    $("follow").checked = true;
+    state.follow = true;
+
+    state.drawings = [];
+    state.pending = null;
+
+    $("limitPrice").value = state.price.toFixed(2);
+    $("ladderStart").value = state.price.toFixed(2);
+
+    ordersDirty = true;
+    statsDirty = true;
+
+    log("🔁 Reset done", "warn");
   });
 
-  $("followBtn").addEventListener("click", () => {
-    state.follow = !state.follow;
-    if (state.follow) state.center = Math.max(0, barsAll().length - 1);
-    log(`Follow ${state.follow ? "ON" : "OFF"}`, "y");
+  $("stepTick").addEventListener("click", () => {
+    if (!state.paused) { log("⚠️ Step работает только на паузе.", "warn"); return; }
+    stepSimulationOnce();
   });
-
-  $("resetBtn").addEventListener("click", resetAll);
 
   // speed buttons
-  document.querySelectorAll(".speed button").forEach(btn => {
+  document.querySelectorAll(".speedBtn").forEach(btn => {
     btn.addEventListener("click", () => {
-      const v = Number(btn.dataset.sp);
-      state.speed = clamp(v, 0.1, 50);
-      document.querySelectorAll(".speed button").forEach(b => b.classList.toggle("active", b === btn));
-      log(`Speed = ${state.speed}x`, "y");
+      const v = Number(btn.dataset.speed || "1");
+      state.speedMul = clamp(v, 0.1, 50);
+      document.querySelectorAll(".speedBtn").forEach(b => b.classList.toggle("active", b === btn));
+      statsDirty = true;
     });
   });
 
-  // ========= HOTKEYS
+  // Simple/Advanced mode
+  $("toggleMode").addEventListener("click", () => {
+    document.body.classList.toggle("simple");
+    const isSimple = document.body.classList.contains("simple");
+    $("toggleMode").textContent = isSimple ? "🧩 Advanced" : "🧩 Simple";
+  });
+
+  // Help overlay
+  const helpOverlay = $("helpOverlay");
+  function openHelp(){ helpOverlay.classList.add("open"); }
+  function closeHelp(){ helpOverlay.classList.remove("open"); }
+  $("openHelp").addEventListener("click", openHelp);
+  $("closeHelp").addEventListener("click", closeHelp);
+  helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) closeHelp(); });
+
+  // settings listeners
+  ["vol","liq","impact","simHzBase","tick","spread","timeframe","visibleBars","follow"].forEach(id => {
+    $(id).addEventListener("change", () => {
+      applySettingsFromUI();
+      if (state.follow) state.rightOffset = 0;
+      statsDirty = true;
+    });
+  });
+
+  // Hotkeys (sandbox)
   window.addEventListener("keydown", (e) => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     if (typing) return;
 
     const k = e.key.toLowerCase();
-    if (k === "b") market("buy", getQty(), getSlip());
-    if (k === "s") market("sell", getQty(), getSlip());
-    if (k === "c") cancelAll();
-    if (k === "x") flatten();
-    if (k === "f") {
-      state.follow = !state.follow;
-      if (state.follow) state.center = Math.max(0, barsAll().length - 1);
-      log(`Follow ${state.follow ? "ON" : "OFF"}`, "y");
-    }
-    if (k === "r") resetAll();
-    if (k === " ") { e.preventDefault(); $("pauseBtn").click(); }
 
-    // speed 1..5 = 0.5/1/2/5/10
-    if (k === "1") setSpeedBtn("0.5");
-    if (k === "2") setSpeedBtn("1");
-    if (k === "3") setSpeedBtn("2");
-    if (k === "4") setSpeedBtn("5");
-    if (k === "5") setSpeedBtn("10");
+    if (k === "?") { e.preventDefault(); helpOverlay.classList.toggle("open"); return; }
+    if (e.ctrlKey && k === "z") { e.preventDefault(); undoDrawing(); return; }
+
+    if (k === "b") { buyMarket(); return; }
+    if (k === "s") { sellMarket(); return; }
+    if (k === "f") {
+      $("follow").checked = !$("follow").checked;
+      state.follow = $("follow").checked;
+      if (state.follow) state.rightOffset = 0;
+      return;
+    }
+    if (k === " ") { e.preventDefault(); $("pause").click(); return; }
+    if (k === "c") { cancelAll(); return; }
+    if (k === "x") { flatten(); return; }
+    if (k === "+") { setQty(getQty() + 1); return; }
+    if (k === "-") { setQty(getQty() - 1); return; }
+
+    if (k === "1") { $("tool").value="cursor"; $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "2") { $("tool").value="trend";  $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "3") { $("tool").value="rect";   $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "4") { $("tool").value="hline";  $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "5") { $("tool").value="erase";  $("tool").dispatchEvent(new Event("change")); return; }
   });
 
-  function setSpeedBtn(val) {
-    const btn = [...document.querySelectorAll(".speed button")].find(b => b.dataset.sp === val);
-    if (btn) btn.click();
+  // ===== UI throttle (10 fps for DOM)
+  setInterval(() => {
+    if (statsDirty) { renderStats(); statsDirty = false; }
+    if (ordersDirty) { renderOrdersTable(); ordersDirty = false; }
+  }, 100);
+
+  // ===== loop (canvas)
+  function init() {
+    $("limitPrice").value = state.price.toFixed(2);
+    $("ladderStart").value = state.price.toFixed(2);
+    resizeCanvasToDisplaySize();
+    log("Готово: sandbox-режим (speed presets + step + ctrl/alt clicks + hotkeys).", "warn");
   }
 
-  // ========= PRESEED (NO EMPTY CHART)
-  function preseedHistory(barCount = 900) {
-    // generate quickly: simulate ticks until we have barCount bars
-    state.bars = [];
-    state.curBar = null;
-    state.curTicks = 0;
-
-    // start price with slight randomness so it doesn't look "flat"
-    state.price = roundTo(17000 + (Math.random()-0.5)*200, state.tick);
-    state.v = 0;
-    state.flow = 0;
-
-    // ensure speed=1 for consistent seeding
-    const oldSpeed = state.speed;
-    state.speed = 1;
-
-    // we want N bars, each bar is barSeconds * hz ticks
-    const targetBars = barCount;
-    const maxTicks = targetBars * Math.round(state.barSeconds * state.baseHz);
-
-    for (let i=0; i<maxTicks; i++) stepOnce();
-
-    // set camera to latest
-    state.follow = true;
-    state.center = Math.max(0, barsAll().length - 1);
-
-    state.speed = oldSpeed;
-  }
-
-  // ========= RESET
-  function resetAll() {
-    state.pos = 0;
-    state.avg = null;
-    state.limits = [];
-    state.nextId = 1;
-
-    state.vol = 8; state.liq = 10; state.impact = 8;
-    state.spreadTicks = 1;
-
-    state.barsPerScreen = 160;
-    state.follow = true;
-
-    preseedHistory(900);
-    log("Reset done (history regenerated)", "y");
-  }
-
-  // ========= MAIN LOOP
-  let last = performance.now();
+  let lastTs = performance.now();
   let acc = 0;
 
-  function frame(ts) {
-    const dt = Math.min(0.05, (ts - last) / 1000);
-    last = ts;
+  function loop(ts) {
+    const dt = (ts - lastTs) / 1000;
+    lastTs = ts;
 
-    const hz = simHz();
-    const step = 1 / hz;
+    applySettingsFromUI();
 
+    const step = 1 / state.simHz;
     if (!state.paused) {
       acc += dt;
       acc = Math.min(acc, 0.25);
       while (acc >= step) {
-        stepOnce();
+        stepSimulationOnce();
         acc -= step;
       }
     }
 
-    updateHUD();
-    draw();
+    if (state.follow) state.rightOffset = 0;
+    clampOffset();
 
-    requestAnimationFrame(frame);
-  }
-
-  // init
-  function init() {
-    preseedHistory(900);
-    updateHUD();
-    log("Ready. Drag/Wheel works нормально. Chart not empty ✅", "y");
-    requestAnimationFrame(frame);
+    drawChart();
+    requestAnimationFrame(loop);
   }
 
   init();
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
