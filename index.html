@@ -3,22 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Market Sandbox — Pan/Zoom + TF</title>
+  <title>Market Sandbox — TV-like Chart</title>
   <style>
     :root{
-      --bg:#0b0f14;
-      --text:#e7eef7;
-      --muted:#9fb0c3;
-      --line:#223044;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --bg:#0b0f14; --text:#e7eef7; --muted:#9fb0c3; --line:#223044;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
     }
     *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family:var(--sans);
+      margin:0; font-family:var(--sans);
       background: radial-gradient(1200px 800px at 10% 10%, #101a2a 0%, var(--bg) 45%) fixed;
       color:var(--text);
     }
@@ -32,11 +27,11 @@
     header .row{
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       max-width:1400px; margin:0 auto;
+      flex-wrap:wrap;
     }
     .title{display:flex; flex-direction:column; gap:2px;}
-    .title h1{font-size:16px; margin:0; font-weight:700; letter-spacing:.2px;}
+    .title h1{font-size:16px; margin:0; font-weight:800; letter-spacing:.2px;}
     .title .sub{font-size:12px; color:var(--muted);}
-
     .pill{
       display:inline-flex; gap:10px; align-items:center;
       padding:8px 10px;
@@ -48,14 +43,11 @@
       color:var(--muted);
       white-space:nowrap;
     }
-    .pill b{color:var(--text); font-weight:700}
+    .pill b{color:var(--text); font-weight:800}
 
     main{
-      max-width:1400px;
-      margin:0 auto;
-      padding:14px;
-      display:grid;
-      grid-template-columns: 420px 1fr 420px;
+      max-width:1400px; margin:0 auto; padding:14px;
+      display:grid; grid-template-columns: 420px 1fr 420px;
       gap:14px;
     }
     .card{
@@ -64,7 +56,6 @@
       border-radius:var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
-      min-height: 140px;
     }
     .card h2{
       margin:0;
@@ -73,17 +64,13 @@
       letter-spacing:.2px;
       border-bottom:1px solid rgba(34,48,68,.7);
       color: #dce8f7;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
-    .card h2 small{color:var(--muted); font-weight:600; font-size:11px;}
+    .card h2 small{color:var(--muted); font-weight:700; font-size:11px;}
     .card .content{padding:12px;}
     .grid{display:grid; gap:10px;}
     .grid.cols2{grid-template-columns:1fr 1fr;}
     .grid.cols3{grid-template-columns:1fr 1fr 1fr;}
-
     label{display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted);}
     input, select, button{font-family:inherit;}
     input, select{
@@ -100,7 +87,7 @@
       border-radius:12px;
       padding:11px 12px;
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
       letter-spacing:.2px;
       user-select:none;
       display:inline-flex;
@@ -118,7 +105,7 @@
     .btn.bad{background: rgba(255,91,110,.14); color: #ffd0d7; border:1px solid rgba(255,91,110,.45);}
     .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
     .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
-    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px; font-weight:800;}
+    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px; font-weight:900;}
 
     .row{display:flex; gap:10px; align-items:center;}
     .row.wrap{flex-wrap:wrap;}
@@ -132,7 +119,7 @@
       min-width: 0;
     }
     .stat .k{font-size:11px; color:var(--muted);}
-    .stat .v{font-family:var(--mono); font-size:13px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .stat .v{font-family:var(--mono); font-size:13px; font-weight:900; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 
     .chartTopBar{
       padding:12px;
@@ -155,9 +142,10 @@
       color: var(--muted);
       font-size:12px;
       user-select:none;
+      white-space:nowrap;
     }
     .miniField input{width:90px; padding:8px 8px; border-radius:10px; font-size:12px;}
-    .miniField select{width:150px; padding:8px 8px; border-radius:10px; font-size:12px;}
+    .miniField select{width:190px; padding:8px 8px; border-radius:10px; font-size:12px;}
 
     .toggle{
       display:flex; align-items:center; gap:8px;
@@ -169,10 +157,11 @@
       font-size:12px;
       user-select:none;
       cursor:pointer;
+      white-space:nowrap;
     }
     .toggle input{width:auto; transform: translateY(1px);}
 
-    .chartWrap{height: 520px; padding: 10px 12px 12px;}
+    .chartWrap{height: 540px; padding: 10px 12px 12px;}
     canvas{
       width:100%;
       height:100%;
@@ -180,8 +169,8 @@
       border-radius:12px;
       border:1px solid rgba(34,48,68,.7);
       background: rgba(5,8,12,.65);
-      cursor: grab;
       touch-action: none;
+      cursor: grab;
     }
     .mono{font-family:var(--mono)}
     .muted{color:var(--muted)}
@@ -190,18 +179,12 @@
 
     table{width:100%; border-collapse:collapse; font-size:12px;}
     thead th{
-      text-align:left;
-      color: var(--muted);
-      font-size:11px;
-      font-weight:700;
-      padding:10px 8px;
-      border-bottom:1px solid rgba(34,48,68,.7);
+      text-align:left; color: var(--muted); font-size:11px; font-weight:900;
+      padding:10px 8px; border-bottom:1px solid rgba(34,48,68,.7);
     }
     tbody td{
-      padding:9px 8px;
-      border-bottom:1px solid rgba(34,48,68,.35);
-      vertical-align:top;
-      font-family: var(--mono);
+      padding:9px 8px; border-bottom:1px solid rgba(34,48,68,.35);
+      vertical-align:top; font-family: var(--mono);
     }
     tbody tr:hover{background: rgba(100,181,255,.06);}
 
@@ -231,16 +214,8 @@
     .log div{padding:3px 0; border-bottom:1px dashed rgba(34,48,68,.35);}
     .log div:last-child{border-bottom:none;}
 
-    .rightSticky{
-      position:sticky;
-      top:74px;
-      height: calc(100vh - 88px);
-      overflow:auto;
-      padding-bottom: 16px;
-    }
-    .leftSticky{
-      position:sticky;
-      top:74px;
+    .rightSticky,.leftSticky{
+      position:sticky; top:74px;
       height: calc(100vh - 88px);
       overflow:auto;
       padding-bottom: 16px;
@@ -251,7 +226,7 @@
       .rightSticky,.leftSticky{position:static; height:auto;}
       .chartWrap{height:420px;}
       .miniField input{width:110px;}
-      .miniField select{width:170px;}
+      .miniField select{width:210px;}
     }
   </style>
 </head>
@@ -260,10 +235,9 @@
 <header>
   <div class="row">
     <div class="title">
-      <h1>Market Sandbox — Pan/Zoom + TF 🕹️</h1>
-      <div class="sub">Колесо — зум, drag — пан. Auto-follow держит последнюю свечу. TF включает 15m.</div>
+      <h1>Market Sandbox — TV-like Chart 📈</h1>
+      <div class="sub">Пан: 1 палец/drag. Зум: pinch (2 пальца) / wheel на ПК. Тулы: line/rect/hline. Цены слева.</div>
     </div>
-
     <div class="row wrap">
       <div class="pill">Инструмент: <b id="sym">NQ (sim)</b></div>
       <div class="pill">Цена: <b id="hdrPrice">—</b></div>
@@ -279,14 +253,9 @@
     <section class="card">
       <h2>Ордера <small>mkt + limit</small></h2>
       <div class="content grid">
-
         <div class="grid cols2">
-          <label>Кол-во (qty)
-            <input id="qty" type="number" step="1" min="1" value="1" />
-          </label>
-          <label>Проскальзывание (ticks)
-            <input id="slip" type="number" step="1" min="0" value="1" />
-          </label>
+          <label>Кол-во (qty)<input id="qty" type="number" step="1" min="1" value="1" /></label>
+          <label>Проскальзывание (ticks)<input id="slip" type="number" step="1" min="0" value="1" /></label>
         </div>
 
         <div class="sep"></div>
@@ -298,9 +267,7 @@
               <option value="sell">Limit Sell</option>
             </select>
           </label>
-          <label>Цена лимитки
-            <input id="limitPrice" type="number" step="0.25" value="0" />
-          </label>
+          <label>Цена лимитки<input id="limitPrice" type="number" step="0.25" value="0" /></label>
         </div>
         <button class="btn neutral" id="placeLimit">➕ Поставить Limit</button>
 
@@ -308,48 +275,25 @@
 
         <div class="grid cols3">
           <label>Лестница: side
-            <select id="ladderSide">
-              <option value="buy">Buy ladder</option>
-              <option value="sell">Sell ladder</option>
-            </select>
+            <select id="ladderSide"><option value="buy">Buy ladder</option><option value="sell">Sell ladder</option></select>
           </label>
-          <label>Levels
-            <input id="ladderLevels" type="number" step="1" min="1" value="8" />
-          </label>
-          <label>Step (pts)
-            <input id="ladderStep" type="number" step="0.25" min="0.25" value="5" />
-          </label>
+          <label>Levels<input id="ladderLevels" type="number" step="1" min="1" value="8" /></label>
+          <label>Step (pts)<input id="ladderStep" type="number" step="0.25" min="0.25" value="5" /></label>
         </div>
         <div class="grid cols2">
-          <label>Start price
-            <input id="ladderStart" type="number" step="0.25" value="0" />
-          </label>
-          <label>Qty per level
-            <input id="ladderQty" type="number" step="1" min="1" value="1" />
-          </label>
+          <label>Start price<input id="ladderStart" type="number" step="0.25" value="0" /></label>
+          <label>Qty per level<input id="ladderQty" type="number" step="1" min="1" value="1" /></label>
         </div>
         <button class="btn warn" id="placeLadder">🪜 Поставить лестницу</button>
 
         <div class="sep"></div>
 
         <div class="grid cols2">
-          <label>Сдвиг всех лимиток (pts)
-            <input id="shiftPts" type="number" step="0.25" value="1" />
-          </label>
-          <div class="grid cols2" style="align-items:end">
-            <button class="btn small" id="shiftUp">⬆️ Shift +</button>
-            <button class="btn small" id="shiftDn">⬇️ Shift −</button>
-          </div>
-        </div>
-
-        <div class="grid cols2">
           <button class="btn" id="cancelAll">🧹 Cancel All</button>
           <button class="btn" id="flatten">🧯 Flatten (mkt)</button>
         </div>
 
-        <div class="hint">
-          Если ты потянул график в историю — <b>Auto-follow</b> отключится сам (чтоб не бесило).
-        </div>
+        <div class="hint">Да, это симулятор. Нет, он не делает тебя “богом рынка”. Но тренироваться можно 🤝</div>
       </div>
     </section>
 
@@ -357,30 +301,16 @@
       <h2>Движок рынка <small>smooth + TF</small></h2>
       <div class="content grid">
         <div class="grid cols2">
-          <label>Volatility (1–20)
-            <input id="vol" type="number" step="1" min="1" max="20" value="8" />
-          </label>
-          <label>Liquidity (1–20)
-            <input id="liq" type="number" step="1" min="1" max="20" value="10" />
-          </label>
+          <label>Volatility (1–20)<input id="vol" type="number" step="1" min="1" max="20" value="8" /></label>
+          <label>Liquidity (1–20)<input id="liq" type="number" step="1" min="1" max="20" value="10" /></label>
         </div>
-
         <div class="grid cols2">
-          <label>Impact (0–20)
-            <input id="impact" type="number" step="1" min="0" max="20" value="8" />
-          </label>
-          <label>Sim ticks/sec (5–120)
-            <input id="simHz" type="number" step="1" min="5" max="120" value="60" />
-          </label>
+          <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
+          <label>Sim ticks/sec (5–120)<input id="simHz" type="number" step="1" min="5" max="120" value="60" /></label>
         </div>
-
         <div class="grid cols2">
-          <label>Tick size
-            <input id="tick" type="number" step="0.01" min="0.01" value="0.25" />
-          </label>
-          <label>Spread (ticks)
-            <input id="spread" type="number" step="1" min="0" value="1" />
-          </label>
+          <label>Tick size<input id="tick" type="number" step="0.01" min="0.01" value="0.25" /></label>
+          <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
         </div>
 
         <div class="grid cols2">
@@ -394,9 +324,7 @@
               <option value="15m">15m</option>
             </select>
           </label>
-          <label>Свечей на экране
-            <input id="visibleBars" type="number" step="5" min="20" max="600" value="140" />
-          </label>
+          <label>Свечей на экране<input id="visibleBars" type="number" step="5" min="20" max="600" value="140" /></label>
         </div>
 
         <div class="grid cols2">
@@ -409,28 +337,43 @@
 
   <!-- CENTER -->
   <section class="card">
-    <h2>График (пан/зум) <small>без тулов</small></h2>
+    <h2>График <small>TradingView-ish</small></h2>
 
     <div class="chartTopBar">
       <div class="left">
         <button class="btn good" id="buyMktTop">⬆️ Buy Market</button>
         <button class="btn bad" id="sellMktTop">⬇️ Sell Market</button>
+
         <div class="miniField">qty <input id="qtyTop" type="number" step="1" min="1" value="1" /></div>
         <div class="miniField">slip <input id="slipTop" type="number" step="1" min="0" value="1" /></div>
 
-        <div class="toggle" id="followWrap" title="Если включено — график держится на последней свече">
+        <div class="toggle" id="followWrap">
           <input id="follow" type="checkbox" checked />
           <span>Auto-follow</span>
         </div>
+
+        <div class="miniField">
+          Tool
+          <select id="tool">
+            <option value="cursor" selected>Cursor</option>
+            <option value="trend">Trendline</option>
+            <option value="rect">Rectangle zone</option>
+            <option value="hline">Horizontal line</option>
+            <option value="erase">Eraser (tap item)</option>
+          </select>
+        </div>
+
+        <button class="btn small" id="undo">↩ Undo</button>
+        <button class="btn small" id="clearDraw">🧼 Clear</button>
       </div>
 
       <div class="right">
-        <div class="miniField mono" title="Колесо — зум. Drag — пан.">Wheel=Zoom Drag=Pan</div>
+        <div class="miniField mono">1 finger=Pan • 2 fingers=Zoom • Tap=Draw</div>
       </div>
     </div>
 
     <div class="chartWrap">
-      <canvas id="chart" width="1200" height="520"></canvas>
+      <canvas id="chart" width="1200" height="540"></canvas>
     </div>
 
     <div class="content">
@@ -443,7 +386,7 @@
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
       </div>
       <div class="hint" style="margin-top:10px">
-        Подсказка: если ты ушёл влево (в историю), включи follow обратно — вернёт к последним свечам.
+        Trend/Rect: 2 тапа (старт/финиш). HLine: 1 тап. Eraser: тап по объекту чтобы удалить.
       </div>
     </div>
   </section>
@@ -451,7 +394,7 @@
   <!-- RIGHT -->
   <div class="rightSticky">
     <section class="card">
-      <h2>Активные лимитки <small>click → cancel</small></h2>
+      <h2>Активные лимитки <small>tap → cancel</small></h2>
       <div class="content" style="padding:0">
         <div style="max-height:320px; overflow:auto">
           <table>
@@ -507,25 +450,35 @@
     pos: 0,
     avg: null,
 
-    // bars
-    bars: [],               // {idx,o,h,l,c}
+    bars: [],
     lastBarIdx: 0,
     barTicks: 300,
     _barCounter: 0,
     _curBar: null,
 
-    // limits
     nextOrderId: 1,
     limits: [],
 
-    // view (pan/zoom)
+    // view
     visibleBars: 140,
-    rightOffset: 0,   // 0=latest
+    rightOffset: 0,
     follow: true,
 
-    // interaction
-    dragging: false,
-    dragStart: null,
+    // pointer / gestures
+    pointers: new Map(),
+    panStart: null,      // {x, rightOffset, stepPx}
+    pinchStart: null,    // {dist, visibleBars}
+
+    // chart geometry (updated each draw)
+    geo: null,           // {leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,plotY0,plotY1,stepPxCanvas, stepPxScreen, ...}
+
+    // crosshair
+    cross: { on:false, x:0, y:0, idx:null, price:null },
+
+    // drawings
+    tool: "cursor",
+    drawings: [],        // [{type, ...}]
+    pending: null,       // pending first point for trend/rect
   };
 
   $("sym").textContent = state.symbol;
@@ -597,12 +550,6 @@
     log(`🧹 Cancel All (${n} orders)`, "warn");
   }
 
-  function shiftAll(deltaPts) {
-    const delta = roundTo(deltaPts, state.tickSize);
-    state.limits.forEach(o => o.price = roundTo(o.price + delta, state.tickSize));
-    log(`↕ Shift all limits by <span class="mono">${delta.toFixed(2)}</span> pts`, "warn");
-  }
-
   function flatten() {
     if (state.pos === 0) { log("🧯 Flatten: позиция уже 0", "warn"); return; }
     const qty = Math.abs(state.pos);
@@ -638,7 +585,6 @@
 
       o.left -= chunk;
       applyFill(o.side, chunk, o.price, `limit id=${o.id}`);
-
       if (o.left <= 0) filledIds.push(o.id);
     }
     if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
@@ -698,10 +644,7 @@
     matchLimits();
   }
 
-  // ===== Chart with window (pan/zoom)
-  const canvas = $("chart");
-  const ctx = canvas.getContext("2d");
-
+  // ===== bars window
   function getAllBarsForRender() {
     const arr = state.bars.slice();
     if (state._curBar) arr.push(state._curBar);
@@ -711,12 +654,11 @@
   function getWindowBars() {
     const bars = getAllBarsForRender();
     const n = bars.length;
-    if (n === 0) return {bars:[], total:0};
-
+    if (n === 0) return {bars:[], total:0, startPos:0, endPos:0};
     const vis = clamp(state.visibleBars, 20, 600);
     const end = Math.max(0, n - 1 - state.rightOffset);
     const start = Math.max(0, end - vis + 1);
-    return { bars: bars.slice(start, end + 1), startPos: start, endPos: end, total: n };
+    return { bars: bars.slice(start, end + 1), total:n, startPos:start, endPos:end };
   }
 
   function computePriceRange(windowBars) {
@@ -731,119 +673,377 @@
     return { min: min - pad, max: max + pad };
   }
 
-  function makeTransform(windowBars, pr, w, h) {
+  function niceStep(range, targetTicks=8) {
+    const raw = range / targetTicks;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const frac = raw / pow;
+    let niceFrac;
+    if (frac <= 1) niceFrac = 1;
+    else if (frac <= 2) niceFrac = 2;
+    else if (frac <= 5) niceFrac = 5;
+    else niceFrac = 10;
+    return niceFrac * pow;
+  }
+
+  // ===== coordinate mapping
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+
+  function buildGeo(windowBars, pr) {
+    const w = canvas.width, h = canvas.height;
+
+    const leftPad = 74;
+    const rightPad = 14;
+    const topPad = 10;
+    const bottomPad = 26;
+
+    const plotX0 = leftPad;
+    const plotX1 = w - rightPad;
+    const plotY0 = topPad;
+    const plotY1 = h - bottomPad;
+
     const n = windowBars.length;
-    const candleW = Math.max(3, Math.floor(w / (n + 10)));
+    const candleW = Math.max(3, Math.floor((plotX1 - plotX0) / (n + 10)));
     const gap = Math.max(1, Math.floor(candleW * 0.35));
     const step = candleW + gap;
     const totalW = step * n;
-    const xStart = Math.max(6, Math.floor((w - totalW) / 2));
+    const xStart = plotX0 + Math.max(6, Math.floor(((plotX1 - plotX0) - totalW) / 2));
 
-    const yOf = (p) => h - ((p - pr.min) / (pr.max - pr.min)) * h;
+    const yOf = (p) => {
+      const yy = plotY1 - ((p - pr.min) / (pr.max - pr.min)) * (plotY1 - plotY0);
+      return clamp(yy, plotY0, plotY1);
+    };
 
-    // used for pan translation
-    return { candleW, gap, step, xStart, yOf };
+    const xOfIdx = (idx, firstIdx, lastIdx) => {
+      // idx is bar.idx, we map it linearly to visible positions
+      const span = Math.max(1, lastIdx - firstIdx);
+      const t = (idx - firstIdx) / span;
+      // BUT we actually draw candles by slot i, not by idx, so use slots when possible.
+      // This helper is used mainly for drawings; we approximate with linear idx mapping.
+      return plotX0 + t * (plotX1 - plotX0);
+    };
+
+    const rect = canvas.getBoundingClientRect();
+    const scale = rect.width / canvas.width; // canvas px -> screen px
+    const stepPxScreen = step * scale;
+
+    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,plotY0,plotY1,candleW,gap,step,totalW,xStart,yOf,stepPxScreen,xOfIdx };
   }
 
+  function canvasPointFromClient(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (canvas.width / r.width);
+    const y = (e.clientY - r.top) * (canvas.height / r.height);
+    return {x, y};
+  }
+
+  function priceFromY(y, pr, geo) {
+    const t = (geo.plotY1 - y) / (geo.plotY1 - geo.plotY0);
+    const p = pr.min + t * (pr.max - pr.min);
+    return roundTo(p, state.tickSize);
+  }
+
+  function idxFromX(x, win, geo) {
+    // map x to nearest candle slot in window
+    const n = win.bars.length;
+    if (n < 2) return null;
+    const i = Math.round((x - geo.xStart) / geo.step);
+    const ii = clamp(i, 0, n-1);
+    return win.bars[ii].idx;
+  }
+
+  // ===== drawings
+  function pushDrawing(d) {
+    state.drawings.push(d);
+  }
+  function undoDrawing() {
+    if (state.pending) { state.pending = null; return; }
+    state.drawings.pop();
+  }
+  function clearDrawings() {
+    state.pending = null;
+    state.drawings = [];
+  }
+
+  function distPointToSegment(px,py, x1,y1, x2,y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
+    const t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy);
+    const tt = clamp(t, 0, 1);
+    const cx = x1 + tt*dx, cy = y1 + tt*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+
+  function hitTestDrawing(pt, win, pr, geo) {
+    // returns index in drawings or -1
+    const firstIdx = win.bars[0].idx;
+    const lastIdx  = win.bars[win.bars.length-1].idx;
+    const px = pt.x, py = pt.y;
+
+    for (let k = state.drawings.length-1; k>=0; k--) {
+      const d = state.drawings[k];
+      if (d.type === "hline") {
+        const y = geo.yOf(d.p);
+        if (Math.abs(py - y) <= 6 && px >= geo.plotX0 && px <= geo.plotX1) return k;
+      }
+      if (d.type === "trend") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y2 = geo.yOf(d.y2);
+        if (distPointToSegment(px,py,x1,y1,x2,y2) <= 7) return k;
+      }
+      if (d.type === "rect") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const y2 = geo.yOf(d.y2);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        const onEdge = (
+          (Math.abs(px-l)<=6 && py>=t && py<=b) ||
+          (Math.abs(px-r)<=6 && py>=t && py<=b) ||
+          (Math.abs(py-t)<=6 && px>=l && px<=r) ||
+          (Math.abs(py-b)<=6 && px>=l && px<=r)
+        );
+        if (onEdge) return k;
+      }
+    }
+    return -1;
+  }
+
+  // ===== draw
   function drawChart() {
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0,0,w,h);
-
-    // grid
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(34,48,68,0.55)";
-    for (let i=1;i<8;i++){
-      const y = (h/8)*i;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
-    }
-    for (let i=1;i<12;i++){
-      const x = (w/12)*i;
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
-    }
 
     const win = getWindowBars();
     const windowBars = win.bars;
     if (windowBars.length < 2) return;
 
     const pr = computePriceRange(windowBars);
-    const tf = makeTransform(windowBars, pr, w, h);
+    const geo = buildGeo(windowBars, pr);
+    state.geo = geo;
+
+    // background plot
+    ctx.fillStyle = "rgba(5,8,12,0.35)";
+    ctx.fillRect(geo.plotX0, geo.plotY0, geo.plotX1-geo.plotX0, geo.plotY1-geo.plotY0);
+
+    // left scale background
+    ctx.fillStyle = "rgba(11,15,20,0.55)";
+    ctx.fillRect(0, 0, geo.leftPad, h);
+
+    // border between scale and plot
+    ctx.strokeStyle = "rgba(34,48,68,0.9)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(geo.leftPad + 0.5, 0);
+    ctx.lineTo(geo.leftPad + 0.5, h);
+    ctx.stroke();
+
+    // price grid + labels
+    let step = niceStep(pr.max - pr.min, 8);
+    step = Math.max(state.tickSize, roundTo(step, state.tickSize));
+    const startP = Math.floor(pr.min / step) * step;
+
+    ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+    ctx.textBaseline = "middle";
+
+    for (let p = startP; p <= pr.max + step; p += step) {
+      const price = roundTo(p, state.tickSize);
+      const y = geo.yOf(price);
+
+      ctx.strokeStyle = "rgba(34,48,68,0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(159,176,195,0.95)";
+      ctx.fillText(price.toFixed(2), 8, y);
+    }
+
+    // time grid (vertical light)
+    ctx.strokeStyle = "rgba(34,48,68,0.35)";
+    for (let i=0; i<windowBars.length; i+= Math.max(5, Math.round(windowBars.length/10))) {
+      const x = geo.xStart + i * geo.step + geo.candleW/2;
+      ctx.beginPath(); ctx.moveTo(x, geo.plotY0); ctx.lineTo(x, geo.plotY1); ctx.stroke();
+    }
 
     // bid/ask band
     const {bid, ask} = getBidAsk();
-    const yBid = tf.yOf(bid), yAsk = tf.yOf(ask);
+    const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
     ctx.fillStyle = "rgba(159,176,195,0.08)";
-    ctx.fillRect(0, Math.min(yBid,yAsk), w, Math.abs(yBid-yAsk));
+    ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
 
     // candles
     for (let i=0; i<windowBars.length; i++) {
       const b = windowBars[i];
-      const x = tf.xStart + i * tf.step;
-      const yO = tf.yOf(b.o), yH = tf.yOf(b.h), yL = tf.yOf(b.l), yC = tf.yOf(b.c);
+      const x = geo.xStart + i * geo.step;
+      const yO = geo.yOf(b.o), yH = geo.yOf(b.h), yL = geo.yOf(b.l), yC = geo.yOf(b.c);
       const up = b.c >= b.o;
 
+      // wick
       ctx.strokeStyle = up ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(x + tf.candleW/2, yH);
-      ctx.lineTo(x + tf.candleW/2, yL);
+      ctx.moveTo(x + geo.candleW/2, yH);
+      ctx.lineTo(x + geo.candleW/2, yL);
       ctx.stroke();
 
+      // body
       const bodyTop = Math.min(yO, yC);
       const bodyH = Math.max(2, Math.abs(yC - yO));
       ctx.fillStyle = up ? "rgba(61,220,151,0.30)" : "rgba(255,91,110,0.28)";
       ctx.strokeStyle = up ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
       ctx.lineWidth = 1.5;
-      ctx.fillRect(x, bodyTop, tf.candleW, bodyH);
-      ctx.strokeRect(x, bodyTop, tf.candleW, bodyH);
+      ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
+      ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
     }
 
     // limits
     for (const o of state.limits) {
-      const y = tf.yOf(o.price);
+      const y = geo.yOf(o.price);
+
       ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
       ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
 
       ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
-      ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-      ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, 10, y - 6);
+      ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`, geo.plotX0 + 10, y - 10);
     }
 
-    // labels
-    ctx.fillStyle = "rgba(159,176,195,0.85)";
-    ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-    ctx.fillText(`max ${pr.max.toFixed(2)}`, 10, 16);
-    ctx.fillText(`min ${pr.min.toFixed(2)}`, 10, h - 10);
+    // drawings
+    const firstIdx = windowBars[0].idx;
+    const lastIdx  = windowBars[windowBars.length-1].idx;
 
-    // last dot
-    const yLast = tf.yOf(state.price);
-    ctx.fillStyle = "rgba(100,181,255,0.95)";
-    ctx.beginPath();
-    ctx.arc(w-10, yLast, 4, 0, Math.PI*2);
-    ctx.fill();
+    for (const d of state.drawings) {
+      if (d.type === "hline") {
+        const y = geo.yOf(d.p);
+        ctx.strokeStyle = "rgba(255,207,91,0.70)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+      }
+      if (d.type === "trend") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y2 = geo.yOf(d.y2);
+        ctx.strokeStyle = "rgba(100,181,255,0.85)";
+        ctx.lineWidth = 2.0;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      if (d.type === "rect") {
+        const x1 = geo.xOfIdx(d.x1, firstIdx, lastIdx);
+        const x2 = geo.xOfIdx(d.x2, firstIdx, lastIdx);
+        const y1 = geo.yOf(d.y1);
+        const y2 = geo.yOf(d.y2);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        ctx.fillStyle = "rgba(100,181,255,0.10)";
+        ctx.strokeStyle = "rgba(100,181,255,0.70)";
+        ctx.lineWidth = 1.8;
+        ctx.fillRect(l,t,r-l,b-t);
+        ctx.strokeRect(l,t,r-l,b-t);
+      }
+    }
+
+    // pending preview
+    if (state.pending) {
+      const p = state.pending;
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      if (p.type === "trend") {
+        const x1 = geo.xOfIdx(p.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfIdx(state.cross.idx ?? p.x1, firstIdx, lastIdx);
+        const y2 = geo.yOf(state.cross.price ?? p.y1);
+        ctx.strokeStyle = "rgba(100,181,255,0.65)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      if (p.type === "rect") {
+        const x1 = geo.xOfIdx(p.x1, firstIdx, lastIdx);
+        const y1 = geo.yOf(p.y1);
+        const x2 = geo.xOfIdx(state.cross.idx ?? p.x1, firstIdx, lastIdx);
+        const y2 = geo.yOf(state.cross.price ?? p.y1);
+        const l = Math.min(x1,x2), r = Math.max(x1,x2);
+        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        ctx.fillStyle = "rgba(100,181,255,0.08)";
+        ctx.strokeStyle = "rgba(100,181,255,0.55)";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(l,t,r-l,b-t);
+        ctx.strokeRect(l,t,r-l,b-t);
+      }
+      ctx.restore();
+    }
+
+    // last price marker + label on scale
+    const yLast = geo.yOf(state.price);
+    ctx.fillStyle = "rgba(100,181,255,0.20)";
+    ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
+    ctx.strokeStyle = "rgba(100,181,255,0.70)";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad-1, 23);
+    ctx.fillStyle = "rgba(211,236,255,0.98)";
+    ctx.fillText(state.price.toFixed(2), 8, yLast);
+
+    // crosshair
+    if (state.cross.on && state.cross.idx != null && state.cross.price != null) {
+      const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
+      const y = clamp(state.cross.y, geo.plotY0, geo.plotY1);
+
+      ctx.strokeStyle = "rgba(159,176,195,0.55)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, geo.plotY0); ctx.lineTo(x, geo.plotY1); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // price label on left
+      ctx.fillStyle = "rgba(159,176,195,0.14)";
+      ctx.fillRect(0, y - 12, geo.leftPad, 24);
+      ctx.strokeStyle = "rgba(159,176,195,0.55)";
+      ctx.strokeRect(0.5, y - 11.5, geo.leftPad-1, 23);
+      ctx.fillStyle = "rgba(231,238,247,0.98)";
+      ctx.fillText(state.cross.price.toFixed(2), 8, y);
+
+      // idx label bottom
+      const lab = String(state.cross.idx);
+      const bw = ctx.measureText(lab).width + 14;
+      const bx = clamp(x - bw/2, geo.plotX0, geo.plotX1 - bw);
+      const by = geo.plotY1 + 2;
+      ctx.fillStyle = "rgba(11,15,20,0.75)";
+      ctx.fillRect(bx, by, bw, 20);
+      ctx.strokeStyle = "rgba(34,48,68,0.9)";
+      ctx.strokeRect(bx+0.5, by+0.5, bw-1, 19);
+      ctx.fillStyle = "rgba(231,238,247,0.95)";
+      ctx.textBaseline = "middle";
+      ctx.fillText(lab, bx + 7, by + 10);
+      ctx.textBaseline = "middle";
+    }
 
     // window info
-    const firstIdx = windowBars[0].idx;
-    const lastIdx = windowBars[windowBars.length-1].idx;
-    $("stWin").textContent = `${firstIdx} → ${lastIdx} (offset ${state.rightOffset})`;
+    $("stWin").textContent = `${windowBars[0].idx} → ${windowBars[windowBars.length-1].idx} (offset ${state.rightOffset})`;
   }
 
-  // ===== orders table + stats
+  // ===== UI render
   function renderOrdersTable() {
     const body = $("ordersBody");
     body.innerHTML = "";
     const orders = [...state.limits].sort((a,b) => a.price - b.price);
-
     for (const o of orders) {
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
       tr.title = "Нажми чтобы отменить";
       tr.addEventListener("click", () => cancelOrder(o.id));
-
       const sideTag = o.side === "buy"
         ? `<span class="tag buy">BUY</span>`
         : `<span class="tag sell">SELL</span>`;
-
       tr.innerHTML = `
         <td>${sideTag}</td>
         <td>${o.price.toFixed(2)}</td>
@@ -889,20 +1089,19 @@
     state.tickSize = Number($("tick").value) || 0.25;
     state.spreadTicks = Math.max(0, Number($("spread").value || 0));
     state.volatility = clamp(Number($("vol").value || 8), 1, 20);
-    state.liquidity = clamp(Number($("liq").value || 10), 1, 20);
-    state.impact = clamp(Number($("impact").value || 8), 0, 20);
-    state.simHz = clamp(Number($("simHz").value || 60), 5, 120);
+    state.liquidity  = clamp(Number($("liq").value || 10), 1, 20);
+    state.impact     = clamp(Number($("impact").value || 8), 0, 20);
+    state.simHz      = clamp(Number($("simHz").value || 60), 5, 120);
     state.visibleBars = clamp(Number($("visibleBars").value || 140), 20, 600);
-
-    const tf = $("timeframe").value;
-    state.barTicks = timeframeToBarTicks(tf, state.simHz);
+    state.barTicks = timeframeToBarTicks($("timeframe").value, state.simHz);
 
     state.follow = $("follow").checked;
+    state.tool = $("tool").value;
 
     syncTopFromLeft();
   }
 
-  function clampOffset(){
+  function clampOffset() {
     const all = getAllBarsForRender();
     const n = all.length;
     if (n <= 1) { state.rightOffset = 0; return; }
@@ -910,59 +1109,177 @@
     state.rightOffset = clamp(state.rightOffset, 0, maxOffset);
   }
 
-  // ===== Pan/Zoom handlers
+  function stepPxScreen() {
+    if (!state.geo) return 8;
+    return Math.max(2, state.geo.stepPxScreen);
+  }
+
+  // ===== Interactions: wheel zoom (desktop)
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     applySettingsFromUI();
 
-    const dir = (e.deltaY > 0) ? +1 : -1; // +1 zoom out
+    const dir = (e.deltaY > 0) ? +1 : -1;
     const factor = (dir < 0) ? 0.85 : 1.18;
     const newVis = clamp(Math.round(state.visibleBars * factor), 20, 600);
     if (newVis === state.visibleBars) return;
 
-    // zooming usually means user wants control -> disable follow unless already off
-    if (state.follow) {
-      $("follow").checked = false;
-      state.follow = false;
-    }
+    $("follow").checked = false;
+    state.follow = false;
 
     state.visibleBars = newVis;
     $("visibleBars").value = String(newVis);
   }, { passive:false });
 
-  canvas.addEventListener("mousedown", (e) => {
-    applySettingsFromUI();
-    state.dragging = true;
-    canvas.style.cursor = "grabbing";
-    state.dragStart = { x: e.clientX, rightOffset: state.rightOffset };
-  });
+  // ===== Pointer events: pan + pinch + tap-to-draw
+  let tapCandidate = null;
 
-  window.addEventListener("mousemove", (e) => {
-    if (!state.dragging) return;
-    const all = getAllBarsForRender();
-    const win = getWindowBars();
-    if (!all.length || !win.bars.length) return;
+  canvas.addEventListener("pointerdown", (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    const pr = computePriceRange(win.bars);
-    const tf = makeTransform(win.bars, pr, canvas.width, canvas.height);
+    // any interaction disables follow
+    if (state.follow) { $("follow").checked = false; state.follow = false; }
 
-    const dx = e.clientX - state.dragStart.x;
-    const barsDelta = Math.round(-dx / tf.step); // drag right => older => increase offset
-    state.rightOffset = Math.max(0, state.dragStart.rightOffset + barsDelta);
+    tapCandidate = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
 
-    if (state.rightOffset > 0 && state.follow) {
-      $("follow").checked = false;
-      state.follow = false;
+    if (state.pointers.size === 1) {
+      canvas.style.cursor = "grabbing";
+      state.panStart = { x: e.clientX, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+      state.pinchStart = null;
+
+      // crosshair on move
+      state.cross.on = true;
+    } else if (state.pointers.size === 2) {
+      const pts = [...state.pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      state.pinchStart = { dist, visibleBars: state.visibleBars };
+      state.panStart = null;
+      state.cross.on = false; // pinch -> hide crosshair
     }
-    clampOffset();
   });
 
-  window.addEventListener("mouseup", () => {
-    if (!state.dragging) return;
-    state.dragging = false;
-    canvas.style.cursor = "grab";
-    state.dragStart = null;
+  canvas.addEventListener("pointermove", (e) => {
+    if (!state.pointers.has(e.pointerId)) return;
+    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    applySettingsFromUI();
+
+    // pinch
+    if (state.pointers.size === 2 && state.pinchStart) {
+      const pts = [...state.pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const ratio = dist / Math.max(1, state.pinchStart.dist);
+      const newVis = clamp(Math.round(state.pinchStart.visibleBars / ratio), 20, 600);
+      state.visibleBars = newVis;
+      $("visibleBars").value = String(newVis);
+      return;
+    }
+
+    // pan
+    if (state.pointers.size === 1 && state.panStart) {
+      const dx = e.clientX - state.panStart.x;
+      const barsDelta = Math.round(-dx / Math.max(2, state.panStart.stepPx));
+      state.rightOffset = Math.max(0, state.panStart.rightOffset + barsDelta);
+      clampOffset();
+    }
+
+    // crosshair update
+    const pt = canvasPointFromClient(e);
+    const win = getWindowBars();
+    if (win.bars.length >= 2) {
+      const pr = computePriceRange(win.bars);
+      const geo = state.geo ?? buildGeo(win.bars, pr);
+      const idx = idxFromX(pt.x, win, geo);
+      const price = priceFromY(pt.y, pr, geo);
+      state.cross.x = pt.x;
+      state.cross.y = pt.y;
+      state.cross.idx = idx;
+      state.cross.price = price;
+      state.cross.on = true;
+    }
   });
+
+  function handleTap(clientX, clientY) {
+    const win = getWindowBars();
+    if (win.bars.length < 2) return;
+    const pr = computePriceRange(win.bars);
+    const geo = state.geo ?? buildGeo(win.bars, pr);
+
+    const fakeEvt = { clientX, clientY };
+    const pt = canvasPointFromClient(fakeEvt);
+
+    // ignore taps outside plot area
+    if (pt.x < geo.plotX0 || pt.x > geo.plotX1 || pt.y < geo.plotY0 || pt.y > geo.plotY1) return;
+
+    const idx = idxFromX(pt.x, win, geo);
+    const price = priceFromY(pt.y, pr, geo);
+    if (idx == null) return;
+
+    if (state.tool === "erase") {
+      const k = hitTestDrawing(pt, win, pr, geo);
+      if (k >= 0) state.drawings.splice(k, 1);
+      state.pending = null;
+      return;
+    }
+
+    if (state.tool === "hline") {
+      pushDrawing({ type:"hline", p: price });
+      state.pending = null;
+      return;
+    }
+
+    if (state.tool === "trend") {
+      if (!state.pending) {
+        state.pending = { type:"trend", x1: idx, y1: price };
+      } else {
+        pushDrawing({ type:"trend", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price });
+        state.pending = null;
+      }
+      return;
+    }
+
+    if (state.tool === "rect") {
+      if (!state.pending) {
+        state.pending = { type:"rect", x1: idx, y1: price };
+      } else {
+        pushDrawing({ type:"rect", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price });
+        state.pending = null;
+      }
+      return;
+    }
+
+    // cursor tool: no drawing
+  }
+
+  function pointerUpCommon(e) {
+    if (state.pointers.has(e.pointerId)) state.pointers.delete(e.pointerId);
+
+    // detect tap (short + little move)
+    if (tapCandidate && tapCandidate.id === e.pointerId) {
+      const dt = performance.now() - tapCandidate.t;
+      const dx = Math.abs(e.clientX - tapCandidate.x);
+      const dy = Math.abs(e.clientY - tapCandidate.y);
+      const isTap = (dt < 260 && dx < 8 && dy < 8);
+      if (isTap) handleTap(e.clientX, e.clientY);
+      tapCandidate = null;
+    }
+
+    if (state.pointers.size === 0) {
+      canvas.style.cursor = "grab";
+      state.panStart = null;
+      state.pinchStart = null;
+      // keep crosshair a bit (cursor style)
+      if (state.tool !== "cursor") state.cross.on = false;
+    } else if (state.pointers.size === 1) {
+      const only = [...state.pointers.values()][0];
+      state.panStart = { x: only.x, rightOffset: state.rightOffset, stepPx: stepPxScreen() };
+      state.pinchStart = null;
+    }
+  }
+
+  canvas.addEventListener("pointerup", pointerUpCommon);
+  canvas.addEventListener("pointercancel", pointerUpCommon);
 
   // ===== Buttons
   function buyMarket() { syncLeftFromTop(); marketOrder("buy", getQty(), getSlip()); }
@@ -970,7 +1287,6 @@
 
   $("buyMktTop").addEventListener("click", buyMarket);
   $("sellMktTop").addEventListener("click", sellMarket);
-
   $("qtyTop").addEventListener("input", syncLeftFromTop);
   $("slipTop").addEventListener("input", syncLeftFromTop);
 
@@ -979,6 +1295,15 @@
     state.follow = $("follow").checked;
     if (state.follow) state.rightOffset = 0;
   });
+
+  $("tool").addEventListener("change", () => {
+    state.tool = $("tool").value;
+    state.pending = null;
+    if (state.tool === "cursor") state.cross.on = true;
+  });
+
+  $("undo").addEventListener("click", () => undoDrawing());
+  $("clearDraw").addEventListener("click", () => clearDrawings());
 
   $("placeLimit").addEventListener("click", () => {
     const side = $("limitSide").value;
@@ -1001,9 +1326,6 @@
   $("cancelAll").addEventListener("click", cancelAll);
   $("flatten").addEventListener("click", flatten);
 
-  $("shiftUp").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) shiftAll(Math.abs(pts)); });
-  $("shiftDn").addEventListener("click", () => { const pts = Number($("shiftPts").value||0); if (pts) shiftAll(-Math.abs(pts)); });
-
   $("clearLog").addEventListener("click", () => $("log").innerHTML = "");
 
   $("pause").addEventListener("click", () => {
@@ -1018,8 +1340,8 @@
     state.flow = 0;
     state.pos = 0;
     state.avg = null;
-    state.limits = [];
 
+    state.limits = [];
     state.bars = [];
     state.lastBarIdx = 0;
     state._curBar = null;
@@ -1029,13 +1351,16 @@
     $("follow").checked = true;
     state.follow = true;
 
+    state.drawings = [];
+    state.pending = null;
+
     $("limitPrice").value = state.price.toFixed(2);
     $("ladderStart").value = state.price.toFixed(2);
 
     log("🔁 Reset done", "warn");
   });
 
-  // ===== React to settings
+  // ===== settings listeners
   ["vol","liq","impact","simHz","tick","spread","timeframe","visibleBars","follow"].forEach(id => {
     $(id).addEventListener("change", () => {
       applySettingsFromUI();
@@ -1043,7 +1368,13 @@
     });
   });
 
-  // ===== Main loop
+  // ===== loop
+  function init() {
+    $("limitPrice").value = state.price.toFixed(2);
+    $("ladderStart").value = state.price.toFixed(2);
+    log("Готово: TV-like шкала/кроссхэйр/тулы/пан/зум работают.", "warn");
+  }
+
   let lastTs = performance.now();
   let acc = 0;
 
@@ -1073,14 +1404,8 @@
     requestAnimationFrame(loop);
   }
 
-  function init() {
-    $("limitPrice").value = state.price.toFixed(2);
-    $("ladderStart").value = state.price.toFixed(2);
-    log("Готово: пан/зум + TF (15m добавлен). 🫡", "warn");
-    requestAnimationFrame(loop);
-  }
-
   init();
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
