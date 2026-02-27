@@ -1,816 +1,958 @@
-
-
-
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
-  
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Techlyn</title>
-  <meta name="description" content="Professional Web & Web3 services — manual frontend, security, audits.">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Market Sandbox — Control Mode</title>
   <style>
-:root{
-  --bg:#061226;
-  --card:#081426;
-  --muted:#9aa4b2;
-  --accent1:#4dd0e1;
-  --accent2:#7dd3fc;
-  --glass: rgba(255,255,255,0.02);
-  --radius:12px;
-  --maxw:1200px;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:linear-gradient(180deg,#041021,#061226);color:#e6eef6;padding:28px 18px;display:flex;justify-content:center;align-items:flex-start; -webkit-text-size-adjust:100%;}
-.container{width:100%;max-width:var(--maxw);padding-bottom:60px}
-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
-.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:0.2px;font-size:18px}
-
-.logo.logo-neon{width:80px;height:10px;display:flex;align-items:center;justify-content:center;padding:0;margin-right:8px;flex:0 0 auto}
-.logo-ring{
-  width:67px;
-  height:64px;
-  border-radius:50%;
-  padding:6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,0.03);
-  box-shadow:0 6px 18px rgba(2,6,23,0.5);
-}
-.logo-img{
-  position:relative;
-  width:97px;
-  height:97px;
-  border-radius:50%;
-  object-fit:cover;
-  display:block;
-  z-index:2;
-  transform: scale(1);
-  transition: transform .18s ease, box-shadow .18s ease;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
-  border: 1px solid rgba(255,255,255,0.03);
-  max-width:127px; }
-
-nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-.lang-switch{display:flex;gap:8px;align-items:center;margin-left:8px}
-.lang-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer;font-weight:700}
-.lang-btn.active{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;border-color:transparent;box-shadow:0 6px 18px rgba(45,118,138,0.08)}
-.btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 30px rgba(45,118,138,0.08);transition:transform .18s ease, box-shadow .18s ease, filter .12s ease;}
-.btn:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(45,118,138,0.12);filter:brightness(1.03)}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:9px 12px;border-radius:10px;transition:all .18s ease}
-.btn-ghost:hover{color:#e6eef6;border-color:rgba(125,211,252,0.25);transform:translateY(-3px)}
-.muted{color:var(--muted);font-size:14px}
-.hero{position:relative;overflow:visible;background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:var(--radius);padding:28px;display:flex;gap:20px;align-items:center;box-shadow: 0 12px 46px rgba(2,6,23,0.6)}
-.hero-left{flex:1;z-index:2}
-.eyebrow{color:var(--accent1);font-weight:700;font-size:13px}
-h1{margin:8px 0 6px;font-size:28px}
-p.lead{margin:0 0 14px;color:var(--muted);font-size:15px;line-height:1.45}
-.features{display:flex;gap:10px;flex-wrap:wrap}
-.chip{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:20px}
-.card{background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.03);transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;cursor:default;overflow:hidden}
-.card:hover{ transform: translateY(-8px); box-shadow: 0 18px 48px rgba(2,6,23,0.6); border-color: rgba(125,211,252,0.12) }
-.card .title-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.price{font-weight:800;font-size:18px;color:var(--accent2);display:flex;align-items:center;gap:8px}
-.price .orig{font-weight:600;color:var(--muted);text-decoration:line-through;font-size:13px}
-.badge-discount{background:rgba(217,107,255,0.12);color:#d96bff;padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px}
-.small{font-size:13px;color:var(--muted)}
-a.button-link{display:inline-block;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#02222b;font-weight:700;text-decoration:none;transition:transform .12s ease,box-shadow .12s ease}
-a.button-link:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(45,118,138,0.12)}
-.cta-strip{margin:22px 0;padding:16px;border-radius:12px;background:linear-gradient(90deg, rgba(77,208,225,0.03), rgba(125,211,252,0.02));display:flex;justify-content:space-between;align-items:center;gap:12px}
-.two-col{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:22px}
-.faq{background:var(--card);padding:18px;border-radius:12px}
-.faq-item{padding:12px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);margin-bottom:8px}
-.contact{background:var(--card);padding:18px;border-radius:12px;position:sticky;top:24px;height:max-content}
-input,textarea,select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-.close-btn{background:#fff;color:#041021;padding:8px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-.scene-overlay{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;min-height:80px}
-.codeglyph{position:absolute;left=0;top=0;pointer-events:none;mix-blend-mode:screen;color:rgba(125,211,252,0.9);font-family:monospace;white-space:nowrap;font-size:13px}
-.btn-hover-burst{position:relative;overflow:visible}
-
-@media(max-width:900px){
-  .two-col{grid-template-columns:1fr}
-  header{flex-direction:column;align-items:flex-start;gap:14px}
-  .hero{flex-direction:column;align-items:flex-start}
-  .hero-right{max-width:100%}
-}
-
-@media(max-width:600px){
-  body{padding:12px}
-  h1{font-size:20px}
-  .hero{padding:16px}
-  .right{width:100%}
-  .grid{grid-template-columns:1fr}
-  .card{padding:12px}
-  .logo-ring{width:46px;height:48px}
-  .logo-img{width:72px;height:72px}
-  nav{gap:6px}
-  .btn{padding:8px 10px;font-size:14px}
-  .btn-ghost{padding:7px 9px;font-size:14px}
-  .scene-overlay{min-height:120px}
-}
-a{
-  text-decoration: none;
-}
+    :root{
+      --bg:#0b0f14;
+      --panel:#111824;
+      --panel2:#0f1620;
+      --text:#e7eef7;
+      --muted:#9fb0c3;
+      --line:#223044;
+      --good:#3ddc97;
+      --bad:#ff5b6e;
+      --warn:#ffcf5b;
+      --accent:#64b5ff;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 10% 10%, #101a2a 0%, var(--bg) 45%) fixed;
+      color:var(--text);
+    }
+    header{
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,36,.85), rgba(11,15,20,.55));
+      position:sticky; top:0; z-index:3;
+      backdrop-filter: blur(8px);
+    }
+    header .row{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      max-width:1400px; margin:0 auto;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .title h1{
+      font-size:16px; margin:0; font-weight:700; letter-spacing:.2px;
+    }
+    .title .sub{
+      font-size:12px; color:var(--muted);
+    }
+    .pill{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 10px;
+      background: rgba(17,24,36,.75);
+      border:1px solid rgba(34,48,68,.9);
+      border-radius:999px;
+      box-shadow: var(--shadow);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text); font-weight:700}
+    main{
+      max-width:1400px;
+      margin:0 auto;
+      padding:14px;
+      display:grid;
+      grid-template-columns: 420px 1fr 420px;
+      gap:14px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(17,24,36,.9), rgba(15,22,32,.82));
+      border:1px solid rgba(34,48,68,.9);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height: 140px;
+    }
+    .card h2{
+      margin:0;
+      padding:12px 12px 10px;
+      font-size:13px;
+      letter-spacing:.2px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+      color: #dce8f7;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card h2 small{
+      color:var(--muted);
+      font-weight:600;
+      font-size:11px;
+    }
+    .card .content{
+      padding:12px;
+    }
+    .grid{
+      display:grid;
+      gap:10px;
+    }
+    .grid.cols2{grid-template-columns:1fr 1fr;}
+    .grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    input, select, button, textarea{
+      font-family:inherit;
+    }
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:10px;
+      border:1px solid rgba(34,48,68,.9);
+      background: rgba(11,15,20,.55);
+      color: var(--text);
+      outline:none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(100,181,255,.9);
+      box-shadow: 0 0 0 3px rgba(100,181,255,.15);
+    }
+    .btn{
+      border:none;
+      border-radius:12px;
+      padding:11px 12px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.2px;
+      transition: transform .06s ease, filter .2s ease, opacity .2s ease;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .btn:active{transform: translateY(1px);}
+    .btn.good{background: rgba(61,220,151,.16); color: #bdf8de; border:1px solid rgba(61,220,151,.45);}
+    .btn.bad{background: rgba(255,91,110,.14); color: #ffd0d7; border:1px solid rgba(255,91,110,.45);}
+    .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
+    .btn.gray{background: rgba(159,176,195,.12); color: #e7eef7; border:1px solid rgba(159,176,195,.35);}
+    .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
+    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px; font-weight:800;}
+    .row{
+      display:flex; gap:10px; align-items:center;
+    }
+    .row.wrap{flex-wrap:wrap;}
+    .stat{
+      display:flex; flex-direction:column; gap:2px;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      min-width: 0;
+    }
+    .stat .k{font-size:11px; color:var(--muted);}
+    .stat .v{font-family:var(--mono); font-size:13px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .chartWrap{
+      height: 520px;
+      padding: 10px 12px 12px;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(5,8,12,.65);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    thead th{
+      text-align:left;
+      color: var(--muted);
+      font-size:11px;
+      font-weight:700;
+      padding:10px 8px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+    }
+    tbody td{
+      padding:9px 8px;
+      border-bottom:1px solid rgba(34,48,68,.35);
+      vertical-align:top;
+      font-family: var(--mono);
+    }
+    tbody tr:hover{
+      background: rgba(100,181,255,.06);
+    }
+    .tag{
+      font-family: var(--mono);
+      font-size:11px;
+      padding:3px 6px;
+      border-radius:999px;
+      border:1px solid rgba(34,48,68,.8);
+      background: rgba(11,15,20,.35);
+      color: var(--muted);
+    }
+    .tag.buy{border-color: rgba(61,220,151,.45); color:#bdf8de; background: rgba(61,220,151,.10);}
+    .tag.sell{border-color: rgba(255,91,110,.45); color:#ffd0d7; background: rgba(255,91,110,.10);}
+    .muted{color:var(--muted)}
+    .mono{font-family:var(--mono)}
+    .log{
+      height: 240px;
+      overflow:auto;
+      border-radius:12px;
+      border:1px solid rgba(34,48,68,.7);
+      background: rgba(11,15,20,.35);
+      padding:10px;
+      font-family: var(--mono);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .log div{padding:3px 0; border-bottom:1px dashed rgba(34,48,68,.35);}
+    .log div:last-child{border-bottom:none;}
+    .rightSticky{
+      position:sticky;
+      top:74px;
+      height: calc(100vh - 88px);
+      overflow:auto;
+      padding-bottom: 16px;
+    }
+    .leftSticky{
+      position:sticky;
+      top:74px;
+      height: calc(100vh - 88px);
+      overflow:auto;
+      padding-bottom: 16px;
+    }
+    .hint{
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.35;
+    }
+    .sep{
+      height:1px;
+      background: rgba(34,48,68,.7);
+      margin: 12px 0;
+    }
+    @media (max-width: 1220px){
+      main{grid-template-columns: 1fr;}
+      .rightSticky,.leftSticky{position:static; height:auto;}
+      .chartWrap{height:420px;}
+    }
   </style>
-  <link rel="icon" type="image/png" href="/img/photo_2025-10-01_20-26-04-Photoroom.png">
-<link rel="apple-touch-icon" href="/img/photo_2025-10-01_20-26-04-Photoroom.png">
 </head>
+
 <body>
-  <div class="container" role="main">
-    <header>
-      <div class="brand" aria-label="Techlyn">
-        <div class="logo logo-neon" aria-hidden="true" title="Techlyn">
-          <div class="logo-ring">
-            <img src="./img/photo_2025-10-01_20-26-04-Photoroom.png" alt="Techlyne logo" class="logo-img" />
-          </div>
-        </div>
-
-        <div>
-          <div style="font-size:14px" id="brand-name" data-i18n="brand_name">Techlyn</div>
-          <div class="muted" style="margin-top:2px" id="brand-sub" data-i18n="brand_sub">Manual development • Integrations • Security</div>
-        </div>
-      </div>
-
-      <nav>
-        <a href="index.html" class="btn-ghost" data-i18n="nav_home">Home</a>
-        <a href="services.html" class="btn-ghost" data-i18n="nav_services">Services</a>
-
-        <div class="lang-switch" role="tablist" aria-label="Language switch">
-          <button id="lang-en" class="lang-btn" aria-pressed="false">EN</button>
-          <button id="lang-ru" class="lang-btn" aria-pressed="false">Рус</button>
-          <button id="lang-hy" class="lang-btn" aria-pressed="false">Հայ</button>
-        </div>
-      </nav>
-    </header>
-
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-left">
-        <div class="eyebrow" data-i18n="quick_start">Quick start</div>
-        <h1 id="hero-title" data-i18n="hero_title">Professional websites and Web3 integrations</h1>
-        <p class="lead" id="hero-lead" data-i18n="hero_lead">
-          Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.
-        </p>
-
-        <div class="features" aria-hidden="true">
-          <div class="chip" data-i18n="feat1">Clean code</div>
-          <div class="chip" data-i18n="feat2">Responsive</div>
-          <div class="chip" data-i18n="feat3">Security</div>
-          <div class="chip" data-i18n="feat4">Support</div>
-        </div>
-      </div>
-
-      <div class="hero-right">
-        <div style="padding:14px;border-radius:12px;z-index:2;position:relative;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-weight:700" data-i18n="quick_start_small">Quick start</div>
-            <div class="badge"></div>
-          </div>
-        
-
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" id="btn-order-landing" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Services</a>
-          </div>
-        </div>
-
-        <div style="height:14px"></div>
-        <div class="scene-overlay" id="scene-overlay" aria-hidden="true"></div>
-      </div>
-    </section>
-
-    <section aria-labelledby="advantages" class="advantages-simple" style="margin-top:18px">
-      <h2 id="advantages" data-i18n="advantages_title">Our advantages</h2>
-      <p class="small" data-i18n="advantages_sub">Why clients choose us</p>
-
-      <div class="adv-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:12px;align-items:start">
-        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
-          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">⚡</div>
-          <h3 data-i18n="adv_heading1">Build High-Performance Websites That Convert</h3>
-          <p class="small" data-i18n="adv_text1">From responsive websites to Web3 features and security hardening — we deliver clean code, real integration, and peace of mind.</p>
-        </div>
-
-        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
-          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">🎯</div>
-          <h3 data-i18n="adv_heading2">Transform Clicks into Clients</h3>
-          <p class="small" data-i18n="adv_text2">We design and develop high-converting landing pages that capture attention, drive engagement, and maximize ROI for your campaigns.</p>
-        </div>
-
-        <div class="adv-item" style="background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
-          <div class="adv-icon" aria-hidden="true" style="font-size:26px;margin-bottom:8px">🔧</div>
-          <h3 data-i18n="adv_heading3">Your One-Stop Partner for Website Development</h3>
-          <p class="small" data-i18n="adv_text3">From strategy and wireframing to launch and optimization, we handle every step of building your online presence — tailored for your goals.</p>
-        </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="packages" style="margin-top:18px">
-      <h2 id="packages" style="margin:8px 0 6px" data-i18n="packages">Packages</h2>
-      <div class="grid" id="packages-grid">
-
-        <article class="card" aria-labelledby="p1">
-          <div class="title-row">
-            <h3 id="p1" data-i18n="landing">Landing Website (Landing)</h3>
-            <div class="price" aria-hidden="true">
-              <span class="orig">$79</span>
-              <span class="price-value">$55</span>
-              <span class="badge-discount" aria-hidden="true">30% off</span>
-            </div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_landing">Term: 2 days</div>
-          <ul>
-            <li data-i18n="li_l1">Single-page responsive landing</li>
-            <li data-i18n="li_l2">Header, CTA, benefits, FAQ, contact via Telegram</li>
-            <li data-i18n="li_l3">Webhook → Telegram</li>
-            <li data-i18n="li_l4">Analytics, optimisation, SSL, deploy</li>
-            <li data-i18n="li_l5">1 round of revisions, source delivery</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Landing" data-price="55" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-        <article class="card" aria-labelledby="p2">
-          <div class="title-row">
-            <h3 id="p2" data-i18n="website">Website (Standard)</h3>
-            <div class="price" aria-hidden="true">
-              <span class="orig">$229</span>
-              <span class="price-value">$160</span>
-              <span class="badge-discount" aria-hidden="true">30% off</span>
-            </div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_standard">Term: 4 days</div>
-          <ul>
-            <li data-i18n="li_w1">Up to 5 pages (Home, Services, Cases, Contacts)</li>
-            <li data-i18n="li_w2">Forms → Telegram/CRM</li>
-            <li data-i18n="li_w3">SEO, responsive, 2 rounds of revisions</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Standard" data-price="160" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-        <article class="card" aria-labelledby="p3">
-          <div class="title-row">
-            <h3 id="p3" data-i18n="premium">Premium Website</h3>
-            <div class="price" aria-hidden="true">
-              <span class="orig">$449</span>
-              <span class="price-value">$225</span>
-              <span class="badge-discount" aria-hidden="true">50% off</span>
-            </div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_premium">Term: 7 days</div>
-          <ul>
-            <li data-i18n="li_p1">Up to 10 pages, bespoke design, measured animations</li>
-            <li data-i18n="li_p2"><strong data-i18n="security">Security Package</strong> included: diagnostics, Cloudflare/WAF, CSP, headers, hardening</li>
-            <li data-i18n="li_p3">CMS on request, SEO, 3 rounds, 14 days support</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Premium" data-price="225" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-        <article class="card" aria-labelledby="p4">
-          <div class="title-row">
-            <h3 id="p4" data-i18n="web3">Web3 Website (Frontend + Integration)</h3>
-            <div class="price" aria-hidden="true">
-              <span class="orig">$599</span>
-              <span class="price-value">$300</span>
-              <span class="badge-discount" aria-hidden="true">50% off</span>
-            </div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_web3">Term: 7 days</div>
-          <ul>
-            <li data-i18n="li_web31">Wallets: MetaMask / WalletConnect</li>
-            <li data-i18n="li_web32">Auth via wallet, token balance display</li>
-            <li data-i18n="li_web33">UI for contract interaction (read/write)</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Web3" data-price="300" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-        <article class="card" aria-labelledby="p-ecom">
-          <div class="title-row">
-            <h3 id="p-ecom" data-i18n="ecom">E-commerce Store</h3>
-            <div class="price" aria-hidden="true">
-              <span class="orig">$500</span>
-              <span class="price-value">$250</span>
-              <span class="badge-discount" aria-hidden="true">50% off</span>
-            </div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_ecom">Term: 7–10 days (depends on catalogue)</div>
-          <ul>
-            <li data-i18n="li_e1">Full online store (products, categories, cart)</li>
-            <li data-i18n="li_e2">Payment gateway integration (Stripe / Cards)</li>
-            <li data-i18n="li_e3">Admin panel: products, orders, basic inventory</li>
-            <li data-i18n="li_e4">Analytics, SEO, deployment, 7 days support</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Ecommerce" data-price="450" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-        <article class="card" aria-labelledby="p5">
-          <div class="title-row">
-            <h3 id="p5" data-i18n="security">Security Package</h3>
-            <div class="price" aria-hidden="true"><span class="price-value" data-i18n="included">Included in Premium.</span></div>
-          </div>
-          <div class="small" style="margin-top:6px;font-weight:600" data-i18n="term_security">Deep diagnostics & hardening</div>
-          <ul>
-            <li data-i18n="li_s1">Automated scanning + manual check</li>
-            <li data-i18n="li_s2">Cloudflare / WAF setup, rate-limiting</li>
-            <li data-i18n="li_s3">CSP, security headers, input validation</li>
-            <li data-i18n="li_s4">Pen-test scenarios & remediation plan</li>
-          </ul>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-hover-burst" data-package="Security" data-price="included" data-i18n="order">Order</button>
-            <a href="services.html" class="btn-ghost" data-i18n="details">Details</a>
-          </div>
-        </article>
-
-      </div>
-    </section>
-
-    <div class="cta-strip" role="region" aria-live="polite">
-      <div>
-        <div style="font-weight:700" data-i18n="smart">Smart Contracts & Audit</div>
-        <div class="small" data-i18n="smart_sub">Development and audit — pricing upon request</div>
-      </div>
-      <div style="display:flex;gap:8px"><a class="btn" href="services.html#smart" data-i18n="learn_more">Learn more</a></div>
+<header>
+  <div class="row">
+    <div class="title">
+      <h1>Market Sandbox — Control Mode 🕹️</h1>
+      <div class="sub">Синтетический рынок + Market/Limit + лестницы уровней. Без TP/SL, чистый контроль.</div>
     </div>
 
-    <section class="two-col" aria-label="FAQ and contact">
-      <div class="faq" aria-labelledby="faq-title">
-        <h4 id="faq-title" data-i18n="faq_title">FAQ — short</h4>
+    <div class="row wrap">
+      <div class="pill">Инструмент: <b id="sym">NQ (sim)</b></div>
+      <div class="pill">Цена: <b id="hdrPrice">—</b></div>
+      <div class="pill">Позиция: <b id="hdrPos">0</b></div>
+      <div class="pill">Delta flow: <b id="hdrFlow">0</b></div>
+    </div>
+  </div>
+</header>
 
-        <div class="faq-item">
-          <strong data-i18n="how_time">How deadlines are counted?</strong>
-          <div class="small" data-i18n="how_time_sub">From receipt of materials and prepayment.</div>
+<main>
+  <!-- LEFT: Controls -->
+  <div class="leftSticky">
+    <section class="card">
+      <h2>Маркет-контроль <small>ордеры</small></h2>
+      <div class="content grid">
+        <div class="grid cols2">
+          <label>Кол-во (qty)
+            <input id="qty" type="number" step="1" min="1" value="1" />
+          </label>
+          <label>Проскальзывание (ticks)
+            <input id="slip" type="number" step="1" min="0" value="1" />
+          </label>
         </div>
 
-        <div class="faq-item">
-          <strong data-i18n="how_pay">Payment?</strong>
-          <div class="small" data-i18n="how_pay_sub">50% up front, 50% on delivery.</div>
+        <div class="grid cols2">
+          <button class="btn good" id="buyMkt">⬆️ Buy Market</button>
+          <button class="btn bad" id="sellMkt">⬇️ Sell Market</button>
         </div>
 
-        <div class="faq-item">
-          <strong data-i18n="tech">Technologies?</strong>
-          <div class="small" data-i18n="tech_sub">Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.</div>
+        <div class="sep"></div>
+
+        <div class="grid cols2">
+          <label>Тип лимитки
+            <select id="limitSide">
+              <option value="buy">Limit Buy</option>
+              <option value="sell">Limit Sell</option>
+            </select>
+          </label>
+          <label>Цена лимитки
+            <input id="limitPrice" type="number" step="0.25" value="0" />
+          </label>
+        </div>
+        <button class="btn neutral" id="placeLimit">➕ Поставить Limit</button>
+
+        <div class="sep"></div>
+
+        <div class="grid cols3">
+          <label>Лестница: side
+            <select id="ladderSide">
+              <option value="buy">Buy ladder</option>
+              <option value="sell">Sell ladder</option>
+            </select>
+          </label>
+          <label>Levels
+            <input id="ladderLevels" type="number" step="1" min="1" value="8" />
+          </label>
+          <label>Step (pts)
+            <input id="ladderStep" type="number" step="0.25" min="0.25" value="5" />
+          </label>
+        </div>
+        <div class="grid cols2">
+          <label>Start price
+            <input id="ladderStart" type="number" step="0.25" value="0" />
+          </label>
+          <label>Qty per level
+            <input id="ladderQty" type="number" step="1" min="1" value="1" />
+          </label>
+        </div>
+        <button class="btn warn" id="placeLadder">🪜 Поставить лестницу</button>
+
+        <div class="sep"></div>
+
+        <div class="grid cols2">
+          <label>Сдвиг всех лимиток (pts)
+            <input id="shiftPts" type="number" step="0.25" value="1" />
+          </label>
+          <div class="grid cols2" style="align-items:end">
+            <button class="btn gray small" id="shiftUp">⬆️ Shift +</button>
+            <button class="btn gray small" id="shiftDn">⬇️ Shift −</button>
+          </div>
         </div>
 
-        <div class="faq-item">
-          <strong data-i18n="security_q">Security?</strong>
-          <div class="small" data-i18n="security_q_sub">Basic hardening included; deep audit is separate.</div>
+        <div class="grid cols2">
+          <button class="btn gray" id="cancelAll">🧹 Cancel All</button>
+          <button class="btn gray" id="flatten">🧯 Flatten (mkt)</button>
+        </div>
+
+        <div class="hint">
+          <span class="mono">Flatten</span> закроет текущую позицию маркетом (не TP/SL — просто “выключить”).
         </div>
       </div>
-
     </section>
 
-    <footer style="margin-top:22px" data-i18n="footer">© Techlyn — Manual development</footer>
+    <section class="card" style="margin-top:14px">
+      <h2>Движок рынка <small>настройки</small></h2>
+      <div class="content grid">
+        <div class="grid cols2">
+          <label>Volatility (1–20)
+            <input id="vol" type="number" step="1" min="1" max="20" value="8" />
+          </label>
+          <label>Liquidity (1–20)
+            <input id="liq" type="number" step="1" min="1" max="20" value="10" />
+          </label>
+        </div>
+
+        <div class="grid cols2">
+          <label>Impact (0–20)
+            <input id="impact" type="number" step="1" min="0" max="20" value="8" />
+          </label>
+          <label>Speed (ms)
+            <input id="speed" type="number" step="10" min="20" value="80" />
+          </label>
+        </div>
+
+        <div class="grid cols2">
+          <label>Tick size
+            <input id="tick" type="number" step="0.01" min="0.01" value="0.25" />
+          </label>
+          <label>Spread (ticks)
+            <input id="spread" type="number" step="1" min="0" value="1" />
+          </label>
+        </div>
+
+        <div class="grid cols2">
+          <button class="btn neutral" id="pause">⏸️ Pause</button>
+          <button class="btn neutral" id="reset">🔁 Reset</button>
+        </div>
+
+        <div class="hint">
+          <b>Impact</b> — насколько твой net-flow двигает цену. <br/>
+          <b>Liquidity</b> — сопротивление рынку (чем выше, тем сложнее сдвинуть). <br/>
+          Да, это “модель”, но она делает то, что тебе нужно: реакцию на давление. 😌
+        </div>
+      </div>
+    </section>
   </div>
 
-  <script>
-(function(){
-  const parent = document.getElementById('scene-overlay');
-  const canvas = document.createElement('canvas');
-  canvas.style.width='100%'; canvas.style.height='100%';
-  parent.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  function resizeCanvas(){
-    const rect = parent.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  const w = ()=>canvas.clientWidth, h = ()=>canvas.clientHeight;
-  const P = [];
-  for(let i=0;i<60;i++) P.push({x:Math.random()*w(),y:Math.random()*h(),vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:1+Math.random()*2,t:Math.random()*6});
-  const glyphs = [];
-  const codes = ['<>','{ }','0x','()</>','//','=>','const','let','fn','0/1','<>/'];
-  function spawnGlyph(){ glyphs.push({x:Math.random()*w(),y:-10,vy:0.3+Math.random()*0.6,txt:codes[Math.floor(Math.random()*codes.length)],alpha:0.9,scale:0.8+Math.random()*0.8}); }
-  setInterval(spawnGlyph, 1600);
-  function frame(){
-    const cw = canvas.width, ch = canvas.height;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const g=ctx.createLinearGradient(0,0,canvas.clientWidth,canvas.clientHeight); g.addColorStop(0,'rgba(77,208,225,0.015)'); g.addColorStop(1,'rgba(125,211,252,0.008)'); ctx.fillStyle=g; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-    for(let p of P){ p.x+=p.vx; p.y+=p.vy; p.t+=0.01; if(p.x<0) p.x=canvas.clientWidth; if(p.x>canvas.clientWidth) p.x=0; if(p.y<0) p.y=canvas.clientHeight; if(p.y>canvas.clientHeight) p.y=0; const rr=p.r+Math.sin(p.t)*0.6; ctx.beginPath(); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.arc(p.x,p.y,rr,0,Math.PI*2); ctx.fill(); }
-    for(let i=0;i<P.length;i++){ for(let j=i+1;j<P.length;j++){ const a=P[i], b=P[j]; const dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy); if(d<120){ ctx.strokeStyle='rgba(125,211,252,'+((120-d)/140*0.12)+')'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); } } }
-    ctx.font='13px monospace'; ctx.textBaseline='top';
-    for(let i=glyphs.length-1;i>=0;i--){ const gyl=glyphs[i]; gyl.y += gyl.vy; gyl.alpha -= 0.0005; ctx.globalAlpha = Math.max(0, gyl.alpha); ctx.fillStyle='rgba(125,211,252,0.9)'; ctx.fillText(gyl.txt, gyl.x, gyl.y); ctx.globalAlpha = 1; if(gyl.y > canvas.clientHeight + 40 || gyl.alpha <= 0) glyphs.splice(i,1); }
-    requestAnimationFrame(frame);
-  }
-  frame();
-})();
+  <!-- CENTER: Chart -->
+  <section class="card">
+    <h2>График цены <small>canvas</small></h2>
+    <div class="chartWrap">
+      <canvas id="chart" width="1200" height="520"></canvas>
+    </div>
+    <div class="content">
+      <div class="row wrap">
+        <div class="stat"><div class="k">Last</div><div class="v" id="stLast">—</div></div>
+        <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
+        <div class="stat"><div class="k">Net Position</div><div class="v" id="stPos">0</div></div>
+        <div class="stat"><div class="k">Avg Price</div><div class="v" id="stAvg">—</div></div>
+        <div class="stat"><div class="k">Flow (recent)</div><div class="v" id="stFlow">0</div></div>
+        <div class="stat"><div class="k">Active Limits</div><div class="v" id="stLimits">0</div></div>
+      </div>
+    </div>
+  </section>
 
-(function(){
-  function burstAt(x,y,parent){
-    const c=document.createElement('canvas'); c.width=160; c.height=160; c.style.position='absolute'; c.style.left=(x-80)+'px'; c.style.top=(y-80)+'px'; c.style.pointerEvents='none'; parent.appendChild(c);
-    const ctx=c.getContext('2d'); let t=0;
-    function anim(){ t+=1; ctx.clearRect(0,0,c.width,c.height); for(let i=0;i<8;i++){ const ang=(i/8)*Math.PI*2; const rad= t*2 + i*4; const px=80+Math.cos(ang)*rad; const py=80+Math.sin(ang)*rad; ctx.fillStyle='rgba(125,211,252,'+Math.max(0,(1 - t/30))+')'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); } if(t<40) requestAnimationFrame(anim); else try{ parent.removeChild(c); }catch(e){} }
-    anim();
-  }
-  document.querySelectorAll('.btn-hover-burst').forEach(btn=>{
-    btn.addEventListener('mouseenter',(e)=>{
-      const rect=btn.getBoundingClientRect(); const x=e.clientX-rect.left; const y=e.clientY-rect.top;
-      const parent=document.createElement('div'); parent.style.position='absolute'; parent.style.left=rect.left+'px'; parent.style.top=rect.top+'px'; parent.style.width=rect.width+'px'; parent.style.height=rect.height+'px'; parent.style.pointerEvents='none'; document.body.appendChild(parent);
-      burstAt(x, y, parent);
-      setTimeout(()=>{ try{ document.body.removeChild(parent); }catch{} },1200);
-    });
-    btn.addEventListener('touchstart',(e)=>{ const rect=btn.getBoundingClientRect(); burstAt(rect.width/2, rect.height/2, btn); });
-  });
-})();
+  <!-- RIGHT: Orders + Log -->
+  <div class="rightSticky">
+    <section class="card">
+      <h2>Активные лимитки <small>click → cancel</small></h2>
+      <div class="content" style="padding:0">
+        <div style="max-height:320px; overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px">Side</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Left</th>
+                <th style="width:90px">ID</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-(function(){
-  const tgInput=document.getElementById('tg'), copyBtn=document.getElementById('copy-tg'), openBtn=document.getElementById('open-tg'), contactStatus=document.getElementById('contact-status');
-  if(copyBtn) copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(tgInput.value); contactStatus.textContent='Handle copied'; }catch(e){ contactStatus.textContent='Copy failed'; } });
-  if(openBtn) openBtn.addEventListener('click', ()=> window.open('https://t.me/Techlynn','_blank'));
+    <section class="card" style="margin-top:14px">
+      <h2>Лог событий <small>что исполнилось</small></h2>
+      <div class="content">
+        <div class="log" id="log"></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn gray small" id="clearLog">🧽 Clear log</button>
+          <span class="hint">Подсказка: кликай по строке в таблице — отмена ордера.</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
 
-  function handleOrderClick(pkg, price){
-    const priceText = price ? (' — $' + price) : '';
-    const msg = `Order: ${pkg}${priceText}\nContact: @Techlynn\nSource: ${location.href}`;
-    navigator.clipboard.writeText(msg).then(()=>{ contactStatus.textContent = 'Message copied to clipboard — opening Telegram...'; window.open('https://t.me/Techlynn','_blank'); }).catch(()=>{ contactStatus.textContent = 'Copy failed — opening Telegram, paste message manually.'; window.open('https://t.me/Techlynn','_blank'); });
-  }
+<script>
+(() => {
+  // ===== Utilities
+  const $ = (id) => document.getElementById(id);
+  const now = () => new Date().toLocaleTimeString();
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const roundTo = (x, step) => Math.round(x / step) * step;
 
-  document.querySelectorAll('[data-package]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ const pkg = e.currentTarget.dataset.package || 'Custom'; const price = e.currentTarget.dataset.price || ''; handleOrderClick(pkg, price); });
-  });
+  // ===== State
+  const state = {
+    symbol: "NQ (sim)",
+    tickSize: 0.25,
+    spreadTicks: 1,
+    volatility: 8,   // 1..20
+    liquidity: 10,   // 1..20
+    impact: 8,       // 0..20
+    speedMs: 80,
+    paused: false,
 
-  const landingBtn = document.getElementById('btn-order-landing');
-  if(landingBtn) landingBtn.addEventListener('click', ()=> handleOrderClick('Landing', '55'));
-  const contactModalBtn = document.getElementById('contact-modal');
-  if(contactModalBtn) contactModalBtn.addEventListener('click', ()=> handleOrderClick('Custom', ''));
-})();
+    // market variables
+    price: 17000,
+    velocity: 0,
+    flow: 0,          // recent net order flow (decays)
+    flowDecay: 0.92,  // each tick
 
-(function(){
-  const translations = {
-    "en": {
-      "brand_name":"Techlyn",
-      "brand_sub":"Manual development • Integrations • Security",
-      "nav_home":"Home",
-      "nav_services":"Services",
-      "contact_btn":"Contact",
-      "quick_start":"Quick start",
-      "quick_start_small":"Quick start",
-      "hero_title":"Professional websites and Web3 integrations",
-      "hero_lead":"Manual frontend, Web3 integrations and security audits. Formal, reliable design — tailored for clients.",
-      "feat1":"Clean code","feat2":"Responsive","feat3":"Security","feat4":"Support",
-      "contact_channel":"Primary contact — Telegram @Techlynn",
-      "packages":"Packages",
-      "advantages_title":"Our advantages",
-      "advantages_sub":"Why clients choose us",
-      "adv_tab1":"Performance","adv_tab2":"Conversions","adv_tab3":"Full-service",
-      "adv_heading1":"Build High-Performance Websites That Convert",
-      "adv_text1":"From responsive websites to Web3 features and security hardening — we deliver clean code, real integration, and peace of mind.",
-      "adv_heading2":"Transform Clicks into Clients",
-      "adv_text2":"We design and develop high-converting landing pages that capture attention, drive engagement, and maximize ROI for your campaigns.",
-      "adv_heading3":"Your One-Stop Partner for Website Development",
-      "adv_text3":"From strategy and wireframing to launch and optimization, we handle every step of building your online presence — tailored for your goals.",
-      "adv_button":"Get Started Today",
-      "landing":"Landing Website","term_landing":"Term: 2 days",
-      "li_l1":"Single-page responsive landing","li_l2":"Header, CTA, benefits, FAQ, contact via Telegram","li_l3":"Webhook → Telegram","li_l4":"Analytics, optimisation, SSL, deploy","li_l5":"1 round of revisions, source delivery",
-      "website":"Website (Standard)","term_standard":"Term: 4 days","li_w1":"Up to 5 pages (Home, Services, Cases, Contacts)","li_w2":"Forms → Telegram/CRM","li_w3":"SEO, responsive, 2 rounds of revisions",
-      "premium":"Premium Website","term_premium":"Term: 7 days","li_p1":"Up to 10 pages, bespoke design, measured animations","li_p2":"Security Package","li_p3":"CMS on request, SEO, 3 rounds, 14 days support",
-      "web3":"Web3 Website (Frontend + Integration)","term_web3":"Term: 7 days","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Auth via wallet, token balance display","li_web33":"UI for contract interaction (read/write)",
-      "ecom":"E-commerce Store","term_ecom":"Term: 7–10 days (depends on catalogue)","li_e1":"Full online store (products, categories, cart)","li_e2":"Payment gateway integration (Stripe / Cards)","li_e3":"Admin panel: products, orders, basic inventory","li_e4":"Analytics, SEO, deployment, 7 days support",
-      "security":"Security Package","included":"Included in Premium.","term_security":"Deep diagnostics & hardening","li_s1":"Automated scanning + manual check","li_s2":"Cloudflare / WAF setup, rate-limiting","li_s3":"CSP, security headers, input validation","li_s4":"Pen-test scenarios & remediation plan",
-      "smart":"Smart Contracts & Audit","smart_sub":"Development and audit — pricing upon request","learn_more":"Learn more",
-      "faq_title":"FAQ — short","how_time":"How deadlines are counted?","how_time_sub":"From receipt of materials and prepayment.","how_pay":"Payment?","how_pay_sub":"50% up front, 50% on delivery.","tech":"Technologies?","tech_sub":"Manual HTML/CSS/JS, frameworks on request. Web3 via ethers.js.","security_q":"Security?","security_q_sub":"Basic hardening included; deep audit is separate.",
-      "contact_title":"Contact — Telegram","contact_note":"Buttons copy the handle and open Telegram. Email is hidden — contact via Telegram.",
-      "label_tg":"Telegram","copy_tg":"Copy handle","open_tg":"Open Telegram","order":"Order","details":"Details","footer":"© Techlyn — Manual development","security_addon":"Also available: <strong>Security add-on</strong>",
-      "order_pop_title":"Choose contact method",
-      "order_pop_desc":"How would you like to place the order?",
-      "order_pop_btn_tg":"Write in Telegram",
-      "order_pop_btn_form":"Open form",
-      "order_pop_note":"Message will be copied to clipboard for convenience."
-    },
-    "ru": {
-      "brand_name":"Techlyn",
-      "brand_sub":"Ручная разработка • Интеграции • Безопасность",
-      "nav_home":"Главная",
-      "nav_services":"Услуги",
-      "contact_btn":"Контакт",
-      "quick_start":"Быстрый старт",
-      "quick_start_small":"Быстрый старт",
-      "hero_title":"Профессиональные сайты и Web3-интеграции",
-      "hero_lead":"Ручной frontend, Web3-интеграции и аудиты безопасности. Формальный, надёжный дизайн — под клиента.",
-      "feat1":"Чистый код","feat2":"Адаптивность","feat3":"Безопасность","feat4":"Поддержка",
-      "contact_channel":"Основной контакт — Telegram @Techlynn",
-      "packages":"Пакеты",
-      "advantages_title":"Наши преимущества",
-      "advantages_sub":"Почему клиенты выбирают нас",
-      "adv_tab1":"Производительность","adv_tab2":"Конверсии","adv_tab3":"Полный сервис",
-      "adv_heading1":"Создаём быстрые сайты, которые конвертируют",
-      "adv_text1":"От адаптивных сайтов до Web3‑функций и усиления безопасности — мы делаем чистый код, настоящие интеграции и спокойствие для вас.",
-      "adv_heading2":"Превращаем клики в клиентов",
-      "adv_text2":"Мы проектируем и разрабатываем лендинги с высокой конверсией, которые привлекают внимание, повышают вовлечённость и максимизируют ROI кампаний.",
-      "adv_heading3":"Ваш универсальный партнёр по разработке сайтов",
-      "adv_text3":"От стратегии и прототипов до запуска и оптимизации — мы делаем каждый шаг для вашей онлайн‑презентации, под ваши цели.",
-      "adv_button":"Начать сейчас",
-      "landing":"Лендинг (Landing)","term_landing":"Срок: 2 дня",
-      "li_l1":"Одностраничный адаптивный лендинг","li_l2":"Хедер, CTA, преимущества, FAQ, связь через Telegram","li_l3":"Webhook → Telegram","li_l4":"Аналитика, оптимизация, SSL, деплой","li_l5":"1 раунд правок, передача исходников",
-      "website":"Веб-сайт (Стандарт)","term_standard":"Срок: 4 дня","li_w1":"До 5 страниц (Главная, Услуги, Кейсы, Контакты)","li_w2":"Формы → Telegram/CRM","li_w3":"SEO, адаптив, 2 раунда правок",
-      "premium":"Премиум-сайт","term_premium":"Срок: 7 дней","li_p1":"До 10 страниц, дизайн на заказ, аккуратные анимации","li_p2":"Пакет безопасности","li_p3":"CMS по запросу, SEO, 3 раунда, 14 дней поддержки",
-      "web3":"Web3 сайт (Фронтенд + Интеграция)","term_web3":"Срок: 7 дней","li_web31":"Кошельки: MetaMask / WalletConnect","li_web32":"Авторизация через кошелёк, отображение баланса токена","li_web33":"UI для взаимодействия с контрактом (read/write)",
-      "ecom":"Интернет-магазин","term_ecom":"Срок: 7–10 дней (зависит от каталога)","li_e1":"Полный магазин (товары, категории, корзина)","li_e2":"Интеграция платёжных систем (Stripe / карты)","li_e3":"Админ: товары, заказы, базовый учёт","li_e4":"Аналитика, SEO, деплой, 7 дней поддержки",
-      "security":"Пакет безопасности","included":"Включено в Премиум.","term_security":"Глубокая диагностика и усиление","li_s1":"Автосканирование + ручная проверка","li_s2":"Настройка Cloudflare / WAF, rate-limit","li_s3":"CSP, security headers, валидация вводимых данных","li_s4":"Сценарии pentest и план исправлений",
-      "smart":"Смарт-контракты и аудит","smart_sub":"Разработка и аудит — цены по запросу","learn_more":"Узнать подробнее",
-      "faq_title":"FAQ — коротко","how_time":"Как считаются сроки?","how_time_sub":"Считается от получения материалов и предоплаты.","how_pay":"Оплата?","how_pay_sub":"50% аванс, 50% при сдаче.","tech":"Технологии?","tech_sub":"Ручной HTML/CSS/JS, фреймворки по запросу. Web3 через ethers.js.","security_q":"Безопасность?","security_q_sub":"Базовое усиление включено; глубокий аудит отдельно.",
-      "contact_title":"Контакт — Telegram","contact_note":"Кнопки копируют хэндл и открывают Telegram. Почта скрыта — связаться через Telegram.",
-      "label_tg":"Telegram","copy_tg":"Копировать","open_tg":"Открыть Telegram","order":"Заказать","details":"Подробнее","footer":"© Techlyn — Ручная разработка","security_addon":"Также доступно: <strong>Доп. пакет безопасности</strong>",
-      "order_pop_title":"Выберите способ связи",
-      "order_pop_desc":"Как вы хотите оформить заказ?",
-      "order_pop_btn_tg":"Написать в Telegram",
-      "order_pop_btn_form":"На форму",
-      "order_pop_note":"Сообщение автоматически копируется в буфер."
-    },
-    "hy": {
-      "brand_name":"Techlyn",
-      "brand_sub":"Ձեռքբովանդակության մշակում • Ինտեգրացիաներ • Անվտանգություն",
-      "nav_home":"Գլխավոր",
-      "nav_services":"Ծառայությունները",
-      "contact_btn":"Կապ",
-      "quick_start":"Արագ սկսում",
-      "quick_start_small":"Արագ սկսում",
-      "hero_title":"Մասնագիտական կայքեր և Web3 ինտեգրացիաներ",
-      "hero_lead":"Ձեռքով frontend, Web3 ինտեգրացիաներ և անվտանգության աուդիտներ։ Հստակ, հուսալի դիզայն՝ հաճախորդի համար։",
-      "feat1":"Մաքուր կոդ","feat2":"Պատասխանատու","feat3":"Անվտանգություն","feat4":"Ուղորդում",
-      "packages":"Փաթեթներ",
-      "advantages_title":"Մեր առավելությունները",
-      "advantages_sub":"Ո՞րն են պատճառները որ հաճախորդները ընտրում են մեզ",
-      "adv_tab1":"Արդյունք","adv_tab2":"Կոնվերսիաներ","adv_tab3":"Ամբողջական ծառայություն",
-      "adv_heading1":"Սահմանենք արագ, հզոր կայքեր, որոնք համալիրով կոնվերտ են",
-      "adv_text1":"Անդադրող կայքերից մինչև Web3 ֆունկցիաներ և անվտանգության ամրացում — մենք ապահովում ենք մաքուր կոդ, իրական ինտեգրացիաներ և մտքի հանգստություն։",
-      "adv_heading2":"Անցումները՝ հաճախորդների մեջ",
-      "adv_text2":"Մենք նախագծում և մշակում ենք բարձր կոնվերտացվող լենդինգներ, որոնք գրավում են ուշադրությունը, բարձրացնում ներգրավվածությունը և մեծացնում ROI-ն։",
-      "adv_heading3":"Ձեր մեկ կանգառային գործընկերը կայքերի զարգացման համար",
-      "adv_text3":"Ստրատեգիայից և հսկողությունից մինչև գործարկում և օպտիմիզացում՝ մենք զբաղվում ենք յուրաքանչյուր քայլով՝ ըստ ձեր նպատակների։",
-      "adv_button":"Սկսել հիմա",
-      "landing":"Landing կայք","term_landing":"Վաղաժամկետը՝ 2 օր",
-      "li_l1":"Միանվագ պատասխանատու ленդինգ","li_l2":"Ղեկավար, CTA, առավելություններ, FAQ, կապ Telegram-ով","li_l3":"Webhook → Telegram","li_l4":"Անալիտիկա, օպտիմիզացիա, SSL, դեպլոյ","li_l5":"1 փուլի վերանայում, աղբյուրների փոխանցում",
-      "website":"Կայք (Ստանդարտ)","term_standard":"Վաղաժամկետը՝ 4 օր","li_w1":"Մինչև 5 էջ (Գլխավոր, Ծառայություններ, Կեյսեր, Կապեր)","li_w2":"Ֆորմաներ → Telegram/CRM","li_w3":"SEO, պատասխանատու, 2 փուլ վերանայում",
-      "premium":"Պրեմիում կայք","term_premium":"Վաղաժամկետը՝ 7 օր","li_p1":"Մինչև 10 էջ, bespoke դիզայն, հանգիստ անիմացիաներ","li_p2":"Անվտանգության փաթեթ","li_p3":"CMS խնդրանքով, SEO, 3 փուլի, 14 օր աջակցության",
-      "web3":"Web3 կայք (Frontend + Ինտեգրում)","term_web3":"Վաղաժամկետը՝ 7 օր","li_web31":"Wallets: MetaMask / WalletConnect","li_web32":"Ամփոփում՝ wallet-ով, token-ի հաշվարկ","li_web33":"UI համար contract interaction (read/write)",
-      "ecom":"Էլեկտրոնային խանութ","term_ecom":"Վաղաժամկետը՝ 7–10 օր (կախված կատալոգից)","li_e1":"Ամբողջական խանութ (ապրանքներ, կատեգորիաներ, զամբյուղ)","li_e2":"Payment gateway ինտեգրում (Stripe / քարտեր)","li_e3":"Ադմին պանել՝ ապրանք, պատվերներ, հիմնական ինվենտար","li_e4":"Անալիտիկա, SEO, դեպլոյ, 7 օր աջակցության",
-      "security":"Անվտանգության փաթեթ","included":"Ընդգրկված է պրեմիումում։","term_security":"Խորքային ախտորոշում և ամրացում","li_s1":"Ավտոմատ սկանավորում + ձեռքի ստուգում","li_s2":"Cloudflare / WAF կարգավորում, rate-limit","li_s3":"CSP, անվտանգության հեդերներ, մուտքային վալիդացիա","li_s4":"Pen-test սցենարներ և վերականգման պլան",
-      "smart":"Սմարթ կոնտրակտներ և աուդիտ","smart_sub":"Ծրագրում և աուդիտ — գները ըստ հարցման","learn_more":"Իմանալ ավելին",
-      "faq_title":"ՀՏՀ — կարճ","how_time":"Ինչպես հաշվարկվում են ժամկետները?","how_time_sub":"Հաշվում է նյութերի ստացումից և նախնական վճարից։","how_pay":"Վճարում?","how_pay_sub":"50% նախապես, 50% առաքման պահին։","tech":"Տեխնոլոգիաներ?","tech_sub":"Ձեռնարկ HTML/CSS/JS, framework-ներ ըստ հարցի. Web3՝ через ethers.js.","security_q":"Անվտանգություն?","security_q_sub":"Հիմնական ամրացումը ներառված է; խորքային աուդիտը առանձին է։",
-      "contact_title":"Կապ — Telegram","contact_note":"Կոճակները պատճենում են հենդլը և բացում Telegram։ Էլ.փոստը թաքնված է — կապվեք Telegram-ով։",
-      "label_tg":"Telegram","copy_tg":"Պատճենել","open_tg":"Բացել Telegram","order":" Պատվիրել","details":"Մանրամասներ","footer":"© Techlyn — Ձեռքով մշակված","security_addon":"Հավելյալ հասանելի է: <strong>Անվտանգության Լրացում</strong>",
-      "order_pop_title":"Ընտրեք կապի եղանակը",
-      "order_pop_desc":"Ինչպես ցանկանում եք պատվիրել?",
-      "order_pop_btn_tg":"Написать в Telegram",
-      "order_pop_btn_form":"Բեռնել ձևը",
-      "order_pop_note":"Հաղորդագրությունը ավտոմատ պատճենվում է չանհատականության համար."
-    }
+    // user position (no PnL focus, but keep avg price for context)
+    pos: 0,
+    avg: null,
+
+    // series for chart
+    series: [],
+    maxSeries: 450,
+
+    // orders
+    nextOrderId: 1,
+    limits: [], // {id, side, price, qty, left, createdAt}
   };
 
-  function apply(lang){
-    if(!translations[lang]) lang='en';
-    document.querySelectorAll('[data-i18n]').forEach(el=>{
-      const key = el.getAttribute('data-i18n');
-      if(!key) return;
-      const txt = translations[lang][key];
-      if(typeof txt === 'undefined') return;
-      if(el.children.length === 0){
-        if(key === 'security_addon'){
-          el.innerHTML = translations[lang][key];
-        } else {
-          el.textContent = txt;
-        }
-      } else {
-        for(const node of el.childNodes){
-          if(node.nodeType === Node.TEXT_NODE){
-            if(node.nodeContent && node.nodeContent.trim().length>0){
-              node.nodeContent = ' ' + txt;
-              break;
-            }
-          }
-        }
+  // ===== UI init
+  $("sym").textContent = state.symbol;
+
+  function log(msg, kind="") {
+    const el = $("log");
+    const line = document.createElement("div");
+    line.innerHTML = `<span class="muted">[${now()}]</span> ${msg}`;
+    if (kind === "good") line.style.color = "#bdf8de";
+    if (kind === "bad")  line.style.color = "#ffd0d7";
+    if (kind === "warn") line.style.color = "#ffe8b2";
+    el.prepend(line);
+  }
+
+  function getBidAsk() {
+    const spread = state.spreadTicks * state.tickSize;
+    const mid = state.price;
+    const bid = mid - spread/2;
+    const ask = mid + spread/2;
+    return { bid, ask };
+  }
+
+  function applyFill(side, qty, fillPrice, reason="") {
+    // Update position + average price (simple weighted avg)
+    const oldPos = state.pos;
+    const newPos = oldPos + (side === "buy" ? qty : -qty);
+
+    // Average price logic:
+    // - If increasing same direction: weighted avg
+    // - If reducing: avg unchanged unless flips through zero
+    // - If flips: avg becomes fill price for remaining
+    if (oldPos === 0) {
+      state.avg = fillPrice;
+    } else if (Math.sign(oldPos) === Math.sign(newPos) && newPos !== 0) {
+      // same side add
+      const oldAbs = Math.abs(oldPos);
+      const newAbs = Math.abs(newPos);
+      // qty added = newAbs - oldAbs
+      const addQty = newAbs - oldAbs;
+      if (addQty > 0) {
+        state.avg = (state.avg * oldAbs + fillPrice * addQty) / newAbs;
       }
-    });
-
-    document.querySelectorAll('.lang-btn').forEach(b=>{
-      b.classList.remove('active');
-      b.setAttribute('aria-pressed','false');
-    });
-    const btn = document.getElementById('lang-' + lang);
-    if(btn){ btn.classList.add('active'); btn.setAttribute('aria-pressed','true'); }
-    try{ localStorage.setItem('site_lang', lang); }catch(e){}
-  }
-
-  ['en','ru','hy'].forEach(code=>{
-    const el = document.getElementById('lang-'+code);
-    if(el) el.addEventListener('click', ()=> apply(code));
-  });
-
-  let saved = null;
-  try{ saved = localStorage.getItem('site_lang'); }catch(e){}
-  if(saved && translations[saved]) apply(saved);
-  else {
-    let userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    if(userLang.startsWith('ru') || userLang.startsWith('uk')) apply('ru');
-    else if(userLang.startsWith('hy')) apply('hy');
-    else apply('en');
-  }
-
-  try { window.siteTranslations = translations; } catch(e) { }
-})();
-  </script>
-
-<style>
-.order-popover {
-  position: absolute;
-  z-index: 9999;
-  min-width: 220px;
-  max-width: 320px;
-  background: linear-gradient(180deg, rgba(2,6,23,0.98), rgba(4,18,34,0.95));
-  border: 1px solid rgba(255,255,255,0.04);
-  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-  padding: 12px;
-  border-radius: 10px;
-  color: #e6eef6;
-  font-size: 14px;
-  backdrop-filter: blur(6px);
-}
-.order-popover .title { font-weight:700; margin-bottom:8px; }
-.order-popover .row { display:flex; gap:8px; margin-top:8px; }
-.order-popover .btn-pop {
-  flex:1;
-  padding:8px 10px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  font-weight:700;
-}
-.btn-pop-tg { background: linear-gradient(90deg,var(--accent1,var(--accent1, #4dd0e1)),var(--accent2,var(--accent2, #7dd3fc))); color:#02222b; }
-.btn-pop-form { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted,#9aa4b2); }
-.order-popover .note { font-size:12px; color: rgba(255,255,255,0.6); margin-top:8px; }
-</style>
-
-<script>
-(function(){
-  const JOTFORM = 'https://form.jotform.com/252745154703052';
-  const TG_HANDLE = '@Techlynn';
-  const TG_LINK = 'https://t.me/Techlynn';
-
-  const pop = document.createElement('div');
-  pop.className = 'order-popover';
-  pop.style.display = 'none';
-  document.body.appendChild(pop);
-
-  function getCurrentSiteLang(){
-    try{
-      const s = localStorage.getItem('site_lang');
-      if(s) return s;
-    }catch(e){}
-    const userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    if(userLang.startsWith('ru') || userLang.startsWith('uk')) return 'ru';
-    if(userLang.startsWith('hy')) return 'hy';
-    return 'en';
-  }
-
-  function renderPopover(lang){
-    const t = (window.siteTranslations && window.siteTranslations[lang]) ? window.siteTranslations[lang] : (window.siteTranslations && window.siteTranslations['en']) ? window.siteTranslations['en'] : {
-      order_pop_title: 'Choose contact method',
-      order_pop_desc: 'How would you like to place the order?',
-      order_pop_btn_tg: 'Write in Telegram',
-      order_pop_btn_form: 'Open form',
-      order_pop_note: 'Message will be copied to clipboard for convenience.'
-    };
-    pop.innerHTML = `
-      <div class="title">${t.order_pop_title || 'Choose contact method'}</div>
-      <div class="desc">${t.order_pop_desc || 'How would you like to place the order?'}</div>
-      <div class="row">
-        <button class="btn-pop btn-pop-tg" type="button">${t.order_pop_btn_tg || 'Write in Telegram'}</button>
-        <button class="btn-pop btn-pop-form" type="button">${t.order_pop_btn_form || 'Open form'}</button>
-      </div>
-      <div class="note">${t.order_pop_note || 'Message will be copied to clipboard for convenience.'}</div>
-    `;
-  }
-
-  function hidePop() {
-    pop.style.display = 'none';
-    currentTarget = null;
-  }
-  document.addEventListener('click', (e)=>{
-    if(pop.style.display === 'none') return;
-    if(!pop.contains(e.target) && !e.target.closest('[data-package]') && e.target.id !== 'btn-order-landing'){
-      hidePop();
+    } else if (newPos === 0) {
+      state.avg = null;
+    } else if (Math.sign(oldPos) !== Math.sign(newPos)) {
+      // flip
+      state.avg = fillPrice;
     }
-  }, {capture:true});
 
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') hidePop(); });
+    state.pos = newPos;
 
-  function buildMessage(pkg, price){
-    let priceText = price ? (' — $' + price) : '';
-    return `Order: ${pkg}${priceText}\nContact: ${TG_HANDLE}\nSource: ${location.href}`;
+    // Add flow impact: buy positive, sell negative
+    state.flow += (side === "buy" ? qty : -qty);
+
+    const tag = side === "buy" ? "🟢" : "🔴";
+    log(`${tag} FILLED <span class="mono">${side.toUpperCase()}</span> qty=<span class="mono">${qty}</span> @ <span class="mono">${fillPrice.toFixed(2)}</span> ${reason ? `<span class="muted">(${reason})</span>` : ""}`,
+        side === "buy" ? "good" : "bad");
   }
 
-  pop.addEventListener('click', async (e)=>{
-    const target = e.target;
-    if(target.classList.contains('btn-pop-tg')){
-      if(!currentTarget) return;
-      const pkg = currentTarget.dataset.package || 'Custom';
-      const price = currentTarget.dataset.price || '';
-      const msg = buildMessage(pkg, price);
-      try {
-        await navigator.clipboard.writeText(msg);
-      } catch(e){}
-      window.open(TG_LINK, '_blank');
-      hidePop();
-    } else if(target.classList.contains('btn-pop-form')){
-      window.open(JOTFORM, '_blank');
-      hidePop();
-    }
-  });
-
-  function showPopoverFor(target){
-    const lang = getCurrentSiteLang();
-    renderPopover(lang);
-
-    const rect = target.getBoundingClientRect();
-    pop.style.left = '-9999px';
-    pop.style.top = '-9999px';
-    pop.style.display = 'block';
-    requestAnimationFrame(()=>{
-      const pageX = rect.left + window.scrollX;
-      const pageY = rect.bottom + window.scrollY + 10;
-      const left = Math.min(pageX, window.scrollX + window.innerWidth - pop.offsetWidth - 12);
-      pop.style.left = left + 'px';
-      pop.style.top = pageY + 'px';
-    });
+  // ===== Order actions
+  function marketOrder(side, qty, slipTicks) {
+    const { bid, ask } = getBidAsk();
+    // Simple slippage: extra ticks in direction
+    const slip = slipTicks * state.tickSize;
+    const fill = side === "buy" ? (ask + slip) : (bid - slip);
+    applyFill(side, qty, fill, "market");
   }
 
-  let currentTarget = null;
-
-  function wireButtons(){
-    document.querySelectorAll('[data-package]').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        e.preventDefault();
-        currentTarget = btn;
-        pop.style.display='block';
-        pop.style.left='-9999px';
-        pop.style.top='-9999px';
-        requestAnimationFrame(()=> showPopoverFor(btn));
-      });
+  function placeLimit(side, price, qty) {
+    price = roundTo(price, state.tickSize);
+    const id = state.nextOrderId++;
+    state.limits.push({
+      id,
+      side,
+      price,
+      qty,
+      left: qty,
+      createdAt: Date.now()
     });
+    log(`➕ LIMIT <span class="mono">${side.toUpperCase()}</span> qty=<span class="mono">${qty}</span> @ <span class="mono">${price.toFixed(2)}</span> <span class="muted">(id=${id})</span>`, "warn");
+    render();
+  }
 
-    const landing = document.getElementById('btn-order-landing');
-    if(landing){
-      landing.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        e.preventDefault();
-        landing.dataset.package = landing.dataset.package || 'Landing';
-        landing.dataset.price = landing.dataset.price || '55';
-        currentTarget = landing;
-        pop.style.display='block';
-        pop.style.left='-9999px';
-        pop.style.top='-9999px';
-        requestAnimationFrame(()=> showPopoverFor(landing));
-      });
+  function cancelOrder(id) {
+    const idx = state.limits.findIndex(o => o.id === id);
+    if (idx >= 0) {
+      const o = state.limits[idx];
+      state.limits.splice(idx, 1);
+      log(`✖ CANCEL id=<span class="mono">${id}</span> (${o.side} @ ${o.price.toFixed(2)}, left=${o.left})`, "warn");
+      render();
     }
   }
 
-  wireButtons();
+  function cancelAll() {
+    const n = state.limits.length;
+    state.limits = [];
+    log(`🧹 Cancel All (${n} orders)`, "warn");
+    render();
+  }
 
-  document.querySelectorAll('.lang-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      if(pop.style.display === 'block'){
-        renderPopover(getCurrentSiteLang());
-      }
-    });
+  function shiftAll(deltaPts) {
+    const delta = roundTo(deltaPts, state.tickSize);
+    state.limits.forEach(o => o.price = roundTo(o.price + delta, state.tickSize));
+    log(`↕ Shift all limits by <span class="mono">${delta.toFixed(2)}</span> pts`, "warn");
+    render();
+  }
+
+  function flatten() {
+    if (state.pos === 0) { log("🧯 Flatten: позиция уже 0", "warn"); return; }
+    const qty = Math.abs(state.pos);
+    const side = state.pos > 0 ? "sell" : "buy";
+    marketOrder(side, qty, Number($("slip").value || 0));
+    log("🧯 Flatten done", "warn");
+    render();
+  }
+
+  function placeLadder(side, start, levels, step, qtyPerLevel) {
+    start = roundTo(start, state.tickSize);
+    step = Math.max(state.tickSize, step);
+    step = roundTo(step, state.tickSize);
+
+    for (let i = 0; i < levels; i++) {
+      const p = side === "buy"
+        ? start - i * step
+        : start + i * step;
+      placeLimit(side, p, qtyPerLevel);
+    }
+  }
+
+  // ===== Matching engine for limits
+  function matchLimits() {
+    const { bid, ask } = getBidAsk();
+    // For buy limits: fill if ask <= limitPrice (price touches/through)
+    // For sell limits: fill if bid >= limitPrice
+    // Partial fills: simulate with liquidity (higher = smaller partial)
+    const liq = clamp(state.liquidity, 1, 20);
+
+    // process in time order to feel fair-ish
+    state.limits.sort((a,b)=>a.createdAt-b.createdAt);
+
+    const filledIds = [];
+    for (const o of state.limits) {
+      if (o.left <= 0) { filledIds.push(o.id); continue; }
+
+      const canFill = (o.side === "buy")
+        ? (ask <= o.price)
+        : (bid >= o.price);
+
+      if (!canFill) continue;
+
+      // Partial fill size: depends on liquidity + order left
+      // low liq => larger chunks, high liq => smaller chunks
+      const baseChunk = Math.max(1, Math.round(o.qty * (21 - liq) / 20));
+      const chunk = Math.min(o.left, baseChunk);
+
+      // Fill price: assume filled at limit price (you control liquidity),
+      // could add slight improvement: fill at min(ask,limit) etc.
+      const fillPrice = o.price;
+
+      o.left -= chunk;
+      applyFill(o.side, chunk, fillPrice, `limit id=${o.id}`);
+
+      if (o.left <= 0) filledIds.push(o.id);
+    }
+
+    if (filledIds.length) {
+      state.limits = state.limits.filter(o => !filledIds.includes(o.id));
+    }
+  }
+
+  // ===== Market simulation
+  function stepMarket() {
+    if (state.paused) return;
+
+    // decay flow
+    state.flow *= state.flowDecay;
+
+    // random component (volatility)
+    const vol = clamp(state.volatility, 1, 20);
+    // gaussian-ish random
+    const r = (Math.random() + Math.random() + Math.random() + Math.random() - 2);
+    const noise = r * (vol * state.tickSize * 0.35);
+
+    // impact component
+    const imp = clamp(state.impact, 0, 20);
+    const liq = clamp(state.liquidity, 1, 20);
+
+    // netFlow pressure, damped by liquidity
+    const pressure = (state.flow) * (imp * state.tickSize * 0.06) * (1 / (liq * 0.35));
+
+    // velocity with some mean reversion (keep stable-ish)
+    state.velocity = (state.velocity * 0.85) + noise + pressure;
+
+    // update price
+    state.price = roundTo(state.price + state.velocity, state.tickSize);
+
+    // keep series
+    state.series.push(state.price);
+    if (state.series.length > state.maxSeries) state.series.shift();
+
+    // match limits after move
+    matchLimits();
+
+    render();
+  }
+
+  // ===== Chart (simple line + levels)
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+
+  function drawChart() {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    // Background grid
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1;
+
+    ctx.strokeStyle = "rgba(34,48,68,0.55)";
+    for (let i=1;i<8;i++){
+      const y = (h/8)*i;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+    for (let i=1;i<12;i++){
+      const x = (w/12)*i;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+
+    const data = state.series;
+    if (data.length < 2) return;
+
+    let min = Math.min(...data);
+    let max = Math.max(...data);
+
+    // include limit levels in view
+    for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
+
+    const pad = (max-min) * 0.12 + state.tickSize * 20;
+    min -= pad; max += pad;
+
+    const xStep = w / (data.length - 1);
+    const yOf = (p) => h - ((p - min) / (max - min)) * h;
+
+    // Price line
+    ctx.strokeStyle = "rgba(100,181,255,0.95)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i=0;i<data.length;i++){
+      const x = i * xStep;
+      const y = yOf(data[i]);
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // current price marker
+    const last = data[data.length-1];
+    const yLast = yOf(last);
+    ctx.fillStyle = "rgba(100,181,255,0.95)";
+    ctx.beginPath();
+    ctx.arc(w-8, yLast, 4, 0, Math.PI*2);
+    ctx.fill();
+
+    // draw bid/ask band
+    const {bid, ask} = getBidAsk();
+    const yBid = yOf(bid), yAsk = yOf(ask);
+    ctx.fillStyle = "rgba(159,176,195,0.08)";
+    ctx.fillRect(0, Math.min(yBid,yAsk), w, Math.abs(yBid-yAsk));
+
+    // Limits lines
+    for (const o of state.limits) {
+      const y = yOf(o.price);
+      ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+
+      // label
+      ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
+      ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+      const text = `${o.side.toUpperCase()} ${o.price.toFixed(2)} (left ${o.left})`;
+      ctx.fillText(text, 10, y - 6);
+    }
+
+    // Axis labels (min/max)
+    ctx.fillStyle = "rgba(159,176,195,0.85)";
+    ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+    ctx.fillText(`max ${max.toFixed(2)}`, 10, 16);
+    ctx.fillText(`min ${min.toFixed(2)}`, 10, h - 10);
+  }
+
+  // ===== Render UI
+  function renderOrdersTable() {
+    const body = $("ordersBody");
+    body.innerHTML = "";
+
+    // Show sorted by price depending on side for readability
+    const orders = [...state.limits].sort((a,b) => a.price - b.price);
+
+    for (const o of orders) {
+      const tr = document.createElement("tr");
+      tr.style.cursor = "pointer";
+      tr.title = "Нажми чтобы отменить";
+      tr.addEventListener("click", () => cancelOrder(o.id));
+
+      const sideTag = o.side === "buy"
+        ? `<span class="tag buy">BUY</span>`
+        : `<span class="tag sell">SELL</span>`;
+
+      tr.innerHTML = `
+        <td>${sideTag}</td>
+        <td>${o.price.toFixed(2)}</td>
+        <td>${o.qty}</td>
+        <td>${o.left}</td>
+        <td>${o.id}</td>
+      `;
+      body.appendChild(tr);
+    }
+  }
+
+  function renderStats() {
+    const { bid, ask } = getBidAsk();
+    $("hdrPrice").textContent = state.price.toFixed(2);
+    $("hdrPos").textContent = String(state.pos);
+    $("hdrFlow").textContent = state.flow.toFixed(2);
+
+    $("stLast").textContent = state.price.toFixed(2);
+    $("stBA").textContent = `${bid.toFixed(2)} / ${ask.toFixed(2)}`;
+    $("stPos").textContent = String(state.pos);
+    $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(2);
+    $("stFlow").textContent = state.flow.toFixed(2);
+    $("stLimits").textContent = String(state.limits.length);
+  }
+
+  function render() {
+    // sync settings
+    state.tickSize = Number($("tick").value) || 0.25;
+    state.spreadTicks = Math.max(0, Number($("spread").value || 0));
+    state.volatility = clamp(Number($("vol").value || 8), 1, 20);
+    state.liquidity = clamp(Number($("liq").value || 10), 1, 20);
+    state.impact = clamp(Number($("impact").value || 8), 0, 20);
+    state.speedMs = Math.max(20, Number($("speed").value || 80));
+
+    renderStats();
+    renderOrdersTable();
+    drawChart();
+  }
+
+  // ===== Buttons
+  $("buyMkt").addEventListener("click", () => {
+    const qty = Math.max(1, Math.floor(Number($("qty").value || 1)));
+    const slip = Math.max(0, Math.floor(Number($("slip").value || 0)));
+    marketOrder("buy", qty, slip);
+    render();
   });
 
+  $("sellMkt").addEventListener("click", () => {
+    const qty = Math.max(1, Math.floor(Number($("qty").value || 1)));
+    const slip = Math.max(0, Math.floor(Number($("slip").value || 0)));
+    marketOrder("sell", qty, slip);
+    render();
+  });
+
+  $("placeLimit").addEventListener("click", () => {
+    const side = $("limitSide").value;
+    const qty = Math.max(1, Math.floor(Number($("qty").value || 1)));
+    const price = Number($("limitPrice").value || 0);
+    if (!Number.isFinite(price) || price <= 0) {
+      log("⚠️ Введи нормальную цену лимитки (> 0).", "warn");
+      return;
+    }
+    placeLimit(side, price, qty);
+  });
+
+  $("placeLadder").addEventListener("click", () => {
+    const side = $("ladderSide").value;
+    const levels = Math.max(1, Math.floor(Number($("ladderLevels").value || 1)));
+    const step = Number($("ladderStep").value || state.tickSize);
+    const qtyPer = Math.max(1, Math.floor(Number($("ladderQty").value || 1)));
+    let start = Number($("ladderStart").value || 0);
+
+    if (!Number.isFinite(start) || start <= 0) {
+      // default start around current price for convenience
+      start = state.price;
+      $("ladderStart").value = start.toFixed(2);
+    }
+    placeLadder(side, start, levels, step, qtyPer);
+  });
+
+  $("cancelAll").addEventListener("click", cancelAll);
+  $("flatten").addEventListener("click", flatten);
+
+  $("shiftUp").addEventListener("click", () => {
+    const pts = Number($("shiftPts").value || 0);
+    if (!Number.isFinite(pts) || pts === 0) return;
+    shiftAll(Math.abs(pts));
+  });
+  $("shiftDn").addEventListener("click", () => {
+    const pts = Number($("shiftPts").value || 0);
+    if (!Number.isFinite(pts) || pts === 0) return;
+    shiftAll(-Math.abs(pts));
+  });
+
+  $("clearLog").addEventListener("click", () => $("log").innerHTML = "");
+
+  $("pause").addEventListener("click", () => {
+    state.paused = !state.paused;
+    $("pause").textContent = state.paused ? "▶️ Resume" : "⏸️ Pause";
+    log(state.paused ? "⏸️ Market paused" : "▶️ Market resumed", "warn");
+  });
+
+  $("reset").addEventListener("click", () => {
+    // hard reset
+    state.price = 17000;
+    state.velocity = 0;
+    state.flow = 0;
+    state.pos = 0;
+    state.avg = null;
+    state.limits = [];
+    state.series = [];
+    for (let i=0;i<60;i++) state.series.push(state.price);
+    $("limitPrice").value = state.price.toFixed(2);
+    $("ladderStart").value = state.price.toFixed(2);
+    log("🔁 Reset done", "warn");
+    render();
+  });
+
+  // Convenience: init limit price with current
+  function init() {
+    // seed series
+    for (let i=0;i<80;i++) state.series.push(state.price);
+    $("limitPrice").value = state.price.toFixed(2);
+    $("ladderStart").value = state.price.toFixed(2);
+    render();
+    log("Готово. Дави рынок как хочешь 😈", "warn");
+  }
+
+  // ===== Timer loop (dynamic speed)
+  let timer = null;
+  function startLoop() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(stepMarket, state.speedMs);
+  }
+
+  // update loop speed when input changes
+  ["speed","vol","liq","impact","tick","spread"].forEach(id => {
+    $(id).addEventListener("change", () => { render(); startLoop(); });
+    $(id).addEventListener("input", () => { /* smooth-ish */ });
+  });
+
+  // quick keys
+  window.addEventListener("keydown", (e) => {
+    if (e.target && ["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName)) return;
+
+    if (e.key === " "){
+      e.preventDefault();
+      $("pause").click();
+    }
+    if (e.key.toLowerCase() === "b") $("buyMkt").click();
+    if (e.key.toLowerCase() === "s") $("sellMkt").click();
+    if (e.key.toLowerCase() === "c") $("cancelAll").click();
+    if (e.key.toLowerCase() === "f") $("flatten").click();
+  });
+
+  init();
+  startLoop();
 })();
 </script>
-
-<script>
-if (location.pathname.endsWith('index.html')) {
-  const base = location.pathname.slice(0, -'index.html'.length) || '/';
-  location.replace(base + location.search + location.hash);
-}
-</script>
-
-
-
 </body>
 </html>
