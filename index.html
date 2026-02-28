@@ -17,7 +17,6 @@
       background: radial-gradient(1200px 800px at 10% 10%, #101a2a 0%, var(--bg) 45%) fixed;
       color:var(--text);
     }
-
     header{
       padding:12px 16px;
       border-bottom:1px solid var(--line);
@@ -33,7 +32,6 @@
     .title{display:flex; flex-direction:column; gap:2px;}
     .title h1{font-size:16px; margin:0; font-weight:900; letter-spacing:.2px;}
     .title .sub{font-size:12px; color:var(--muted); line-height:1.25;}
-
     .pill{
       display:inline-flex; gap:10px; align-items:center;
       padding:8px 10px;
@@ -46,20 +44,17 @@
       white-space:nowrap;
     }
     .pill b{color:var(--text); font-weight:900}
-
     .toast{
       max-width: 460px;
       overflow:hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-
     main{
       max-width:1480px; margin:0 auto; padding:14px;
       display:grid; grid-template-columns: 360px 1fr;
       gap:14px;
     }
-
     .card{
       background: linear-gradient(180deg, rgba(17,24,36,.92), rgba(15,22,32,.84));
       border:1px solid rgba(34,48,68,.9);
@@ -78,13 +73,10 @@
     }
     .card h2 small{color:var(--muted); font-weight:800; font-size:11px;}
     .card .content{padding:10px;}
-
     .grid{display:grid; gap:10px;}
     .grid.cols2{grid-template-columns:1fr 1fr;}
     .grid.cols3{grid-template-columns:1fr 1fr 1fr;}
-
     label{display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted);}
-
     input, select, button{font-family:inherit;}
     input, select{
       width:100%;
@@ -99,7 +91,6 @@
       border-color: rgba(100,181,255,.55);
       box-shadow: 0 0 0 3px rgba(100,181,255,.12);
     }
-
     .btn{
       border:none;
       border-radius:12px;
@@ -125,7 +116,6 @@
     .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
     .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
     .btn.small{padding:8px 10px; border-radius:10px; font-size:12px;}
-
     .row{display:flex; gap:10px; align-items:center;}
     .row.wrap{flex-wrap:wrap;}
     .sep{height:1px; background: rgba(34,48,68,.7); margin: 12px 0;}
@@ -140,7 +130,6 @@
       background: rgba(11,15,20,.55);
       color: rgba(231,238,247,.95);
     }
-
     .stat{
       display:flex; flex-direction:column; gap:2px;
       padding:9px 10px;
@@ -151,7 +140,6 @@
     }
     .stat .k{font-size:11px; color:var(--muted);}
     .stat .v{font-family:var(--mono); font-size:13px; font-weight:900; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-
     .chartTopBar{
       padding:10px 12px;
       border-bottom:1px solid rgba(34,48,68,.7);
@@ -160,7 +148,6 @@
     }
     .chartTopBar .left{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
     .chartTopBar .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-
     .miniField{
       display:flex; align-items:center; gap:8px;
       padding:8px 10px;
@@ -174,7 +161,6 @@
     }
     .miniField input{width:92px; padding:8px 8px; border-radius:10px; font-size:12px;}
     .miniField select{width:190px; padding:8px 8px; border-radius:10px; font-size:12px;}
-
     .toggle{
       display:flex; align-items:center; gap:8px;
       padding:8px 10px;
@@ -188,7 +174,6 @@
       white-space:nowrap;
     }
     .toggle input{width:auto; transform: translateY(1px);}
-
     .speedGroup{
       display:flex; align-items:center; gap:6px;
       padding:6px;
@@ -210,7 +195,6 @@
       border-color: rgba(100,181,255,.55);
       color: rgba(212,235,255,.98);
     }
-
     .chartWrap{
       height: 680px;
       padding: 10px 12px 12px;
@@ -229,7 +213,6 @@
       touch-action: none;
       cursor: grab;
     }
-
     .overlayHelp{
       position: fixed;
       inset: 0;
@@ -267,7 +250,6 @@
       line-height: 1.35;
     }
     .helpItem b{ color: var(--text); }
-
     @media (max-width: 1220px){
       main{grid-template-columns: 1fr;}
       .chartWrap{height:420px;}
@@ -292,6 +274,7 @@
 
     <div class="row wrap">
       <div class="pill">Symbol: <b id="sym">NQ (sim)</b></div>
+      <div class="pill">Dev: <b>David Kyn</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
       <div class="pill">Price: <b id="hdrPrice">—</b></div>
       <div class="pill">Pos: <b id="hdrPos">0</b></div>
@@ -303,7 +286,6 @@
 </header>
 
 <main>
-  <!-- LEFT PANEL -->
   <div class="card">
     <h2>Trading <small>market / limit / drip</small></h2>
     <div class="content grid">
@@ -366,7 +348,11 @@
 
       <div class="grid cols2">
         <button class="btn" id="cancelAll">Cancel All</button>
-        <button class="btn" id="flatten">Flatten (MKT)</button>
+        <button class="btn" id="flatten">Flatten 100% (MKT)</button>
+      </div>
+      <div class="grid cols2">
+        <button class="btn" id="flatten50">Flatten 50% (MKT)</button>
+        <button class="btn" id="flatten25">Flatten 25% (MKT)</button>
       </div>
 
       <div class="sep"></div>
@@ -418,7 +404,6 @@
     </div>
   </div>
 
-  <!-- CENTER CHART -->
   <section class="card">
     <h2>Chart <small>sandbox</small></h2>
 
@@ -501,7 +486,6 @@
   </section>
 </main>
 
-<!-- Help overlay -->
 <div class="overlayHelp" id="helpOverlay">
   <div class="helpCard">
     <div class="row" style="justify-content:space-between; align-items:center;">
@@ -535,14 +519,12 @@
 
   function decimalsFor(step){
     if (!Number.isFinite(step) || step <= 0) return 2;
-    // handle 0.25, 0.01, 0.0001, etc
     const s = String(step);
     if (s.includes("e-")) return parseInt(s.split("e-")[1], 10) || 2;
     const dot = s.indexOf(".");
     return dot >= 0 ? (s.length - dot - 1) : 0;
   }
 
-  // Box-Muller normal
   function randn() {
     let u = 0, v = 0;
     while (u === 0) u = Math.random();
@@ -563,86 +545,57 @@
 
   const state = {
     symbol: "NQ (sim)",
-
-    // market micro
     tickSize: 0.25,
     spreadTicks: 1,
-
-    // smoothed params
     p: { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
     target: { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
-
     volPresetKey: "nykz",
     speedMul: 1,
     paused: false,
-
-    // simulation core (more NQ-like)
     sim: {
       price: 17000,
-      drift: 0,            // points/sec
+      drift: 0,
       driftTarget: 0,
-      sigma: 3.2,          // points/sqrt(sec)
+      sigma: 3.2,
       sigmaTarget: 3.2,
-      volOfVol: 0.55,      // how fast sigma moves
-      meanRev: 0.18,       // sigma mean reversion
+      volOfVol: 0.55,
+      meanRev: 0.18,
       nextRegimeT: 30,
       jumpProb: 0.0012,
-      jumpScale: 14,       // points
+      jumpScale: 14,
       flow: 0,
       flowDecay: 0.92,
       vel: 0
     },
-
-    // time
     simTime: 0,
     tickCount: 0,
     ticks: [],
     maxTicks: 220000,
-
-    // bars
     tfSec: 5,
     bars: [],
     curBar: null,
-
-    // trading
     pos: 0,
     avg: null,
     nextOrderId: 1,
     limits: [],
-
-    // drip
     drip: { on:false, timer:null, side:"buy" },
-
-    // view (NEW ENGINE)
     view: {
       visibleBars: 160,
       futureBars: 40,
       follow: true,
-      end: 0.0, // float "rightmost" virtual position (includes future space)
+      end: 0.0,
     },
-
-    // y view
     y: { auto:true, scale:1.0, offset:0.0 },
-
-    // pointers / gestures
     pointers: new Map(),
     dragStart: null,
     yDragStart: null,
     gestureStart: null,
-
-    // crosshair
     cross: { on:false, x:0, y:0, pos:null, idx:null, price:null },
-
-    // drawings
     tool: "cursor",
     drawings: [],
     pending: null,
-
-    // indicators
     indicators: { vol:true, vwap:true, ma:true },
     indCache: { tfSec:null, len:0, maN:0, vwap:[], ma:[] },
-
-    // ui
     toastUntil: 0
   };
 
@@ -661,7 +614,7 @@
     if (canvas.width !== displayW || canvas.height !== displayH) {
       canvas.width = displayW;
       canvas.height = displayH;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS px
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
   }
   window.addEventListener("resize", resizeCanvasToDisplaySize);
@@ -675,7 +628,6 @@
     toast(`Vol preset: ${p.name}`);
   }
 
-  // ===== Trading engine
   function getBidAsk() {
     const spread = state.spreadTicks * state.tickSize;
     const mid = state.sim.price;
@@ -701,8 +653,6 @@
     else if (Math.sign(oldPos) !== Math.sign(newPos)) state.avg = fillPrice;
 
     state.pos = newPos;
-
-    // order-flow pressure
     state.sim.flow += (side === "buy" ? qty : -qty);
   }
 
@@ -743,6 +693,16 @@
     toast("Flatten done");
   }
 
+  function partialFlatten(percent) {
+    if (state.pos === 0) { toast("Position already flat"); return; }
+    const abs = Math.abs(state.pos);
+    const pct = clamp(percent, 0, 1);
+    const qty = pct >= 1 ? abs : Math.max(1, Math.round(abs * pct));
+    const side = state.pos > 0 ? "sell" : "buy";
+    marketOrder(side, qty, getSlip());
+    toast(`Flatten ${Math.round(pct*100)}% done`);
+  }
+
   function placeLadder(side, start, levels, step, qtyPerLevel) {
     start = roundTo(start, state.tickSize);
     step = roundTo(Math.max(state.tickSize, step), state.tickSize);
@@ -774,7 +734,6 @@
       const crossed = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
       if (!crossed) continue;
 
-      // slightly smarter fill: closer cross => higher prob
       const dist = o.side === "buy" ? (o.price - ask) : (bid - o.price);
       const distTicks = dist / Math.max(1e-9, state.tickSize);
       const boost = clamp(distTicks / 4, 0, 1);
@@ -794,7 +753,6 @@
     if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
   }
 
-  // ===== Bars
   function barKeyForTime(t, tfSec) { return Math.floor(t / tfSec); }
 
   function ensureBarForTick(t, price, vol) {
@@ -817,8 +775,7 @@
     if (state.bars.length > 12000) state.bars.shift();
 
     state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
-
-    state.indCache.len = 0; // invalidate indicators
+    state.indCache.len = 0;
   }
 
   function rebuildBars(tfSec) {
@@ -829,7 +786,6 @@
 
     for (const tk of state.ticks) ensureBarForTick(tk.t, tk.p, tk.v);
 
-    // keep view stable after TF switch: clamp end and optionally follow
     const all = getAllBarsForRender();
     const last = Math.max(0, all.length - 1);
     const maxEnd = last + state.view.futureBars;
@@ -845,7 +801,6 @@
     return arr;
   }
 
-  // ===== View window (NEW)
   function getViewWindow() {
     const all = getAllBarsForRender();
     const n = all.length;
@@ -857,11 +812,10 @@
     let end = state.view.follow ? maxEnd : state.view.end;
     end = clamp(end, Math.max(0, vis - 1), maxEnd);
 
-    const start = end - vis + 1; // float
+    const start = end - vis + 1;
     return { all, n, last, vis, start, end, maxEnd };
   }
 
-  // ===== Price ranges
   function computeAutoPriceRange(vwin) {
     let min = Infinity, max = -Infinity;
 
@@ -900,7 +854,6 @@
     return { min: c - half, max: c + half };
   }
 
-  // ===== Geometry
   function buildGeo(vwin, pr) {
     const rect = canvas.getBoundingClientRect();
     const w = rect.width, h = rect.height;
@@ -963,7 +916,6 @@
   }
 
   function posForIdx(idx, all) {
-    // binary search (bars sorted by idx)
     let lo = 0, hi = all.length - 1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
@@ -975,7 +927,6 @@
     return clamp(lo, 0, Math.max(0, all.length - 1));
   }
 
-  // ===== Indicators
   function computeIndicators(allBars) {
     const tfSec = state.tfSec;
     const len = allBars.length;
@@ -983,7 +934,7 @@
     const wantMa = state.indicators.ma;
     const wantVwap = state.indicators.vwap;
 
-    const maN = Math.max(1, Math.round((20 * 60) / tfSec)); // 20 min
+    const maN = Math.max(1, Math.round((20 * 60) / tfSec));
 
     if (state.indCache.tfSec === tfSec &&
         state.indCache.len === len &&
@@ -1021,7 +972,6 @@
     return state.indCache;
   }
 
-  // ===== Drawings hit-test
   function distPointToSegment(px,py, x1,y1, x2,y2) {
     const dx = x2 - x1, dy = y2 - y1;
     if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
@@ -1070,7 +1020,6 @@
     return -1;
   }
 
-  // ===== Render
   function drawChart() {
     resizeCanvasToDisplaySize();
     const rect = canvas.getBoundingClientRect();
@@ -1087,15 +1036,12 @@
 
     const dec = decimalsFor(state.tickSize);
 
-    // plot background
     ctx.fillStyle = "rgba(5,8,12,0.35)";
     ctx.fillRect(geo.plotX0, geo.priceY0, geo.plotX1-geo.plotX0, geo.priceY1-geo.priceY0);
 
-    // left scale background
     ctx.fillStyle = "rgba(11,15,20,0.55)";
     ctx.fillRect(0, 0, geo.leftPad, h);
 
-    // border line
     ctx.strokeStyle = "rgba(34,48,68,0.9)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1103,7 +1049,6 @@
     ctx.lineTo(geo.leftPad + 0.5, h);
     ctx.stroke();
 
-    // grid + labels
     let step = niceStep(pr.max - pr.min, 8);
     step = Math.max(state.tickSize, roundTo(step, state.tickSize));
     const startP = Math.floor(pr.min / step) * step;
@@ -1126,7 +1071,6 @@
       ctx.fillText(price.toFixed(dec), 8, y);
     }
 
-    // vertical guides
     ctx.strokeStyle = "rgba(34,48,68,0.35)";
     const every = Math.max(8, Math.round(vwin.vis/10));
     for (let i=0; i<=vwin.vis; i+=every) {
@@ -1135,13 +1079,11 @@
       ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
     }
 
-    // bid/ask band
     const { bid, ask } = getBidAsk();
     const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
     ctx.fillStyle = "rgba(159,176,195,0.08)";
     ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
 
-    // candles (only existing bars)
     const i0 = Math.floor(vwin.start);
     const i1 = Math.ceil(vwin.end);
 
@@ -1168,7 +1110,6 @@
       ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
     }
 
-    // indicators
     const allBars = getAllBarsForRender();
     const ind = computeIndicators(allBars);
 
@@ -1192,7 +1133,6 @@
     if (state.indicators.vwap) drawLine(ind.vwap, "rgba(255,207,91,0.85)");
     if (state.indicators.ma)   drawLine(ind.ma,   "rgba(100,181,255,0.85)");
 
-    // volume panel
     if (state.indicators.vol && geo.volPanelH > 0) {
       ctx.fillStyle = "rgba(5,8,12,0.35)";
       ctx.fillRect(geo.plotX0, geo.volY0, geo.plotX1-geo.plotX0, geo.volY1-geo.volY0);
@@ -1221,7 +1161,6 @@
       ctx.stroke();
     }
 
-    // limits
     for (const o of state.limits) {
       const y = geo.yOf(o.price);
       ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
@@ -1235,7 +1174,6 @@
       ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(dec)} (${o.left})`, geo.plotX0 + 10, y - 10);
     }
 
-    // drawings
     for (const d of state.drawings) {
       if (d.type === "hline") {
         const y = geo.yOf(d.p);
@@ -1267,7 +1205,6 @@
       }
     }
 
-    // pending preview
     if (state.pending && state.cross.idx != null && state.cross.price != null) {
       const p = state.pending;
       ctx.save();
@@ -1300,7 +1237,6 @@
       ctx.restore();
     }
 
-    // last price label
     const yLast = geo.yOf(state.sim.price);
     ctx.fillStyle = "rgba(100,181,255,0.20)";
     ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
@@ -1310,7 +1246,6 @@
     ctx.fillStyle = "rgba(211,236,255,0.98)";
     ctx.fillText(state.sim.price.toFixed(dec), 8, yLast);
 
-    // crosshair
     if (state.cross.on && state.cross.price != null) {
       const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
       const y = clamp(state.cross.y, geo.priceY0, geo.priceY1);
@@ -1322,7 +1257,6 @@
       ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
       ctx.setLineDash([]);
 
-      // price label
       ctx.fillStyle = "rgba(159,176,195,0.14)";
       ctx.fillRect(0, y - 12, geo.leftPad, 24);
       ctx.strokeStyle = "rgba(159,176,195,0.55)";
@@ -1397,65 +1331,50 @@
     state.p.simHzBase = lerp(state.p.simHzBase, state.target.simHzBase, t);
   }
 
-  // ===== Simulation (more NQ-like)
   function stepSimulationOnce() {
     smoothParams();
 
     const volKnob = clamp(state.p.vol, 1, 16);
     const impact = clamp(state.p.impact, 0, 20);
 
-    // flow decay
     state.sim.flow *= state.sim.flowDecay;
 
-    // dt (sim time)
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
 
-    // regime change
     if (state.simTime >= state.sim.nextRegimeT) {
-      // drift target in points/sec (small but meaningful)
       state.sim.driftTarget = randn() * (0.18 + 0.06 * (volKnob/10));
-      // sigma target in points/sqrt(sec)
-      const baseSig = 1.4 + 0.55 * volKnob; // knob to sigma
+      const baseSig = 1.4 + 0.55 * volKnob;
       state.sim.sigmaTarget = baseSig * (0.85 + 0.45 * Math.abs(randn()));
       state.sim.nextRegimeT = state.simTime + 18 + Math.random() * 70;
     }
 
-    // drift smooth
     state.sim.drift = lerp(state.sim.drift, state.sim.driftTarget, 0.02);
 
-    // sigma OU mean reversion
     const k = state.sim.meanRev;
     const vv = state.sim.volOfVol;
     const sig = state.sim.sigma;
     const dSig = k * (state.sim.sigmaTarget - sig) * dt + vv * Math.sqrt(dt) * randn();
     state.sim.sigma = clamp(sig + dSig, 0.6, 40);
 
-    // core move: drift*dt + sigma*sqrt(dt)*N
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
 
-    // flow impact (slower & more "pushy")
     dp += (state.sim.flow) * (impact * state.tickSize * 0.020);
 
-    // microstructure smoothing
     state.sim.vel = state.sim.vel * 0.72 + dp * 0.85;
 
-    // rare jumps (news-like)
     const jp = state.sim.jumpProb * (0.55 + 0.06 * volKnob);
     if (Math.random() < jp) {
       const dir = Math.sign(randn()) || 1;
       state.sim.vel += dir * (state.sim.jumpScale * (0.6 + Math.random() * 1.1)) * (0.65 + 0.05 * volKnob);
     }
 
-    // clamp runaway
     const maxVel = (0.9 + 0.12 * volKnob) * (6.5 * state.tickSize);
     state.sim.vel = clamp(state.sim.vel, -maxVel, maxVel);
 
-    // apply
     state.sim.price = roundTo(state.sim.price + state.sim.vel, state.tickSize);
 
-    // synthetic tick volume
     const tickVol =
       1 +
       Math.floor(Math.abs(state.sim.vel) / Math.max(1e-6, state.tickSize * 0.20)) +
@@ -1474,7 +1393,6 @@
     ensureBarForTick(state.simTime, state.sim.price, tickVol);
     matchLimits();
 
-    // if follow: keep end pinned
     if (state.view.follow) {
       const all = getAllBarsForRender();
       const last = Math.max(0, all.length - 1);
@@ -1482,16 +1400,14 @@
     }
   }
 
-  // ===== Interaction helpers
   function disableFollowKeepEnd() {
     if (!state.view.follow) return;
     const v = getViewWindow();
     state.view.follow = false;
     $("follow").checked = false;
-    state.view.end = v.end; // freeze current end
+    state.view.end = v.end;
   }
 
-  // ===== Wheel: X zoom / Y zoom anchored
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     applySettingsFromUI();
@@ -1508,7 +1424,6 @@
 
     const dir = (e.deltaY > 0) ? +1 : -1;
 
-    // Shift+Wheel => Y zoom
     if (e.shiftKey) {
       const anchorPrice = priceFromY(pt.y, viewRange, geo);
       const factor = (dir < 0) ? 0.88 : 1.14;
@@ -1533,7 +1448,6 @@
       return;
     }
 
-    // X zoom
     const factor = (dir < 0) ? 0.85 : 1.18;
     const oldVis = state.view.visibleBars;
     const newVis = clamp(Math.round(oldVis * factor), 20, 700);
@@ -1556,7 +1470,6 @@
 
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // ===== Pointer events (smooth pan + pinch)
   let tapCandidate = null;
 
   canvas.addEventListener("pointerdown", (e) => {
@@ -1638,7 +1551,6 @@
 
     applySettingsFromUI();
 
-    // pinch + two-finger Y pan
     if (state.pointers.size === 2 && state.gestureStart) {
       const pts = [...state.pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -1650,7 +1562,6 @@
       state.view.visibleBars = newVis;
       $("visibleBars").value = String(newVis);
 
-      // keep zoom anchored around midpoint
       const endTarget = state.gestureStart.anchorPos + (1 - state.gestureStart.xFrac) * (newVis - 1);
 
       const all = getAllBarsForRender();
@@ -1658,7 +1569,6 @@
       const maxEnd = last + state.view.futureBars;
       state.view.end = clamp(endTarget, Math.max(0, newVis - 1), maxEnd);
 
-      // two-finger drag => Y pan
       const dy = midY - state.gestureStart.midY;
       if (Math.abs(dy) > 1.5) {
         if (state.y.auto) { state.y.auto = false; $("autoY").checked = false; }
@@ -1668,13 +1578,11 @@
       return;
     }
 
-    // Y pan (shift drag)
     if (state.pointers.size === 1 && state.yDragStart) {
       const dy = e.clientY - state.yDragStart.y;
       state.y.offset = state.yDragStart.offset + (-dy) * state.yDragStart.pricePerPx;
     }
 
-    // X pan (smooth)
     if (state.pointers.size === 1 && state.dragStart) {
       const dx = e.clientX - state.dragStart.x;
       const barsDelta = dx / Math.max(2, state.dragStart.stepPx);
@@ -1688,7 +1596,6 @@
       state.view.end = clamp(endTarget, Math.max(0, state.view.visibleBars - 1), maxEnd);
     }
 
-    // crosshair update (cursor tool only)
     const pt = canvasPointFromClient(e);
     const vwin = getViewWindow();
     if (vwin.n >= 2) {
@@ -1706,7 +1613,7 @@
         state.cross.pos = pos;
         state.cross.idx = idx;
         state.cross.price = price;
-        state.cross.on = (state.tool === "cursor" || state.tool !== "cursor");
+        state.cross.on = true;
       }
     }
   });
@@ -1739,7 +1646,6 @@
       return;
     }
 
-    // drawings
     if (state.tool === "erase") {
       const k = hitTestDrawing(pt, vwin, pr, geo);
       if (k >= 0) state.drawings.splice(k, 1);
@@ -1797,7 +1703,6 @@
     if (state.y.auto) { state.y.scale = 1.0; state.y.offset = 0.0; }
   });
 
-  // ===== UI handlers
   function buyMarket(){ marketOrder("buy", getQty(), getSlip()); }
   function sellMarket(){ marketOrder("sell", getQty(), getSlip()); }
 
@@ -1855,6 +1760,8 @@
 
   $("cancelAll").addEventListener("click", cancelAll);
   $("flatten").addEventListener("click", flatten);
+  $("flatten50").addEventListener("click", () => partialFlatten(0.5));
+  $("flatten25").addEventListener("click", () => partialFlatten(0.25));
 
   $("pause").addEventListener("click", () => {
     state.paused = !state.paused;
@@ -1867,7 +1774,6 @@
     stepSimulationOnce();
   });
 
-  // Speed
   document.querySelectorAll(".speedBtn").forEach(btn => {
     btn.addEventListener("click", () => {
       const v = Number(btn.dataset.speed || "1");
@@ -1877,21 +1783,17 @@
     });
   });
 
-  // Vol preset
   $("volPreset").addEventListener("change", () => setVolPreset($("volPreset").value));
 
-  // TF change
   $("timeframe").addEventListener("change", () => {
     const sec = Math.max(1, Number($("timeframe").value || 5));
     rebuildBars(sec);
   });
 
-  // Indicators toggles
   ["indVol","indVwap","indMa"].forEach(id => {
     $(id).addEventListener("change", () => { applySettingsFromUI(); state.indCache.len = 0; });
   });
 
-  // Drip trading
   function stopDrip() {
     if (state.drip.timer) clearInterval(state.drip.timer);
     state.drip.timer = null;
@@ -1925,7 +1827,6 @@
   $("reset").addEventListener("click", () => {
     stopDrip();
 
-    // reset sim
     state.sim.price = 17000;
     state.sim.drift = 0;
     state.sim.driftTarget = 0;
@@ -1935,27 +1836,22 @@
     state.sim.flow = 0;
     state.sim.vel = 0;
 
-    // reset trading
     state.pos = 0;
     state.avg = null;
     state.limits = [];
     state.nextOrderId = 1;
 
-    // reset drawings
     state.drawings = [];
     state.pending = null;
 
-    // reset view
     $("follow").checked = true;
     state.view.follow = true;
 
-    // reset y
     state.y.auto = true;
     $("autoY").checked = true;
     state.y.scale = 1.0;
     state.y.offset = 0.0;
 
-    // reset history
     state.simTime = 0;
     state.tickCount = 0;
     state.ticks = [];
@@ -1964,7 +1860,6 @@
 
     applySettingsFromUI();
 
-    // warm-up
     const warmSeconds = 14 * 60;
     const baseHz = Math.max(20, state.p.simHzBase);
     const warmTicks = Math.floor(warmSeconds * baseHz);
@@ -1983,7 +1878,6 @@
     toast("Reset complete");
   });
 
-  // Hotkeys
   window.addEventListener("keydown", (e) => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
@@ -2018,13 +1912,11 @@
     if (k === "5") { $("tool").value="erase";  $("tool").dispatchEvent(new Event("change")); return; }
   });
 
-  // Help overlay
   const helpOverlay = $("helpOverlay");
   $("openHelp").addEventListener("click", () => helpOverlay.classList.add("open"));
   $("closeHelp").addEventListener("click", () => helpOverlay.classList.remove("open"));
   helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove("open"); });
 
-  // init
   function init() {
     $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
@@ -2035,7 +1927,6 @@
     applySettingsFromUI();
     resizeCanvasToDisplaySize();
 
-    // warm-up history
     const warmSeconds = 14 * 60;
     const baseHz = Math.max(20, state.p.simHzBase);
     const warmTicks = Math.floor(warmSeconds * baseHz);
@@ -2062,7 +1953,6 @@
 
     applySettingsFromUI();
 
-    // ticks per real second
     const ticksPerRealSec = Math.max(10, state.p.simHzBase * state.speedMul);
     const stepReal = 1 / ticksPerRealSec;
 
@@ -2074,7 +1964,6 @@
         acc -= stepReal;
       }
     } else {
-      // when paused, keep follow end consistent
       if (state.view.follow) {
         const all = getAllBarsForRender();
         state.view.end = Math.max(0, all.length - 1) + state.view.futureBars;
