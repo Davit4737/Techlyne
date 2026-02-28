@@ -1,1461 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Market Sandbox — TV-like Chart</title>
+
+<style>
+:root{
+  --bg:#0b0f14;
+  --text:#e7eef7;
+  --muted:#9fb0c3;
+  --line:#223044;
+}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui;
+}
+header{
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+}
+main{
+  padding:10px;
+}
+canvas{
+  width:100%;
+  height:650px;
+  background:#06090d;
+  border:1px solid var(--line);
+  border-radius:10px;
+  touch-action:none;
+}
+button{
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:#111821;
+  color:white;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  Market Sandbox — New Engine
+</header>
+
+<main>
+  <canvas id="chart"></canvas>
+</main>
+
 <script>
 (() => {
-  const $ = (id) => document.getElementById(id);
-  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  const roundTo = (x, step) => Math.round(x / step) * step;
-  const lerp = (a,b,t) => a + (b-a)*t;
 
-  // Box-Muller normal
-  function randn() {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  const r = canvas.getBoundingClientRect();
+  canvas.width = r.width;
+  canvas.height = r.height;
+}
+window.addEventListener("resize",resize);
+resize();
+
+function randn(){
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+let price = 17000;
+let fair = 17000;
+let vol = 2;
+let drift = 0;
+let t=0;
+
+let candles=[];
+let cur=null;
+let tf=1;
+let simTime=0;
+
+function newCandle(p){
+  cur={o:p,h:p,l:p,c:p};
+}
+newCandle(price);
+
+function step(){
+  t+=0.01;
+  simTime+=0.01;
+
+  if(Math.random()<0.002){
+    drift = randn()*0.3;
   }
 
-  const VOL_PRESETS = {
-    nyopen:    { name:"NY Open Vol", vol: 11.5 },
-    nykz:      { name:"NY Killzone", vol:  9.2 },
-    london:    { name:"London",      vol:  6.2 },
-    premarket: { name:"Premarket",   vol:  4.6 },
-    asia:      { name:"Asia",        vol:  3.4 },
-  };
-
-  const canvas = $("chart");
-  const ctx = canvas.getContext("2d", { alpha:true });
-
-  const state = {
-    symbol: "NQ (sim)",
-    tickSize: 0.25,
-    spreadTicks: 1,
-
-    // smoothed params
-    p:      { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
-    target: { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
-    volPresetKey: "nykz",
-
-    speedMul: 1,
-    paused: false,
-
-    // market model (NQ-ish)
-    price: 17000,
-    flow: 0,
-    flowDecay: 0.94,
-
-    model: {
-      // variance in (points^2 / second)
-      v: 2.2,           // стартовая дисперсия (подстроится)
-      fair: 17000,      // fair value (плывёт)
-      drift: 0,         // локальный дрейф
-      driftT: 0,        // когда менять дрейф
-      jumpI: 0,         // jump intensity
-      jumpT: 0          // когда менять jump режим
-    },
-
-    // time / history
-    simTime: 0,
-    ticks: [],           // {t, p, v}
-    maxTicks: 240000,
-
-    tfSec: 5,
-    bars: [],
-    curBar: null,
-
-    // trading
-    pos: 0,
-    avg: null,
-    nextOrderId: 1,
-    limits: [],
-
-    // drip
-    drip: { on:false, side:"buy", timer:null },
-
-    // ===== VIEWPORT (НОВАЯ СИСТЕМА) =====
-    // visibleBars = сколько "позиций" на экране (включая пустое будущее справа)
-    visibleBars: 160,
-    futureBars: 40,
-
-    // xOffset = сколько баров мы "отодвинулись" влево от правого края (плавающее, без дерганья)
-    xOffset: 0,
-
-    follow: true,
-
-    // Y
-    autoY: true,
-    yScale: 1.0,
-    yOffset: 0.0,
-
-    // pointers
-    pointers: new Map(),
-    panStart: null,
-    pinchStart: null,
-    yPanStart: null,
-
-    // crosshair
-    cross: { on:false, x:0, y:0, idx:null, price:null },
-
-    // drawings
-    tool: "cursor",
-    drawings: [],
-    pending: null,
-
-    // indicators toggles
-    indicators: { vol:true, vwap:true, ma:true },
-    indCache: { tfSec:null, len:0, maN:0, vwap:[], ma:[] },
-
-    // ui
-    toastUntil: 0
-  };
-
-  $("sym").textContent = state.symbol;
-
-  function toast(msg) {
-    $("toast").textContent = msg;
-    state.toastUntil = performance.now() + 1800;
+  if(Math.random()<0.001){
+    vol = 1+Math.random()*5;
   }
 
-  function niceStep(range, targetTicks=8) {
-    const raw = range / targetTicks;
-    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-    const frac = raw / pow;
-    let niceFrac;
-    if (frac <= 1) niceFrac = 1;
-    else if (frac <= 2) niceFrac = 2;
-    else if (frac <= 5) niceFrac = 5;
-    else niceFrac = 10;
-    return niceFrac * pow;
+  fair += drift*0.1;
+  const move = randn()*vol*0.5 + (fair-price)*0.02;
+  price += move;
+
+  cur.h=Math.max(cur.h,price);
+  cur.l=Math.min(cur.l,price);
+  cur.c=price;
+
+  if(simTime>tf){
+    candles.push(cur);
+    if(candles.length>300)candles.shift();
+    newCandle(price);
+    simTime=0;
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(candles.length<2)return;
+
+  let min=Infinity,max=-Infinity;
+  for(let c of candles){
+    min=Math.min(min,c.l);
+    max=Math.max(max,c.h);
   }
 
-  function resizeCanvasToDisplaySize() {
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const displayW = Math.round(rect.width * dpr);
-    const displayH = Math.round(rect.height * dpr);
-    if (canvas.width !== displayW || canvas.height !== displayH) {
-      canvas.width = displayW;
-      canvas.height = displayH;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-  }
-  window.addEventListener("resize", resizeCanvasToDisplaySize);
-
-  function setVolPreset(key) {
-    const p = VOL_PRESETS[key] || VOL_PRESETS.nykz;
-    state.volPresetKey = key;
-    $("hdrVol").textContent = p.name;
-    $("volValue").value = String(p.vol);
-    state.target.vol = p.vol;
-    toast(`Vol preset: ${p.name}`);
-  }
-
-  function getBidAsk() {
-    const spread = state.spreadTicks * state.tickSize;
-    const mid = state.price;
-    return { bid: mid - spread/2, ask: mid + spread/2 };
-  }
-
-  function computeUPnL() {
-    if (!state.pos || state.avg == null) return null;
-    return (state.price - state.avg) * state.pos;
-  }
-
-  function applyFill(side, qty, fillPrice) {
-    const oldPos = state.pos;
-    const newPos = oldPos + (side === "buy" ? qty : -qty);
-
-    if (oldPos === 0) state.avg = fillPrice;
-    else if (Math.sign(oldPos) === Math.sign(newPos) && newPos !== 0) {
-      const oldAbs = Math.abs(oldPos);
-      const newAbs = Math.abs(newPos);
-      const addQty = newAbs - oldAbs;
-      if (addQty > 0) state.avg = (state.avg * oldAbs + fillPrice * addQty) / newAbs;
-    } else if (newPos === 0) state.avg = null;
-    else if (Math.sign(oldPos) !== Math.sign(newPos)) state.avg = fillPrice;
-
-    state.pos = newPos;
-    state.flow += (side === "buy" ? qty : -qty);
-  }
-
-  function marketOrder(side, qty, slipTicks) {
-    const { bid, ask } = getBidAsk();
-    const slip = slipTicks * state.tickSize;
-    const fill = side === "buy" ? (ask + slip) : (bid - slip);
-    applyFill(side, qty, fill);
-    toast(`${side.toUpperCase()} MKT filled`);
-  }
-
-  function placeLimit(side, price, qty) {
-    price = roundTo(price, state.tickSize);
-    const id = state.nextOrderId++;
-    state.limits.push({ id, side, price, qty, left: qty, createdAt: state.simTime });
-    toast(`Limit placed (#${id})`);
-  }
-
-  function cancelOrder(id) {
-    const idx = state.limits.findIndex(o => o.id === id);
-    if (idx >= 0) {
-      state.limits.splice(idx, 1);
-      toast(`Limit cancelled (#${id})`);
-    }
-  }
-
-  function cancelAll() {
-    const n = state.limits.length;
-    state.limits = [];
-    toast(`Cancelled ${n} orders`);
-  }
-
-  function flatten() {
-    if (state.pos === 0) { toast("Position already flat"); return; }
-    const qty = Math.abs(state.pos);
-    const side = state.pos > 0 ? "sell" : "buy";
-    marketOrder(side, qty, getSlip());
-    toast("Flatten done");
-  }
-
-  function placeLadder(side, start, levels, step, qtyPerLevel) {
-    start = roundTo(start, state.tickSize);
-    step = roundTo(Math.max(state.tickSize, step), state.tickSize);
-    for (let i = 0; i < levels; i++) {
-      const p = side === "buy" ? start - i * step : start + i * step;
-      placeLimit(side, p, qtyPerLevel);
-    }
-  }
-
-  function cancelNearestLimitByPrice(price) {
-    if (!state.limits.length) return false;
-    let best = null;
-    for (const o of state.limits) {
-      const d = Math.abs(o.price - price);
-      if (!best || d < best.d) best = { d, id: o.id };
-    }
-    const maxDelta = state.tickSize * 6;
-    if (best && best.d <= maxDelta) { cancelOrder(best.id); return true; }
-    return false;
-  }
-
-  function matchLimits() {
-    const { bid, ask } = getBidAsk();
-    const filledIds = [];
-
-    for (const o of state.limits) {
-      if (o.left <= 0) { filledIds.push(o.id); continue; }
-
-      const crossed = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
-      if (!crossed) continue;
-
-      const prob = clamp(state.p.fillProb, 0.5, 0.99);
-      if (Math.random() > prob) continue;
-
-      const chunk = Math.max(1, Math.floor(Math.max(1, o.qty) * (0.45 + 0.35 * prob)));
-      const fillQty = Math.min(o.left, chunk);
-
-      o.left -= fillQty;
-      applyFill(o.side, fillQty, o.price);
-
-      if (o.left <= 0) filledIds.push(o.id);
-    }
-
-    if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
-  }
-
-  // ===== Bars
-  function barKeyForTime(t, tfSec) { return Math.floor(t / tfSec); }
-
-  function onBarClosed() {
-    // КЛЮЧ: если follow выключен — окно НЕ должно "уплывать" при приходе новых баров.
-    // Поэтому компенсируем движение правого края:
-    if (!state.follow) state.xOffset += 1;
-    state.indCache.len = 0;
-  }
-
-  function ensureBarForTick(t, price, vol) {
-    const key = barKeyForTime(t, state.tfSec);
-
-    if (!state.curBar) {
-      state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
-      return;
-    }
-
-    if (key === state.curBar.key) {
-      state.curBar.h = Math.max(state.curBar.h, price);
-      state.curBar.l = Math.min(state.curBar.l, price);
-      state.curBar.c = price;
-      state.curBar.v += vol;
-      return;
-    }
-
-    state.bars.push(state.curBar);
-    if (state.bars.length > 12000) state.bars.shift();
-
-    onBarClosed();
-
-    state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
-  }
-
-  function rebuildBars(tfSec) {
-    state.tfSec = tfSec;
-    state.bars = [];
-    state.curBar = null;
-    state.indCache = { tfSec:null, len:0, maN:0, vwap:[], ma:[] };
-
-    for (const tk of state.ticks) ensureBarForTick(tk.t, tk.p, tk.v);
-
-    toast(`Timeframe: ${tfSec >= 60 ? (tfSec/60 + "m") : (tfSec + "s")}`);
-  }
-
-  function getAllBarsForRender() {
-    const arr = state.bars.slice();
-    if (state.curBar) arr.push(state.curBar);
-    return arr;
-  }
-
-  // ===== Viewport (новая система)
-  function clampXOffset() {
-    const all = getAllBarsForRender();
-    const n = all.length;
-    const lastPos = Math.max(0, n - 1);
-    const rightEdge = lastPos + state.futureBars;         // виртуальный правый край
-    const maxOffset = Math.max(0, rightEdge - (state.visibleBars - 1));
-    state.xOffset = clamp(state.xOffset, 0, maxOffset);
-  }
-
-  function getWindow() {
-    const all = getAllBarsForRender();
-    const n = all.length;
-    const vis = clamp(state.visibleBars, 20, 700);
-
-    const lastPos = Math.max(0, n - 1);
-    const rightEdge = lastPos + state.futureBars;
-    const endPos = rightEdge - state.xOffset;            // float
-    const startPos = endPos - vis + 1;
-
-    return { all, n, vis, lastPos, rightEdge, startPos, endPos };
-  }
-
-  function computeAutoPriceRange(win) {
-    let min = Infinity, max = -Infinity;
-    const s = Math.floor(win.startPos);
-    const e = Math.ceil(win.endPos);
-
-    for (let pos = s; pos <= e; pos++) {
-      if (pos < 0 || pos >= win.n) continue;
-      const b = win.all[pos];
-      min = Math.min(min, b.l);
-      max = Math.max(max, b.h);
-    }
-    for (const o of state.limits) { min = Math.min(min, o.price); max = Math.max(max, o.price); }
-
-    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
-      min = state.price - 50 * state.tickSize;
-      max = state.price + 50 * state.tickSize;
-    }
-
-    const pad = (max - min) * 0.12 + state.tickSize * 18;
-    return { min: min - pad, max: max + pad };
-  }
-
-  function computeViewPriceRange(autoRange) {
-    if (state.autoY) return autoRange;
-
-    const c = (autoRange.min + autoRange.max) / 2 + state.yOffset;
-    const half = ((autoRange.max - autoRange.min) / 2) * clamp(state.yScale, 0.20, 12.0);
-    return { min: c - half, max: c + half };
-  }
-
-  function buildGeo(win, pr) {
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-
-    const leftPad = 74;
-    const rightPad = 14;
-    const topPad = 10;
-    const bottomPad = 26;
-
-    const volPanelH = state.indicators.vol ? Math.max(78, Math.floor((h - topPad - bottomPad) * 0.22)) : 0;
-    const volGap = volPanelH ? 8 : 0;
-
-    const plotX0 = leftPad;
-    const plotX1 = w - rightPad;
-
-    const priceY0 = topPad;
-    const priceY1 = h - bottomPad - volPanelH - volGap;
-
-    const volY0 = priceY1 + volGap;
-    const volY1 = h - bottomPad;
-
-    const plotW = Math.max(10, plotX1 - plotX0);
-    const step = plotW / Math.max(1, win.vis - 1);
-
-    const candleW = clamp(step * 0.62, 3, Math.max(3, step - 1));
-
-    const yOf = (p) => {
-      const yy = priceY1 - ((p - pr.min) / (pr.max - pr.min)) * (priceY1 - priceY0);
-      return clamp(yy, priceY0, priceY1);
-    };
-
-    const posOfX = (x) => (win.startPos + (x - plotX0) / Math.max(1e-6, step));
-    const xCenterOfPos = (pos) => plotX0 + (pos - win.startPos) * step;
-
-    const pricePerPx = (pr.max - pr.min) / Math.max(10, (priceY1 - priceY0));
-
-    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,priceY0,priceY1,volY0,volY1,volPanelH,step,candleW,yOf,posOfX,xCenterOfPos,pricePerPx };
-  }
-
-  function canvasPointFromClient(e) {
-    const r = canvas.getBoundingClientRect();
-    return { x: (e.clientX - r.left), y: (e.clientY - r.top) };
-  }
-
-  function priceFromY(y, pr, geo) {
-    const t = (geo.priceY1 - y) / (geo.priceY1 - geo.priceY0);
-    const p = pr.min + t * (pr.max - pr.min);
-    return roundTo(p, state.tickSize);
-  }
-
-  function idxFromX(x, win, geo) {
-    const pos = geo.posOfX(x);
-    const i = Math.round(pos);
-    if (win.n <= 0) return null;
-    const firstIdx = win.all[0]?.idx ?? 0;
-    return firstIdx + i; // idx может быть и в "будущем"
-  }
-
-  function posFromIdx(idx, win) {
-    const firstIdx = win.all[0]?.idx ?? 0;
-    return idx - firstIdx; // может быть вне диапазона -> это ок для будущего
-  }
-
-  function distPointToSegment(px,py, x1,y1, x2,y2) {
-    const dx = x2 - x1, dy = y2 - y1;
-    if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
-    const t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy);
-    const tt = clamp(t, 0, 1);
-    const cx = x1 + tt*dx, cy = y1 + tt*dy;
-    return Math.hypot(px-cx, py-cy);
-  }
-
-  function hitTestDrawing(pt, win, pr, geo) {
-    const px = pt.x, py = pt.y;
-    for (let k = state.drawings.length - 1; k >= 0; k--) {
-      const d = state.drawings[k];
-      if (d.type === "hline") {
-        const y = geo.yOf(d.p);
-        if (Math.abs(py - y) <= 6 && px >= geo.plotX0 && px <= geo.plotX1) return k;
-      }
-      if (d.type === "trend") {
-        const x1 = geo.xCenterOfPos(posFromIdx(d.x1, win));
-        const y1 = geo.yOf(d.y1);
-        const x2 = geo.xCenterOfPos(posFromIdx(d.x2, win));
-        const y2 = geo.yOf(d.y2);
-        if (distPointToSegment(px,py,x1,y1,x2,y2) <= 7) return k;
-      }
-      if (d.type === "rect") {
-        const x1 = geo.xCenterOfPos(posFromIdx(d.x1, win));
-        const x2 = geo.xCenterOfPos(posFromIdx(d.x2, win));
-        const y1 = geo.yOf(d.y1);
-        const y2 = geo.yOf(d.y2);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
-        const onEdge = (
-          (Math.abs(px-l)<=6 && py>=t && py<=b) ||
-          (Math.abs(px-r)<=6 && py>=t && py<=b) ||
-          (Math.abs(py-t)<=6 && px>=l && px<=r) ||
-          (Math.abs(py-b)<=6 && px>=l && px<=r)
-        );
-        if (onEdge) return k;
-      }
-    }
-    return -1;
-  }
-
-  function computeIndicators(allBars) {
-    const tfSec = state.tfSec;
-    const len = allBars.length;
-
-    const wantMa = state.indicators.ma;
-    const wantVwap = state.indicators.vwap;
-
-    const maN = Math.max(1, Math.round((20 * 60) / tfSec)); // 20 minutes
-
-    if (state.indCache.tfSec === tfSec &&
-        state.indCache.len === len &&
-        state.indCache.maN === maN &&
-        state.indCache.vwap.length === len &&
-        state.indCache.ma.length === len) {
-      return state.indCache;
-    }
-
-    const vwap = new Array(len).fill(null);
-    const ma = new Array(len).fill(null);
-
-    if (wantVwap) {
-      let cumPV = 0, cumV = 0;
-      for (let i=0;i<len;i++) {
-        const b = allBars[i];
-        const v = Math.max(1, b.v || 1);
-        const tp = (b.h + b.l + b.c) / 3;
-        cumPV += tp * v;
-        cumV += v;
-        vwap[i] = cumPV / Math.max(1, cumV);
-      }
-    }
-
-    if (wantMa) {
-      let sum = 0;
-      for (let i=0;i<len;i++) {
-        sum += allBars[i].c;
-        if (i >= maN) sum -= allBars[i - maN].c;
-        if (i >= maN - 1) ma[i] = sum / maN;
-      }
-    }
-
-    state.indCache = { tfSec, len, maN, vwap, ma };
-    return state.indCache;
-  }
-
-  function drawChart() {
-    resizeCanvasToDisplaySize();
-
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    ctx.clearRect(0,0,w,h);
-
-    const win = getWindow();
-    if (win.n < 2) return;
-
-    const autoRange = computeAutoPriceRange(win);
-    const pr = computeViewPriceRange(autoRange);
-    const geo = buildGeo(win, pr);
-
-    ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-    ctx.textBaseline = "middle";
-
-    // plot background
-    ctx.fillStyle = "rgba(5,8,12,0.35)";
-    ctx.fillRect(geo.plotX0, geo.priceY0, geo.plotX1-geo.plotX0, geo.priceY1-geo.priceY0);
-
-    // left scale background
-    ctx.fillStyle = "rgba(11,15,20,0.55)";
-    ctx.fillRect(0, 0, geo.leftPad, h);
-
-    // border
-    ctx.strokeStyle = "rgba(34,48,68,0.9)";
-    ctx.lineWidth = 1;
+  const pad=(max-min)*0.1;
+  min-=pad;
+  max+=pad;
+
+  const w=canvas.width;
+  const h=canvas.height;
+
+  const cw=w/candles.length;
+
+  candles.forEach((c,i)=>{
+    const x=i*cw;
+    const yO=h-(c.o-min)/(max-min)*h;
+    const yC=h-(c.c-min)/(max-min)*h;
+    const yH=h-(c.h-min)/(max-min)*h;
+    const yL=h-(c.l-min)/(max-min)*h;
+
+    ctx.strokeStyle=c.c>=c.o?"#3ddc97":"#ff5b6e";
     ctx.beginPath();
-    ctx.moveTo(geo.leftPad + 0.5, 0);
-    ctx.lineTo(geo.leftPad + 0.5, h);
+    ctx.moveTo(x+cw/2,yH);
+    ctx.lineTo(x+cw/2,yL);
     ctx.stroke();
 
-    // grid + price labels
-    let stepP = niceStep(pr.max - pr.min, 8);
-    stepP = Math.max(state.tickSize, roundTo(stepP, state.tickSize));
-    const startP = Math.floor(pr.min / stepP) * stepP;
-
-    for (let p = startP; p <= pr.max + stepP; p += stepP) {
-      const price = roundTo(p, state.tickSize);
-      const y = geo.yOf(price);
-
-      ctx.strokeStyle = "rgba(34,48,68,0.45)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(geo.plotX0, y);
-      ctx.lineTo(geo.plotX1, y);
-      ctx.stroke();
-
-      ctx.fillStyle = "rgba(159,176,195,0.95)";
-      ctx.fillText(price.toFixed(2), 8, y);
-    }
-
-    // vertical guides (каждые ~10% окна)
-    ctx.strokeStyle = "rgba(34,48,68,0.35)";
-    const every = Math.max(8, Math.round(win.vis/10));
-    for (let i=0; i<win.vis; i+= every) {
-      const pos = Math.round(win.startPos + i);
-      const x = geo.xCenterOfPos(pos);
-      ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
-    }
-
-    // bid/ask band
-    const {bid, ask} = getBidAsk();
-    const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
-    ctx.fillStyle = "rgba(159,176,195,0.08)";
-    ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
-
-    const sPos = Math.floor(win.startPos);
-    const ePos = Math.ceil(win.endPos);
-
-    // candles
-    for (let pos = sPos; pos <= ePos; pos++) {
-      if (pos < 0 || pos >= win.n) continue;
-      const b = win.all[pos];
-
-      const xC = geo.xCenterOfPos(pos);
-      const x = xC - geo.candleW/2;
-
-      const yO = geo.yOf(b.o), yH = geo.yOf(b.h), yL = geo.yOf(b.l), yC = geo.yOf(b.c);
-      const up = b.c >= b.o;
-
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(xC, yH);
-      ctx.lineTo(xC, yL);
-      ctx.stroke();
-
-      const bodyTop = Math.min(yO, yC);
-      const bodyH = Math.max(2, Math.abs(yC - yO));
-
-      ctx.fillStyle = up ? "rgba(61,220,151,0.30)" : "rgba(255,91,110,0.28)";
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
-      ctx.lineWidth = 1.5;
-      ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
-      ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
-    }
-
-    // indicators
-    const allBars = getAllBarsForRender();
-    const ind = computeIndicators(allBars);
-
-    function drawLine(series, color) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      let started = false;
-      for (let pos = sPos; pos <= ePos; pos++) {
-        if (pos < 0 || pos >= win.n) continue;
-        const val = series[pos];
-        if (val == null) continue;
-        const x = geo.xCenterOfPos(pos);
-        const y = geo.yOf(val);
-        if (!started) { ctx.moveTo(x,y); started = true; }
-        else ctx.lineTo(x,y);
-      }
-      if (started) ctx.stroke();
-    }
-
-    if (state.indicators.vwap) drawLine(ind.vwap, "rgba(255,207,91,0.85)");
-    if (state.indicators.ma)   drawLine(ind.ma,   "rgba(100,181,255,0.85)");
-
-    // volume panel
-    if (state.indicators.vol && geo.volPanelH > 0) {
-      ctx.fillStyle = "rgba(5,8,12,0.35)";
-      ctx.fillRect(geo.plotX0, geo.volY0, geo.plotX1-geo.plotX0, geo.volY1-geo.volY0);
-
-      let maxV = 1;
-      for (let pos = sPos; pos <= ePos; pos++) {
-        if (pos < 0 || pos >= win.n) continue;
-        maxV = Math.max(maxV, win.all[pos].v || 1);
-      }
-
-      for (let pos = sPos; pos <= ePos; pos++) {
-        if (pos < 0 || pos >= win.n) continue;
-        const b = win.all[pos];
-        const up = b.c >= b.o;
-
-        const xC = geo.xCenterOfPos(pos);
-        const x = xC - geo.candleW/2;
-
-        const vh = ((b.v || 1) / maxV) * (geo.volY1 - geo.volY0 - 6);
-        const y = geo.volY1 - vh;
-
-        ctx.fillStyle = up ? "rgba(61,220,151,0.22)" : "rgba(255,91,110,0.20)";
-        ctx.fillRect(x, y, geo.candleW, vh);
-      }
-
-      ctx.strokeStyle = "rgba(34,48,68,0.6)";
-      ctx.beginPath();
-      ctx.moveTo(geo.plotX0, geo.volY0 + 0.5);
-      ctx.lineTo(geo.plotX1, geo.volY0 + 0.5);
-      ctx.stroke();
-    }
-
-    // limits
-    for (const o of state.limits) {
-      const y = geo.yOf(o.price);
-      ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(geo.plotX0, y);
-      ctx.lineTo(geo.plotX1, y);
-      ctx.stroke();
-
-      ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
-      ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(2)} (${o.left})`, geo.plotX0 + 10, y - 10);
-    }
-
-    // drawings
-    for (const d of state.drawings) {
-      if (d.type === "hline") {
-        const y = geo.yOf(d.p);
-        ctx.strokeStyle = "rgba(255,207,91,0.70)";
-        ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-      }
-      if (d.type === "trend") {
-        const x1 = geo.xCenterOfPos(posFromIdx(d.x1, win));
-        const y1 = geo.yOf(d.y1);
-        const x2 = geo.xCenterOfPos(posFromIdx(d.x2, win));
-        const y2 = geo.yOf(d.y2);
-        ctx.strokeStyle = "rgba(100,181,255,0.85)";
-        ctx.lineWidth = 2.0;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      }
-      if (d.type === "rect") {
-        const x1 = geo.xCenterOfPos(posFromIdx(d.x1, win));
-        const x2 = geo.xCenterOfPos(posFromIdx(d.x2, win));
-        const y1 = geo.yOf(d.y1);
-        const y2 = geo.yOf(d.y2);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
-        ctx.fillStyle = "rgba(100,181,255,0.10)";
-        ctx.strokeStyle = "rgba(100,181,255,0.70)";
-        ctx.lineWidth = 1.8;
-        ctx.fillRect(l,t,r-l,b-t);
-        ctx.strokeRect(l,t,r-l,b-t);
-      }
-    }
-
-    // pending preview
-    if (state.pending && state.cross.idx != null && state.cross.price != null) {
-      const p = state.pending;
-      ctx.save();
-      ctx.globalAlpha = 0.9;
-      if (p.type === "trend") {
-        const x1 = geo.xCenterOfPos(posFromIdx(p.x1, win));
-        const y1 = geo.yOf(p.y1);
-        const x2 = geo.xCenterOfPos(posFromIdx(state.cross.idx, win));
-        const y2 = geo.yOf(state.cross.price);
-        ctx.strokeStyle = "rgba(100,181,255,0.65)";
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      }
-      if (p.type === "rect") {
-        const x1 = geo.xCenterOfPos(posFromIdx(p.x1, win));
-        const y1 = geo.yOf(p.y1);
-        const x2 = geo.xCenterOfPos(posFromIdx(state.cross.idx, win));
-        const y2 = geo.yOf(state.cross.price);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
-        ctx.fillStyle = "rgba(100,181,255,0.08)";
-        ctx.strokeStyle = "rgba(100,181,255,0.55)";
-        ctx.lineWidth = 1.5;
-        ctx.fillRect(l,t,r-l,b-t);
-        ctx.strokeRect(l,t,r-l,b-t);
-      }
-      ctx.restore();
-    }
-
-    // last price label
-    const yLast = geo.yOf(state.price);
-    ctx.fillStyle = "rgba(100,181,255,0.20)";
-    ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
-    ctx.strokeStyle = "rgba(100,181,255,0.70)";
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad-1, 23);
-    ctx.fillStyle = "rgba(211,236,255,0.98)";
-    ctx.fillText(state.price.toFixed(2), 8, yLast);
-
-    // crosshair
-    if (state.cross.on && state.cross.idx != null && state.cross.price != null) {
-      const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
-      const y = clamp(state.cross.y, geo.priceY0, geo.priceY1);
-
-      ctx.strokeStyle = "rgba(159,176,195,0.55)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = "rgba(159,176,195,0.14)";
-      ctx.fillRect(0, y - 12, geo.leftPad, 24);
-      ctx.strokeStyle = "rgba(159,176,195,0.55)";
-      ctx.strokeRect(0.5, y - 11.5, geo.leftPad-1, 23);
-      ctx.fillStyle = "rgba(231,238,247,0.98)";
-      ctx.fillText(state.cross.price.toFixed(2), 8, y);
-    }
-
-    $("stWin").textContent = `start ${win.startPos.toFixed(1)} → end ${win.endPos.toFixed(1)} | xOffset ${state.xOffset.toFixed(2)}`;
-  }
-
-  function renderStats() {
-    const { bid, ask } = getBidAsk();
-    const upnl = computeUPnL();
-
-    $("hdrPrice").textContent = state.price.toFixed(2);
-    $("hdrPos").textContent = String(state.pos);
-    $("hdrPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
-    $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
-    $("hdrVol").textContent = (VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz).name;
-
-    $("stLast").textContent = state.price.toFixed(2);
-    $("stBA").textContent = `${bid.toFixed(2)} / ${ask.toFixed(2)}`;
-    $("stPos").textContent = String(state.pos);
-    $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(2);
-    $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
-
-    if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
-  }
-
-  function getQty() {
-    const q = Number($("qty").value || 1);
-    return Math.max(1, Math.floor(q));
-  }
-  function setQty(v) {
-    $("qty").value = String(Math.max(1, Math.floor(v)));
-  }
-  function getSlip() {
-    const s = Number($("slip").value || 0);
-    return Math.max(0, Math.floor(s));
-  }
-
-  function applySettingsFromUI() {
-    state.tickSize = Number($("tick").value) || 0.25;
-    state.spreadTicks = Math.max(0, Number($("spread").value || 1));
-
-    state.visibleBars = clamp(Number($("visibleBars").value || 160), 20, 700);
-    state.futureBars  = clamp(Number($("futureBars").value || 40), 0, 300);
-
-    state.follow = $("follow").checked;
-    state.autoY  = $("autoY").checked;
-
-    state.target.simHzBase = clamp(Number($("simHzBase").value || 75), 20, 200);
-    state.target.impact    = clamp(Number($("impact").value || 10), 0, 20);
-
-    const volManual = clamp(Number($("volValue").value || state.target.vol), 1, 16);
-    state.target.vol = volManual;
-
-    state.indicators.vol  = $("indVol").checked;
-    state.indicators.vwap = $("indVwap").checked;
-    state.indicators.ma   = $("indMa").checked;
-
-    state.tool = $("tool").value;
-  }
-
-  function smoothParams() {
-    const t = 0.03;
-    state.p.vol = lerp(state.p.vol, state.target.vol, t);
-    state.p.impact = lerp(state.p.impact, state.target.impact, t);
-    state.p.simHzBase = lerp(state.p.simHzBase, state.target.simHzBase, t);
-  }
-
-  // ===== NQ-like engine: stochastic volatility + regimes + jumps (все в points)
-  function stepSimulationOnce() {
-    smoothParams();
-    state.flow *= state.flowDecay;
-
-    const vol = clamp(state.p.vol, 1.0, 16.0);
-    const imp = clamp(state.p.impact, 0, 20);
-
-    const hz = Math.max(20, state.p.simHzBase);
-    const dt = 1 / hz;
-    state.simTime += dt;
-
-    // sigmaBase в points/√sec (калибровка под NQ движения)
-    const sigmaBase = vol * state.tickSize * 0.90;
-
-    // обновляем режимы редко
-    if (state.simTime >= state.model.driftT) {
-      // дрейф в points/sec (малый)
-      state.model.drift = randn() * (sigmaBase * 0.03);
-      state.model.driftT = state.simTime + 8 + Math.random() * 40;
-    }
-    if (state.simTime >= state.model.jumpT) {
-      // интенсивность джампов (события)
-      state.model.jumpI = clamp(0.02 + Math.random() * 0.08 * (vol/10), 0.01, 0.12); // jumps/sec
-      state.model.jumpT = state.simTime + 18 + Math.random() * 75;
-    }
-
-    // OU drift of fair value
-    state.model.fair += state.model.drift * dt + randn() * sigmaBase * 0.05 * Math.sqrt(dt);
-
-    // stochastic variance (CIR-ish)
-    const kappa = 1.2; // mean reversion speed
-    const theta = sigmaBase * sigmaBase; // long-run var (points^2/sec)
-    const xi = (sigmaBase * 0.75);       // vol of vol
-
-    const v0 = Math.max(1e-6, state.model.v);
-    const dv = kappa * (theta - v0) * dt + xi * Math.sqrt(v0) * Math.sqrt(dt) * randn();
-    state.model.v = Math.max(1e-6, v0 + dv);
-
-    const sigma = Math.sqrt(state.model.v); // points/√sec
-
-    // micro pull to fair
-    const pull = (state.model.fair - state.price) * (0.18) * dt;
-
-    // order-flow pressure
-    const pressure = (state.flow) * (imp * state.tickSize * 0.040);
-
-    // jumps
-    let jump = 0;
-    if (Math.random() < state.model.jumpI * dt) {
-      // новостной тычок: несколько сигм
-      jump = randn() * sigma * (2.5 + Math.random() * 3.0);
-    }
-
-    const dP = sigma * Math.sqrt(dt) * randn() + pull + pressure + jump;
-
-    // обновляем цену
-    state.price = roundTo(state.price + dP, state.tickSize);
-
-    // synthetic tick volume (реалистичнее: зависит от |движения| и flow)
-    const moveTicks = Math.abs(dP) / Math.max(1e-6, state.tickSize);
-    const baseV = 1 + Math.floor(Math.random()*2);
-    const volKick = Math.floor(moveTicks * (1.0 + Math.random()*0.8));
-    const flowKick = Math.floor(Math.abs(state.flow) * 0.25);
-    const tickVol = baseV + volKick + flowKick;
-
-    state.ticks.push({ t: state.simTime, p: state.price, v: tickVol });
-
-    if (state.ticks.length > state.maxTicks) {
-      state.ticks.splice(0, 40000);
-      rebuildBars(state.tfSec);
-      toast("History trimmed");
-    }
-
-    ensureBarForTick(state.simTime, state.price, tickVol);
-    matchLimits();
-  }
-
-  // ===== Wheel zoom
-  canvas.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    applySettingsFromUI();
-
-    const winBefore = getWindow();
-    if (winBefore.n < 3) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const xCss = (e.clientX - rect.left);
-    const xFrac = clamp((xCss - 74) / Math.max(1, (rect.width - 74 - 14)), 0, 1);
-
-    const dir = (e.deltaY > 0) ? +1 : -1;
-
-    // Shift+Wheel => Y zoom
-    if (e.shiftKey) {
-      const autoRange = computeAutoPriceRange(winBefore);
-      const viewRange = computeViewPriceRange(autoRange);
-      const geo = buildGeo(winBefore, viewRange);
-      const pt = canvasPointFromClient(e);
-      const anchorPrice = priceFromY(pt.y, viewRange, geo);
-
-      const factor = (dir < 0) ? 0.88 : 1.14;
-
-      if (state.autoY) { state.autoY = false; $("autoY").checked = false; }
-
-      const oldScale = state.yScale;
-      const newScale = clamp(oldScale * factor, 0.20, 12.0);
-
-      const c0 = (autoRange.min + autoRange.max) / 2 + state.yOffset;
-      const half0 = ((autoRange.max - autoRange.min) / 2) * oldScale;
-      const t = (anchorPrice - (c0 - half0)) / (2*half0);
-
-      const half1 = ((autoRange.max - autoRange.min) / 2) * newScale;
-      const min1 = anchorPrice - t * (2*half1);
-      const c1 = min1 + half1;
-
-      state.yScale = newScale;
-      state.yOffset = c1 - (autoRange.min + autoRange.max) / 2;
-      return;
-    }
-
-    // X zoom anchored like TradingView
-    const factor = (dir < 0) ? 0.85 : 1.18;
-    const oldVis = state.visibleBars;
-    const newVis = clamp(Math.round(oldVis * factor), 20, 700);
-    if (newVis === oldVis) return;
-
-    // disable follow when zooming
-    $("follow").checked = false;
-    state.follow = false;
-
-    // anchor pos in window (float)
-    const anchorPos = winBefore.startPos + xFrac * (winBefore.vis - 1);
-
-    state.visibleBars = newVis;
-    $("visibleBars").value = String(newVis);
-
-    // compute new endPos keeping anchor at same xFrac
-    const endPosNew = anchorPos + (1 - xFrac) * (newVis - 1);
-
-    // rightEdge depends on latest bars
-    const rightEdge = winBefore.rightEdge;
-    state.xOffset = rightEdge - endPosNew;
-
-    clampXOffset();
-  }, { passive:false });
-
-  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  // ===== Pointer events
-  let tapCandidate = null;
-
-  function stepPxScreen() {
-    const win = getWindow();
-    const autoRange = computeAutoPriceRange(win);
-    const pr = computeViewPriceRange(autoRange);
-    const geo = buildGeo(win, pr);
-    return Math.max(2, geo.step);
-  }
-
-  canvas.addEventListener("pointerdown", (e) => {
-    canvas.setPointerCapture(e.pointerId);
-    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    if (state.follow) { $("follow").checked = false; state.follow = false; }
-
-    tapCandidate = {
-      id: e.pointerId,
-      x: e.clientX, y: e.clientY,
-      t: performance.now(),
-      ctrl: e.ctrlKey,
-      alt: e.altKey,
-      shift: e.shiftKey,
-      button: e.button
-    };
-
-    if (state.pointers.size === 1) {
-      canvas.style.cursor = "grabbing";
-
-      if (e.shiftKey) {
-        const win = getWindow();
-        const autoRange = computeAutoPriceRange(win);
-        const viewRange = computeViewPriceRange(autoRange);
-        const geo = buildGeo(win, viewRange);
-
-        if (state.autoY) { state.autoY = false; $("autoY").checked = false; }
-
-        state.yPanStart = {
-          y: e.clientY,
-          yOffset: state.yOffset,
-          pricePerPx: geo.pricePerPx
-        };
-        state.panStart = null;
-      } else {
-        state.panStart = { x: e.clientX, xOffset: state.xOffset, stepPx: stepPxScreen() };
-        state.yPanStart = null;
-      }
-
-      state.pinchStart = null;
-      state.cross.on = true;
-    } else if (state.pointers.size === 2) {
-      const pts = [...state.pointers.values()];
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      state.pinchStart = { dist, visibleBars: state.visibleBars };
-      state.panStart = null;
-      state.yPanStart = null;
-      state.cross.on = false;
-    }
+    ctx.fillStyle=c.c>=c.o?"rgba(61,220,151,0.5)":"rgba(255,91,110,0.5)";
+    ctx.fillRect(x+cw*0.2,Math.min(yO,yC),cw*0.6,Math.abs(yO-yC));
   });
-
-  canvas.addEventListener("pointermove", (e) => {
-    if (!state.pointers.has(e.pointerId)) return;
-    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    applySettingsFromUI();
-
-    // pinch zoom
-    if (state.pointers.size === 2 && state.pinchStart) {
-      const pts = [...state.pointers.values()];
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const ratio = dist / Math.max(1, state.pinchStart.dist);
-      const newVis = clamp(Math.round(state.pinchStart.visibleBars / ratio), 20, 700);
-      state.visibleBars = newVis;
-      $("visibleBars").value = String(newVis);
-      clampXOffset();
-      return;
-    }
-
-    // Y pan
-    if (state.pointers.size === 1 && state.yPanStart) {
-      const dy = e.clientY - state.yPanStart.y;
-      state.yOffset = state.yPanStart.yOffset + (-dy) * state.yPanStart.pricePerPx;
-      return;
-    }
-
-    // X pan (continuous, no snapping)
-    if (state.pointers.size === 1 && state.panStart) {
-      const dx = e.clientX - state.panStart.x;
-      state.xOffset = state.panStart.xOffset + (dx / Math.max(2, state.panStart.stepPx));
-      clampXOffset();
-    }
-
-    // crosshair update
-    const pt = canvasPointFromClient(e);
-    const win = getWindow();
-    if (win.n >= 1) {
-      const autoRange = computeAutoPriceRange(win);
-      const pr = computeViewPriceRange(autoRange);
-      const geo = buildGeo(win, pr);
-
-      const idx = idxFromX(pt.x, win, geo);
-      const price = priceFromY(pt.y, pr, geo);
-
-      state.cross.x = pt.x;
-      state.cross.y = pt.y;
-      state.cross.idx = idx;
-      state.cross.price = price;
-      state.cross.on = true;
-    }
-  });
-
-  function handleTap(clientX, clientY, mods) {
-    const win = getWindow();
-    if (win.n < 1) return;
-
-    const autoRange = computeAutoPriceRange(win);
-    const pr = computeViewPriceRange(autoRange);
-    const geo = buildGeo(win, pr);
-
-    const pt = canvasPointFromClient({ clientX, clientY });
-    if (pt.x < geo.plotX0 || pt.x > geo.plotX1 || pt.y < geo.priceY0 || pt.y > geo.priceY1) return;
-
-    const idx = idxFromX(pt.x, win, geo);
-    const price = priceFromY(pt.y, pr, geo);
-    if (idx == null) return;
-
-    if (mods && mods.alt) {
-      const ok = cancelNearestLimitByPrice(price);
-      if (!ok) toast("No nearby limit to cancel");
-      return;
-    }
-    if (mods && mods.ctrl) {
-      const side = (mods.button === 2) ? "sell" : "buy";
-      placeLimit(side, price, getQty());
-      return;
-    }
-
-    // drawings
-    if (state.tool === "erase") {
-      const k = hitTestDrawing(pt, win, pr, geo);
-      if (k >= 0) state.drawings.splice(k, 1);
-      state.pending = null;
-      return;
-    }
-    if (state.tool === "hline") {
-      state.drawings.push({ type:"hline", p: price });
-      state.pending = null;
-      return;
-    }
-    if (state.tool === "trend") {
-      if (!state.pending) state.pending = { type:"trend", x1: idx, y1: price };
-      else { state.drawings.push({ type:"trend", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
-      return;
-    }
-    if (state.tool === "rect") {
-      if (!state.pending) state.pending = { type:"rect", x1: idx, y1: price };
-      else { state.drawings.push({ type:"rect", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
-      return;
-    }
-  }
-
-  function pointerUpCommon(e) {
-    if (state.pointers.has(e.pointerId)) state.pointers.delete(e.pointerId);
-
-    if (tapCandidate && tapCandidate.id === e.pointerId) {
-      const dt = performance.now() - tapCandidate.t;
-      const dx = Math.abs(e.clientX - tapCandidate.x);
-      const dy = Math.abs(e.clientY - tapCandidate.y);
-      const isTap = (dt < 260 && dx < 8 && dy < 8);
-      if (isTap) handleTap(e.clientX, e.clientY, tapCandidate);
-      tapCandidate = null;
-    }
-
-    if (state.pointers.size === 0) {
-      canvas.style.cursor = "grab";
-      state.panStart = null;
-      state.pinchStart = null;
-      state.yPanStart = null;
-      if (state.tool !== "cursor") state.cross.on = false;
-    } else if (state.pointers.size === 1) {
-      const only = [...state.pointers.values()][0];
-      state.panStart = { x: only.x, xOffset: state.xOffset, stepPx: stepPxScreen() };
-      state.yPanStart = null;
-      state.pinchStart = null;
-    }
-  }
-  canvas.addEventListener("pointerup", pointerUpCommon);
-  canvas.addEventListener("pointercancel", pointerUpCommon);
-
-  canvas.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    state.autoY = !state.autoY;
-    $("autoY").checked = state.autoY;
-    if (state.autoY) { state.yScale = 1.0; state.yOffset = 0.0; }
-  });
-
-  // ===== UI handlers
-  function buyMarket(){ marketOrder("buy", getQty(), getSlip()); }
-  function sellMarket(){ marketOrder("sell", getQty(), getSlip()); }
-
-  $("buyMkt").addEventListener("click", buyMarket);
-  $("sellMkt").addEventListener("click", sellMarket);
-  $("buyMktTop").addEventListener("click", buyMarket);
-  $("sellMktTop").addEventListener("click", sellMarket);
-
-  $("followWrap").addEventListener("click", (e) => {
-    if (e.target.tagName !== "INPUT") $("follow").checked = !$("follow").checked;
-    state.follow = $("follow").checked;
-    if (state.follow) state.xOffset = 0;
-    clampXOffset();
-  });
-
-  $("autoYWrap").addEventListener("click", (e) => {
-    if (e.target.tagName !== "INPUT") $("autoY").checked = !$("autoY").checked;
-    state.autoY = $("autoY").checked;
-    if (state.autoY) { state.yScale = 1.0; state.yOffset = 0.0; }
-  });
-
-  $("tool").addEventListener("change", () => {
-    state.tool = $("tool").value;
-    state.pending = null;
-    if (state.tool === "cursor") state.cross.on = true;
-  });
-
-  $("undo").addEventListener("click", () => { if (state.pending) state.pending=null; else state.drawings.pop(); });
-  $("clearDraw").addEventListener("click", () => { state.pending=null; state.drawings=[]; });
-
-  $("placeLimit").addEventListener("click", () => {
-    const side = $("limitSide").value;
-    const price = Number($("limitPrice").value || 0);
-    if (!Number.isFinite(price) || price <= 0) { toast("Enter a valid limit price"); return; }
-    placeLimit(side, price, getQty());
-  });
-
-  $("placeLadder").addEventListener("click", () => {
-    const side = $("ladderSide").value;
-    const levels = Math.max(1, Math.floor(Number($("ladderLevels").value || 1)));
-    const step = Number($("ladderStep").value || state.tickSize);
-    const qtyPer = Math.max(1, Math.floor(Number($("ladderQty").value || 1)));
-    let start = Number($("ladderStart").value || 0);
-    if (!Number.isFinite(start) || start <= 0) { start = state.price; $("ladderStart").value = start.toFixed(2); }
-    placeLadder(side, start, levels, step, qtyPer);
-  });
-
-  $("cancelAll").addEventListener("click", cancelAll);
-  $("flatten").addEventListener("click", flatten);
-
-  $("pause").addEventListener("click", () => {
-    state.paused = !state.paused;
-    $("pause").textContent = state.paused ? "▶ Resume" : "⏸ Pause";
-    toast(state.paused ? "Paused" : "Running");
-  });
-
-  $("stepTick").addEventListener("click", () => {
-    if (!state.paused) { toast("Pause first to step"); return; }
-    stepSimulationOnce();
-  });
-
-  // Speed
-  document.querySelectorAll(".speedBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const v = Number(btn.dataset.speed || "1");
-      state.speedMul = clamp(v, 0.1, 50);
-      document.querySelectorAll(".speedBtn").forEach(b => b.classList.toggle("active", b === btn));
-      toast(`Speed: ${state.speedMul}x`);
-    });
-  });
-
-  // Vol preset
-  $("volPreset").addEventListener("change", () => setVolPreset($("volPreset").value));
-
-  // TF change
-  $("timeframe").addEventListener("change", () => {
-    const sec = Math.max(1, Number($("timeframe").value || 5));
-    rebuildBars(sec);
-    clampXOffset();
-  });
-
-  // Indicators toggles
-  ["indVol","indVwap","indMa"].forEach(id => {
-    $(id).addEventListener("change", () => { applySettingsFromUI(); state.indCache.len = 0; });
-  });
-
-  // Drip trading
-  function stopDrip() {
-    if (state.drip.timer) clearInterval(state.drip.timer);
-    state.drip.timer = null;
-    state.drip.on = false;
-    $("dripToggle").textContent = "▶ Start Drip";
-    toast("Drip stopped");
-  }
-  function startDrip() {
-    stopDrip();
-    const side = $("dripSide").value;
-    const everySec = clamp(Number($("dripEvery").value || 2), 0.2, 999);
-    const qtyEach = Math.max(1, Math.floor(Number($("dripQty").value || 1)));
-
-    state.drip.on = true;
-    state.drip.side = side;
-    state.drip.timer = setInterval(() => {
-      if (state.paused) return;
-      marketOrder(side, qtyEach, getSlip());
-    }, Math.round(everySec * 1000));
-
-    $("dripToggle").textContent = "⏸ Drip Running";
-    toast(`Drip ${side.toUpperCase()} every ${everySec}s`);
-  }
-
-  $("dripToggle").addEventListener("click", () => {
-    if (state.drip.on) stopDrip();
-    else startDrip();
-  });
-  $("dripStop").addEventListener("click", stopDrip);
-
-  $("reset").addEventListener("click", () => {
-    stopDrip();
-
-    state.price = 17000;
-    state.flow = 0;
-
-    state.model.v = 2.2;
-    state.model.fair = state.price;
-    state.model.drift = 0;
-    state.model.driftT = 0;
-    state.model.jumpI = 0.04;
-    state.model.jumpT = 0;
-
-    state.pos = 0;
-    state.avg = null;
-
-    state.limits = [];
-    state.nextOrderId = 1;
-
-    state.xOffset = 0;
-    $("follow").checked = true;
-    state.follow = true;
-
-    state.drawings = [];
-    state.pending = null;
-
-    state.autoY = true;
-    $("autoY").checked = true;
-    state.yScale = 1.0;
-    state.yOffset = 0.0;
-
-    state.simTime = 0;
-    state.ticks = [];
-    state.bars = [];
-    state.curBar = null;
-
-    applySettingsFromUI();
-
-    // warm-up
-    const warmSeconds = 12 * 60;
-    const baseHz = Math.max(20, state.p.simHzBase);
-    const warmTicks = Math.floor(warmSeconds * baseHz);
-
-    const savedPaused = state.paused;
-    state.paused = true;
-    for (let i=0;i<warmTicks;i++) stepSimulationOnce();
-    state.paused = savedPaused;
-
-    rebuildBars(state.tfSec);
-
-    $("limitPrice").value = state.price.toFixed(2);
-    $("ladderStart").value = state.price.toFixed(2);
-
-    toast("Reset complete");
-  });
-
-  // Hotkeys
-  window.addEventListener("keydown", (e) => {
-    const tag = (document.activeElement && document.activeElement.tagName) || "";
-    const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-    if (typing) return;
-
-    const k = e.key.toLowerCase();
-
-    if (k === "?") { e.preventDefault(); $("helpOverlay").classList.toggle("open"); return; }
-    if (e.ctrlKey && k === "z") { e.preventDefault(); if (state.pending) state.pending=null; else state.drawings.pop(); return; }
-
-    if (k === "b") { buyMarket(); return; }
-    if (k === "s") { sellMarket(); return; }
-    if (k === "f") {
-      $("follow").checked = !$("follow").checked;
-      state.follow = $("follow").checked;
-      if (state.follow) state.xOffset = 0;
-      clampXOffset();
-      return;
-    }
-    if (k === " ") { e.preventDefault(); $("pause").click(); return; }
-    if (k === "c") { cancelAll(); return; }
-    if (k === "x") { flatten(); return; }
-    if (k === "+") { setQty(getQty() + 1); return; }
-    if (k === "-") { setQty(getQty() - 1); return; }
-
-    if (k === "1") { $("tool").value="cursor"; $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "2") { $("tool").value="trend";  $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "3") { $("tool").value="rect";   $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "4") { $("tool").value="hline";  $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "5") { $("tool").value="erase";  $("tool").dispatchEvent(new Event("change")); return; }
-  });
-
-  // Help overlay
-  const helpOverlay = $("helpOverlay");
-  $("openHelp").addEventListener("click", () => helpOverlay.classList.add("open"));
-  $("closeHelp").addEventListener("click", () => helpOverlay.classList.remove("open"));
-  helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove("open"); });
-
-  // init
-  function init() {
-    $("limitPrice").value = state.price.toFixed(2);
-    $("ladderStart").value = state.price.toFixed(2);
-
-    $("volPreset").value = state.volPresetKey;
-    setVolPreset(state.volPresetKey);
-
-    applySettingsFromUI();
-    resizeCanvasToDisplaySize();
-
-    // warm-up
-    const warmSeconds = 12 * 60;
-    const baseHz = Math.max(20, state.p.simHzBase);
-    const warmTicks = Math.floor(warmSeconds * baseHz);
-    const savedPaused = state.paused;
-    state.paused = true;
-    for (let i=0;i<warmTicks;i++) stepSimulationOnce();
-    state.paused = savedPaused;
-
-    rebuildBars(state.tfSec);
-
-    clampXOffset();
-    toast("Ready");
-  }
-
-  let lastTs = performance.now();
-  let acc = 0;
-
-  function loop(ts) {
-    const dt = (ts - lastTs) / 1000;
-    lastTs = ts;
-
-    applySettingsFromUI();
-
-    // ticks per real second
-    const ticksPerRealSec = Math.max(10, state.p.simHzBase * state.speedMul);
-    const stepReal = 1 / ticksPerRealSec;
-
-    if (!state.paused) {
-      acc += dt;
-      acc = Math.min(acc, 0.35);
-      while (acc >= stepReal) {
-        stepSimulationOnce();
-        acc -= stepReal;
-      }
-    }
-
-    // follow keeps right edge pinned
-    if (state.follow) state.xOffset = 0;
-    clampXOffset();
-
-    drawChart();
-    renderStats();
-    requestAnimationFrame(loop);
-  }
-
-  init();
+}
+
+function loop(){
+  step();
+  draw();
   requestAnimationFrame(loop);
+}
+loop();
+
 })();
 </script>
+
+</body>
+</html>
