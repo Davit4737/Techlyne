@@ -685,7 +685,7 @@
     started: false,
     initialPrice: 17000,
     bias: { mode: "neutral", strength: 3 },
-    sweep: { enabled: false, power: 5, event: null },
+    sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
     sim: {
       price: 17000,
       drift: 0,
@@ -784,6 +784,7 @@
     state.y.offset = 0.0;
 
     state.sweep.event = null;
+    state.sweep.cooldownUntil = 0;
     state.simTime = 0;
     state.tickCount = 0;
     state.ticks = [];
@@ -1210,6 +1211,22 @@
       max = Math.max(max, t.price);
     }
 
+    if (state.sweep.event) {
+      const ev = state.sweep.event;
+      if (Number.isFinite(ev.level)) {
+        min = Math.min(min, ev.level);
+        max = Math.max(max, ev.level);
+      }
+      if (Number.isFinite(ev.target1)) {
+        min = Math.min(min, ev.target1);
+        max = Math.max(max, ev.target1);
+      }
+      if (Number.isFinite(ev.target2)) {
+        min = Math.min(min, ev.target2);
+        max = Math.max(max, ev.target2);
+      }
+    }
+
     if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
       min = state.sim.price - 50 * state.tickSize;
       max = state.sim.price + 50 * state.tickSize;
@@ -1396,60 +1413,209 @@
     return -1;
   }
 
-  function createSweepEvent(dir, power=5, immediate=false) {
+  function findRecentSweepLevels() {
     const bars = getAllBarsForRender();
-    if (bars.length < 30) return false;
+    const highs = [];
+    const lows = [];
 
-    const recent = bars.slice(Math.max(0, bars.length - 28), bars.length - 1);
-    let high = -Infinity, low = Infinity;
-    for (const b of recent) {
-      high = Math.max(high, b.h);
-      low = Math.min(low, b.l);
+    if (bars.length < 10) return { bars, highs, lows, range: 20 * state.tickSize };
+
+    const from = Math.max(3, bars.length - 95);
+    const to = bars.length - 3;
+
+    for (let i = from; i <= to; i++) {
+      const b = bars[i];
+
+      const isHigh =
+        b.h >= bars[i-1].h && b.h > bars[i-2].h &&
+        b.h >= bars[i+1].h && b.h > bars[i+2].h;
+
+      const isLow =
+        b.l <= bars[i-1].l && b.l < bars[i-2].l &&
+        b.l <= bars[i+1].l && b.l < bars[i+2].l;
+
+      if (isHigh) highs.push({ idx: i, price: b.h });
+      if (isLow) lows.push({ idx: i, price: b.l });
     }
-    if (!Number.isFinite(high) || !Number.isFinite(low)) return false;
+
+    const recent = bars.slice(Math.max(0, bars.length - 40));
+    let hi = -Infinity, lo = Infinity;
+    for (const b of recent) {
+      hi = Math.max(hi, b.h);
+      lo = Math.min(lo, b.l);
+    }
+    const range = Number.isFinite(hi) && Number.isFinite(lo) ? Math.max(hi - lo, 20 * state.tickSize) : 20 * state.tickSize;
+
+    return { bars, highs, lows, range };
+  }
+
+  function pickSweepLevel(dir) {
+    const info = findRecentSweepLevels();
+    const px = state.sim.price;
+    const minDist = 3 * state.tickSize;
+
+    if (dir === "up") {
+      const above = info.highs
+        .filter(x => x.price > px + minDist)
+        .sort((a, b) => (a.price - px) - (b.price - px));
+
+      if (above.length) {
+        const nearest = above[0];
+        return {
+          level: nearest.price,
+          kind: "swing high",
+          range: info.range,
+          distance: Math.abs(nearest.price - px)
+        };
+      }
+
+      const fallback = roundTo(px + Math.max(info.range * 0.22, 12 * state.tickSize), state.tickSize);
+      return {
+        level: fallback,
+        kind: "fallback high",
+        range: info.range,
+        distance: Math.abs(fallback - px)
+      };
+    }
+
+    const below = info.lows
+      .filter(x => x.price < px - minDist)
+      .sort((a, b) => (px - a.price) - (px - b.price));
+
+    if (below.length) {
+      const nearest = below[0];
+      return {
+        level: nearest.price,
+        kind: "swing low",
+        range: info.range,
+        distance: Math.abs(nearest.price - px)
+      };
+    }
+
+    const fallback = roundTo(px - Math.max(info.range * 0.22, 12 * state.tickSize), state.tickSize);
+    return {
+      level: fallback,
+      kind: "fallback low",
+      range: info.range,
+      distance: Math.abs(fallback - px)
+    };
+  }
+
+  function chooseAutoSweepDirection() {
+    const up = pickSweepLevel("up");
+    const down = pickSweepLevel("down");
+    const bars = getAllBarsForRender();
+    if (bars.length < 8) return null;
+
+    const last = bars[bars.length - 1].c;
+    const prev = bars[Math.max(0, bars.length - 5)].c;
+    const momentum = last - prev;
+    const momTicks = momentum / Math.max(state.tickSize, 1e-9);
+
+    const upScore =
+      (up ? Math.max(0, 40 - up.distance / state.tickSize) : -999) +
+      Math.max(0, momTicks * 0.9);
+
+    const downScore =
+      (down ? Math.max(0, 40 - down.distance / state.tickSize) : -999) +
+      Math.max(0, -momTicks * 0.9);
+
+    if (upScore < 2 && downScore < 2) return null;
+    if (Math.abs(upScore - downScore) < 2) return Math.random() > 0.5 ? "up" : "down";
+    return upScore > downScore ? "up" : "down";
+  }
+
+  function createSweepEvent(dir, power=5, immediate=false, source="auto") {
+    const sideInfo = pickSweepLevel(dir);
+    if (!sideInfo || !Number.isFinite(sideInfo.level)) return false;
 
     const pwr = clamp(Number(power) || 5, 1, 10);
-    const overshootTicks = immediate
-      ? (4 + Math.floor(pwr * 0.8))
-      : (2 + Math.floor(Math.random() * (3 + Math.round(pwr))));
-    const overshoot = overshootTicks * state.tickSize;
-    const returnDepth = Math.max((high - low) * (0.18 + 0.04 * pwr), (immediate ? 12 : 8) * state.tickSize);
+    const sign = dir === "up" ? 1 : -1;
+    const distanceTicks = Math.max(1, Math.abs(sideInfo.level - state.sim.price) / state.tickSize);
 
-    const target1 = dir === "up" ? high + overshoot : low - overshoot;
-    const target2 = dir === "up" ? high - returnDepth : low + returnDepth;
+    const overshootTicks = immediate
+      ? (6 + Math.floor(pwr * 1.6))
+      : (3 + Math.floor(pwr * 0.9) + Math.floor(Math.random() * 3));
+
+    const overshoot = overshootTicks * state.tickSize;
+    const returnDepth = Math.max(
+      sideInfo.range * (immediate ? 0.34 : 0.24),
+      (immediate ? 14 : 9) * state.tickSize
+    );
+
+    const target1 = roundTo(sideInfo.level + sign * overshoot, state.tickSize);
+    const target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
+
+    const sweepTicks = immediate
+      ? clamp(Math.round(8 + distanceTicks / 4 + pwr * 0.8), 10, 32)
+      : clamp(Math.round(10 + distanceTicks / 6 + pwr * 0.5), 10, 26);
+
+    const revertTicks = immediate
+      ? clamp(Math.round(14 + pwr * 1.1), 16, 34)
+      : clamp(Math.round(16 + pwr * 0.8), 16, 30);
+
+    const force =
+      (
+        (immediate ? 1.00 : 0.32) +
+        pwr * (immediate ? 0.15 : 0.05) +
+        Math.min(immediate ? 1.5 : 0.75, distanceTicks / (immediate ? 20 : 34))
+      ) * state.tickSize;
 
     state.sweep.event = {
       dir,
+      source,
       phase: "sweep",
+      level: roundTo(sideInfo.level, state.tickSize),
+      levelKind: sideInfo.kind,
       target1,
       target2,
-      sweepTicks: immediate ? (7 + Math.floor(pwr * 1.2)) : (10 + Math.floor(Math.random() * 12)),
-      revertTicks: immediate ? (14 + Math.floor(pwr * 1.4)) : (16 + Math.floor(Math.random() * 20)),
-      force: ((immediate ? 0.40 : 0.22) + pwr * (immediate ? 0.09 : 0.06)) * state.tickSize
+      sweepTicks,
+      revertTicks,
+      force,
+      startedAt: state.simTime
     };
+
+    if (immediate) {
+      state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), force * 3.2);
+      state.sim.flow += sign * (2 + pwr * 0.8);
+    } else {
+      state.sim.vel += sign * force * 0.65;
+    }
+
     return true;
   }
 
   function executeManualSweep(side, strength) {
     const dir = side === "sell" ? "down" : "up";
-    const strengthMap = { soft: 4, normal: 6, hard: 8.5 };
-    const power = strengthMap[strength] ?? 6;
-    if (state.sweep.event) state.sweep.event = null;
-    const ok = createSweepEvent(dir, power, true);
+    const strengthMap = { soft: 4.5, normal: 7, hard: 9.5 };
+    const power = strengthMap[strength] ?? 7;
+
+    state.sweep.event = null;
+    const ok = createSweepEvent(dir, power, true, "manual");
     if (!ok) {
       toast("Not enough chart history for sweep");
       return;
     }
+
     toast(dir === "up" ? "Manual buy sweep ↑" : "Manual sell sweep ↓");
   }
 
   function maybeStartSweepEvent(volKnob) {
     if (!state.sweep.enabled || state.sweep.power <= 0 || state.sweep.event) return;
-    const chance = (0.00045 + state.sweep.power * 0.00028) * (0.65 + 0.05 * volKnob);
+    if (state.simTime < state.sweep.cooldownUntil) return;
+
+    const bars = getAllBarsForRender();
+    if (bars.length < 30) return;
+
+    const chance = (0.00008 + state.sweep.power * 0.000035) * (0.80 + 0.04 * volKnob);
     if (Math.random() >= chance) return;
-    const dir = Math.random() > 0.5 ? "up" : "down";
-    if (createSweepEvent(dir, state.sweep.power, false)) {
-      toast(dir === "up" ? "Liquidity sweep ↑" : "Liquidity sweep ↓");
+
+    const dir = chooseAutoSweepDirection();
+    if (!dir) return;
+
+    if (createSweepEvent(dir, state.sweep.power, false, "auto")) {
+      state.sweep.cooldownUntil = state.simTime + 45 + Math.random() * 90;
+      toast(dir === "up" ? "Auto sweep ↑" : "Auto sweep ↓");
     }
   }
 
@@ -1459,24 +1625,26 @@
 
     const target = ev.phase === "sweep" ? ev.target1 : ev.target2;
     const toward = target - state.sim.price;
-    const norm = clamp(toward / Math.max(state.tickSize * 6, Math.abs(toward)), -1, 1);
+    const sign = ev.dir === "up" ? 1 : -1;
+    const norm = clamp(toward / Math.max(state.tickSize * 3, Math.abs(toward)), -1, 1);
 
     if (ev.phase === "sweep") {
-      dp += norm * ev.force;
+      const push = ev.force * (ev.source === "manual" ? 1.25 : 1.0);
+      dp += norm * push + sign * ev.force * 0.10;
       ev.sweepTicks -= 1;
+
       const hit = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
                   (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
-      if (hit || ev.sweepTicks <= 0) {
-        ev.phase = "revert";
-      }
+
+      if (hit || ev.sweepTicks <= 0) ev.phase = "revert";
     } else {
-      dp += norm * ev.force * 1.45;
+      dp += norm * ev.force * (ev.source === "manual" ? 1.85 : 1.55);
       ev.revertTicks -= 1;
+
       const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
                   (ev.dir === "down" && state.sim.price >= ev.target2 - state.tickSize);
-      if (hit || ev.revertTicks <= 0) {
-        state.sweep.event = null;
-      }
+
+      if (hit || ev.revertTicks <= 0) state.sweep.event = null;
     }
 
     return dp;
@@ -1666,6 +1834,28 @@
       ctx.setLineDash([]);
       ctx.fillStyle = "rgba(220,210,255,0.98)";
       ctx.fillText(`EXIT ${t.mode.toUpperCase()} ${t.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
+    }
+
+    if (state.sweep.event) {
+      const ev = state.sweep.event;
+
+      if (Number.isFinite(ev.level)) {
+        const yLevel = geo.yOf(ev.level);
+        ctx.strokeStyle = ev.dir === "up" ? "rgba(255,207,91,0.95)" : "rgba(255,140,140,0.95)";
+        ctx.setLineDash([8,4]);
+        ctx.beginPath(); ctx.moveTo(geo.plotX0, yLevel); ctx.lineTo(geo.plotX1, yLevel); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = ev.dir === "up" ? "rgba(255,232,178,0.98)" : "rgba(255,208,215,0.98)";
+        ctx.fillText(`${ev.source === "manual" ? "MANUAL" : "AUTO"} SWEEP LVL ${ev.level.toFixed(dec)}`, geo.plotX0 + 10, yLevel - 10);
+      }
+
+      if (Number.isFinite(ev.target1)) {
+        const yT1 = geo.yOf(ev.target1);
+        ctx.strokeStyle = ev.dir === "up" ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
+        ctx.setLineDash([3,4]);
+        ctx.beginPath(); ctx.moveTo(geo.plotX0 + 70, yT1); ctx.lineTo(geo.plotX1, yT1); ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
 
     for (const d of state.drawings) {
