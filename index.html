@@ -1612,7 +1612,56 @@
     return upScore > downScore ? "up" : "down";
   }
 
-  function createSweepEvent(dir, power=5, immediate=false, source="auto", manualLevel=null) {
+  function secToSimTicks(sec) {
+    return Math.max(1, Math.round(sec * Math.max(20, state.p.simHzBase)));
+  }
+
+  function getManualSweepConfig(strength) {
+    const map = {
+      soft: {
+        mode: "soft",
+        power: 3.6,
+        overshootPts: [0.75, 1.75],
+        sweepBaseSec: 7.0,
+        sweepPerPointSec: 0.11,
+        revertBaseSec: 4.4,
+        revertPerPointSec: 0.06,
+        forceMul: 0.55,
+        pulseMul: 0.22,
+        directMul: 0.02,
+        reachPolicy: "nudge"
+      },
+      normal: {
+        mode: "normal",
+        power: 6.0,
+        overshootPts: [1.0, 2.5],
+        sweepBaseSec: 5.0,
+        sweepPerPointSec: 0.075,
+        revertBaseSec: 3.6,
+        revertPerPointSec: 0.05,
+        forceMul: 0.82,
+        pulseMul: 0.18,
+        directMul: 0.05,
+        reachPolicy: "assist"
+      },
+      hard: {
+        mode: "hard",
+        power: 8.6,
+        overshootPts: [1.5, 3.5],
+        sweepBaseSec: 3.6,
+        sweepPerPointSec: 0.05,
+        revertBaseSec: 2.8,
+        revertPerPointSec: 0.04,
+        forceMul: 1.12,
+        pulseMul: 0.12,
+        directMul: 0.10,
+        reachPolicy: "take"
+      }
+    };
+    return map[strength] || map.normal;
+  }
+
+  function createSweepEvent(dir, power=5, immediate=false, source="auto", manualLevel=null, manualConfig=null) {
     let sideInfo = null;
 
     if (Number.isFinite(manualLevel)) {
@@ -1621,7 +1670,7 @@
       sideInfo = {
         level: snapped,
         kind: "manual level",
-        range: Math.max(12 * state.tickSize, Math.abs(snapped - px), findRecentSweepLevels().range || 12 * state.tickSize),
+        range: Math.max(10 * state.tickSize, Math.abs(snapped - px), findRecentSweepLevels().range || 10 * state.tickSize),
         distance: Math.abs(snapped - px),
         isFallback: false
       };
@@ -1633,39 +1682,49 @@
 
     const pwr = clamp(Number(power) || 5, 1, 10);
     const sign = dir === "up" ? 1 : -1;
-    const distanceTicks = Math.max(1, Math.abs(sideInfo.level - state.sim.price) / state.tickSize);
+    const distance = Math.abs(sideInfo.level - state.sim.price);
+    const distanceTicks = Math.max(1, distance / state.tickSize);
+    const distancePts = distance;
     const baseCap = getBarRangeCap(state.tfSec);
 
-    const overshootTicks = immediate
-      ? clamp(Math.round(5 + pwr * 1.15 + distanceTicks * 0.035), 6, 24)
-      : clamp(Math.round(2 + pwr * 0.45 + Math.random() * 2), 3, 10);
+    let sweepSec, revertSec, overshootPtsMin, overshootPtsMax, force, extraBarCap, reachPolicy;
+    let pulseMul = 0.15;
+    let directMul = 0.04;
 
-    const overshoot = overshootTicks * state.tickSize;
+    if (source === "manual" && manualConfig) {
+      overshootPtsMin = manualConfig.overshootPts[0];
+      overshootPtsMax = manualConfig.overshootPts[1];
+      sweepSec = manualConfig.sweepBaseSec + distancePts * manualConfig.sweepPerPointSec;
+      revertSec = manualConfig.revertBaseSec + distancePts * manualConfig.revertPerPointSec;
+      force = (0.16 + pwr * 0.04 + Math.min(0.26, distancePts * 0.0024)) * state.tickSize * manualConfig.forceMul;
+      extraBarCap = Math.max(4 * state.tickSize, baseCap * (manualConfig.mode === "hard" ? 0.80 : 0.38));
+      reachPolicy = manualConfig.reachPolicy;
+      pulseMul = manualConfig.pulseMul;
+      directMul = manualConfig.directMul;
+    } else {
+      overshootPtsMin = 0.75;
+      overshootPtsMax = 2.0;
+      sweepSec = 3.8 + Math.min(6.0, distancePts * 0.05);
+      revertSec = 2.6 + Math.min(4.5, distancePts * 0.035);
+      force = (0.11 + pwr * 0.018 + Math.min(0.12, distancePts * 0.0014)) * state.tickSize;
+      extraBarCap = Math.max(3 * state.tickSize, baseCap * 0.30);
+      reachPolicy = "assist";
+      pulseMul = 0.12;
+      directMul = 0.03;
+    }
+
+    const overshootPts = lerp(overshootPtsMin, overshootPtsMax, Math.min(1, distancePts / 70));
+    const overshoot = roundTo(Math.max(state.tickSize, overshootPts), state.tickSize);
     const returnDepth = Math.max(
-      sideInfo.range * (immediate ? 0.30 : 0.20),
-      (immediate ? 12 : 8) * state.tickSize
+      roundTo(sideInfo.range * (source === "manual" ? 0.18 : 0.14), state.tickSize),
+      roundTo((source === "manual" ? 3.0 : 2.0) * state.tickSize, state.tickSize)
     );
 
     const target1 = roundTo(sideInfo.level + sign * overshoot, state.tickSize);
     const target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
 
-    const sweepTicks = immediate
-      ? clamp(Math.round(10 + distanceTicks / 1.9 + pwr * 1.15), 12, 140)
-      : clamp(Math.round(8 + distanceTicks / 7 + pwr * 0.45), 8, 22);
-
-    const revertTicks = immediate
-      ? clamp(Math.round(14 + pwr * 1.1 + distanceTicks / 10), 16, 48)
-      : clamp(Math.round(12 + pwr * 0.65), 14, 26);
-
-    const force = (
-      (immediate ? 2.25 : 0.46) +
-      pwr * (immediate ? 0.30 : 0.055) +
-      Math.min(immediate ? 6.0 : 0.7, distanceTicks / (immediate ? 6.2 : 34))
-    ) * state.tickSize;
-
-    const extraBarCap = immediate
-      ? Math.min(baseCap * 6.0, Math.max(18 * state.tickSize, distanceTicks * 0.95 * state.tickSize + overshoot * 1.8))
-      : Math.min(baseCap * 0.95, Math.max(5 * state.tickSize, distanceTicks * 0.22 * state.tickSize + overshoot * 0.75));
+    const sweepTicks = secToSimTicks(clamp(sweepSec, 2.0, source === "manual" ? 40 : 16));
+    const revertTicks = secToSimTicks(clamp(revertSec, 1.5, source === "manual" ? 24 : 12));
 
     state.sweep.event = {
       dir,
@@ -1678,20 +1737,28 @@
       target1,
       target2,
       sweepTicks,
+      sweepTicksMax: sweepTicks,
       revertTicks,
+      revertTicksMax: revertTicks,
       force,
       extraBarCap,
       distanceTicks,
+      distancePts,
+      reachPolicy,
+      pulseMul,
+      directMul,
+      mode: manualConfig?.mode || null,
       startedAt: state.simTime,
-      extended: false
+      extended: false,
+      tookLevel: false
     };
 
-    if (immediate) {
-      state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), force * 4.8);
-      state.sim.flow += sign * (4 + pwr * 1.2);
+    if (source === "manual") {
+      state.sim.vel += sign * force * (manualConfig?.mode === "hard" ? 1.4 : 0.7);
+      state.sim.flow += sign * (manualConfig?.mode === "hard" ? 2.2 : 0.9);
     } else {
-      state.sim.vel += sign * force * 0.95;
-      state.sim.flow += sign * (0.8 + pwr * 0.16);
+      state.sim.vel += sign * force * 0.55;
+      state.sim.flow += sign * (0.4 + pwr * 0.08);
     }
 
     return true;
@@ -1699,8 +1766,8 @@
 
   function executeManualSweep(side, strength) {
     const dir = side === "sell" ? "down" : "up";
-    const strengthMap = { soft: 4.5, normal: 7.5, hard: 10 };
-    const power = strengthMap[strength] ?? 7.5;
+    const cfg = getManualSweepConfig(strength);
+    const power = cfg.power;
 
     let manualLevel = Number($("manualSweepLevel").value || 0);
     if (!Number.isFinite(manualLevel) || manualLevel <= 0) manualLevel = null;
@@ -1719,7 +1786,7 @@
     }
 
     state.sweep.event = null;
-    const ok = createSweepEvent(dir, power, true, "manual", manualLevel);
+    const ok = createSweepEvent(dir, power, true, "manual", manualLevel, cfg);
     if (!ok) {
       toast("Not enough chart history for sweep");
       return;
@@ -1727,8 +1794,8 @@
 
     toast(
       manualLevel != null
-        ? `${dir === "up" ? "Manual buy" : "Manual sell"} sweep → ${manualLevel.toFixed(decimalsFor(state.tickSize))}`
-        : (dir === "up" ? "Manual buy sweep ↑" : "Manual sell sweep ↓")
+        ? `${dir === "up" ? "Manual buy" : "Manual sell"} ${cfg.mode} sweep → ${manualLevel.toFixed(decimalsFor(state.tickSize))}`
+        : `${dir === "up" ? "Manual buy" : "Manual sell"} ${cfg.mode} sweep`
     );
   }
 
@@ -1764,36 +1831,63 @@
     const target = ev.phase === "sweep" ? ev.target1 : ev.target2;
     const toward = target - state.sim.price;
     const sign = ev.dir === "up" ? 1 : -1;
-    const norm = clamp(toward / Math.max(state.tickSize * 2, Math.abs(toward)), -1, 1);
     const remainingTicks = Math.abs(toward) / Math.max(state.tickSize, 1e-9);
+    const progress = ev.phase === "sweep"
+      ? 1 - ev.sweepTicks / Math.max(1, ev.sweepTicksMax)
+      : 1 - ev.revertTicks / Math.max(1, ev.revertTicksMax);
+    const pulse = Math.sin(progress * Math.PI * (ev.source === "manual" ? 3.2 : 2.4));
+    const norm = clamp(toward / Math.max(state.tickSize * 6, Math.abs(toward)), -1, 1);
 
     if (ev.phase === "sweep") {
       if (ev.source === "manual") {
-        const directPull = sign * Math.min(Math.abs(toward) * 0.42, ev.force * 3.8);
-        dp += norm * ev.force * 2.8 + sign * ev.force * 0.72 + directPull;
-        if (remainingTicks > 4) {
-          const velFloor = ev.force * (2.1 + Math.min(4.2, remainingTicks / 14));
+        const basePull = norm * ev.force;
+        const pulsePull = sign * ev.force * ev.pulseMul * pulse;
+        const gentleLock = sign * Math.min(Math.abs(toward) * ev.directMul, ev.force * (ev.mode === "hard" ? 1.35 : ev.mode === "normal" ? 0.75 : 0.30));
+
+        dp += basePull + pulsePull + gentleLock;
+
+        if (ev.mode === "hard" && remainingTicks > 5) {
+          const velFloor = ev.force * Math.min(5.0, 1.2 + remainingTicks / 22);
+          state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), velFloor);
+        } else if (ev.mode === "normal" && remainingTicks > 8) {
+          const velFloor = ev.force * Math.min(2.6, 0.8 + remainingTicks / 40);
           state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), velFloor);
         }
       } else {
-        dp += norm * ev.force * 1.18 + sign * ev.force * 0.12;
+        dp += norm * ev.force + sign * ev.force * 0.08 * pulse;
       }
+
       ev.sweepTicks -= 1;
 
-      const hit = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
-                  (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
+      const hitLevel = (ev.dir === "up" && state.sim.price >= ev.level) ||
+                       (ev.dir === "down" && state.sim.price <= ev.level);
+      const hitTarget = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
+                        (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
 
-      if (!hit && ev.source === "manual" && ev.sweepTicks <= 0 && remainingTicks > 2) {
-        ev.sweepTicks = clamp(Math.ceil(remainingTicks / 2.6), 4, 28);
-        ev.force *= 1.14;
-        ev.extraBarCap = Math.max(ev.extraBarCap || 0, remainingTicks * state.tickSize * 0.95);
-        ev.extended = true;
-      } else if (hit || ev.sweepTicks <= 0) {
+      if (hitLevel) ev.tookLevel = true;
+
+      if (ev.source === "manual" && ev.sweepTicks <= 0 && !hitTarget) {
+        if (ev.mode === "hard" && remainingTicks > 2) {
+          ev.sweepTicks = secToSimTicks(clamp(1.0 + remainingTicks * 0.018, 1.0, 6.0));
+          ev.sweepTicksMax += ev.sweepTicks;
+          ev.force *= 1.06;
+          ev.extended = true;
+        } else if (ev.mode === "normal" && remainingTicks > 6 && !ev.tookLevel) {
+          ev.sweepTicks = secToSimTicks(clamp(0.8 + remainingTicks * 0.012, 0.8, 3.5));
+          ev.sweepTicksMax += ev.sweepTicks;
+          ev.force *= 1.02;
+          ev.extended = true;
+        } else {
+          ev.phase = "revert";
+        }
+      } else if (hitTarget || ev.sweepTicks <= 0) {
         ev.phase = "revert";
       }
     } else {
-      const revertMul = ev.source === "manual" ? 2.1 : 1.45;
-      dp += norm * ev.force * revertMul;
+      const revertMul = ev.source === "manual"
+        ? (ev.mode === "hard" ? 1.35 : ev.mode === "normal" ? 1.10 : 0.88)
+        : 1.0;
+      dp += norm * ev.force * revertMul + sign * ev.force * 0.05 * pulse;
       ev.revertTicks -= 1;
 
       const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
