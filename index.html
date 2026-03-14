@@ -632,6 +632,16 @@
         <button class="chipBtn" data-start-price="19000">19000</button>
         <button class="chipBtn" data-start-price="20000">20000</button>
       </div>
+      <label>Market movement
+        <select id="startMotionProfile">
+          <option value="tight">Tight / smooth</option>
+          <option value="realistic" selected>Realistic NQ</option>
+          <option value="volatile">Volatile session</option>
+        </select>
+      </label>
+      <div class="muted" style="font-size:12px; line-height:1.35;">
+        Realistic NQ keeps one-candle moves under control. A 300 pts dump should already feel strong — not like one random candle teleported.
+      </div>
       <div class="row wrap" style="margin-top:6px;">
         <button class="btn neutral" id="startMenuBegin">Start simulation</button>
         <button class="btn" id="startMenuDefault">Use 17000</button>
@@ -670,6 +680,36 @@
     asia:      { name:"Asia",        vol:  3.4 },
   };
 
+  const MOTION_PROFILES = {
+    tight: {
+      name: "Tight / smooth",
+      sigmaMul: 0.62,
+      jumpProbMul: 0.20,
+      jumpScaleMul: 0.28,
+      maxVelMul: 0.42,
+      flowMul: 0.78,
+      barCap: { 1: 8, 5: 16, 15: 28, 60: 65, 300: 145, 900: 240 }
+    },
+    realistic: {
+      name: "Realistic NQ",
+      sigmaMul: 0.78,
+      jumpProbMul: 0.26,
+      jumpScaleMul: 0.40,
+      maxVelMul: 0.52,
+      flowMul: 0.84,
+      barCap: { 1: 10, 5: 20, 15: 36, 60: 85, 300: 180, 900: 280 }
+    },
+    volatile: {
+      name: "Volatile session",
+      sigmaMul: 0.96,
+      jumpProbMul: 0.36,
+      jumpScaleMul: 0.56,
+      maxVelMul: 0.68,
+      flowMul: 0.95,
+      barCap: { 1: 14, 5: 28, 15: 52, 60: 120, 300: 240, 900: 360 }
+    }
+  };
+
   const canvas = $("chart");
   const ctx = canvas.getContext("2d", { alpha:true });
 
@@ -684,6 +724,7 @@
     paused: false,
     started: false,
     initialPrice: 17000,
+    motionProfileKey: "realistic",
     bias: { mode: "neutral", strength: 3 },
     sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
     sim: {
@@ -744,6 +785,27 @@
     state.toastUntil = performance.now() + 1800;
   }
 
+  function getMotionProfile() {
+    return MOTION_PROFILES[state.motionProfileKey] || MOTION_PROFILES.realistic;
+  }
+
+  function getBarRangeCap(tfSec = state.tfSec) {
+    const profile = getMotionProfile();
+    return profile.barCap[tfSec] ?? profile.barCap[5];
+  }
+
+  function clampCandidateToBarRange(candidatePrice, barKey) {
+    const cap = getBarRangeCap(state.tfSec);
+    if (!Number.isFinite(cap) || cap <= 0) return candidatePrice;
+
+    const cur = state.curBar;
+    if (cur && cur.key === barKey) {
+      const upper = cur.o + cap;
+      const lower = cur.o - cap;
+      return clamp(candidatePrice, lower, upper);
+    }
+    return candidatePrice;
+  }
 
   function setInitialPrice(value) {
     const p = roundTo(Math.max(state.tickSize, Number(value) || state.initialPrice || 17000), state.tickSize);
@@ -817,11 +879,12 @@
   function startFromMenu(forceValue=null) {
     const raw = forceValue != null ? forceValue : $("startPriceInput").value;
     const price = setInitialPrice(raw);
+    state.motionProfileKey = $("startMotionProfile").value || "realistic";
     $("startPriceInput").value = price.toFixed(decimalsFor(state.tickSize));
     bootstrapMarket();
     state.started = true;
     $("startOverlay").classList.remove("open");
-    toast(`Started at ${price.toFixed(decimalsFor(state.tickSize))}`);
+    toast(`Started at ${price.toFixed(decimalsFor(state.tickSize))} • ${getMotionProfile().name}`);
   }
 
   function resizeCanvasToDisplaySize() {
@@ -2030,6 +2093,7 @@
       state.bias.mode === "bearish" ? -1 : 0;
 
     const biasStrength = clamp(state.bias.strength, 0, 10);
+    const motion = getMotionProfile();
 
     state.sim.flow *= state.sim.flowDecay;
 
@@ -2037,14 +2101,14 @@
     state.simTime += dt;
 
     if (state.simTime >= state.sim.nextRegimeT) {
-      const randomDrift = randn() * (0.18 + 0.06 * (volKnob / 10));
-      const biasDrift = biasDir * biasStrength * (0.045 + 0.010 * volKnob);
+      const randomDrift = randn() * (0.12 + 0.038 * (volKnob / 10));
+      const biasDrift = biasDir * biasStrength * (0.026 + 0.007 * volKnob);
 
       state.sim.driftTarget = randomDrift + biasDrift;
 
-      const baseSig = 1.4 + 0.55 * volKnob;
-      state.sim.sigmaTarget = baseSig * (0.85 + 0.45 * Math.abs(randn()));
-      state.sim.nextRegimeT = state.simTime + 18 + Math.random() * 70;
+      const baseSig = (0.90 + 0.32 * volKnob) * motion.sigmaMul;
+      state.sim.sigmaTarget = baseSig * (0.90 + 0.28 * Math.abs(randn()));
+      state.sim.nextRegimeT = state.simTime + 22 + Math.random() * 85;
     }
 
     state.sim.drift = lerp(state.sim.drift, state.sim.driftTarget, 0.02);
@@ -2053,28 +2117,31 @@
     const vv = state.sim.volOfVol;
     const sig = state.sim.sigma;
     const dSig = k * (state.sim.sigmaTarget - sig) * dt + vv * Math.sqrt(dt) * randn();
-    state.sim.sigma = clamp(sig + dSig, 0.6, 40);
+    state.sim.sigma = clamp(sig + dSig, 0.35, 18);
 
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
 
-    dp += (state.sim.flow) * (impact * state.tickSize * 0.020);
+    dp += (state.sim.flow) * (impact * state.tickSize * 0.020 * motion.flowMul);
 
     maybeStartSweepEvent(volKnob);
     dp = applySweepEvent(dp);
 
     state.sim.vel = state.sim.vel * 0.72 + dp * 0.85;
 
-    const jp = state.sim.jumpProb * (0.55 + 0.06 * volKnob);
+    const jp = state.sim.jumpProb * motion.jumpProbMul * (0.40 + 0.035 * volKnob);
     if (Math.random() < jp) {
       const dir = Math.sign(randn()) || 1;
-      state.sim.vel += dir * (state.sim.jumpScale * (0.6 + Math.random() * 1.1)) * (0.65 + 0.05 * volKnob);
+      state.sim.vel += dir * (state.sim.jumpScale * motion.jumpScaleMul * (0.40 + Math.random() * 0.55)) * (0.48 + 0.035 * volKnob);
     }
 
-    const maxVel = (0.9 + 0.12 * volKnob) * (6.5 * state.tickSize);
+    const maxVel = (0.70 + 0.075 * volKnob) * (6.5 * state.tickSize) * motion.maxVelMul;
     state.sim.vel = clamp(state.sim.vel, -maxVel, maxVel);
 
-    state.sim.price = roundTo(state.sim.price + state.sim.vel, state.tickSize);
+    const nextBarKey = barKeyForTime(state.simTime, state.tfSec);
+    let nextPrice = roundTo(state.sim.price + state.sim.vel, state.tickSize);
+    nextPrice = clampCandidateToBarRange(nextPrice, nextBarKey);
+    state.sim.price = nextPrice;
 
     const tickVol =
       1 +
@@ -2601,6 +2668,7 @@
 
     const startInput = $("startPriceInput");
     startInput.value = state.initialPrice.toFixed(decimalsFor(state.tickSize));
+    $("startMotionProfile").value = state.motionProfileKey;
 
     document.querySelectorAll("[data-start-price]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -2618,7 +2686,7 @@
       if (e.target === $("startOverlay")) startInput.focus();
     });
 
-    toast("Choose starting price");
+    toast("Choose starting price and movement");
   }
 
   let lastTs = performance.now();
