@@ -1620,41 +1620,41 @@
     const map = {
       soft: {
         mode: "soft",
-        power: 3.6,
-        overshootPts: [0.75, 1.75],
-        sweepBaseSec: 7.0,
-        sweepPerPointSec: 0.11,
-        revertBaseSec: 4.4,
-        revertPerPointSec: 0.06,
-        forceMul: 0.55,
-        pulseMul: 0.22,
-        directMul: 0.02,
-        reachPolicy: "nudge"
+        power: 3.2,
+        overshootPts: [0.50, 1.25],
+        sweepBaseSec: 6.5,
+        sweepPerPointSec: 0.095,
+        revertBaseSec: 3.6,
+        revertPerPointSec: 0.05,
+        forceMul: 0.40,
+        pulseMul: 0.34,
+        directMul: 0.006,
+        reachPolicy: "probe"
       },
       normal: {
         mode: "normal",
-        power: 6.0,
-        overshootPts: [1.0, 2.5],
-        sweepBaseSec: 5.0,
-        sweepPerPointSec: 0.075,
-        revertBaseSec: 3.6,
-        revertPerPointSec: 0.05,
-        forceMul: 0.82,
-        pulseMul: 0.18,
-        directMul: 0.05,
-        reachPolicy: "assist"
+        power: 5.2,
+        overshootPts: [0.75, 2.0],
+        sweepBaseSec: 4.8,
+        sweepPerPointSec: 0.065,
+        revertBaseSec: 3.0,
+        revertPerPointSec: 0.045,
+        forceMul: 0.60,
+        pulseMul: 0.26,
+        directMul: 0.016,
+        reachPolicy: "test"
       },
       hard: {
         mode: "hard",
-        power: 8.6,
-        overshootPts: [1.5, 3.5],
-        sweepBaseSec: 3.6,
+        power: 8.0,
+        overshootPts: [1.25, 3.0],
+        sweepBaseSec: 3.8,
         sweepPerPointSec: 0.05,
-        revertBaseSec: 2.8,
+        revertBaseSec: 2.6,
         revertPerPointSec: 0.04,
-        forceMul: 1.12,
-        pulseMul: 0.12,
-        directMul: 0.10,
+        forceMul: 0.90,
+        pulseMul: 0.18,
+        directMul: 0.040,
         reachPolicy: "take"
       }
     };
@@ -1835,26 +1835,37 @@
     const progress = ev.phase === "sweep"
       ? 1 - ev.sweepTicks / Math.max(1, ev.sweepTicksMax)
       : 1 - ev.revertTicks / Math.max(1, ev.revertTicksMax);
-    const pulse = Math.sin(progress * Math.PI * (ev.source === "manual" ? 3.2 : 2.4));
     const norm = clamp(toward / Math.max(state.tickSize * 6, Math.abs(toward)), -1, 1);
 
     if (ev.phase === "sweep") {
       if (ev.source === "manual") {
-        const basePull = norm * ev.force;
-        const pulsePull = sign * ev.force * ev.pulseMul * pulse;
-        const gentleLock = sign * Math.min(Math.abs(toward) * ev.directMul, ev.force * (ev.mode === "hard" ? 1.35 : ev.mode === "normal" ? 0.75 : 0.30));
+        const cycleFreq = ev.mode === "hard" ? 3.8 : ev.mode === "normal" ? 3.1 : 2.5;
+        const rawBurst = Math.max(0, Math.sin(progress * Math.PI * cycleFreq));
+        const burstGate = ev.mode === "hard" ? 0.02 : ev.mode === "normal" ? 0.16 : 0.28;
+        const burst = rawBurst > burstGate ? rawBurst : 0;
 
-        dp += basePull + pulsePull + gentleLock;
+        const burstMul = ev.mode === "hard" ? 1.20 : ev.mode === "normal" ? 0.82 : 0.52;
+        const chaseCap = ev.mode === "hard" ? 0.95 : ev.mode === "normal" ? 0.34 : 0.14;
+        const pullProb = ev.mode === "hard" ? 0.10 : ev.mode === "normal" ? 0.18 : 0.26;
+        const pullMul = ev.mode === "hard" ? 0.10 : ev.mode === "normal" ? 0.22 : 0.30;
+        const jitterMul = ev.mode === "hard" ? 0.08 : ev.mode === "normal" ? 0.13 : 0.18;
 
-        if (ev.mode === "hard" && remainingTicks > 5) {
-          const velFloor = ev.force * Math.min(5.0, 1.2 + remainingTicks / 22);
-          state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), velFloor);
-        } else if (ev.mode === "normal" && remainingTicks > 8) {
-          const velFloor = ev.force * Math.min(2.6, 0.8 + remainingTicks / 40);
+        const burstPush = sign * ev.force * burstMul * burst;
+        const chasePush = sign * Math.min(Math.abs(toward) * ev.directMul, ev.force * chaseCap);
+        const pullback = Math.random() < pullProb
+          ? -sign * ev.force * pullMul * (0.55 + Math.random() * 0.65)
+          : 0;
+        const jitter = randn() * ev.force * jitterMul;
+
+        dp += burstPush + chasePush + pullback + jitter;
+
+        if (ev.mode === "hard" && burst > 0.35 && remainingTicks > 5) {
+          const velFloor = ev.force * Math.min(3.2, 0.9 + remainingTicks / 26);
           state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), velFloor);
         }
       } else {
-        dp += norm * ev.force + sign * ev.force * 0.08 * pulse;
+        const burst = Math.max(0, Math.sin(progress * Math.PI * 2.4));
+        dp += norm * ev.force * 0.85 + sign * ev.force * 0.16 * burst + randn() * ev.force * 0.08;
       }
 
       ev.sweepTicks -= 1;
@@ -1868,14 +1879,14 @@
 
       if (ev.source === "manual" && ev.sweepTicks <= 0 && !hitTarget) {
         if (ev.mode === "hard" && remainingTicks > 2) {
-          ev.sweepTicks = secToSimTicks(clamp(1.0 + remainingTicks * 0.018, 1.0, 6.0));
+          ev.sweepTicks = secToSimTicks(clamp(0.9 + remainingTicks * 0.016, 0.9, 5.0));
           ev.sweepTicksMax += ev.sweepTicks;
-          ev.force *= 1.06;
+          ev.force *= 1.04;
           ev.extended = true;
-        } else if (ev.mode === "normal" && remainingTicks > 6 && !ev.tookLevel) {
-          ev.sweepTicks = secToSimTicks(clamp(0.8 + remainingTicks * 0.012, 0.8, 3.5));
+        } else if (ev.mode === "normal" && !ev.extended && ev.tookLevel && remainingTicks > 2 && remainingTicks < 18) {
+          ev.sweepTicks = secToSimTicks(clamp(0.7 + remainingTicks * 0.010, 0.7, 2.5));
           ev.sweepTicksMax += ev.sweepTicks;
-          ev.force *= 1.02;
+          ev.force *= 1.01;
           ev.extended = true;
         } else {
           ev.phase = "revert";
@@ -1884,10 +1895,17 @@
         ev.phase = "revert";
       }
     } else {
-      const revertMul = ev.source === "manual"
-        ? (ev.mode === "hard" ? 1.35 : ev.mode === "normal" ? 1.10 : 0.88)
-        : 1.0;
-      dp += norm * ev.force * revertMul + sign * ev.force * 0.05 * pulse;
+      if (ev.source === "manual") {
+        const revertMul = ev.mode === "hard" ? 1.10 : ev.mode === "normal" ? 0.98 : 0.88;
+        const wobble = Math.sin(progress * Math.PI * (ev.mode === "hard" ? 2.5 : 2.1));
+        const snap = norm * ev.force * revertMul;
+        const wobblePush = sign * ev.force * 0.10 * wobble;
+        const jitter = randn() * ev.force * (ev.mode === "hard" ? 0.07 : 0.10);
+        dp += snap + wobblePush + jitter;
+      } else {
+        dp += norm * ev.force + randn() * ev.force * 0.06;
+      }
+
       ev.revertTicks -= 1;
 
       const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
