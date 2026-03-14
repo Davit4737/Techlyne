@@ -276,6 +276,7 @@
       <div class="pill">Symbol: <b id="sym">NQ (sim)</b></div>
       <div class="pill">Dev: <b>David Kyn</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
+      <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
       <div class="pill">Price: <b id="hdrPrice">—</b></div>
       <div class="pill">Pos: <b id="hdrPos">0</b></div>
       <div class="pill">uPnL: <b id="hdrPnL">—</b></div>
@@ -395,6 +396,17 @@
           </select>
         </label>
         <label>Bars on screen<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></label>
+      </div>
+
+      <div class="grid cols2">
+        <label>Bias
+          <select id="biasMode">
+            <option value="neutral" selected>Neutral</option>
+            <option value="bullish">Bullish</option>
+            <option value="bearish">Bearish</option>
+          </select>
+        </label>
+        <label>Bias strength (0–10)<input id="biasStrength" type="number" min="0" max="10" step="0.1" value="3" /></label>
       </div>
 
       <div class="grid cols2">
@@ -552,6 +564,7 @@
     volPresetKey: "nykz",
     speedMul: 1,
     paused: false,
+    bias: { mode: "neutral", strength: 3 },
     sim: {
       price: 17000,
       drift: 0,
@@ -570,7 +583,8 @@
     simTime: 0,
     tickCount: 0,
     ticks: [],
-    maxTicks: 220000,
+    maxTicks: Infinity,
+    maxBars: Infinity,
     tfSec: 5,
     bars: [],
     curBar: null,
@@ -626,6 +640,12 @@
     $("volValue").value = String(p.vol);
     state.target.vol = p.vol;
     toast(`Vol preset: ${p.name}`);
+  }
+
+  function getBiasLabel() {
+    if (state.bias.mode === "bullish") return `Bullish ${state.bias.strength.toFixed(1)}`;
+    if (state.bias.mode === "bearish") return `Bearish ${state.bias.strength.toFixed(1)}`;
+    return "Neutral";
   }
 
   function getBidAsk() {
@@ -772,7 +792,10 @@
     }
 
     state.bars.push(state.curBar);
-    if (state.bars.length > 12000) state.bars.shift();
+
+    if (Number.isFinite(state.maxBars) && state.bars.length > state.maxBars) {
+      state.bars.shift();
+    }
 
     state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
     state.indCache.len = 0;
@@ -1279,6 +1302,7 @@
     $("hdrPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
     $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
     $("hdrVol").textContent = (VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz).name;
+    $("hdrBias").textContent = getBiasLabel();
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
@@ -1322,6 +1346,9 @@
     state.indicators.ma   = $("indMa").checked;
 
     state.tool = $("tool").value;
+
+    state.bias.mode = $("biasMode").value;
+    state.bias.strength = clamp(Number($("biasStrength").value || 0), 0, 10);
   }
 
   function smoothParams() {
@@ -1337,13 +1364,23 @@
     const volKnob = clamp(state.p.vol, 1, 16);
     const impact = clamp(state.p.impact, 0, 20);
 
+    const biasDir =
+      state.bias.mode === "bullish" ? 1 :
+      state.bias.mode === "bearish" ? -1 : 0;
+
+    const biasStrength = clamp(state.bias.strength, 0, 10);
+
     state.sim.flow *= state.sim.flowDecay;
 
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
 
     if (state.simTime >= state.sim.nextRegimeT) {
-      state.sim.driftTarget = randn() * (0.18 + 0.06 * (volKnob/10));
+      const randomDrift = randn() * (0.18 + 0.06 * (volKnob / 10));
+      const biasDrift = biasDir * biasStrength * (0.045 + 0.010 * volKnob);
+
+      state.sim.driftTarget = randomDrift + biasDrift;
+
       const baseSig = 1.4 + 0.55 * volKnob;
       state.sim.sigmaTarget = baseSig * (0.85 + 0.45 * Math.abs(randn()));
       state.sim.nextRegimeT = state.simTime + 18 + Math.random() * 70;
@@ -1384,7 +1421,7 @@
     state.tickCount++;
     state.ticks.push({ t: state.simTime, p: state.sim.price, v: tickVol });
 
-    if (state.ticks.length > state.maxTicks) {
+    if (Number.isFinite(state.maxTicks) && state.ticks.length > state.maxTicks) {
       state.ticks.splice(0, 35000);
       rebuildBars(state.tfSec);
       toast("History trimmed");
@@ -1790,9 +1827,10 @@
     rebuildBars(sec);
   });
 
-  ["indVol","indVwap","indMa"].forEach(id => {
+  ["indVol","indVwap","indMa","biasMode","biasStrength"].forEach(id => {
     $(id).addEventListener("change", () => { applySettingsFromUI(); state.indCache.len = 0; });
   });
+  $("biasStrength").addEventListener("input", () => applySettingsFromUI());
 
   function stopDrip() {
     if (state.drip.timer) clearInterval(state.drip.timer);
