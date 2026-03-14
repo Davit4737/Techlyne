@@ -1650,21 +1650,21 @@
     const target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
 
     const sweepTicks = immediate
-      ? clamp(Math.round(7 + distanceTicks / 3.2 + pwr * 0.9), 9, 30)
+      ? clamp(Math.round(10 + distanceTicks / 1.9 + pwr * 1.15), 12, 140)
       : clamp(Math.round(8 + distanceTicks / 7 + pwr * 0.45), 8, 22);
 
     const revertTicks = immediate
-      ? clamp(Math.round(12 + pwr * 1.0), 14, 30)
+      ? clamp(Math.round(14 + pwr * 1.1 + distanceTicks / 10), 16, 48)
       : clamp(Math.round(12 + pwr * 0.65), 14, 26);
 
     const force = (
-      (immediate ? 1.45 : 0.46) +
-      pwr * (immediate ? 0.18 : 0.055) +
-      Math.min(immediate ? 1.9 : 0.7, distanceTicks / (immediate ? 16 : 34))
+      (immediate ? 2.25 : 0.46) +
+      pwr * (immediate ? 0.30 : 0.055) +
+      Math.min(immediate ? 6.0 : 0.7, distanceTicks / (immediate ? 6.2 : 34))
     ) * state.tickSize;
 
     const extraBarCap = immediate
-      ? Math.min(baseCap * 2.15, Math.max(10 * state.tickSize, distanceTicks * 0.60 * state.tickSize + overshoot * 1.25))
+      ? Math.min(baseCap * 6.0, Math.max(18 * state.tickSize, distanceTicks * 0.95 * state.tickSize + overshoot * 1.8))
       : Math.min(baseCap * 0.95, Math.max(5 * state.tickSize, distanceTicks * 0.22 * state.tickSize + overshoot * 0.75));
 
     state.sweep.event = {
@@ -1681,7 +1681,9 @@
       revertTicks,
       force,
       extraBarCap,
-      startedAt: state.simTime
+      distanceTicks,
+      startedAt: state.simTime,
+      extended: false
     };
 
     if (immediate) {
@@ -1766,17 +1768,29 @@
     const remainingTicks = Math.abs(toward) / Math.max(state.tickSize, 1e-9);
 
     if (ev.phase === "sweep") {
-      const pushMul = ev.source === "manual" ? 2.3 : 1.18;
-      dp += norm * ev.force * pushMul + sign * ev.force * (ev.source === "manual" ? 0.42 : 0.12);
-      if (ev.source === "manual" && remainingTicks > 6) {
-        state.sim.vel += sign * ev.force * 0.55;
+      if (ev.source === "manual") {
+        const directPull = sign * Math.min(Math.abs(toward) * 0.42, ev.force * 3.8);
+        dp += norm * ev.force * 2.8 + sign * ev.force * 0.72 + directPull;
+        if (remainingTicks > 4) {
+          const velFloor = ev.force * (2.1 + Math.min(4.2, remainingTicks / 14));
+          state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), velFloor);
+        }
+      } else {
+        dp += norm * ev.force * 1.18 + sign * ev.force * 0.12;
       }
       ev.sweepTicks -= 1;
 
       const hit = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
                   (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
 
-      if (hit || ev.sweepTicks <= 0) ev.phase = "revert";
+      if (!hit && ev.source === "manual" && ev.sweepTicks <= 0 && remainingTicks > 2) {
+        ev.sweepTicks = clamp(Math.ceil(remainingTicks / 2.6), 4, 28);
+        ev.force *= 1.14;
+        ev.extraBarCap = Math.max(ev.extraBarCap || 0, remainingTicks * state.tickSize * 0.95);
+        ev.extended = true;
+      } else if (hit || ev.sweepTicks <= 0) {
+        ev.phase = "revert";
+      }
     } else {
       const revertMul = ev.source === "manual" ? 2.1 : 1.45;
       dp += norm * ev.force * revertMul;
