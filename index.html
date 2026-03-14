@@ -279,6 +279,7 @@
       <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
       <div class="pill">Price: <b id="hdrPrice">—</b></div>
       <div class="pill">Pos: <b id="hdrPos">0</b></div>
+      <div class="pill">Exit targets: <b id="hdrExit">—</b></div>
       <div class="pill">uPnL: <b id="hdrPnL">—</b></div>
       <div class="pill">Speed: <b id="hdrSpeed">1.0x</b></div>
       <div class="pill toast">Status: <b id="toast">Ready</b></div>
@@ -358,6 +359,29 @@
 
       <div class="sep"></div>
 
+      <h2 style="border:none; padding:0; margin-top:2px;">Exit Targets <small>flatten at a chosen price</small></h2>
+      <div class="grid cols2">
+        <label>Exit price<input id="exitTargetPrice" type="number" min="0.25" step="0.25" value="0" /></label>
+        <label>Exit mode
+          <select id="exitTargetMode">
+            <option value="full" selected>Full</option>
+            <option value="p50">50%</option>
+            <option value="p25">25%</option>
+            <option value="custom">Custom qty</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid cols2">
+        <label>Custom qty<input id="exitTargetQty" type="number" min="1" step="1" value="1" /></label>
+        <label>Trigger<small class="muted">auto picks above/below from your current position</small></label>
+      </div>
+      <div class="grid cols2">
+        <button class="btn good" id="placeExitTargetBtn">🎯 Place Exit Target</button>
+        <button class="btn bad" id="clearExitTargetsBtn">✖ Clear Exit Targets</button>
+      </div>
+
+      <div class="sep"></div>
+
       <h2 style="border:none; padding:0; margin-top:2px;">Market Engine <small>volatility + timing</small></h2>
 
       <div class="grid cols2">
@@ -385,6 +409,7 @@
       </div>
 
       <div class="grid cols2">
+        <label>Initial price<input id="initialPrice" type="number" step="0.25" min="0.25" value="17000" /></label>
         <label>Timeframe
           <select id="timeframe">
             <option value="1">1s</option>
@@ -395,6 +420,9 @@
             <option value="900">15m</option>
           </select>
         </label>
+      </div>
+
+      <div class="grid cols2">
         <label>Bars on screen<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></label>
       </div>
 
@@ -470,6 +498,10 @@
           <input id="indMa" type="checkbox" checked />
           <span>20m SMA</span>
         </div>
+        <div class="toggle" id="indStructWrap">
+          <input id="indStruct" type="checkbox" checked />
+          <span>Break</span>
+        </div>
 
         <button class="btn small neutral" id="openHelp" title="Hotkey: ?">❔ Help</button>
       </div>
@@ -491,6 +523,7 @@
         <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
         <div class="stat"><div class="k">Net Pos</div><div class="v" id="stPos">0</div></div>
         <div class="stat"><div class="k">Avg</div><div class="v" id="stAvg">—</div></div>
+        <div class="stat"><div class="k">Exit Targets</div><div class="v" id="stExit">—</div></div>
         <div class="stat"><div class="k">uPnL</div><div class="v" id="stPnL">—</div></div>
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
       </div>
@@ -565,6 +598,7 @@
     speedMul: 1,
     paused: false,
     bias: { mode: "neutral", strength: 3 },
+    sweep: { event: null, cooldownUntil: 0, baseChance: 0.000028, forceBase: 0.16 },
     sim: {
       price: 17000,
       drift: 0,
@@ -592,6 +626,7 @@
     avg: null,
     nextOrderId: 1,
     limits: [],
+    exitTargets: [],
     drip: { on:false, timer:null, side:"buy" },
     view: {
       visibleBars: 160,
@@ -608,8 +643,9 @@
     tool: "cursor",
     drawings: [],
     pending: null,
-    indicators: { vol:true, vwap:true, ma:true },
+    indicators: { vol:true, vwap:true, ma:true, struct:true },
     indCache: { tfSec:null, len:0, maN:0, vwap:[], ma:[] },
+    structureCache: { tfSec:null, len:0, swings:[], events:[] },
     toastUntil: 0
   };
 
@@ -648,6 +684,28 @@
     return "Neutral";
   }
 
+  function getExitTargetsLabel() {
+    const dec = decimalsFor(state.tickSize);
+    const n = state.exitTargets.length;
+    if (!n) return "—";
+    if (n === 1) {
+      const t = state.exitTargets[0];
+      const modeLabel = t.mode === "full" ? "full" : t.mode === "p50" ? "50%" : t.mode === "p25" ? "25%" : `${t.qty}q`;
+      return `${t.price.toFixed(dec)} ${modeLabel}`;
+    }
+    return `${n} active`;
+  }
+
+  function getInitialPriceValue() {
+    const raw = Number($("initialPrice").value || state.sim.price || 17000);
+    const safe = Number.isFinite(raw) && raw > 0 ? raw : (state.sim.price || 17000);
+    return roundTo(safe, state.tickSize);
+  }
+
+  function setInitialPriceValue(price) {
+    $("initialPrice").value = roundTo(price, state.tickSize).toFixed(decimalsFor(state.tickSize));
+  }
+
   function getBidAsk() {
     const spread = state.spreadTicks * state.tickSize;
     const mid = state.sim.price;
@@ -659,9 +717,48 @@
     return (state.sim.price - state.avg) * state.pos;
   }
 
+  function clearExitTargets(silent=false) {
+    state.exitTargets = [];
+    if (!silent) toast("Exit targets cleared");
+  }
+
+  function getExitQtyFromTarget(target) {
+    const abs = Math.abs(state.pos);
+    if (abs <= 0) return 0;
+    if (target.mode === "full") return abs;
+    if (target.mode === "p50") return Math.min(abs, Math.max(1, Math.round(abs * 0.5)));
+    if (target.mode === "p25") return Math.min(abs, Math.max(1, Math.round(abs * 0.25)));
+    return Math.min(abs, Math.max(1, Math.floor(target.qty || 1)));
+  }
+
+  function placeExitTarget(price, mode, customQty) {
+    if (!state.pos || state.avg == null) { toast("Open a position first"); return; }
+    if (!Number.isFinite(price) || price <= 0) { toast("Enter a valid exit price"); return; }
+
+    price = roundTo(price, state.tickSize);
+    const posSide = state.pos > 0 ? "long" : "short";
+    const condition = posSide === "long"
+      ? (price >= state.sim.price ? "gte" : "lte")
+      : (price <= state.sim.price ? "lte" : "gte");
+
+    const id = state.nextOrderId++;
+    state.exitTargets.push({
+      id,
+      price,
+      mode,
+      qty: Math.max(1, Math.floor(customQty || 1)),
+      posSide,
+      condition,
+      createdAt: state.simTime
+    });
+    toast(`Exit target placed (#${id})`);
+  }
+
   function applyFill(side, qty, fillPrice) {
     const oldPos = state.pos;
+    const oldSign = Math.sign(oldPos);
     const newPos = oldPos + (side === "buy" ? qty : -qty);
+    const newSign = Math.sign(newPos);
 
     if (oldPos === 0) state.avg = fillPrice;
     else if (Math.sign(oldPos) === Math.sign(newPos) && newPos !== 0) {
@@ -674,6 +771,10 @@
 
     state.pos = newPos;
     state.sim.flow += (side === "buy" ? qty : -qty);
+
+    if (newPos === 0 || (oldSign !== 0 && newSign !== 0 && oldSign !== newSign)) {
+      clearExitTargets(true);
+    }
   }
 
   function marketOrder(side, qty, slipTicks) {
@@ -710,6 +811,7 @@
     const qty = Math.abs(state.pos);
     const side = state.pos > 0 ? "sell" : "buy";
     marketOrder(side, qty, getSlip());
+    clearExitTargets(true);
     toast("Flatten done");
   }
 
@@ -773,6 +875,38 @@
     if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
   }
 
+  function checkExitTargets() {
+    if (!state.exitTargets.length || state.pos === 0) return;
+    const { bid, ask } = getBidAsk();
+    const triggered = [];
+
+    for (const t of state.exitTargets) {
+      const currentSide = state.pos > 0 ? "long" : "short";
+      if (t.posSide !== currentSide) continue;
+
+      const ref = currentSide === "long" ? bid : ask;
+      const hit = t.condition === "gte" ? ref >= t.price : ref <= t.price;
+      if (!hit) continue;
+
+      const qty = getExitQtyFromTarget(t);
+      if (qty <= 0) continue;
+
+      const side = currentSide === "long" ? "sell" : "buy";
+      marketOrder(side, qty, getSlip());
+      triggered.push(t.id);
+      toast(`Exit target hit @ ${t.price.toFixed(decimalsFor(state.tickSize))}`);
+
+      if (state.pos === 0) {
+        clearExitTargets(true);
+        return;
+      }
+    }
+
+    if (triggered.length) {
+      state.exitTargets = state.exitTargets.filter(t => !triggered.includes(t.id));
+    }
+  }
+
   function barKeyForTime(t, tfSec) { return Math.floor(t / tfSec); }
 
   function ensureBarForTick(t, price, vol) {
@@ -792,13 +926,13 @@
     }
 
     state.bars.push(state.curBar);
-
     if (Number.isFinite(state.maxBars) && state.bars.length > state.maxBars) {
       state.bars.shift();
     }
 
     state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
     state.indCache.len = 0;
+    state.structureCache.len = 0;
   }
 
   function rebuildBars(tfSec) {
@@ -806,6 +940,7 @@
     state.bars = [];
     state.curBar = null;
     state.indCache = { tfSec:null, len:0, maN:0, vwap:[], ma:[] };
+    state.structureCache = { tfSec:null, len:0, swings:[], events:[] };
 
     for (const tk of state.ticks) ensureBarForTick(tk.t, tk.p, tk.v);
 
@@ -852,15 +987,34 @@
       max = Math.max(max, b.h);
     }
 
-    for (const o of state.limits) {
-      min = Math.min(min, o.price);
-      max = Math.max(max, o.price);
-    }
-
     if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
       min = state.sim.price - 50 * state.tickSize;
       max = state.sim.price + 50 * state.tickSize;
     }
+
+    const baseMin = min;
+    const baseMax = max;
+    const baseRange = Math.max(baseMax - baseMin, state.tickSize * 80);
+    const includeBand = Math.max(baseRange * 1.35, state.tickSize * 160);
+    const lowBound = baseMin - includeBand;
+    const highBound = baseMax + includeBand;
+
+    for (const o of state.limits) {
+      if (o.price >= lowBound && o.price <= highBound) {
+        min = Math.min(min, o.price);
+        max = Math.max(max, o.price);
+      }
+    }
+
+    for (const t of state.exitTargets) {
+      if (t.price >= lowBound && t.price <= highBound) {
+        min = Math.min(min, t.price);
+        max = Math.max(max, t.price);
+      }
+    }
+
+    min = Math.min(min, state.sim.price - baseRange * 0.20);
+    max = Math.max(max, state.sim.price + baseRange * 0.20);
 
     const pad = (max - min) * 0.12 + state.tickSize * 18;
     return { min: min - pad, max: max + pad };
@@ -995,6 +1149,66 @@
     return state.indCache;
   }
 
+  function computeStructure(allBars) {
+    const tfSec = state.tfSec;
+    const len = allBars.length;
+
+    if (state.structureCache.tfSec === tfSec && state.structureCache.len === len) {
+      return state.structureCache;
+    }
+
+    const swings = [];
+    const events = [];
+    const brokenHighs = new Set();
+    const brokenLows = new Set();
+
+    if (len >= 7) {
+      for (let i = 2; i < len - 2; i++) {
+        const b = allBars[i];
+
+        const isSwingHigh =
+          b.h > allBars[i-1].h && b.h >= allBars[i-2].h &&
+          b.h > allBars[i+1].h && b.h >= allBars[i+2].h;
+
+        const isSwingLow =
+          b.l < allBars[i-1].l && b.l <= allBars[i-2].l &&
+          b.l < allBars[i+1].l && b.l <= allBars[i+2].l;
+
+        if (isSwingHigh) swings.push({ i, kind:"high", price:b.h });
+        if (isSwingLow) swings.push({ i, kind:"low", price:b.l });
+      }
+
+      swings.sort((a,b) => a.i - b.i);
+
+      let activeHigh = null;
+      let activeLow = null;
+
+      for (let i = 0; i < len; i++) {
+        for (const s of swings) {
+          if (s.i === i) {
+            if (s.kind === "high") activeHigh = s;
+            else activeLow = s;
+          }
+        }
+
+        const close = allBars[i].c;
+
+        if (activeHigh && !brokenHighs.has(activeHigh.i) && close > activeHigh.price + state.tickSize * 0.1) {
+          events.push({ i, type: "Break", dir: "up", level: activeHigh.price });
+          brokenHighs.add(activeHigh.i);
+        }
+
+        if (activeLow && !brokenLows.has(activeLow.i) && close < activeLow.price - state.tickSize * 0.1) {
+          events.push({ i, type: "Break", dir: "down", level: activeLow.price });
+          brokenLows.add(activeLow.i);
+        }
+      }
+    }
+
+    state.structureCache = { tfSec, len, swings, events };
+    return state.structureCache;
+  }
+
   function distPointToSegment(px,py, x1,y1, x2,y2) {
     const dx = x2 - x1, dy = y2 - y1;
     if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
@@ -1043,6 +1257,92 @@
     return -1;
   }
 
+  function maybeStartSweepEvent(volKnob) {
+    if (state.sweep.event) return;
+    if (state.simTime < state.sweep.cooldownUntil) return;
+
+    const bars = getAllBarsForRender();
+    if (bars.length < 42) return;
+
+    const recent = bars.slice(Math.max(0, bars.length - 32), bars.length - 1);
+    if (recent.length < 20) return;
+
+    let high = -Infinity, low = Infinity, sumRange = 0;
+    for (const b of recent) {
+      high = Math.max(high, b.h);
+      low = Math.min(low, b.l);
+      sumRange += (b.h - b.l);
+    }
+    if (!Number.isFinite(high) || !Number.isFinite(low)) return;
+
+    const totalRange = high - low;
+    const avgRange = sumRange / Math.max(1, recent.length);
+    if (totalRange < state.tickSize * 18) return;
+
+    const last = recent[recent.length - 1];
+    const impulse = Math.abs(last.c - last.o);
+    const velAbs = Math.abs(state.sim.vel);
+    if (impulse < state.tickSize * 3 && velAbs < state.tickSize * 2.2) return;
+
+    const closePos = (last.c - low) / Math.max(state.tickSize, totalRange);
+    let dir;
+    if (closePos > 0.72) dir = Math.random() < 0.75 ? "up" : "down";
+    else if (closePos < 0.28) dir = Math.random() < 0.75 ? "down" : "up";
+    else dir = Math.random() < 0.5 ? "up" : "down";
+
+    const impulseBoost = clamp((impulse / Math.max(state.tickSize, avgRange)) * 0.9 + (velAbs / Math.max(state.tickSize, avgRange)) * 0.35, 0.7, 1.9);
+    const chance = state.sweep.baseChance * (0.85 + volKnob * 0.055) * impulseBoost;
+    if (Math.random() >= chance) return;
+
+    const overshootTicks = 1 + Math.floor(Math.random() * (2 + Math.round(volKnob / 6)));
+    const overshoot = overshootTicks * state.tickSize;
+    const returnDepth = Math.max(totalRange * 0.20, avgRange * 1.15, 6 * state.tickSize);
+
+    const target1 = dir === "up" ? high + overshoot : low - overshoot;
+    const target2 = dir === "up" ? high - returnDepth : low + returnDepth;
+
+    state.sweep.event = {
+      dir,
+      phase: "sweep",
+      target1,
+      target2,
+      sweepTicks: 7 + Math.floor(Math.random() * 6),
+      revertTicks: 10 + Math.floor(Math.random() * 10),
+      force: (state.sweep.forceBase + volKnob * 0.012) * state.tickSize
+    };
+
+    state.sweep.cooldownUntil = state.simTime + 45 + Math.random() * 75;
+  }
+
+  function applySweepEvent(dp) {
+    const ev = state.sweep.event;
+    if (!ev) return dp;
+
+    const target = ev.phase === "sweep" ? ev.target1 : ev.target2;
+    const toward = target - state.sim.price;
+    const norm = clamp(toward / Math.max(state.tickSize * 6, Math.abs(toward)), -1, 1);
+
+    if (ev.phase === "sweep") {
+      dp += norm * ev.force;
+      ev.sweepTicks -= 1;
+      const hit = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
+                  (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
+      if (hit || ev.sweepTicks <= 0) {
+        ev.phase = "revert";
+      }
+    } else {
+      dp += norm * ev.force * 1.45;
+      ev.revertTicks -= 1;
+      const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
+                  (ev.dir === "down" && state.sim.price >= ev.target2 - state.tickSize);
+      if (hit || ev.revertTicks <= 0) {
+        state.sweep.event = null;
+      }
+    }
+
+    return dp;
+  }
+
   function drawChart() {
     resizeCanvasToDisplaySize();
     const rect = canvas.getBoundingClientRect();
@@ -1059,6 +1359,7 @@
 
     const dec = decimalsFor(state.tickSize);
 
+    ctx.clearRect(0,0,w,h);
     ctx.fillStyle = "rgba(5,8,12,0.35)";
     ctx.fillRect(geo.plotX0, geo.priceY0, geo.plotX1-geo.plotX0, geo.priceY1-geo.priceY0);
 
@@ -1184,6 +1485,28 @@
       ctx.stroke();
     }
 
+    if (state.indicators.struct) {
+      const struct = computeStructure(allBars);
+
+      for (const ev of struct.events) {
+        if (ev.i < i0 - 3 || ev.i > i1 + 3) continue;
+        const x = geo.xCenterOfPos(ev.i);
+        const y = geo.yOf(ev.level);
+
+        ctx.strokeStyle = ev.dir === "up" ? "rgba(61,220,151,0.45)" : "rgba(255,91,110,0.45)";
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(geo.plotX0, y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "rgba(231,238,247,0.95)";
+        ctx.font = "bold 11px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(`Break ${ev.dir === "up" ? "↑" : "↓"}`, x + 6, ev.dir === "up" ? y - 14 : y + 14);
+      }
+    }
+
     for (const o of state.limits) {
       const y = geo.yOf(o.price);
       ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
@@ -1195,6 +1518,20 @@
 
       ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
       ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(dec)} (${o.left})`, geo.plotX0 + 10, y - 10);
+    }
+
+    for (const t of state.exitTargets) {
+      const y = geo.yOf(t.price);
+      const lineColor = t.condition === "gte" ? "rgba(61,220,151,0.90)" : "rgba(255,91,110,0.90)";
+      const textColor = t.condition === "gte" ? "rgba(189,248,222,0.98)" : "rgba(255,208,215,0.98)";
+      const modeLabel = t.mode === "full" ? "FULL" : t.mode === "p50" ? "50%" : t.mode === "p25" ? "25%" : `${t.qty}Q`;
+      const trigLabel = t.condition === "gte" ? ">=" : "<=";
+      ctx.strokeStyle = lineColor;
+      ctx.setLineDash([8,4]);
+      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = textColor;
+      ctx.fillText(`EXIT ${modeLabel} ${trigLabel} ${t.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
     }
 
     for (const d of state.drawings) {
@@ -1303,11 +1640,13 @@
     $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
     $("hdrVol").textContent = (VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz).name;
     $("hdrBias").textContent = getBiasLabel();
+    $("hdrExit").textContent = getExitTargetsLabel();
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
     $("stPos").textContent = String(state.pos);
     $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(dec);
+    $("stExit").textContent = getExitTargetsLabel();
     $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
 
     if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
@@ -1341,14 +1680,16 @@
     const volManual = clamp(Number($("volValue").value || state.target.vol), 1, 16);
     state.target.vol = volManual;
 
-    state.indicators.vol  = $("indVol").checked;
-    state.indicators.vwap = $("indVwap").checked;
-    state.indicators.ma   = $("indMa").checked;
+    state.indicators.vol    = $("indVol").checked;
+    state.indicators.vwap   = $("indVwap").checked;
+    state.indicators.ma     = $("indMa").checked;
+    state.indicators.struct = $("indStruct").checked;
 
     state.tool = $("tool").value;
 
     state.bias.mode = $("biasMode").value;
     state.bias.strength = clamp(Number($("biasStrength").value || 0), 0, 10);
+
   }
 
   function smoothParams() {
@@ -1399,6 +1740,9 @@
 
     dp += (state.sim.flow) * (impact * state.tickSize * 0.020);
 
+    maybeStartSweepEvent(volKnob);
+    dp = applySweepEvent(dp);
+
     state.sim.vel = state.sim.vel * 0.72 + dp * 0.85;
 
     const jp = state.sim.jumpProb * (0.55 + 0.06 * volKnob);
@@ -1429,6 +1773,7 @@
 
     ensureBarForTick(state.simTime, state.sim.price, tickVol);
     matchLimits();
+    checkExitTargets();
 
     if (state.view.follow) {
       const all = getAllBarsForRender();
@@ -1799,6 +2144,13 @@
   $("flatten").addEventListener("click", flatten);
   $("flatten50").addEventListener("click", () => partialFlatten(0.5));
   $("flatten25").addEventListener("click", () => partialFlatten(0.25));
+  $("placeExitTargetBtn").addEventListener("click", () => {
+    const price = Number($("exitTargetPrice").value || 0);
+    const mode = $("exitTargetMode").value;
+    const customQty = Number($("exitTargetQty").value || 1);
+    placeExitTarget(price, mode, customQty);
+  });
+  $("clearExitTargetsBtn").addEventListener("click", () => clearExitTargets());
 
   $("pause").addEventListener("click", () => {
     state.paused = !state.paused;
@@ -1827,10 +2179,15 @@
     rebuildBars(sec);
   });
 
-  ["indVol","indVwap","indMa","biasMode","biasStrength"].forEach(id => {
-    $(id).addEventListener("change", () => { applySettingsFromUI(); state.indCache.len = 0; });
+  ["indVol","indVwap","indMa","indStruct","biasMode","biasStrength"].forEach(id => {
+    $(id).addEventListener("change", () => {
+      applySettingsFromUI();
+      state.indCache.len = 0;
+      state.structureCache.len = 0;
+    });
   });
   $("biasStrength").addEventListener("input", () => applySettingsFromUI());
+  $("initialPrice").addEventListener("blur", () => setInitialPriceValue(getInitialPriceValue()));
 
   function stopDrip() {
     if (state.drip.timer) clearInterval(state.drip.timer);
@@ -1865,7 +2222,7 @@
   $("reset").addEventListener("click", () => {
     stopDrip();
 
-    state.sim.price = 17000;
+    state.sim.price = getInitialPriceValue();
     state.sim.drift = 0;
     state.sim.driftTarget = 0;
     state.sim.sigma = 3.2;
@@ -1878,6 +2235,7 @@
     state.avg = null;
     state.limits = [];
     state.nextOrderId = 1;
+    clearExitTargets(true);
 
     state.drawings = [];
     state.pending = null;
@@ -1890,11 +2248,14 @@
     state.y.scale = 1.0;
     state.y.offset = 0.0;
 
+    state.sweep.event = null;
     state.simTime = 0;
     state.tickCount = 0;
     state.ticks = [];
     state.bars = [];
     state.curBar = null;
+    state.indCache = { tfSec:null, len:0, maN:0, vwap:[], ma:[] };
+    state.structureCache = { tfSec:null, len:0, swings:[], events:[] };
 
     applySettingsFromUI();
 
@@ -1910,8 +2271,10 @@
     rebuildBars(state.tfSec);
 
     const dec = decimalsFor(state.tickSize);
+    setInitialPriceValue(state.sim.price);
     $("limitPrice").value = state.sim.price.toFixed(dec);
     $("ladderStart").value = state.sim.price.toFixed(dec);
+    $("exitTargetPrice").value = state.sim.price.toFixed(dec);
 
     toast("Reset complete");
   });
@@ -1956,14 +2319,24 @@
   helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove("open"); });
 
   function init() {
-    $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
-    $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
-
     $("volPreset").value = state.volPresetKey;
     setVolPreset(state.volPresetKey);
 
     applySettingsFromUI();
     resizeCanvasToDisplaySize();
+
+    let startPrice = getInitialPriceValue();
+    const asked = window.prompt("Enter starting price", String(startPrice));
+    if (asked !== null && asked.trim() !== "") {
+      const parsed = Number(asked);
+      if (Number.isFinite(parsed) && parsed > 0) startPrice = roundTo(parsed, state.tickSize);
+    }
+
+    state.sim.price = startPrice;
+    setInitialPriceValue(startPrice);
+    $("limitPrice").value = startPrice.toFixed(decimalsFor(state.tickSize));
+    $("ladderStart").value = startPrice.toFixed(decimalsFor(state.tickSize));
+    $("exitTargetPrice").value = startPrice.toFixed(decimalsFor(state.tickSize));
 
     const warmSeconds = 14 * 60;
     const baseHz = Math.max(20, state.p.simHzBase);
