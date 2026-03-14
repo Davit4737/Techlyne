@@ -795,10 +795,15 @@
   }
 
   function clampCandidateToBarRange(candidatePrice, barKey) {
-    const cap = getBarRangeCap(state.tfSec);
+    let cap = getBarRangeCap(state.tfSec);
     if (!Number.isFinite(cap) || cap <= 0) return candidatePrice;
 
     const cur = state.curBar;
+    const ev = state.sweep.event;
+    if (ev && cur && cur.key === barKey) {
+      cap += Math.max(0, ev.extraBarCap || 0);
+    }
+
     if (cur && cur.key === barKey) {
       const upper = cur.o + cap;
       const lower = cur.o - cap;
@@ -1481,9 +1486,9 @@
     const highs = [];
     const lows = [];
 
-    if (bars.length < 10) return { bars, highs, lows, range: 20 * state.tickSize };
+    if (bars.length < 12) return { bars, highs, lows, range: 20 * state.tickSize };
 
-    const from = Math.max(3, bars.length - 95);
+    const from = Math.max(3, bars.length - 140);
     const to = bars.length - 3;
 
     for (let i = from; i <= to; i++) {
@@ -1497,11 +1502,11 @@
         b.l <= bars[i-1].l && b.l < bars[i-2].l &&
         b.l <= bars[i+1].l && b.l < bars[i+2].l;
 
-      if (isHigh) highs.push({ idx: i, price: b.h });
-      if (isLow) lows.push({ idx: i, price: b.l });
+      if (isHigh) highs.push({ idx: i, price: roundTo(b.h, state.tickSize) });
+      if (isLow) lows.push({ idx: i, price: roundTo(b.l, state.tickSize) });
     }
 
-    const recent = bars.slice(Math.max(0, bars.length - 40));
+    const recent = bars.slice(Math.max(0, bars.length - 50));
     let hi = -Infinity, lo = Infinity;
     for (const b of recent) {
       hi = Math.max(hi, b.h);
@@ -1512,15 +1517,23 @@
     return { bars, highs, lows, range };
   }
 
-  function pickSweepLevel(dir) {
+  function pickSweepLevel(dir, opts = {}) {
+    const { allowFallback = true, requireNearby = false } = opts;
     const info = findRecentSweepLevels();
     const px = state.sim.price;
     const minDist = 3 * state.tickSize;
+    const maxDist = Math.max(info.range * 1.45, 48 * state.tickSize);
+
+    const scoreCandidate = (x) => {
+      const dist = Math.abs(x.price - px) / state.tickSize;
+      const age = Math.max(1, info.bars.length - 1 - x.idx);
+      return dist + age * 0.06;
+    };
 
     if (dir === "up") {
       const above = info.highs
-        .filter(x => x.price > px + minDist)
-        .sort((a, b) => (a.price - px) - (b.price - px));
+        .filter(x => x.price > px + minDist && x.price - px <= maxDist)
+        .sort((a, b) => scoreCandidate(a) - scoreCandidate(b));
 
       if (above.length) {
         const nearest = above[0];
@@ -1528,22 +1541,26 @@
           level: nearest.price,
           kind: "swing high",
           range: info.range,
-          distance: Math.abs(nearest.price - px)
+          distance: Math.abs(nearest.price - px),
+          isFallback: false
         };
       }
 
-      const fallback = roundTo(px + Math.max(info.range * 0.22, 12 * state.tickSize), state.tickSize);
+      if (!allowFallback || requireNearby) return null;
+
+      const fallback = roundTo(px + Math.max(Math.min(info.range * 0.30, 26 * state.tickSize), 12 * state.tickSize), state.tickSize);
       return {
         level: fallback,
         kind: "fallback high",
         range: info.range,
-        distance: Math.abs(fallback - px)
+        distance: Math.abs(fallback - px),
+        isFallback: true
       };
     }
 
     const below = info.lows
-      .filter(x => x.price < px - minDist)
-      .sort((a, b) => (px - a.price) - (px - b.price));
+      .filter(x => x.price < px - minDist && px - x.price <= maxDist)
+      .sort((a, b) => scoreCandidate(a) - scoreCandidate(b));
 
     if (below.length) {
       const nearest = below[0];
@@ -1551,98 +1568,110 @@
         level: nearest.price,
         kind: "swing low",
         range: info.range,
-        distance: Math.abs(nearest.price - px)
+        distance: Math.abs(nearest.price - px),
+        isFallback: false
       };
     }
 
-    const fallback = roundTo(px - Math.max(info.range * 0.22, 12 * state.tickSize), state.tickSize);
+    if (!allowFallback || requireNearby) return null;
+
+    const fallback = roundTo(px - Math.max(Math.min(info.range * 0.30, 26 * state.tickSize), 12 * state.tickSize), state.tickSize);
     return {
       level: fallback,
       kind: "fallback low",
       range: info.range,
-      distance: Math.abs(fallback - px)
+      distance: Math.abs(fallback - px),
+      isFallback: true
     };
   }
 
   function chooseAutoSweepDirection() {
-    const up = pickSweepLevel("up");
-    const down = pickSweepLevel("down");
+    const up = pickSweepLevel("up", { allowFallback: false, requireNearby: true });
+    const down = pickSweepLevel("down", { allowFallback: false, requireNearby: true });
     const bars = getAllBarsForRender();
-    if (bars.length < 8) return null;
+    if (bars.length < 12) return null;
 
     const last = bars[bars.length - 1].c;
-    const prev = bars[Math.max(0, bars.length - 5)].c;
+    const prev = bars[Math.max(0, bars.length - 6)].c;
     const momentum = last - prev;
     const momTicks = momentum / Math.max(state.tickSize, 1e-9);
 
-    const upScore =
-      (up ? Math.max(0, 40 - up.distance / state.tickSize) : -999) +
-      Math.max(0, momTicks * 0.9);
+    const upScore = up
+      ? Math.max(0, 55 - up.distance / state.tickSize) + Math.max(0, momTicks * 0.75)
+      : -999;
 
-    const downScore =
-      (down ? Math.max(0, 40 - down.distance / state.tickSize) : -999) +
-      Math.max(0, -momTicks * 0.9);
+    const downScore = down
+      ? Math.max(0, 55 - down.distance / state.tickSize) + Math.max(0, -momTicks * 0.75)
+      : -999;
 
-    if (upScore < 2 && downScore < 2) return null;
-    if (Math.abs(upScore - downScore) < 2) return Math.random() > 0.5 ? "up" : "down";
+    if (upScore < 6 && downScore < 6) return null;
+    if (Math.abs(upScore - downScore) < 3) return Math.random() > 0.5 ? "up" : "down";
     return upScore > downScore ? "up" : "down";
   }
 
   function createSweepEvent(dir, power=5, immediate=false, source="auto") {
-    const sideInfo = pickSweepLevel(dir);
+    const sideInfo = pickSweepLevel(dir, { allowFallback: true, requireNearby: !immediate && source === "auto" });
     if (!sideInfo || !Number.isFinite(sideInfo.level)) return false;
 
     const pwr = clamp(Number(power) || 5, 1, 10);
     const sign = dir === "up" ? 1 : -1;
     const distanceTicks = Math.max(1, Math.abs(sideInfo.level - state.sim.price) / state.tickSize);
+    const baseCap = getBarRangeCap(state.tfSec);
 
     const overshootTicks = immediate
-      ? (6 + Math.floor(pwr * 1.6))
-      : (3 + Math.floor(pwr * 0.9) + Math.floor(Math.random() * 3));
+      ? clamp(Math.round(5 + pwr * 1.15 + distanceTicks * 0.035), 6, 24)
+      : clamp(Math.round(2 + pwr * 0.45 + Math.random() * 2), 3, 10);
 
     const overshoot = overshootTicks * state.tickSize;
     const returnDepth = Math.max(
-      sideInfo.range * (immediate ? 0.34 : 0.24),
-      (immediate ? 14 : 9) * state.tickSize
+      sideInfo.range * (immediate ? 0.30 : 0.20),
+      (immediate ? 12 : 8) * state.tickSize
     );
 
     const target1 = roundTo(sideInfo.level + sign * overshoot, state.tickSize);
     const target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
 
     const sweepTicks = immediate
-      ? clamp(Math.round(8 + distanceTicks / 4 + pwr * 0.8), 10, 32)
-      : clamp(Math.round(10 + distanceTicks / 6 + pwr * 0.5), 10, 26);
+      ? clamp(Math.round(7 + distanceTicks / 3.2 + pwr * 0.9), 9, 30)
+      : clamp(Math.round(8 + distanceTicks / 7 + pwr * 0.45), 8, 22);
 
     const revertTicks = immediate
-      ? clamp(Math.round(14 + pwr * 1.1), 16, 34)
-      : clamp(Math.round(16 + pwr * 0.8), 16, 30);
+      ? clamp(Math.round(12 + pwr * 1.0), 14, 30)
+      : clamp(Math.round(12 + pwr * 0.65), 14, 26);
 
-    const force =
-      (
-        (immediate ? 1.00 : 0.32) +
-        pwr * (immediate ? 0.15 : 0.05) +
-        Math.min(immediate ? 1.5 : 0.75, distanceTicks / (immediate ? 20 : 34))
-      ) * state.tickSize;
+    const force = (
+      (immediate ? 1.45 : 0.46) +
+      pwr * (immediate ? 0.18 : 0.055) +
+      Math.min(immediate ? 1.9 : 0.7, distanceTicks / (immediate ? 16 : 34))
+    ) * state.tickSize;
+
+    const extraBarCap = immediate
+      ? Math.min(baseCap * 2.15, Math.max(10 * state.tickSize, distanceTicks * 0.60 * state.tickSize + overshoot * 1.25))
+      : Math.min(baseCap * 0.95, Math.max(5 * state.tickSize, distanceTicks * 0.22 * state.tickSize + overshoot * 0.75));
 
     state.sweep.event = {
       dir,
       source,
       phase: "sweep",
+      power: pwr,
       level: roundTo(sideInfo.level, state.tickSize),
       levelKind: sideInfo.kind,
+      isFallback: !!sideInfo.isFallback,
       target1,
       target2,
       sweepTicks,
       revertTicks,
       force,
+      extraBarCap,
       startedAt: state.simTime
     };
 
     if (immediate) {
-      state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), force * 3.2);
-      state.sim.flow += sign * (2 + pwr * 0.8);
+      state.sim.vel = sign * Math.max(Math.abs(state.sim.vel), force * 4.8);
+      state.sim.flow += sign * (4 + pwr * 1.2);
     } else {
-      state.sim.vel += sign * force * 0.65;
+      state.sim.vel += sign * force * 0.95;
+      state.sim.flow += sign * (0.8 + pwr * 0.16);
     }
 
     return true;
@@ -1650,8 +1679,8 @@
 
   function executeManualSweep(side, strength) {
     const dir = side === "sell" ? "down" : "up";
-    const strengthMap = { soft: 4.5, normal: 7, hard: 9.5 };
-    const power = strengthMap[strength] ?? 7;
+    const strengthMap = { soft: 4.5, normal: 7.5, hard: 10 };
+    const power = strengthMap[strength] ?? 7.5;
 
     state.sweep.event = null;
     const ok = createSweepEvent(dir, power, true, "manual");
@@ -1668,16 +1697,22 @@
     if (state.simTime < state.sweep.cooldownUntil) return;
 
     const bars = getAllBarsForRender();
-    if (bars.length < 30) return;
-
-    const chance = (0.00008 + state.sweep.power * 0.000035) * (0.80 + 0.04 * volKnob);
-    if (Math.random() >= chance) return;
+    if (bars.length < 40) return;
 
     const dir = chooseAutoSweepDirection();
     if (!dir) return;
 
+    const sideInfo = pickSweepLevel(dir, { allowFallback: false, requireNearby: true });
+    if (!sideInfo) return;
+
+    const distTicks = sideInfo.distance / Math.max(state.tickSize, 1e-9);
+    if (distTicks < 4 || distTicks > 70) return;
+
+    const chance = (0.000018 + state.sweep.power * 0.000011) * (0.72 + 0.03 * volKnob);
+    if (Math.random() >= chance) return;
+
     if (createSweepEvent(dir, state.sweep.power, false, "auto")) {
-      state.sweep.cooldownUntil = state.simTime + 45 + Math.random() * 90;
+      state.sweep.cooldownUntil = state.simTime + 70 + Math.random() * 150;
       toast(dir === "up" ? "Auto sweep ↑" : "Auto sweep ↓");
     }
   }
@@ -1689,11 +1724,15 @@
     const target = ev.phase === "sweep" ? ev.target1 : ev.target2;
     const toward = target - state.sim.price;
     const sign = ev.dir === "up" ? 1 : -1;
-    const norm = clamp(toward / Math.max(state.tickSize * 3, Math.abs(toward)), -1, 1);
+    const norm = clamp(toward / Math.max(state.tickSize * 2, Math.abs(toward)), -1, 1);
+    const remainingTicks = Math.abs(toward) / Math.max(state.tickSize, 1e-9);
 
     if (ev.phase === "sweep") {
-      const push = ev.force * (ev.source === "manual" ? 1.25 : 1.0);
-      dp += norm * push + sign * ev.force * 0.10;
+      const pushMul = ev.source === "manual" ? 2.3 : 1.18;
+      dp += norm * ev.force * pushMul + sign * ev.force * (ev.source === "manual" ? 0.42 : 0.12);
+      if (ev.source === "manual" && remainingTicks > 6) {
+        state.sim.vel += sign * ev.force * 0.55;
+      }
       ev.sweepTicks -= 1;
 
       const hit = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
@@ -1701,7 +1740,8 @@
 
       if (hit || ev.sweepTicks <= 0) ev.phase = "revert";
     } else {
-      dp += norm * ev.force * (ev.source === "manual" ? 1.85 : 1.55);
+      const revertMul = ev.source === "manual" ? 2.1 : 1.45;
+      dp += norm * ev.force * revertMul;
       ev.revertTicks -= 1;
 
       const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
