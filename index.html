@@ -432,7 +432,7 @@
       <div class="sep"></div>
 
       <h2 style="border:none; padding:0; margin-top:2px;">Liquidity Sweep <small>fake movement</small></h2>
-      <div class="grid cols2">
+      <div class="grid cols3">
         <label>Sweep side
           <select id="manualSweepSide">
             <option value="buy">Buy sweep (fake up)</option>
@@ -445,6 +445,9 @@
             <option value="normal" selected>Normal</option>
             <option value="hard">Hard</option>
           </select>
+        </label>
+        <label>Sweep level price
+          <input id="manualSweepLevel" type="number" min="0.25" step="0.25" value="0" />
         </label>
       </div>
       <button class="btn warn" id="executeManualSweep">⚡ Execute Sweep</button>
@@ -1609,8 +1612,23 @@
     return upScore > downScore ? "up" : "down";
   }
 
-  function createSweepEvent(dir, power=5, immediate=false, source="auto") {
-    const sideInfo = pickSweepLevel(dir, { allowFallback: true, requireNearby: !immediate && source === "auto" });
+  function createSweepEvent(dir, power=5, immediate=false, source="auto", manualLevel=null) {
+    let sideInfo = null;
+
+    if (Number.isFinite(manualLevel)) {
+      const px = state.sim.price;
+      const snapped = roundTo(manualLevel, state.tickSize);
+      sideInfo = {
+        level: snapped,
+        kind: "manual level",
+        range: Math.max(12 * state.tickSize, Math.abs(snapped - px), findRecentSweepLevels().range || 12 * state.tickSize),
+        distance: Math.abs(snapped - px),
+        isFallback: false
+      };
+    } else {
+      sideInfo = pickSweepLevel(dir, { allowFallback: true, requireNearby: !immediate && source === "auto" });
+    }
+
     if (!sideInfo || !Number.isFinite(sideInfo.level)) return false;
 
     const pwr = clamp(Number(power) || 5, 1, 10);
@@ -1682,14 +1700,34 @@
     const strengthMap = { soft: 4.5, normal: 7.5, hard: 10 };
     const power = strengthMap[strength] ?? 7.5;
 
+    let manualLevel = Number($("manualSweepLevel").value || 0);
+    if (!Number.isFinite(manualLevel) || manualLevel <= 0) manualLevel = null;
+    else manualLevel = roundTo(manualLevel, state.tickSize);
+
+    if (manualLevel != null) {
+      const minGap = state.tickSize;
+      if (dir === "up" && manualLevel <= state.sim.price + minGap) {
+        toast("For buy sweep set level above current price");
+        return;
+      }
+      if (dir === "down" && manualLevel >= state.sim.price - minGap) {
+        toast("For sell sweep set level below current price");
+        return;
+      }
+    }
+
     state.sweep.event = null;
-    const ok = createSweepEvent(dir, power, true, "manual");
+    const ok = createSweepEvent(dir, power, true, "manual", manualLevel);
     if (!ok) {
       toast("Not enough chart history for sweep");
       return;
     }
 
-    toast(dir === "up" ? "Manual buy sweep ↑" : "Manual sell sweep ↓");
+    toast(
+      manualLevel != null
+        ? `${dir === "up" ? "Manual buy" : "Manual sell"} sweep → ${manualLevel.toFixed(decimalsFor(state.tickSize))}`
+        : (dir === "up" ? "Manual buy sweep ↑" : "Manual sell sweep ↓")
+    );
   }
 
   function maybeStartSweepEvent(volKnob) {
@@ -2699,6 +2737,7 @@
     $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("exitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    $("manualSweepLevel").value = "0";
 
     $("volPreset").value = state.volPresetKey;
     setVolPreset(state.volPresetKey);
