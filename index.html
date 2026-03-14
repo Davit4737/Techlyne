@@ -431,6 +431,26 @@
 
       <div class="sep"></div>
 
+      <h2 style="border:none; padding:0; margin-top:2px;">Liquidity Sweep <small>fake movement</small></h2>
+      <div class="grid cols2">
+        <label>Sweep side
+          <select id="manualSweepSide">
+            <option value="buy">Buy sweep (fake up)</option>
+            <option value="sell">Sell sweep (fake down)</option>
+          </select>
+        </label>
+        <label>Sweep strength
+          <select id="manualSweepStrength">
+            <option value="soft">Soft</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn warn" id="executeManualSweep">⚡ Execute Sweep</button>
+
+      <div class="sep"></div>
+
       <h2 style="border:none; padding:0; margin-top:2px;">Market Engine <small>volatility + timing</small></h2>
 
       <div class="grid cols2">
@@ -665,7 +685,7 @@
     started: false,
     initialPrice: 17000,
     bias: { mode: "neutral", strength: 3 },
-    sweep: { enabled: true, power: 5, event: null },
+    sweep: { enabled: false, power: 5, event: null },
     sim: {
       price: 17000,
       drift: 0,
@@ -1376,13 +1396,9 @@
     return -1;
   }
 
-  function maybeStartSweepEvent(volKnob) {
-    if (!state.sweep.enabled || state.sweep.power <= 0 || state.sweep.event) return;
+  function createSweepEvent(dir, power=5, immediate=false) {
     const bars = getAllBarsForRender();
-    if (bars.length < 30) return;
-
-    const chance = (0.00045 + state.sweep.power * 0.00028) * (0.65 + 0.05 * volKnob);
-    if (Math.random() >= chance) return;
+    if (bars.length < 30) return false;
 
     const recent = bars.slice(Math.max(0, bars.length - 28), bars.length - 1);
     let high = -Infinity, low = Infinity;
@@ -1390,12 +1406,14 @@
       high = Math.max(high, b.h);
       low = Math.min(low, b.l);
     }
-    if (!Number.isFinite(high) || !Number.isFinite(low)) return;
+    if (!Number.isFinite(high) || !Number.isFinite(low)) return false;
 
-    const dir = Math.random() > 0.5 ? "up" : "down";
-    const overshootTicks = 2 + Math.floor(Math.random() * (3 + Math.round(state.sweep.power)));
+    const pwr = clamp(Number(power) || 5, 1, 10);
+    const overshootTicks = immediate
+      ? (4 + Math.floor(pwr * 0.8))
+      : (2 + Math.floor(Math.random() * (3 + Math.round(pwr))));
     const overshoot = overshootTicks * state.tickSize;
-    const returnDepth = Math.max((high - low) * (0.18 + 0.04 * state.sweep.power), 8 * state.tickSize);
+    const returnDepth = Math.max((high - low) * (0.18 + 0.04 * pwr), (immediate ? 12 : 8) * state.tickSize);
 
     const target1 = dir === "up" ? high + overshoot : low - overshoot;
     const target2 = dir === "up" ? high - returnDepth : low + returnDepth;
@@ -1405,12 +1423,34 @@
       phase: "sweep",
       target1,
       target2,
-      sweepTicks: 10 + Math.floor(Math.random() * 12),
-      revertTicks: 16 + Math.floor(Math.random() * 20),
-      force: (0.22 + state.sweep.power * 0.06) * state.tickSize
+      sweepTicks: immediate ? (7 + Math.floor(pwr * 1.2)) : (10 + Math.floor(Math.random() * 12)),
+      revertTicks: immediate ? (14 + Math.floor(pwr * 1.4)) : (16 + Math.floor(Math.random() * 20)),
+      force: ((immediate ? 0.40 : 0.22) + pwr * (immediate ? 0.09 : 0.06)) * state.tickSize
     };
+    return true;
+  }
 
-    toast(dir === "up" ? "Liquidity sweep ↑" : "Liquidity sweep ↓");
+  function executeManualSweep(side, strength) {
+    const dir = side === "sell" ? "down" : "up";
+    const strengthMap = { soft: 4, normal: 6, hard: 8.5 };
+    const power = strengthMap[strength] ?? 6;
+    if (state.sweep.event) state.sweep.event = null;
+    const ok = createSweepEvent(dir, power, true);
+    if (!ok) {
+      toast("Not enough chart history for sweep");
+      return;
+    }
+    toast(dir === "up" ? "Manual buy sweep ↑" : "Manual sell sweep ↓");
+  }
+
+  function maybeStartSweepEvent(volKnob) {
+    if (!state.sweep.enabled || state.sweep.power <= 0 || state.sweep.event) return;
+    const chance = (0.00045 + state.sweep.power * 0.00028) * (0.65 + 0.05 * volKnob);
+    if (Math.random() >= chance) return;
+    const dir = Math.random() > 0.5 ? "up" : "down";
+    if (createSweepEvent(dir, state.sweep.power, false)) {
+      toast(dir === "up" ? "Liquidity sweep ↑" : "Liquidity sweep ↓");
+    }
   }
 
   function applySweepEvent(dp) {
@@ -2238,6 +2278,7 @@
     placeExitTarget(price, mode, qty);
   });
   $("clearExitTargets").addEventListener("click", () => clearExitTargets());
+  $("executeManualSweep").addEventListener("click", () => executeManualSweep($("manualSweepSide").value, $("manualSweepStrength").value));
 
   $("cancelAll").addEventListener("click", cancelAll);
   $("flatten").addEventListener("click", flatten);
