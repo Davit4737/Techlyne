@@ -330,6 +330,8 @@
       <div class="pill">Dev: <b>David Kyn</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
       <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
+      <div class="pill">Regime: <b id="hdrRegime">Balanced</b></div>
+      <div class="pill">Delta: <b id="hdrDelta">0.00</b></div>
       <div class="pill">Price: <b id="hdrPrice">—</b></div>
       <div class="pill">Pos: <b id="hdrPos">0</b></div>
       <div class="pill">uPnL: <b id="hdrPnL">—</b></div>
@@ -506,6 +508,18 @@
       </div>
 
       <div class="grid cols2">
+        <label>Order flow profile
+          <select id="orderFlowProfile">
+            <option value="realistic" selected>Realistic OF</option>
+            <option value="auction">Balanced auction</option>
+            <option value="trend">Trend day</option>
+            <option value="thin">Thin book</option>
+          </select>
+        </label>
+        <label>Flow intensity (0.5–2.0)<input id="flowIntensity" type="number" min="0.5" max="2" step="0.1" value="1.0" /></label>
+      </div>
+
+      <div class="grid cols2">
         <button class="btn neutral" id="pause">⏸ Pause</button>
         <button class="btn neutral" id="reset">🔁 Reset</button>
       </div>
@@ -587,6 +601,9 @@
         <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
         <div class="stat"><div class="k">Net Pos</div><div class="v" id="stPos">0</div></div>
         <div class="stat"><div class="k">Avg</div><div class="v" id="stAvg">—</div></div>
+        <div class="stat"><div class="k">Regime</div><div class="v" id="stRegime">Balanced</div></div>
+        <div class="stat"><div class="k">Delta</div><div class="v" id="stDelta">0.00</div></div>
+        <div class="stat"><div class="k">Absorb</div><div class="v" id="stAbsorb">0.00</div></div>
         <div class="stat"><div class="k">uPnL</div><div class="v" id="stPnL">—</div></div>
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
       </div>
@@ -621,9 +638,9 @@
 
 <div class="startOverlay open" id="startOverlay">
   <div class="startCard">
-    <div class="startTitle">Choose starting price</div>
+    <div class="startTitle">Set starting price & market model</div>
     <div class="startSub">
-      Set the initial market price before the simulation starts. Everything else works the same — only the starting point changes.
+      Choose the initial market price, motion profile and order-flow model. This does not make the sim equal to live CME, but it makes it behave much closer to a real intraday market.
     </div>
     <div class="grid">
       <label>Starting price
@@ -642,8 +659,16 @@
           <option value="volatile">Volatile session</option>
         </select>
       </label>
+      <label>Order flow model
+        <select id="startOrderFlowProfile">
+          <option value="realistic" selected>Realistic OF</option>
+          <option value="auction">Balanced auction</option>
+          <option value="trend">Trend day</option>
+          <option value="thin">Thin book</option>
+        </select>
+      </label>
       <div class="muted" style="font-size:12px; line-height:1.35;">
-        Realistic NQ keeps one-candle moves under control. A 300 pts dump should already feel strong — not like one random candle teleported.
+        Realistic NQ keeps one-candle moves under control. A 300 pts dump should already feel strong — not like one random candle teleported. The order-flow model adds pseudo resting liquidity, stop clusters, absorption and smarter sweeps.
       </div>
       <div class="row wrap" style="margin-top:6px;">
         <button class="btn neutral" id="startMenuBegin">Start simulation</button>
@@ -713,6 +738,55 @@
     }
   };
 
+  const ORDERFLOW_PROFILES = {
+    realistic: {
+      name: "Realistic OF",
+      liquidityDensity: 1.0,
+      absorption: 1.0,
+      stopBurst: 1.0,
+      flowImpact: 1.0,
+      trendPersistence: 1.0,
+      regimeWeights: { balanced: 0.28, bid: 0.13, offer: 0.13, trendUp: 0.12, trendDown: 0.12, compression: 0.12, expansion: 0.10 }
+    },
+    auction: {
+      name: "Balanced auction",
+      liquidityDensity: 1.12,
+      absorption: 1.16,
+      stopBurst: 0.90,
+      flowImpact: 0.86,
+      trendPersistence: 0.88,
+      regimeWeights: { balanced: 0.38, bid: 0.10, offer: 0.10, trendUp: 0.08, trendDown: 0.08, compression: 0.16, expansion: 0.10 }
+    },
+    trend: {
+      name: "Trend day",
+      liquidityDensity: 0.94,
+      absorption: 0.84,
+      stopBurst: 1.10,
+      flowImpact: 1.10,
+      trendPersistence: 1.18,
+      regimeWeights: { balanced: 0.16, bid: 0.14, offer: 0.14, trendUp: 0.20, trendDown: 0.20, compression: 0.06, expansion: 0.10 }
+    },
+    thin: {
+      name: "Thin book",
+      liquidityDensity: 0.74,
+      absorption: 0.72,
+      stopBurst: 1.24,
+      flowImpact: 1.20,
+      trendPersistence: 0.96,
+      regimeWeights: { balanced: 0.18, bid: 0.16, offer: 0.16, trendUp: 0.13, trendDown: 0.13, compression: 0.08, expansion: 0.16 }
+    }
+  };
+
+  const REGIME_LIBRARY = {
+    balanced:   { buy: 1.00, sell: 1.00, drift: 0.00 },
+    bid:        { buy: 1.18, sell: 0.90, drift: 0.10 },
+    offer:      { buy: 0.90, sell: 1.18, drift: -0.10 },
+    trendUp:    { buy: 1.32, sell: 0.82, drift: 0.18 },
+    trendDown:  { buy: 0.82, sell: 1.32, drift: -0.18 },
+    compression:{ buy: 0.94, sell: 0.94, drift: 0.00 },
+    expansion:  { buy: 1.14, sell: 1.14, drift: 0.00 }
+  };
+
   const canvas = $("chart");
   const ctx = canvas.getContext("2d", { alpha:true });
 
@@ -728,8 +802,24 @@
     started: false,
     initialPrice: 17000,
     motionProfileKey: "realistic",
+    orderFlowProfileKey: "realistic",
+    flowIntensity: 1.0,
     bias: { mode: "neutral", strength: 3 },
     sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
+    orderFlow: {
+      regime: "balanced",
+      regimeUntil: 0,
+      buyAgg: 1,
+      sellAgg: 1,
+      delta: 0,
+      deltaEma: 0,
+      pressure: 0,
+      absorption: 0,
+      snapshot: { above: [], below: [], range: 20, eqh: [], eql: [] },
+      postImpulse: null,
+      lastLevelTake: null,
+      lastAbsorbSide: null
+    },
     sim: {
       price: 17000,
       drift: 0,
@@ -790,6 +880,29 @@
 
   function getMotionProfile() {
     return MOTION_PROFILES[state.motionProfileKey] || MOTION_PROFILES.realistic;
+  }
+
+  function getOrderFlowProfile() {
+    return ORDERFLOW_PROFILES[state.orderFlowProfileKey] || ORDERFLOW_PROFILES.realistic;
+  }
+
+  function getRegimeLabel() {
+    const map = {
+      balanced: "Balanced",
+      bid: "Bid stack",
+      offer: "Offer stack",
+      trendUp: "Trend ↑",
+      trendDown: "Trend ↓",
+      compression: "Compression",
+      expansion: "Expansion"
+    };
+    return map[state.orderFlow.regime] || "Balanced";
+  }
+
+  function getDeltaLabel() {
+    const d = Number.isFinite(state.orderFlow.deltaEma) ? state.orderFlow.deltaEma : 0;
+    const arrow = d > 0.04 ? "↑" : d < -0.04 ? "↓" : "•";
+    return `${arrow} ${(d * 100).toFixed(1)}%`;
   }
 
   function getBarRangeCap(tfSec = state.tfSec) {
@@ -855,6 +968,20 @@
 
     state.sweep.event = null;
     state.sweep.cooldownUntil = 0;
+    state.orderFlow = {
+      regime: "balanced",
+      regimeUntil: 0,
+      buyAgg: 1,
+      sellAgg: 1,
+      delta: 0,
+      deltaEma: 0,
+      pressure: 0,
+      absorption: 0,
+      snapshot: { above: [], below: [], range: 20, eqh: [], eql: [] },
+      postImpulse: null,
+      lastLevelTake: null,
+      lastAbsorbSide: null
+    };
     state.simTime = 0;
     state.tickCount = 0;
     state.ticks = [];
@@ -888,6 +1015,8 @@
     const raw = forceValue != null ? forceValue : $("startPriceInput").value;
     const price = setInitialPrice(raw);
     state.motionProfileKey = $("startMotionProfile").value || "realistic";
+    state.orderFlowProfileKey = $("startOrderFlowProfile").value || "realistic";
+    if ($("orderFlowProfile")) $("orderFlowProfile").value = state.orderFlowProfileKey;
     $("startPriceInput").value = price.toFixed(decimalsFor(state.tickSize));
     bootstrapMarket();
     state.started = true;
@@ -1117,6 +1246,23 @@
   function cancelNearestLimitByPrice(price) {
     if (!state.limits.length) return false;
     let best = null;
+    if (state.orderFlow.snapshot) {
+      const liq = [
+        ...(state.orderFlow.snapshot.above || []).slice(0, 2),
+        ...(state.orderFlow.snapshot.below || []).slice(0, 2)
+      ];
+      for (const lv of liq) {
+        const y = geo.yOf(lv.price);
+        ctx.strokeStyle = lv.kind === "high" || lv.kind === "eqh" ? "rgba(255,207,91,0.28)" : "rgba(100,181,255,0.26)";
+        ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = lv.kind === "high" || lv.kind === "eqh" ? "rgba(255,232,178,0.88)" : "rgba(212,235,255,0.88)";
+        ctx.font = "11px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(`LIQ ${lv.label} ${lv.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
+      }
+    }
+
     for (const o of state.limits) {
       const d = Math.abs(o.price - price);
       if (!best || d < best.d) best = { d, id: o.id };
@@ -1484,6 +1630,300 @@
     return -1;
   }
 
+  function weightedPick(obj) {
+    const entries = Object.entries(obj).filter(([, v]) => v > 0);
+    const total = entries.reduce((a, [, v]) => a + v, 0);
+    if (total <= 0) return entries[0]?.[0] || "balanced";
+    let r = Math.random() * total;
+    for (const [k, v] of entries) {
+      r -= v;
+      if (r <= 0) return k;
+    }
+    return entries[entries.length - 1]?.[0] || "balanced";
+  }
+
+  function clusterPriceLevels(levels, toleranceTicks = 2.5) {
+    if (!levels.length) return [];
+    const tol = toleranceTicks * state.tickSize;
+    const sorted = levels.slice().sort((a, b) => a.price - b.price);
+    const groups = [];
+    for (const lv of sorted) {
+      const g = groups[groups.length - 1];
+      if (g && Math.abs(g.anchor - lv.price) <= tol) {
+        g.items.push(lv);
+        g.anchor = (g.anchor * (g.items.length - 1) + lv.price) / g.items.length;
+        g.lastIdx = Math.max(g.lastIdx, lv.idx || 0);
+      } else {
+        groups.push({ anchor: lv.price, items: [lv], lastIdx: lv.idx || 0 });
+      }
+    }
+    return groups.map(g => ({
+      price: roundTo(g.anchor, state.tickSize),
+      count: g.items.length,
+      idx: g.lastIdx,
+      strength: 1 + (g.items.length - 1) * 0.55
+    }));
+  }
+
+  function buildLiquiditySnapshot() {
+    const info = findRecentSweepLevels();
+    const px = state.sim.price;
+    const density = getOrderFlowProfile().liquidityDensity * state.flowIntensity;
+    const ageMul = (idx) => 1 + Math.max(0, 1 - (info.bars.length - 1 - idx) / 120) * 0.35;
+
+    const eqh = clusterPriceLevels(info.highs, 2.5).filter(x => x.count >= 2);
+    const eql = clusterPriceLevels(info.lows, 2.5).filter(x => x.count >= 2);
+
+    const above = [];
+    const below = [];
+
+    for (const h of info.highs) {
+      if (h.price > px + state.tickSize * 1.5) {
+        above.push({
+          price: h.price,
+          distance: h.price - px,
+          strength: 0.90 * density * ageMul(h.idx),
+          label: "swing high",
+          kind: "high",
+          eq: false
+        });
+      }
+    }
+    for (const l of info.lows) {
+      if (l.price < px - state.tickSize * 1.5) {
+        below.push({
+          price: l.price,
+          distance: px - l.price,
+          strength: 0.90 * density * ageMul(l.idx),
+          label: "swing low",
+          kind: "low",
+          eq: false
+        });
+      }
+    }
+    for (const h of eqh) {
+      if (h.price > px + state.tickSize * 1.5) {
+        above.push({
+          price: h.price,
+          distance: h.price - px,
+          strength: 1.20 * h.strength * density * ageMul(h.idx),
+          label: "EQH",
+          kind: "eqh",
+          eq: true
+        });
+      }
+    }
+    for (const l of eql) {
+      if (l.price < px - state.tickSize * 1.5) {
+        below.push({
+          price: l.price,
+          distance: px - l.price,
+          strength: 1.20 * l.strength * density * ageMul(l.idx),
+          label: "EQL",
+          kind: "eql",
+          eq: true
+        });
+      }
+    }
+
+    const compact = (arr) => arr
+      .sort((a, b) => a.distance - b.distance || b.strength - a.strength)
+      .filter((x, idx, src) => idx === src.findIndex(y => Math.abs(y.price - x.price) <= state.tickSize * 1.5))
+      .slice(0, 4);
+
+    return { bars: info.bars, highs: info.highs, lows: info.lows, range: info.range, eqh, eql, above: compact(above), below: compact(below) };
+  }
+
+  function maybeShiftOrderFlowRegime(volKnob) {
+    if (state.simTime < state.orderFlow.regimeUntil) return;
+    const profile = getOrderFlowProfile();
+    const w = { ...profile.regimeWeights };
+
+    if (state.bias.mode === "bullish") {
+      w.bid += 0.04 + 0.01 * state.bias.strength;
+      w.trendUp += 0.06 + 0.012 * state.bias.strength;
+      w.offer *= 0.88;
+      w.trendDown *= 0.84;
+    } else if (state.bias.mode === "bearish") {
+      w.offer += 0.04 + 0.01 * state.bias.strength;
+      w.trendDown += 0.06 + 0.012 * state.bias.strength;
+      w.bid *= 0.88;
+      w.trendUp *= 0.84;
+    }
+
+    const lastTake = state.orderFlow.lastLevelTake;
+    if (lastTake && state.simTime - lastTake.at < 18) {
+      if (lastTake.dir === "up") {
+        w.offer += 0.03;
+        w.trendUp += 0.02;
+      } else {
+        w.bid += 0.03;
+        w.trendDown += 0.02;
+      }
+    }
+
+    state.orderFlow.regime = weightedPick(w);
+    const durBase = state.orderFlow.regime === "compression" ? 10 : state.orderFlow.regime.startsWith("trend") ? 18 : 14;
+    state.orderFlow.regimeUntil = state.simTime + durBase + Math.random() * (8 + volKnob * 0.8);
+  }
+
+  function updateOrderFlowCore(volKnob) {
+    maybeShiftOrderFlowRegime(volKnob);
+    const profile = getOrderFlowProfile();
+    const regime = REGIME_LIBRARY[state.orderFlow.regime] || REGIME_LIBRARY.balanced;
+    const snap = buildLiquiditySnapshot();
+    state.orderFlow.snapshot = snap;
+
+    const base = (0.92 + volKnob * 0.085) * state.flowIntensity;
+    let buyAgg = base * regime.buy;
+    let sellAgg = base * regime.sell;
+
+    const pulse = clamp(randn() * 0.22, -0.45, 0.55);
+    if (pulse >= 0) buyAgg *= 1 + pulse;
+    else sellAgg *= 1 - pulse;
+
+    if (state.bias.mode === "bullish") {
+      buyAgg *= 1 + 0.035 * state.bias.strength;
+      sellAgg *= 1 - 0.012 * state.bias.strength;
+    } else if (state.bias.mode === "bearish") {
+      sellAgg *= 1 + 0.035 * state.bias.strength;
+      buyAgg *= 1 - 0.012 * state.bias.strength;
+    }
+
+    if (state.orderFlow.pressure > 0) buyAgg *= 1 + state.orderFlow.pressure * 0.22 * profile.trendPersistence;
+    else sellAgg *= 1 + (-state.orderFlow.pressure) * 0.22 * profile.trendPersistence;
+
+    let absorption = 0;
+    const above = snap.above[0];
+    const below = snap.below[0];
+    const absorbWindow = 14 * state.tickSize;
+
+    if (above && above.distance <= absorbWindow && buyAgg >= sellAgg * 0.88) {
+      const prox = clamp(1 - above.distance / absorbWindow, 0, 1);
+      const resist = prox * above.strength * 0.58 * profile.absorption;
+      buyAgg *= clamp(1 - resist * 0.16, 0.52, 1);
+      absorption -= resist * 0.22;
+      state.orderFlow.lastAbsorbSide = "up";
+      if (resist > 0.65 && Math.random() < 0.05 + prox * 0.08) sellAgg += resist * 0.14;
+    }
+    if (below && below.distance <= absorbWindow && sellAgg >= buyAgg * 0.88) {
+      const prox = clamp(1 - below.distance / absorbWindow, 0, 1);
+      const resist = prox * below.strength * 0.58 * profile.absorption;
+      sellAgg *= clamp(1 - resist * 0.16, 0.52, 1);
+      absorption += resist * 0.22;
+      state.orderFlow.lastAbsorbSide = "down";
+      if (resist > 0.65 && Math.random() < 0.05 + prox * 0.08) buyAgg += resist * 0.14;
+    }
+
+    const rawDelta = (buyAgg - sellAgg) / Math.max(0.001, buyAgg + sellAgg);
+    state.orderFlow.buyAgg = buyAgg;
+    state.orderFlow.sellAgg = sellAgg;
+    state.orderFlow.delta = rawDelta;
+    state.orderFlow.deltaEma = lerp(state.orderFlow.deltaEma, rawDelta, 0.07);
+    state.orderFlow.absorption = lerp(state.orderFlow.absorption, absorption, 0.08);
+    state.orderFlow.pressure = lerp(state.orderFlow.pressure, clamp(rawDelta + regime.drift * 0.35 + absorption * 0.18, -1, 1), 0.06);
+
+    const impulse = (state.orderFlow.deltaEma * (0.35 + volKnob * 0.018) + absorption * 0.12) * state.tickSize * profile.flowImpact;
+    return { impulse, snapshot: snap };
+  }
+
+  function chooseSweepPostBehavior(dir, source = "auto", mode = "normal", sideInfo = null) {
+    const profile = getOrderFlowProfile();
+    const sign = dir === "up" ? 1 : -1;
+    const p = state.orderFlow.pressure;
+    const same = sign === 1 ? Math.max(0, p) : Math.max(0, -p);
+    const opp = sign === 1 ? Math.max(0, -p) : Math.max(0, p);
+
+    let reverse = 0.42 + profile.absorption * 0.16 + opp * 0.48;
+    let cont = 0.28 + profile.trendPersistence * 0.10 + same * 0.62;
+    let fake = 0.14 + ((sideInfo?.eq || (sideInfo?.label || "").includes("EQ")) ? 0.08 : 0.02);
+
+    if (state.orderFlow.regime === "balanced" || state.orderFlow.regime === "compression") reverse += 0.10;
+    if ((state.orderFlow.regime === "trendUp" && dir === "up") || (state.orderFlow.regime === "trendDown" && dir === "down")) cont += 0.18;
+    if (mode === "soft") reverse += 0.06;
+    if (mode === "hard") cont += 0.08;
+    if (source === "auto") reverse += 0.04;
+
+    const picked = weightedPick({ reverse, continue: cont, fake });
+    return picked;
+  }
+
+  function armPostLiquidityImpulse(dir, levelStrength = 1, eq = false) {
+    const profile = getOrderFlowProfile();
+    const sign = dir === "up" ? 1 : -1;
+    const same = sign === 1 ? Math.max(0, state.orderFlow.pressure) : Math.max(0, -state.orderFlow.pressure);
+    const opp = sign === 1 ? Math.max(0, -state.orderFlow.pressure) : Math.max(0, state.orderFlow.pressure);
+    let reverse = 0.42 + profile.absorption * 0.18 + opp * 0.55 + (eq ? 0.08 : 0);
+    let cont = 0.25 + profile.trendPersistence * 0.12 + same * 0.48;
+    let fake = 0.14 + (eq ? 0.08 : 0.03);
+    if (state.orderFlow.regime === "balanced" || state.orderFlow.regime === "compression") reverse += 0.10;
+    if ((state.orderFlow.regime === "trendUp" && dir === "up") || (state.orderFlow.regime === "trendDown" && dir === "down")) cont += 0.16;
+    const outcome = weightedPick({ reverse, continue: cont, fake });
+    state.orderFlow.postImpulse = {
+      outcome,
+      dir,
+      ticks: secToSimTicks(outcome === "continue" ? 2.8 : outcome === "reverse" ? 3.8 : 3.0),
+      maxTicks: secToSimTicks(outcome === "continue" ? 2.8 : outcome === "reverse" ? 3.8 : 3.0),
+      force: (0.12 + levelStrength * 0.05) * state.tickSize * profile.stopBurst
+    };
+  }
+
+  function applyPostLiquidityImpulse(dp) {
+    const ev = state.orderFlow.postImpulse;
+    if (!ev) return dp;
+    const sign = ev.dir === "up" ? 1 : -1;
+    const progress = 1 - ev.ticks / Math.max(1, ev.maxTicks);
+
+    if (ev.outcome === "reverse") {
+      const burst = Math.max(0, Math.sin(progress * Math.PI * 2.2));
+      dp += -sign * ev.force * (0.78 + 0.46 * burst) + randn() * ev.force * 0.14;
+    } else if (ev.outcome === "continue") {
+      const burst = Math.max(0, Math.sin(progress * Math.PI * 2.0));
+      const pullback = Math.random() < 0.16 ? -sign * ev.force * 0.18 : 0;
+      dp += sign * ev.force * (0.52 + 0.34 * burst) + pullback + randn() * ev.force * 0.10;
+    } else {
+      const half = ev.maxTicks * 0.52;
+      if (ev.ticks > half) dp += -sign * ev.force * 0.60 + randn() * ev.force * 0.12;
+      else dp += sign * ev.force * 0.48 + randn() * ev.force * 0.12;
+    }
+
+    ev.ticks -= 1;
+    if (ev.ticks <= 0) state.orderFlow.postImpulse = null;
+    return dp;
+  }
+
+  function detectLiquidityTake(prevPrice, newPrice) {
+    const snap = state.orderFlow.snapshot;
+    if (!snap) return;
+
+    let taken = null;
+    for (const lvl of snap.above.slice(0, 2)) {
+      if (prevPrice < lvl.price && newPrice >= lvl.price) {
+        taken = { ...lvl, dir: "up" };
+        break;
+      }
+    }
+    if (!taken) {
+      for (const lvl of snap.below.slice(0, 2)) {
+        if (prevPrice > lvl.price && newPrice <= lvl.price) {
+          taken = { ...lvl, dir: "down" };
+          break;
+        }
+      }
+    }
+    if (!taken) return;
+
+    if (state.orderFlow.lastLevelTake && Math.abs(state.orderFlow.lastLevelTake.level - taken.price) <= state.tickSize * 2 && state.simTime - state.orderFlow.lastLevelTake.at < 3) {
+      return;
+    }
+
+    state.orderFlow.lastLevelTake = { level: taken.price, dir: taken.dir, at: state.simTime, label: taken.label };
+    const sign = taken.dir === "up" ? 1 : -1;
+    state.sim.flow += sign * (0.7 + taken.strength * 0.25);
+    state.sim.vel += sign * state.tickSize * (0.35 + taken.strength * 0.18);
+    armPostLiquidityImpulse(taken.dir, taken.strength, !!taken.eq);
+  }
+
   function findRecentSweepLevels() {
     const bars = getAllBarsForRender();
     const highs = [];
@@ -1720,8 +2160,16 @@
       roundTo((source === "manual" ? 3.0 : 2.0) * state.tickSize, state.tickSize)
     );
 
+    const postBehavior = chooseSweepPostBehavior(dir, source, manualConfig?.mode || "normal", sideInfo);
     const target1 = roundTo(sideInfo.level + sign * overshoot, state.tickSize);
-    const target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
+    let target2;
+    if (postBehavior === "continue") {
+      target2 = roundTo(sideInfo.level + sign * Math.max(returnDepth * 0.85, overshoot * 1.8), state.tickSize);
+    } else if (postBehavior === "fake") {
+      target2 = roundTo(sideInfo.level - sign * Math.max(returnDepth * 0.45, 2 * state.tickSize), state.tickSize);
+    } else {
+      target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
+    }
 
     const sweepTicks = secToSimTicks(clamp(sweepSec, 2.0, source === "manual" ? 40 : 16));
     const revertTicks = secToSimTicks(clamp(revertSec, 1.5, source === "manual" ? 24 : 12));
@@ -1748,6 +2196,7 @@
       pulseMul,
       directMul,
       mode: manualConfig?.mode || null,
+      postBehavior,
       startedAt: state.simTime,
       extended: false,
       tookLevel: false
@@ -1815,7 +2264,8 @@
     const distTicks = sideInfo.distance / Math.max(state.tickSize, 1e-9);
     if (distTicks < 4 || distTicks > 70) return;
 
-    const chance = (0.000018 + state.sweep.power * 0.000011) * (0.72 + 0.03 * volKnob);
+    const profile = getOrderFlowProfile();
+    const chance = (0.000011 + state.sweep.power * 0.000008) * (0.70 + 0.03 * volKnob) * profile.stopBurst;
     if (Math.random() >= chance) return;
 
     if (createSweepEvent(dir, state.sweep.power, false, "auto")) {
@@ -1844,14 +2294,16 @@
         const burstGate = ev.mode === "hard" ? 0.02 : ev.mode === "normal" ? 0.16 : 0.28;
         const burst = rawBurst > burstGate ? rawBurst : 0;
 
+        const samePressure = sign === 1 ? Math.max(0, state.orderFlow.pressure) : Math.max(0, -state.orderFlow.pressure);
+        const oppPressure = sign === 1 ? Math.max(0, -state.orderFlow.pressure) : Math.max(0, state.orderFlow.pressure);
         const burstMul = ev.mode === "hard" ? 1.20 : ev.mode === "normal" ? 0.82 : 0.52;
         const chaseCap = ev.mode === "hard" ? 0.95 : ev.mode === "normal" ? 0.34 : 0.14;
-        const pullProb = ev.mode === "hard" ? 0.10 : ev.mode === "normal" ? 0.18 : 0.26;
-        const pullMul = ev.mode === "hard" ? 0.10 : ev.mode === "normal" ? 0.22 : 0.30;
+        const pullProb = ev.mode === "hard" ? 0.10 + oppPressure * 0.05 : ev.mode === "normal" ? 0.18 + oppPressure * 0.08 : 0.26 + oppPressure * 0.10;
+        const pullMul = ev.mode === "hard" ? 0.10 + oppPressure * 0.10 : ev.mode === "normal" ? 0.22 + oppPressure * 0.14 : 0.30 + oppPressure * 0.18;
         const jitterMul = ev.mode === "hard" ? 0.08 : ev.mode === "normal" ? 0.13 : 0.18;
 
-        const burstPush = sign * ev.force * burstMul * burst;
-        const chasePush = sign * Math.min(Math.abs(toward) * ev.directMul, ev.force * chaseCap);
+        const burstPush = sign * ev.force * burstMul * burst * (0.88 + samePressure * 0.35);
+        const chasePush = sign * Math.min(Math.abs(toward) * ev.directMul, ev.force * chaseCap) * (0.78 + samePressure * 0.40);
         const pullback = Math.random() < pullProb
           ? -sign * ev.force * pullMul * (0.55 + Math.random() * 0.65)
           : 0;
@@ -1898,12 +2350,14 @@
       if (ev.source === "manual") {
         const revertMul = ev.mode === "hard" ? 1.10 : ev.mode === "normal" ? 0.98 : 0.88;
         const wobble = Math.sin(progress * Math.PI * (ev.mode === "hard" ? 2.5 : 2.1));
-        const snap = norm * ev.force * revertMul;
+        const outcomeDir = ev.postBehavior === "continue" ? sign : ev.postBehavior === "fake" ? (progress < 0.52 ? -sign : sign * 0.75) : -sign;
+        const snap = outcomeDir * Math.abs(ev.force) * revertMul * (0.60 + Math.abs(wobble) * 0.55);
         const wobblePush = sign * ev.force * 0.10 * wobble;
         const jitter = randn() * ev.force * (ev.mode === "hard" ? 0.07 : 0.10);
         dp += snap + wobblePush + jitter;
       } else {
-        dp += norm * ev.force + randn() * ev.force * 0.06;
+        const outcomeDir = ev.postBehavior === "continue" ? sign : -sign;
+        dp += outcomeDir * Math.abs(ev.force) + randn() * ev.force * 0.06;
       }
 
       ev.revertTicks -= 1;
@@ -2231,11 +2685,16 @@
     $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
     $("hdrVol").textContent = (VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz).name;
     $("hdrBias").textContent = getBiasLabel();
+    $("hdrRegime").textContent = getRegimeLabel();
+    $("hdrDelta").textContent = getDeltaLabel();
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
     $("stPos").textContent = String(state.pos);
     $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(dec);
+    $("stRegime").textContent = getRegimeLabel();
+    $("stDelta").textContent = getDeltaLabel();
+    $("stAbsorb").textContent = state.orderFlow.absorption.toFixed(2);
     $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
 
     if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
@@ -2277,6 +2736,9 @@
 
     state.bias.mode = $("biasMode").value;
     state.bias.strength = clamp(Number($("biasStrength").value || 0), 0, 10);
+
+    state.orderFlowProfileKey = $("orderFlowProfile").value || state.orderFlowProfileKey || "realistic";
+    state.flowIntensity = clamp(Number($("flowIntensity").value || 1), 0.5, 2.0);
   }
 
   function smoothParams() {
@@ -2773,7 +3235,7 @@
     rebuildBars(sec);
   });
 
-  ["indVol","indVwap","indMa","biasMode","biasStrength"].forEach(id => {
+  ["indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity"].forEach(id => {
     $(id).addEventListener("change", () => {
       applySettingsFromUI();
       state.indCache.len = 0;
@@ -2866,6 +3328,8 @@
     $("manualSweepLevel").value = "0";
 
     $("volPreset").value = state.volPresetKey;
+    if ($("orderFlowProfile")) $("orderFlowProfile").value = state.orderFlowProfileKey;
+    if ($("startOrderFlowProfile")) $("startOrderFlowProfile").value = state.orderFlowProfileKey;
     setVolPreset(state.volPresetKey);
 
     applySettingsFromUI();
