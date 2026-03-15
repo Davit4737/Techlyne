@@ -468,12 +468,12 @@
             <option value="asia">Asia</option>
           </select>
         </label>
-        <label>Volatility (1–16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="9.2" /></label>
+        <label>Volatility (1–16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="6.8" /></label>
       </div>
 
       <div class="grid cols2">
         <label>Base ticks / sim-sec (20–200)<input id="simHzBase" type="number" step="1" min="20" max="200" value="75" /></label>
-        <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="10" /></label>
+        <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
       </div>
 
       <div class="grid cols3">
@@ -516,7 +516,7 @@
             <option value="thin">Thin book</option>
           </select>
         </label>
-        <label>Flow intensity (0.5–2.0)<input id="flowIntensity" type="number" min="0.5" max="2" step="0.1" value="1.0" /></label>
+        <label>Flow intensity (0.5–2.0)<input id="flowIntensity" type="number" min="0.5" max="2" step="0.1" value="0.9" /></label>
       </div>
 
       <div class="grid cols2">
@@ -635,12 +635,11 @@
   </div>
 </div>
 
-
 <div class="startOverlay open" id="startOverlay">
   <div class="startCard">
     <div class="startTitle">Set starting price & market model</div>
     <div class="startSub">
-      Choose the initial market price, motion profile and order-flow model. This does not make the sim equal to live CME, but it makes it behave much closer to a real intraday market.
+      Choose the initial market price, motion profile and order-flow model. This does not make the sim equal to live CME, but it now behaves calmer and much closer to a controlled intraday market.
     </div>
     <div class="grid">
       <label>Starting price
@@ -668,7 +667,7 @@
         </select>
       </label>
       <div class="muted" style="font-size:12px; line-height:1.35;">
-        Realistic NQ keeps one-candle moves under control. A 300 pts dump should already feel strong — not like one random candle teleported. The order-flow model adds pseudo resting liquidity, stop clusters, absorption and smarter sweeps.
+        One candle is no longer hard-capped like a brick wall. Strong flow can still stretch the current candle, but without teleporting 100+ points too easily.
       </div>
       <div class="row wrap" style="margin-top:6px;">
         <button class="btn neutral" id="startMenuBegin">Start simulation</button>
@@ -701,40 +700,40 @@
   }
 
   const VOL_PRESETS = {
-    nyopen:    { name:"NY Open Vol", vol: 11.5 },
-    nykz:      { name:"NY Killzone", vol:  9.2 },
-    london:    { name:"London",      vol:  6.2 },
-    premarket: { name:"Premarket",   vol:  4.6 },
-    asia:      { name:"Asia",        vol:  3.4 },
+    nyopen:    { name:"NY Open Vol", vol: 8.4 },
+    nykz:      { name:"NY Killzone", vol: 6.8 },
+    london:    { name:"London",      vol: 4.8 },
+    premarket: { name:"Premarket",   vol: 3.5 },
+    asia:      { name:"Asia",        vol: 2.6 },
   };
 
   const MOTION_PROFILES = {
     tight: {
       name: "Tight / smooth",
-      sigmaMul: 0.62,
-      jumpProbMul: 0.20,
-      jumpScaleMul: 0.28,
-      maxVelMul: 0.42,
-      flowMul: 0.78,
-      barCap: { 1: 8, 5: 16, 15: 28, 60: 65, 300: 145, 900: 240 }
+      sigmaMul: 0.50,
+      jumpProbMul: 0.12,
+      jumpScaleMul: 0.18,
+      maxVelMul: 0.30,
+      flowMul: 0.62,
+      barCap: { 1: 5, 5: 10, 15: 18, 60: 42, 300: 95, 900: 160 }
     },
     realistic: {
       name: "Realistic NQ",
-      sigmaMul: 0.78,
-      jumpProbMul: 0.26,
-      jumpScaleMul: 0.40,
-      maxVelMul: 0.52,
-      flowMul: 0.84,
-      barCap: { 1: 10, 5: 20, 15: 36, 60: 85, 300: 180, 900: 280 }
+      sigmaMul: 0.62,
+      jumpProbMul: 0.18,
+      jumpScaleMul: 0.26,
+      maxVelMul: 0.38,
+      flowMul: 0.70,
+      barCap: { 1: 7, 5: 13, 15: 24, 60: 56, 300: 120, 900: 190 }
     },
     volatile: {
       name: "Volatile session",
-      sigmaMul: 0.96,
-      jumpProbMul: 0.36,
-      jumpScaleMul: 0.56,
-      maxVelMul: 0.68,
-      flowMul: 0.95,
-      barCap: { 1: 14, 5: 28, 15: 52, 60: 120, 300: 240, 900: 360 }
+      sigmaMul: 0.78,
+      jumpProbMul: 0.26,
+      jumpScaleMul: 0.38,
+      maxVelMul: 0.50,
+      flowMul: 0.82,
+      barCap: { 1: 10, 5: 18, 15: 34, 60: 80, 300: 160, 900: 250 }
     }
   };
 
@@ -794,8 +793,8 @@
     symbol: "NQ (sim)",
     tickSize: 0.25,
     spreadTicks: 1,
-    p: { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
-    target: { vol: 9.2, impact: 10, simHzBase: 75, fillProb: 0.92 },
+    p: { vol: 6.8, impact: 8, simHzBase: 75, fillProb: 0.92 },
+    target: { vol: 6.8, impact: 8, simHzBase: 75, fillProb: 0.92 },
     volPresetKey: "nykz",
     speedMul: 1,
     paused: false,
@@ -803,7 +802,7 @@
     initialPrice: 17000,
     motionProfileKey: "realistic",
     orderFlowProfileKey: "realistic",
-    flowIntensity: 1.0,
+    flowIntensity: 0.9,
     bias: { mode: "neutral", strength: 3 },
     sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
     orderFlow: {
@@ -824,15 +823,15 @@
       price: 17000,
       drift: 0,
       driftTarget: 0,
-      sigma: 3.2,
-      sigmaTarget: 3.2,
-      volOfVol: 0.55,
-      meanRev: 0.18,
+      sigma: 2.1,
+      sigmaTarget: 2.1,
+      volOfVol: 0.42,
+      meanRev: 0.24,
       nextRegimeT: 30,
-      jumpProb: 0.0012,
-      jumpScale: 14,
+      jumpProb: 0.00055,
+      jumpScale: 8.5,
       flow: 0,
-      flowDecay: 0.92,
+      flowDecay: 0.88,
       vel: 0
     },
     simTime: 0,
@@ -910,22 +909,65 @@
     return profile.barCap[tfSec] ?? profile.barCap[5];
   }
 
+  function getDynamicBarRangeCap(tfSec = state.tfSec, barKey = null) {
+    const base = getBarRangeCap(tfSec);
+    if (!Number.isFinite(base) || base <= 0) return base;
+
+    const flowBoost =
+      Math.min(base * 0.90, Math.abs(state.sim.flow || 0) * state.tickSize * 2.4);
+
+    const velBoost =
+      Math.min(base * 0.75, Math.abs(state.sim.vel || 0) * 5.5);
+
+    const pressureBoost =
+      base * Math.min(0.55, Math.abs(state.orderFlow.pressure || 0) * 0.65);
+
+    const deltaBoost =
+      base * Math.min(0.35, Math.abs(state.orderFlow.deltaEma || 0) * 0.55);
+
+    const sweepBoost =
+      (state.sweep.event && state.curBar && state.curBar.key === (barKey ?? state.curBar.key))
+        ? Math.max(0, state.sweep.event.extraBarCap || 0)
+        : 0;
+
+    return base + flowBoost + velBoost + pressureBoost + deltaBoost + sweepBoost;
+  }
+
   function clampCandidateToBarRange(candidatePrice, barKey) {
-    let cap = getBarRangeCap(state.tfSec);
+    const cur = state.curBar;
+    if (!cur || cur.key !== barKey) return candidatePrice;
+
+    let cap = getDynamicBarRangeCap(state.tfSec, barKey);
     if (!Number.isFinite(cap) || cap <= 0) return candidatePrice;
 
-    const cur = state.curBar;
-    const ev = state.sweep.event;
-    if (ev && cur && cur.key === barKey) {
-      cap += Math.max(0, ev.extraBarCap || 0);
+    const upper = cur.o + cap;
+    const lower = cur.o - cap;
+
+    if (candidatePrice <= upper && candidatePrice >= lower) {
+      return candidatePrice;
     }
 
-    if (cur && cur.key === barKey) {
-      const upper = cur.o + cap;
-      const lower = cur.o - cap;
-      return clamp(candidatePrice, lower, upper);
-    }
-    return candidatePrice;
+    const isAbove = candidatePrice > upper;
+    const edge = isAbove ? upper : lower;
+    const overflow = Math.abs(candidatePrice - edge);
+
+    const pressure = Math.abs(state.orderFlow.pressure || 0);
+    const delta = Math.abs(state.orderFlow.deltaEma || 0);
+    const flow = Math.min(1.0, Math.abs(state.sim.flow || 0) * 0.12);
+    const vel = Math.min(1.0, Math.abs(state.sim.vel || 0) / Math.max(state.tickSize * 8, 1e-9));
+
+    const strength = clamp(
+      pressure * 0.9 + delta * 0.9 + flow * 0.8 + vel * 0.8,
+      0,
+      2.2
+    );
+
+    const spillFactor = 0.20 + strength * 0.22;
+    const maxStretch = cap * (0.18 + strength * 0.18);
+
+    const spill = Math.min(overflow * spillFactor, maxStretch);
+
+    return isAbove ? (upper + spill) : (lower - spill);
   }
 
   function setInitialPrice(value) {
@@ -941,8 +983,8 @@
     state.sim.price = state.initialPrice;
     state.sim.drift = 0;
     state.sim.driftTarget = 0;
-    state.sim.sigma = 3.2;
-    state.sim.sigmaTarget = 3.2;
+    state.sim.sigma = 2.1;
+    state.sim.sigmaTarget = 2.1;
     state.sim.nextRegimeT = 30;
     state.sim.flow = 0;
     state.sim.vel = 0;
@@ -1050,12 +1092,6 @@
     if (state.bias.mode === "bullish") return `Bullish ${state.bias.strength.toFixed(1)}`;
     if (state.bias.mode === "bearish") return `Bearish ${state.bias.strength.toFixed(1)}`;
     return "Neutral";
-  }
-
-  function getBracketLabel() {
-    const dec = decimalsFor(state.tickSize);
-    if (!state.brackets.armed) return "—";
-    return `TP ${state.brackets.tp != null ? state.brackets.tp.toFixed(dec) : "—"} / SL ${state.brackets.sl != null ? state.brackets.sl.toFixed(dec) : "—"}`;
   }
 
   function getBidAsk() {
@@ -1246,23 +1282,6 @@
   function cancelNearestLimitByPrice(price) {
     if (!state.limits.length) return false;
     let best = null;
-    if (state.orderFlow.snapshot) {
-      const liq = [
-        ...(state.orderFlow.snapshot.above || []).slice(0, 2),
-        ...(state.orderFlow.snapshot.below || []).slice(0, 2)
-      ];
-      for (const lv of liq) {
-        const y = geo.yOf(lv.price);
-        ctx.strokeStyle = lv.kind === "high" || lv.kind === "eqh" ? "rgba(255,207,91,0.28)" : "rgba(100,181,255,0.26)";
-        ctx.setLineDash([5,5]);
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = lv.kind === "high" || lv.kind === "eqh" ? "rgba(255,232,178,0.88)" : "rgba(212,235,255,0.88)";
-        ctx.font = "11px " + getComputedStyle(document.body).fontFamily;
-        ctx.fillText(`LIQ ${lv.label} ${lv.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
-      }
-    }
-
     for (const o of state.limits) {
       const d = Math.abs(o.price - price);
       if (!best || d < best.d) best = { d, id: o.id };
@@ -1774,24 +1793,24 @@
     const snap = buildLiquiditySnapshot();
     state.orderFlow.snapshot = snap;
 
-    const base = (0.92 + volKnob * 0.085) * state.flowIntensity;
+    const base = (0.82 + volKnob * 0.065) * state.flowIntensity;
     let buyAgg = base * regime.buy;
     let sellAgg = base * regime.sell;
 
-    const pulse = clamp(randn() * 0.22, -0.45, 0.55);
+    const pulse = clamp(randn() * 0.18, -0.36, 0.42);
     if (pulse >= 0) buyAgg *= 1 + pulse;
     else sellAgg *= 1 - pulse;
 
     if (state.bias.mode === "bullish") {
-      buyAgg *= 1 + 0.035 * state.bias.strength;
-      sellAgg *= 1 - 0.012 * state.bias.strength;
+      buyAgg *= 1 + 0.028 * state.bias.strength;
+      sellAgg *= 1 - 0.010 * state.bias.strength;
     } else if (state.bias.mode === "bearish") {
-      sellAgg *= 1 + 0.035 * state.bias.strength;
-      buyAgg *= 1 - 0.012 * state.bias.strength;
+      sellAgg *= 1 + 0.028 * state.bias.strength;
+      buyAgg *= 1 - 0.010 * state.bias.strength;
     }
 
-    if (state.orderFlow.pressure > 0) buyAgg *= 1 + state.orderFlow.pressure * 0.22 * profile.trendPersistence;
-    else sellAgg *= 1 + (-state.orderFlow.pressure) * 0.22 * profile.trendPersistence;
+    if (state.orderFlow.pressure > 0) buyAgg *= 1 + state.orderFlow.pressure * 0.18 * profile.trendPersistence;
+    else sellAgg *= 1 + (-state.orderFlow.pressure) * 0.18 * profile.trendPersistence;
 
     let absorption = 0;
     const above = snap.above[0];
@@ -1821,9 +1840,9 @@
     state.orderFlow.delta = rawDelta;
     state.orderFlow.deltaEma = lerp(state.orderFlow.deltaEma, rawDelta, 0.07);
     state.orderFlow.absorption = lerp(state.orderFlow.absorption, absorption, 0.08);
-    state.orderFlow.pressure = lerp(state.orderFlow.pressure, clamp(rawDelta + regime.drift * 0.35 + absorption * 0.18, -1, 1), 0.06);
+    state.orderFlow.pressure = lerp(state.orderFlow.pressure, clamp(rawDelta + regime.drift * 0.30 + absorption * 0.14, -1, 1), 0.06);
 
-    const impulse = (state.orderFlow.deltaEma * (0.35 + volKnob * 0.018) + absorption * 0.12) * state.tickSize * profile.flowImpact;
+    const impulse = (state.orderFlow.deltaEma * (0.20 + volKnob * 0.010) + absorption * 0.08) * state.tickSize * profile.flowImpact;
     return { impulse, snapshot: snap };
   }
 
@@ -1864,7 +1883,7 @@
       dir,
       ticks: secToSimTicks(outcome === "continue" ? 2.8 : outcome === "reverse" ? 3.8 : 3.0),
       maxTicks: secToSimTicks(outcome === "continue" ? 2.8 : outcome === "reverse" ? 3.8 : 3.0),
-      force: (0.12 + levelStrength * 0.05) * state.tickSize * profile.stopBurst
+      force: (0.08 + levelStrength * 0.03) * state.tickSize * profile.stopBurst
     };
   }
 
@@ -1876,15 +1895,15 @@
 
     if (ev.outcome === "reverse") {
       const burst = Math.max(0, Math.sin(progress * Math.PI * 2.2));
-      dp += -sign * ev.force * (0.78 + 0.46 * burst) + randn() * ev.force * 0.14;
+      dp += -sign * ev.force * (0.72 + 0.38 * burst) + randn() * ev.force * 0.10;
     } else if (ev.outcome === "continue") {
       const burst = Math.max(0, Math.sin(progress * Math.PI * 2.0));
-      const pullback = Math.random() < 0.16 ? -sign * ev.force * 0.18 : 0;
-      dp += sign * ev.force * (0.52 + 0.34 * burst) + pullback + randn() * ev.force * 0.10;
+      const pullback = Math.random() < 0.16 ? -sign * ev.force * 0.14 : 0;
+      dp += sign * ev.force * (0.48 + 0.26 * burst) + pullback + randn() * ev.force * 0.08;
     } else {
       const half = ev.maxTicks * 0.52;
-      if (ev.ticks > half) dp += -sign * ev.force * 0.60 + randn() * ev.force * 0.12;
-      else dp += sign * ev.force * 0.48 + randn() * ev.force * 0.12;
+      if (ev.ticks > half) dp += -sign * ev.force * 0.52 + randn() * ev.force * 0.10;
+      else dp += sign * ev.force * 0.40 + randn() * ev.force * 0.10;
     }
 
     ev.ticks -= 1;
@@ -1919,8 +1938,8 @@
 
     state.orderFlow.lastLevelTake = { level: taken.price, dir: taken.dir, at: state.simTime, label: taken.label };
     const sign = taken.dir === "up" ? 1 : -1;
-    state.sim.flow += sign * (0.7 + taken.strength * 0.25);
-    state.sim.vel += sign * state.tickSize * (0.35 + taken.strength * 0.18);
+    state.sim.flow += sign * (0.45 + taken.strength * 0.18);
+    state.sim.vel += sign * state.tickSize * (0.20 + taken.strength * 0.10);
     armPostLiquidityImpulse(taken.dir, taken.strength, !!taken.eq);
   }
 
@@ -2025,7 +2044,7 @@
       range: info.range,
       distance: Math.abs(fallback - px),
       isFallback: true
-    };
+      };
   }
 
   function chooseAutoSweepDirection() {
@@ -2146,8 +2165,8 @@
       overshootPtsMax = 2.0;
       sweepSec = 3.8 + Math.min(6.0, distancePts * 0.05);
       revertSec = 2.6 + Math.min(4.5, distancePts * 0.035);
-      force = (0.11 + pwr * 0.018 + Math.min(0.12, distancePts * 0.0014)) * state.tickSize;
-      extraBarCap = Math.max(3 * state.tickSize, baseCap * 0.30);
+      force = (0.10 + pwr * 0.014 + Math.min(0.08, distancePts * 0.0010)) * state.tickSize;
+      extraBarCap = Math.max(3 * state.tickSize, baseCap * 0.28);
       reachPolicy = "assist";
       pulseMul = 0.12;
       directMul = 0.03;
@@ -2265,7 +2284,7 @@
     if (distTicks < 4 || distTicks > 70) return;
 
     const profile = getOrderFlowProfile();
-    const chance = (0.000011 + state.sweep.power * 0.000008) * (0.70 + 0.03 * volKnob) * profile.stopBurst;
+    const chance = (0.000009 + state.sweep.power * 0.000006) * (0.65 + 0.025 * volKnob) * profile.stopBurst;
     if (Math.random() >= chance) return;
 
     if (createSweepEvent(dir, state.sweep.power, false, "auto")) {
@@ -2317,7 +2336,7 @@
         }
       } else {
         const burst = Math.max(0, Math.sin(progress * Math.PI * 2.4));
-        dp += norm * ev.force * 0.85 + sign * ev.force * 0.16 * burst + randn() * ev.force * 0.08;
+        dp += norm * ev.force * 0.78 + sign * ev.force * 0.12 * burst + randn() * ev.force * 0.06;
       }
 
       ev.sweepTicks -= 1;
@@ -2357,7 +2376,7 @@
         dp += snap + wobblePush + jitter;
       } else {
         const outcomeDir = ev.postBehavior === "continue" ? sign : -sign;
-        dp += outcomeDir * Math.abs(ev.force) + randn() * ev.force * 0.06;
+        dp += outcomeDir * Math.abs(ev.force) + randn() * ev.force * 0.05;
       }
 
       ev.revertTicks -= 1;
@@ -2723,7 +2742,7 @@
     state.y.auto = $("autoY").checked;
 
     state.target.simHzBase = clamp(Number($("simHzBase").value || 75), 20, 200);
-    state.target.impact    = clamp(Number($("impact").value || 10), 0, 20);
+    state.target.impact    = clamp(Number($("impact").value || 8), 0, 20);
 
     const volManual = clamp(Number($("volValue").value || state.target.vol), 1, 16);
     state.target.vol = volManual;
@@ -2738,7 +2757,7 @@
     state.bias.strength = clamp(Number($("biasStrength").value || 0), 0, 10);
 
     state.orderFlowProfileKey = $("orderFlowProfile").value || state.orderFlowProfileKey || "realistic";
-    state.flowIntensity = clamp(Number($("flowIntensity").value || 1), 0.5, 2.0);
+    state.flowIntensity = clamp(Number($("flowIntensity").value || 0.9), 0.5, 2.0);
   }
 
   function smoothParams() {
@@ -2766,15 +2785,17 @@
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
 
+    const flowCore = updateOrderFlowCore(volKnob);
+
     if (state.simTime >= state.sim.nextRegimeT) {
-      const randomDrift = randn() * (0.12 + 0.038 * (volKnob / 10));
-      const biasDrift = biasDir * biasStrength * (0.026 + 0.007 * volKnob);
+      const randomDrift = randn() * (0.07 + 0.022 * (volKnob / 10));
+      const biasDrift = biasDir * biasStrength * (0.016 + 0.0045 * volKnob);
 
       state.sim.driftTarget = randomDrift + biasDrift;
 
-      const baseSig = (0.90 + 0.32 * volKnob) * motion.sigmaMul;
-      state.sim.sigmaTarget = baseSig * (0.90 + 0.28 * Math.abs(randn()));
-      state.sim.nextRegimeT = state.simTime + 22 + Math.random() * 85;
+      const baseSig = (0.75 + 0.24 * volKnob) * motion.sigmaMul;
+      state.sim.sigmaTarget = baseSig * (0.92 + 0.18 * Math.abs(randn()));
+      state.sim.nextRegimeT = state.simTime + 28 + Math.random() * 95;
     }
 
     state.sim.drift = lerp(state.sim.drift, state.sim.driftTarget, 0.02);
@@ -2783,37 +2804,42 @@
     const vv = state.sim.volOfVol;
     const sig = state.sim.sigma;
     const dSig = k * (state.sim.sigmaTarget - sig) * dt + vv * Math.sqrt(dt) * randn();
-    state.sim.sigma = clamp(sig + dSig, 0.35, 18);
+    state.sim.sigma = clamp(sig + dSig, 0.25, 10);
 
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
 
-    dp += (state.sim.flow) * (impact * state.tickSize * 0.020 * motion.flowMul);
+    dp += (state.sim.flow) * (impact * state.tickSize * 0.011 * motion.flowMul);
+    dp += flowCore.impulse * 0.58;
 
     maybeStartSweepEvent(volKnob);
     dp = applySweepEvent(dp);
+    dp = applyPostLiquidityImpulse(dp);
 
-    state.sim.vel = state.sim.vel * 0.72 + dp * 0.85;
+    state.sim.vel = state.sim.vel * 0.66 + dp * 0.80;
 
-    const jp = state.sim.jumpProb * motion.jumpProbMul * (0.40 + 0.035 * volKnob);
+    const jp = state.sim.jumpProb * motion.jumpProbMul * (0.34 + 0.028 * volKnob);
     if (Math.random() < jp) {
       const dir = Math.sign(randn()) || 1;
-      state.sim.vel += dir * (state.sim.jumpScale * motion.jumpScaleMul * (0.40 + Math.random() * 0.55)) * (0.48 + 0.035 * volKnob);
+      state.sim.vel += dir * (state.sim.jumpScale * motion.jumpScaleMul * (0.36 + Math.random() * 0.38)) * (0.34 + 0.024 * volKnob);
     }
 
-    const maxVel = (0.70 + 0.075 * volKnob) * (6.5 * state.tickSize) * motion.maxVelMul;
+    const maxVel = (0.58 + 0.055 * volKnob) * (6.0 * state.tickSize) * motion.maxVelMul;
     state.sim.vel = clamp(state.sim.vel, -maxVel, maxVel);
 
     const nextBarKey = barKeyForTime(state.simTime, state.tfSec);
+    const prevPrice = state.sim.price;
     let nextPrice = roundTo(state.sim.price + state.sim.vel, state.tickSize);
     nextPrice = clampCandidateToBarRange(nextPrice, nextBarKey);
     state.sim.price = nextPrice;
 
+    detectLiquidityTake(prevPrice, state.sim.price);
+
     const tickVol =
       1 +
-      Math.floor(Math.abs(state.sim.vel) / Math.max(1e-6, state.tickSize * 0.20)) +
+      Math.floor(Math.abs(state.sim.vel) / Math.max(1e-6, state.tickSize * 0.24)) +
       Math.floor(Math.random() * 2) +
-      Math.floor(Math.abs(state.sim.flow) * 0.2);
+      Math.floor(Math.abs(state.sim.flow) * 0.16);
 
     state.tickCount++;
     state.ticks.push({ t: state.simTime, p: state.sim.price, v: tickVol });
