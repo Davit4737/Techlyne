@@ -250,6 +250,13 @@
       line-height: 1.35;
     }
     .helpItem b{ color: var(--text); }
+    .leftStack{display:grid; gap:14px; align-content:start;}
+    .macroGrid{display:grid; gap:10px;}
+    .macroBadgeRow{display:flex; flex-wrap:wrap; gap:8px;}
+    .macroPill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:12px; border:1px solid rgba(34,48,68,.7); background: rgba(11,15,20,.35); font-size:12px; color:var(--muted);}
+    .macroPill b{color:var(--text);}
+    .shockGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+    .macroRead{padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.7); background: rgba(11,15,20,.35); color:var(--muted); font-size:12px; line-height:1.45;}
 
     .startOverlay{
       position: fixed;
@@ -342,6 +349,7 @@
 </header>
 
 <main>
+  <div class="leftStack">
   <div class="card">
     <h2>Trading <small>market / limit / drip</small></h2>
     <div class="content grid">
@@ -489,8 +497,10 @@
             <option value="5" selected>5s</option>
             <option value="15">15s</option>
             <option value="60">1m</option>
+            <option value="180">3m</option>
             <option value="300">5m</option>
             <option value="900">15m</option>
+            <option value="3600">1h</option>
           </select>
         </label>
         <label>Bars on screen<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></label>
@@ -526,6 +536,8 @@
     </div>
   </div>
 
+  </div>
+
   <section class="card">
     <h2>Chart <small>sandbox</small></h2>
 
@@ -550,6 +562,7 @@
           <button class="speedBtn" data-speed="2">2x</button>
           <button class="speedBtn" data-speed="5">5x</button>
           <button class="speedBtn" data-speed="10">10x</button>
+          <button class="speedBtn" data-speed="20">20x</button>
         </div>
 
         <button class="btn small neutral" id="stepTick" title="Step 1 tick (paused)">⏭ Step</button>
@@ -715,7 +728,7 @@
       jumpScaleMul: 0.18,
       maxVelMul: 0.30,
       flowMul: 0.62,
-      barCap: { 1: 5, 5: 10, 15: 18, 60: 42, 300: 95, 900: 160 }
+      barCap: { 1: 5, 5: 10, 15: 18, 60: 42, 180: 66, 300: 95, 900: 160, 3600: 320 }
     },
     realistic: {
       name: "Realistic NQ",
@@ -724,7 +737,7 @@
       jumpScaleMul: 0.26,
       maxVelMul: 0.38,
       flowMul: 0.70,
-      barCap: { 1: 7, 5: 13, 15: 24, 60: 56, 300: 120, 900: 190 }
+      barCap: { 1: 7, 5: 13, 15: 24, 60: 56, 180: 88, 300: 120, 900: 190, 3600: 380 }
     },
     volatile: {
       name: "Volatile session",
@@ -733,7 +746,7 @@
       jumpScaleMul: 0.38,
       maxVelMul: 0.50,
       flowMul: 0.82,
-      barCap: { 1: 10, 5: 18, 15: 34, 60: 80, 300: 160, 900: 250 }
+      barCap: { 1: 10, 5: 18, 15: 34, 60: 80, 180: 125, 300: 160, 900: 250, 3600: 520 }
     }
   };
 
@@ -786,6 +799,26 @@
     expansion:  { buy: 1.14, sell: 1.14, drift: 0.00 }
   };
 
+  const MACRO_PRESETS = {
+    balanced:    { rates:0, inflation:0, growth:0, earnings:0, risk:0, read:"Balanced tape. Macro is not leaning hard either way." },
+    goldilocks:  { rates:1, inflation:1, growth:0, earnings:1, risk:1, read:"Cooling inflation + easier Fed expectations keep tech supported." },
+    hawkish:     { rates:-1, inflation:-1, growth:1, earnings:0, risk:-1, read:"Hot data and a hawkish Fed lean push yields up and pressure NQ." },
+    growthscare: { rates:0, inflation:0, growth:-1, earnings:-1, risk:-1, read:"Growth scare tape. Weak demand and cautious risk tone drag tech lower." },
+    aibid:       { rates:0, inflation:0, growth:1, earnings:1, risk:1, read:"Semis and megacap momentum are carrying the tape higher." },
+    riskoff:     { rates:-1, inflation:0, growth:-1, earnings:-1, risk:-1, read:"Broad de-risking tape. Buyers fade and downside moves extend easier." }
+  };
+
+  const MACRO_SHOCKS = {
+    fomcDovish:  { label:"FOMC dovish",  dir: 1, strength:0.95, ttl:90, sigma:0.18 },
+    fomcHawkish: { label:"FOMC hawkish", dir:-1, strength:0.95, ttl:90, sigma:0.22 },
+    cpiCool:     { label:"CPI cool",     dir: 1, strength:0.78, ttl:75, sigma:0.14 },
+    cpiHot:      { label:"CPI hot",      dir:-1, strength:0.78, ttl:75, sigma:0.16 },
+    nvdaBeat:    { label:"NVDA beat",    dir: 1, strength:0.62, ttl:60, sigma:0.12 },
+    nvdaMiss:    { label:"NVDA miss",    dir:-1, strength:0.62, ttl:60, sigma:0.12 },
+    riskOn:      { label:"Risk-on",      dir: 1, strength:0.52, ttl:55, sigma:0.10 },
+    riskOff:     { label:"Risk-off",     dir:-1, strength:0.58, ttl:55, sigma:0.12 }
+  };
+
   const canvas = $("chart");
   const ctx = canvas.getContext("2d", { alpha:true });
 
@@ -804,6 +837,15 @@
     orderFlowProfileKey: "realistic",
     flowIntensity: 0.9,
     bias: { mode: "neutral", strength: 3 },
+    news: {
+      preset: "balanced",
+      rates: 0,
+      inflation: 0,
+      growth: 0,
+      earnings: 0,
+      risk: 0,
+      shock: null
+    },
     sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
     orderFlow: {
       regime: "balanced",
@@ -937,6 +979,57 @@
     return candidatePrice;
   }
 
+  function applyMacroPreset(key, silent=false) {
+    const preset = MACRO_PRESETS[key] || MACRO_PRESETS.balanced;
+    state.news.preset = key in MACRO_PRESETS ? key : "balanced";
+    state.news.rates = preset.rates;
+    state.news.inflation = preset.inflation;
+    state.news.growth = preset.growth;
+    state.news.earnings = preset.earnings;
+    state.news.risk = preset.risk;
+    if ($("macroPreset")) $("macroPreset").value = state.news.preset;
+    if ($("macroRates")) $("macroRates").value = String(state.news.rates);
+    if ($("macroInflation")) $("macroInflation").value = String(state.news.inflation);
+    if ($("macroGrowth")) $("macroGrowth").value = String(state.news.growth);
+    if ($("macroEarnings")) $("macroEarnings").value = String(state.news.earnings);
+    if ($("macroRisk")) $("macroRisk").value = String(state.news.risk);
+    if (!silent) toast(`Macro preset: ${$("macroPreset").selectedOptions[0].textContent}`);
+    renderMacroPanel();
+  }
+
+  function syncMacroFromUI() {
+    state.news.preset = $("macroPreset")?.value || state.news.preset || "balanced";
+    state.news.rates = clamp(Number($("macroRates")?.value || 0), -1, 1);
+    state.news.inflation = clamp(Number($("macroInflation")?.value || 0), -1, 1);
+    state.news.growth = clamp(Number($("macroGrowth")?.value || 0), -1, 1);
+    state.news.earnings = clamp(Number($("macroEarnings")?.value || 0), -1, 1);
+    state.news.risk = clamp(Number($("macroRisk")?.value || 0), -1, 1);
+  }
+
+  function getMacroComposite() {
+    return { bias: 0, volBoost: 0, flowBias: 0, read: "Macro disabled." };
+  }
+
+  function getMacroShockLive() {
+    return 0;
+  }
+
+  function getMacroShock() {
+    return { dir: 0, live: 0, sigma: 0, label: "calm" };
+  }
+
+  function triggerMacroShock(key) {
+    return;
+  }
+
+  function decayMacroShock(dt) {
+    return;
+  }
+
+  function renderMacroPanel() {
+    return;
+  }
+
   function setInitialPrice(value) {
     const p = roundTo(Math.max(state.tickSize, Number(value) || state.initialPrice || 17000), state.tickSize);
     state.initialPrice = p;
@@ -977,6 +1070,7 @@
 
     state.sweep.event = null;
     state.sweep.cooldownUntil = 0;
+    state.news.shock = null;
     state.orderFlow = {
       regime: "balanced",
       regimeUntil: 0,
@@ -1000,13 +1094,17 @@
 
     applySettingsFromUI();
 
-    const warmSeconds = 14 * 60;
+    const warmSeconds = 8 * 60 * 60;
     const baseHz = Math.max(20, state.p.simHzBase);
-    const warmTicks = Math.floor(warmSeconds * baseHz);
+    const warmHz = Math.min(12, baseHz);
+    const warmTicks = Math.floor(warmSeconds * warmHz);
 
     const savedPaused = state.paused;
+    const savedHz = state.p.simHzBase;
     state.paused = true;
+    state.p.simHzBase = warmHz;
     for (let i=0;i<warmTicks;i++) stepSimulationOnce();
+    state.p.simHzBase = savedHz;
     state.paused = savedPaused;
 
     rebuildBars(state.tfSec);
@@ -2683,6 +2781,7 @@
     $("stAbsorb").textContent = state.orderFlow.absorption.toFixed(2);
     $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
 
+    renderMacroPanel();
     if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
   }
 
@@ -2725,6 +2824,8 @@
 
     state.orderFlowProfileKey = $("orderFlowProfile").value || state.orderFlowProfileKey || "realistic";
     state.flowIntensity = clamp(Number($("flowIntensity").value || 0.9), 0.5, 2.0);
+
+    syncMacroFromUI();
   }
 
   function smoothParams() {
@@ -2739,6 +2840,7 @@
 
     const volKnob = clamp(state.p.vol, 1, 16);
     const impact = clamp(state.p.impact, 0, 20);
+    const macro = getMacroComposite();
 
     const biasDir =
       state.bias.mode === "bullish" ? 1 :
@@ -2751,6 +2853,8 @@
 
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
+    decayMacroShock(dt);
+    const shock = getMacroShock();
 
     const flowCore = updateOrderFlowCore(volKnob);
 
@@ -2758,10 +2862,13 @@
       const randomDrift = randn() * (0.07 + 0.022 * (volKnob / 10));
       const biasDrift = biasDir * biasStrength * (0.016 + 0.0045 * volKnob);
 
-      state.sim.driftTarget = randomDrift + biasDrift;
+      const macroDrift = macro.bias * (0.018 + 0.003 * volKnob);
+      const shockDrift = shock.dir * shock.live * (0.016 + 0.002 * volKnob);
+      state.sim.driftTarget = randomDrift + biasDrift + macroDrift + shockDrift;
 
       const baseSig = (0.75 + 0.24 * volKnob) * motion.sigmaMul;
-      state.sim.sigmaTarget = baseSig * (0.92 + 0.18 * Math.abs(randn()));
+      const sigmaMul = 1 + macro.volBoost + shock.sigma;
+      state.sim.sigmaTarget = baseSig * (0.92 + 0.18 * Math.abs(randn())) * sigmaMul;
       state.sim.nextRegimeT = state.simTime + 28 + Math.random() * 95;
     }
 
@@ -2776,8 +2883,12 @@
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
 
+    state.sim.flow += (macro.flowBias * 0.016 + shock.dir * shock.live * 0.030) * state.flowIntensity;
+
     dp += (state.sim.flow) * (impact * state.tickSize * 0.011 * motion.flowMul);
     dp += flowCore.impulse * 0.58;
+    dp += macro.bias * state.tickSize * 0.018 * motion.flowMul;
+    dp += shock.dir * shock.live * state.tickSize * (0.12 + 0.010 * volKnob);
 
     maybeStartSweepEvent(volKnob);
     dp = applySweepEvent(dp);
@@ -3228,13 +3339,21 @@
     rebuildBars(sec);
   });
 
-  ["indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity"].forEach(id => {
-    $(id).addEventListener("change", () => {
+  ["indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity","macroPreset","macroRates","macroInflation","macroGrowth","macroEarnings","macroRisk"].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener("change", () => {
+      if (id === "macroPreset" && $("macroPreset")) applyMacroPreset($("macroPreset").value, true);
       applySettingsFromUI();
       state.indCache.len = 0;
+      renderMacroPanel();
     });
   });
   $("biasStrength").addEventListener("input", () => applySettingsFromUI());
+
+  document.querySelectorAll(".macroShock").forEach(btn => {
+    btn.addEventListener("click", () => triggerMacroShock(btn.dataset.shock));
+  });
 
   function stopDrip() {
     if (state.drip.timer) clearInterval(state.drip.timer);
@@ -3324,8 +3443,10 @@
     if ($("orderFlowProfile")) $("orderFlowProfile").value = state.orderFlowProfileKey;
     if ($("startOrderFlowProfile")) $("startOrderFlowProfile").value = state.orderFlowProfileKey;
     setVolPreset(state.volPresetKey);
+    applyMacroPreset(state.news.preset, true);
 
     applySettingsFromUI();
+    renderMacroPanel();
     resizeCanvasToDisplaySize();
 
     const startInput = $("startPriceInput");
