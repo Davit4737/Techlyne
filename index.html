@@ -404,9 +404,25 @@
         <label>Qty each<input id="dripQty" type="number" min="1" step="1" value="1" /></label>
       </div>
       <div class="grid cols2">
+        <label>Drip mode
+          <select id="dripMode">
+            <option value="instant" selected>Instant</option>
+            <option value="zone">Price zone</option>
+            <option value="touch_vwap">Touch VWAP</option>
+            <option value="touch_ma">Touch 20m SMA</option>
+          </select>
+        </label>
+        <label>Base touch zone (ticks)<input id="dripTouchTicks" type="number" min="1" step="1" value="2" /></label>
+      </div>
+      <div class="grid cols2" id="dripZoneWrap" style="display:none;">
+        <label>Zone from<input id="dripZoneFrom" type="number" step="0.25" value="0" /></label>
+        <label>Zone to<input id="dripZoneTo" type="number" step="0.25" value="0" /></label>
+      </div>
+      <div class="grid cols2">
         <button class="btn neutral" id="dripToggle">▶ Start Drip</button>
         <button class="btn" id="dripStop">■ Stop</button>
       </div>
+      <div class="muted" style="font-size:11px; margin-top:8px;">VWAP / 20m SMA drip uses an asymmetric hold zone: sell gives more room above the line, buy gives more room below. Rearms after price fully leaves and comes back.</div>
 
       <div class="sep"></div>
 
@@ -891,7 +907,19 @@
     limits: [],
     exitTargets: [],
     brackets: { armed:false, tp:null, sl:null },
-    drip: { on:false, timer:null, side:"buy" },
+    drip: {
+      on:false,
+      timer:null,
+      side:"buy",
+      mode:"instant",
+      qtyEach:1,
+      everySec:2,
+      touchTicks:2,
+      lastExecAt:-1,
+      zoneFrom:null,
+      zoneTo:null,
+      entered:false
+    },
     view: {
       visibleBars: 160,
       futureBars: 40,
@@ -1116,6 +1144,8 @@
     $("limitPrice").value = state.sim.price.toFixed(dec);
     $("ladderStart").value = state.sim.price.toFixed(dec);
     $("exitPrice").value = state.sim.price.toFixed(dec);
+    if ($("dripZoneFrom")) $("dripZoneFrom").value = state.sim.price.toFixed(dec);
+    if ($("dripZoneTo")) $("dripZoneTo").value = state.sim.price.toFixed(dec);
   }
 
   function startFromMenu(forceValue=null) {
@@ -1664,6 +1694,142 @@
 
     state.indCache = { tfSec, len, maN, vwap, ma };
     return state.indCache;
+  }
+
+  function getLiveIndicatorValue(kind) {
+    const allBars = getAllBarsForRender();
+    if (!allBars.length) return null;
+
+    if (kind === "vwap") {
+      let cumPV = 0, cumV = 0;
+      for (let i=0;i<allBars.length;i++) {
+        const b = allBars[i];
+        const v = Math.max(1, b.v || 1);
+        const tp = (b.h + b.l + b.c) / 3;
+        cumPV += tp * v;
+        cumV += v;
+      }
+      return cumV > 0 ? (cumPV / cumV) : null;
+    }
+
+    if (kind === "ma") {
+      const maN = Math.max(1, Math.round((20 * 60) / state.tfSec));
+      if (allBars.length < maN) return null;
+      let sum = 0;
+      for (let i = allBars.length - maN; i < allBars.length; i++) sum += allBars[i].c;
+      return sum / maN;
+    }
+
+    return null;
+  }
+
+  function getIndicatorLabel(kind) {
+    return kind === "ma" ? "20m SMA" : "VWAP";
+  }
+
+  function priceInsideBand(price, a, b) {
+    const low = Math.min(a, b);
+    const high = Math.max(a, b);
+    return price >= low && price <= high;
+  }
+
+  function updateDripUI() {
+    const mode = $("dripMode") ? $("dripMode").value : "instant";
+    const zoneWrap = $("dripZoneWrap");
+    const touchTicks = $("dripTouchTicks");
+    if (zoneWrap) zoneWrap.style.display = mode === "zone" ? "grid" : "none";
+    if (touchTicks) touchTicks.disabled = !(mode === "touch_vwap" || mode === "touch_ma");
+
+    if (!$("dripToggle")) return;
+    if (!state.drip.on) {
+      $("dripToggle").textContent = "▶ Start Drip";
+      return;
+    }
+    $("dripToggle").textContent = state.drip.entered ? "⏸ Drip Running" : "⏳ Drip Armed";
+  }
+
+  function getDripModeLabel(mode) {
+    if (mode === "zone") return "zone";
+    if (mode === "touch_vwap") return "VWAP touch";
+    if (mode === "touch_ma") return "20m SMA touch";
+    return "instant";
+  }
+
+  function segmentTouchesBand(prevPrice, nextPrice, low, high) {
+    const segLow = Math.min(prevPrice, nextPrice);
+    const segHigh = Math.max(prevPrice, nextPrice);
+    return segHigh >= low && segLow <= high;
+  }
+
+  function getIndicatorDripBand(kind, side, entered = false) {
+    const center = getLiveIndicatorValue(kind);
+    if (!Number.isFinite(center)) return null;
+
+    const baseTicks = Math.max(1, Math.abs(state.drip.touchTicks || 1));
+    const base = Math.max(state.tickSize, baseTicks * state.tickSize);
+
+    const favorMul = entered ? 2.15 : 1.65;
+    const opposeMul = entered ? 1.05 : 0.75;
+
+    if ((side || "buy") === "sell") {
+      return { center, low: center - (opposeMul * base), high: center + (favorMul * base) };
+    }
+    return { center, low: center - (favorMul * base), high: center + (opposeMul * base) };
+  }
+
+  function canRunDripNow(prevPrice = state.sim.price, nextPrice = state.sim.price) {
+    if (!state.drip.on) return false;
+    const mode = state.drip.mode || "instant";
+
+    if (mode === "instant") return true;
+
+    if (mode === "zone") {
+      const a = state.drip.zoneFrom;
+      const b = state.drip.zoneTo;
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a === b) return false;
+
+      const low = Math.min(a, b);
+      const high = Math.max(a, b);
+      const inside = priceInsideBand(nextPrice, low, high) || segmentTouchesBand(prevPrice, nextPrice, low, high);
+      if (inside && !state.drip.entered) {
+        state.drip.entered = true;
+        updateDripUI();
+        toast("Zone drip active");
+      } else if (!inside && state.drip.entered) {
+        state.drip.entered = false;
+        updateDripUI();
+        toast("Zone drip re-armed");
+      }
+      return inside;
+    }
+
+    const kind = mode === "touch_ma" ? "ma" : "vwap";
+    const armBand = getIndicatorDripBand(kind, state.drip.side, false);
+    if (!armBand) return false;
+
+    const holdBand = getIndicatorDripBand(kind, state.drip.side, true) || armBand;
+    const activeBand = state.drip.entered ? holdBand : armBand;
+    const inside = priceInsideBand(nextPrice, activeBand.low, activeBand.high) ||
+      segmentTouchesBand(prevPrice, nextPrice, activeBand.low, activeBand.high);
+
+    if (inside && !state.drip.entered) {
+      state.drip.entered = true;
+      updateDripUI();
+      toast(`${getIndicatorLabel(kind)} drip active`);
+    } else if (!inside && state.drip.entered) {
+      state.drip.entered = false;
+      updateDripUI();
+      toast(`${getIndicatorLabel(kind)} drip re-armed`);
+    }
+    return inside;
+  }
+
+  function updateDripEngine(prevPrice, nextPrice) {
+    if (!state.drip.on || state.paused) return;
+    if (!canRunDripNow(prevPrice, nextPrice)) return;
+    if (state.simTime - (state.drip.lastExecAt ?? -1) < state.drip.everySec) return;
+    state.drip.lastExecAt = state.simTime;
+    marketOrder(state.drip.side, state.drip.qtyEach, getSlip());
   }
 
   function distPointToSegment(px,py, x1,y1, x2,y2) {
@@ -2929,6 +3095,7 @@
     }
 
     ensureBarForTick(state.simTime, state.sim.price, tickVol);
+    updateDripEngine(prevPrice, state.sim.price);
     matchLimits();
     checkBrackets();
     checkExitTargets();
@@ -3355,28 +3522,55 @@
     btn.addEventListener("click", () => triggerMacroShock(btn.dataset.shock));
   });
 
-  function stopDrip() {
-    if (state.drip.timer) clearInterval(state.drip.timer);
+  function stopDrip(message = "Drip stopped") {
     state.drip.timer = null;
     state.drip.on = false;
-    $("dripToggle").textContent = "▶ Start Drip";
-    toast("Drip stopped");
+    state.drip.entered = false;
+    state.drip.lastExecAt = -1;
+    updateDripUI();
+    if (message) toast(message);
   }
   function startDrip() {
-    stopDrip();
+    stopDrip(null);
+
     const side = $("dripSide").value;
+    const mode = $("dripMode").value || "instant";
     const everySec = clamp(Number($("dripEvery").value || 2), 0.2, 999);
     const qtyEach = Math.max(1, Math.floor(Number($("dripQty").value || 1)));
+    const touchTicks = Math.max(1, Math.floor(Number($("dripTouchTicks").value || 2)));
+    const zoneFrom = Number($("dripZoneFrom") ? $("dripZoneFrom").value : 0);
+    const zoneTo = Number($("dripZoneTo") ? $("dripZoneTo").value : 0);
+
+    if (mode === "zone" && (!Number.isFinite(zoneFrom) || !Number.isFinite(zoneTo) || zoneFrom === zoneTo)) {
+      toast("Enter a valid drip zone");
+      return;
+    }
+
+    if (mode === "touch_vwap" && !Number.isFinite(getLiveIndicatorValue("vwap"))) {
+      toast("VWAP not ready yet");
+      return;
+    }
+
+    if (mode === "touch_ma" && !Number.isFinite(getLiveIndicatorValue("ma"))) {
+      toast("20m SMA not ready yet");
+      return;
+    }
 
     state.drip.on = true;
     state.drip.side = side;
-    state.drip.timer = setInterval(() => {
-      if (state.paused) return;
-      marketOrder(side, qtyEach, getSlip());
-    }, Math.round(everySec * 1000));
+    state.drip.mode = mode;
+    state.drip.qtyEach = qtyEach;
+    state.drip.everySec = everySec;
+    state.drip.touchTicks = touchTicks;
+    state.drip.zoneFrom = zoneFrom;
+    state.drip.zoneTo = zoneTo;
+    state.drip.entered = mode === "instant" ? true : false;
+    state.drip.lastExecAt = state.simTime - everySec;
 
-    $("dripToggle").textContent = "⏸ Drip Running";
-    toast(`Drip ${side.toUpperCase()} every ${everySec}s`);
+    updateDripUI();
+
+    if (mode === "instant") toast(`Drip ${side.toUpperCase()} every ${everySec}s`);
+    else toast(`Drip armed: ${side.toUpperCase()} on ${getDripModeLabel(mode)} zone`);
   }
 
   $("dripToggle").addEventListener("click", () => {
@@ -3384,6 +3578,7 @@
     else startDrip();
   });
   $("dripStop").addEventListener("click", stopDrip);
+  if ($("dripMode")) $("dripMode").addEventListener("change", updateDripUI);
 
   $("reset").addEventListener("click", () => {
     if (!state.started) {
@@ -3437,6 +3632,8 @@
     $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("exitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    if ($("dripZoneFrom")) $("dripZoneFrom").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    if ($("dripZoneTo")) $("dripZoneTo").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("manualSweepLevel").value = "0";
 
     $("volPreset").value = state.volPresetKey;
@@ -3446,6 +3643,7 @@
     applyMacroPreset(state.news.preset, true);
 
     applySettingsFromUI();
+    updateDripUI();
     renderMacroPanel();
     resizeCanvasToDisplaySize();
 
