@@ -3,338 +3,884 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#09131f" />
   <title>Market Sandbox</title>
   <style>
     :root{
-      --bg:#0b0f14; --text:#e7eef7; --muted:#9fb0c3; --line:#223044;
-      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      --bg:#07101b;
+      --bg-soft:#0d1826;
+      --panel:#101b2a;
+      --panel-2:#0c1522;
+      --text:#edf4ff;
+      --muted:#8ea7c2;
+      --line:rgba(86,123,164,.26);
+      --line-strong:rgba(123,170,223,.34);
+      --good:#39d48d;
+      --bad:#ff697e;
+      --neutral:#6ab5ff;
+      --warn:#ffcf5b;
+      --cyan:#33d7ff;
+      --shadow:0 22px 60px rgba(0,0,0,.38);
+      --radius:18px;
+      --radius-sm:12px;
+      --mono:"Cascadia Code","IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      --sans:"Aptos","Segoe UI Variable","Trebuchet MS","Segoe UI",sans-serif;
+      --display:"Bahnschrift","Aptos Display","Segoe UI Variable",sans-serif;
     }
+
     *{box-sizing:border-box}
+
+    html,body{min-height:100%}
+
     body{
-      margin:0; font-family:var(--sans);
-      background: radial-gradient(1200px 800px at 10% 10%, #101a2a 0%, var(--bg) 45%) fixed;
+      margin:0;
+      font-family:var(--sans);
       color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(42,123,255,.18), transparent 55%),
+        radial-gradient(900px 600px at 100% 10%, rgba(44,211,255,.14), transparent 50%),
+        radial-gradient(900px 700px at 80% 100%, rgba(255,93,136,.10), transparent 56%),
+        linear-gradient(180deg, #07101b 0%, #0a1421 100%);
+      position:relative;
+      overflow-x:hidden;
     }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size:28px 28px;
+      mask-image:linear-gradient(180deg, rgba(0,0,0,.38), transparent 85%);
+      opacity:.34;
+    }
+
+    *::-webkit-scrollbar{width:10px;height:10px}
+    *::-webkit-scrollbar-thumb{
+      background:rgba(134,168,205,.22);
+      border-radius:999px;
+      border:2px solid transparent;
+      background-clip:padding-box;
+    }
+    *::-webkit-scrollbar-track{background:transparent}
+
     header{
-      padding:12px 16px;
+      position:sticky;
+      top:0;
+      z-index:8;
+      padding:14px 18px;
       border-bottom:1px solid var(--line);
-      background: linear-gradient(180deg, rgba(17,24,36,.88), rgba(11,15,20,.58));
-      position:sticky; top:0; z-index:4;
-      backdrop-filter: blur(8px);
+      background:
+        linear-gradient(180deg, rgba(6,12,20,.92), rgba(8,15,23,.72)),
+        radial-gradient(500px 260px at 0% 0%, rgba(68,155,255,.10), transparent 60%);
+      backdrop-filter:blur(14px) saturate(125%);
     }
+
     header .row{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      max-width:1480px; margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      max-width:1580px;
+      margin:0 auto;
       flex-wrap:wrap;
     }
-    .title{display:flex; flex-direction:column; gap:2px;}
-    .title h1{font-size:16px; margin:0; font-weight:900; letter-spacing:.2px;}
-    .title .sub{font-size:12px; color:var(--muted); line-height:1.25;}
-    .pill{
-      display:inline-flex; gap:10px; align-items:center;
-      padding:8px 10px;
-      background: rgba(17,24,36,.75);
-      border:1px solid rgba(34,48,68,.9);
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:320px;
+    }
+
+    .eyebrow{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#9ec6ef;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      font-weight:800;
+    }
+
+    .eyebrow .dot{
+      width:8px;
+      height:8px;
       border-radius:999px;
-      box-shadow: var(--shadow);
+      background:linear-gradient(135deg, #33d7ff, #7fd3ff);
+      box-shadow:0 0 12px rgba(51,215,255,.7);
+    }
+
+    .title h1{
+      margin:0;
+      font-family:var(--display);
+      font-size:22px;
+      line-height:1.05;
+      letter-spacing:.02em;
+      font-weight:900;
+    }
+
+    .title .sub{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+      max-width:720px;
+    }
+
+    .toolbarPills{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:9px 12px;
+      border-radius:999px;
+      background:linear-gradient(180deg, rgba(19,31,47,.92), rgba(12,20,31,.86));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
       font-size:12px;
       color:var(--muted);
       white-space:nowrap;
     }
+
     .pill b{color:var(--text); font-weight:900}
+
+    .pill.statusGood{border-color:rgba(57,212,141,.28)}
+    .pill.statusWarn{border-color:rgba(255,207,91,.26)}
+
     .toast{
-      max-width: 460px;
+      max-width:420px;
       overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
+
     main{
-      max-width:1480px; margin:0 auto; padding:14px;
-      display:grid; grid-template-columns: 360px 1fr;
-      gap:14px;
+      max-width:1580px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns:minmax(320px, 390px) minmax(0, 1fr);
+      gap:16px;
+      align-items:start;
     }
+
+    .leftStack{
+      display:grid;
+      gap:16px;
+      align-content:start;
+    }
+
     .card{
-      background: linear-gradient(180deg, rgba(17,24,36,.92), rgba(15,22,32,.84));
-      border:1px solid rgba(34,48,68,.9);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
+      position:relative;
       overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(19,31,47,.96), rgba(11,19,30,.92)),
+        radial-gradient(500px 300px at 10% 0%, rgba(78,173,255,.06), transparent 70%);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 25%);
+      opacity:.5;
+    }
+
     .card h2{
+      position:relative;
+      z-index:1;
       margin:0;
-      padding:10px 12px;
+      padding:12px 14px;
       font-size:13px;
-      letter-spacing:.2px;
-      border-bottom:1px solid rgba(34,48,68,.7);
-      color:#dce8f7;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      border-bottom:1px solid rgba(108,146,188,.18);
+      color:#dff0ff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    .card h2 small{color:var(--muted); font-weight:800; font-size:11px;}
-    .card .content{padding:10px;}
-    .grid{display:grid; gap:10px;}
-    .grid.cols2{grid-template-columns:1fr 1fr;}
-    .grid.cols3{grid-template-columns:1fr 1fr 1fr;}
-    label{display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted);}
-    input, select, button{font-family:inherit;}
+
+    .card h2 small{
+      color:var(--muted);
+      font-weight:800;
+      font-size:11px;
+      letter-spacing:.02em;
+      text-transform:none;
+    }
+
+    .content{
+      position:relative;
+      z-index:1;
+      padding:12px;
+    }
+
+    .grid{display:grid; gap:10px}
+    .grid.cols2{grid-template-columns:1fr 1fr}
+    .grid.cols3{grid-template-columns:1fr 1fr 1fr}
+
+    .sectionLabel{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:2px;
+      color:#dff0ff;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .sectionLabel small{
+      font-size:11px;
+      text-transform:none;
+      letter-spacing:0;
+      color:var(--muted);
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:11px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    input, select, button{font-family:inherit}
+
     input, select{
       width:100%;
-      padding:9px 10px;
-      border-radius:10px;
-      border:1px solid rgba(34,48,68,.9);
-      background: rgba(11,15,20,.55);
-      color: var(--text);
+      padding:10px 11px;
+      border-radius:12px;
+      border:1px solid rgba(89,127,170,.34);
+      background:linear-gradient(180deg, rgba(8,14,22,.9), rgba(12,20,31,.82));
+      color:var(--text);
       outline:none;
+      transition:border-color .14s ease, box-shadow .14s ease, background .14s ease;
     }
+
+    select{
+      color-scheme:light;
+    }
+
+
+input[type="color"]{
+  width:100%;
+  min-height:44px;
+  padding:6px;
+  border-radius:12px;
+  border:1px solid rgba(89,127,170,.34);
+  background:linear-gradient(180deg, rgba(8,14,22,.9), rgba(12,20,31,.82));
+  cursor:pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
+input[type="color"]::-webkit-color-swatch{
+  border:none;
+  border-radius:9px;
+}
+
+.stylePreview{
+  padding:10px 11px;
+  border-radius:14px;
+  border:1px solid rgba(95,132,173,.20);
+  background:
+    radial-gradient(360px 180px at 20% 0%, rgba(106,181,255,.12), transparent 55%),
+    linear-gradient(180deg, rgba(9,15,24,.88), rgba(6,11,18,.92));
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.styleSwatchRow{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.styleSwatch{
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px rgba(0,0,0,.22);
+}
+
+    option,
+    optgroup{
+      color:#08111b;
+      background:#eef5ff;
+    }
+
+    input:hover, select:hover{border-color:rgba(112,155,201,.46)}
+
     input:focus, select:focus{
-      border-color: rgba(100,181,255,.55);
-      box-shadow: 0 0 0 3px rgba(100,181,255,.12);
+      border-color:rgba(106,181,255,.72);
+      box-shadow:0 0 0 3px rgba(106,181,255,.14);
+      background:linear-gradient(180deg, rgba(10,17,27,.96), rgba(14,24,36,.90));
     }
+
     .btn{
       border:none;
-      border-radius:12px;
+      border-radius:14px;
       padding:10px 12px;
       cursor:pointer;
       font-weight:900;
-      letter-spacing:.2px;
+      letter-spacing:.02em;
       user-select:none;
       display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:8px;
       white-space:nowrap;
-      background: rgba(159,176,195,.12);
-      color:#e7eef7;
-      border:1px solid rgba(159,176,195,.35);
-      transition: transform .06s ease, filter .15s ease;
+      background:linear-gradient(180deg, rgba(150,175,205,.14), rgba(120,145,176,.08));
+      color:#eaf2fd;
+      border:1px solid rgba(159,176,195,.28);
+      transition:transform .08s ease, filter .16s ease, border-color .16s ease;
     }
-    .btn:hover{filter: brightness(1.08);}
-    .btn:active{transform: translateY(1px);}
-    .btn.good{background: rgba(61,220,151,.16); color: #bdf8de; border:1px solid rgba(61,220,151,.45);}
-    .btn.bad{background: rgba(255,91,110,.14); color: #ffd0d7; border:1px solid rgba(255,91,110,.45);}
-    .btn.neutral{background: rgba(100,181,255,.14); color: #d4ebff; border:1px solid rgba(100,181,255,.45);}
-    .btn.warn{background: rgba(255,207,91,.12); color: #ffe8b2; border:1px solid rgba(255,207,91,.35);}
-    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px;}
-    .row{display:flex; gap:10px; align-items:center;}
-    .row.wrap{flex-wrap:wrap;}
-    .sep{height:1px; background: rgba(34,48,68,.7); margin: 12px 0;}
+
+    .btn:hover{filter:brightness(1.06); border-color:rgba(159,176,195,.44)}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:none; box-shadow:0 0 0 3px rgba(106,181,255,.18)}
+    .btn.good{background:linear-gradient(180deg, rgba(57,212,141,.22), rgba(57,212,141,.12)); color:#c9ffe6; border-color:rgba(57,212,141,.42)}
+    .btn.bad{background:linear-gradient(180deg, rgba(255,105,126,.22), rgba(255,105,126,.10)); color:#ffe1e7; border-color:rgba(255,105,126,.42)}
+    .btn.neutral{background:linear-gradient(180deg, rgba(106,181,255,.22), rgba(106,181,255,.10)); color:#dcefff; border-color:rgba(106,181,255,.44)}
+    .btn.warn{background:linear-gradient(180deg, rgba(255,207,91,.18), rgba(255,207,91,.08)); color:#fff0c4; border-color:rgba(255,207,91,.35)}
+    .btn.small{padding:8px 10px; border-radius:11px; font-size:12px}
+
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap}
+
+    .row{display:flex; gap:10px; align-items:center}
+    .row.wrap{flex-wrap:wrap}
+
+    .sep{
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(102,140,184,.34), transparent);
+      margin:12px 0;
+    }
+
     .mono{font-family:var(--mono)}
     .muted{color:var(--muted)}
+
+    .tiny{
+      font-size:11px;
+      line-height:1.45;
+      color:var(--muted);
+    }
+
     .kbd{
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 8px;
-      border:1px solid rgba(34,48,68,.9);
-      background: rgba(11,15,20,.55);
-      color: rgba(231,238,247,.95);
+      font-family:var(--mono);
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(90,124,163,.36);
+      background:rgba(11,18,28,.72);
+      color:rgba(237,244,255,.95);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
     }
+
+    .statGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(128px, 1fr));
+      gap:10px;
+    }
+
     .stat{
-      display:flex; flex-direction:column; gap:2px;
-      padding:9px 10px;
-      border-radius:12px;
-      border:1px solid rgba(34,48,68,.7);
-      background: rgba(11,15,20,.35);
-      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      padding:10px 11px;
+      border-radius:14px;
+      border:1px solid rgba(94,132,177,.22);
+      background:linear-gradient(180deg, rgba(10,17,27,.88), rgba(13,22,35,.72));
+      min-width:0;
     }
-    .stat .k{font-size:11px; color:var(--muted);}
-    .stat .v{font-family:var(--mono); font-size:13px; font-weight:900; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-    .chartTopBar{
-      padding:10px 12px;
-      border-bottom:1px solid rgba(34,48,68,.7);
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px; flex-wrap:wrap;
+
+    .stat .k{
+      font-size:10px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-weight:800;
     }
-    .chartTopBar .left{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-    .chartTopBar .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-    .miniField{
-      display:flex; align-items:center; gap:8px;
+
+    .stat .v{
+      font-family:var(--mono);
+      font-size:13px;
+      font-weight:900;
+      color:var(--text);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .callout{
+      display:grid;
+      gap:10px;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(76,117,160,.22);
+      background:
+        linear-gradient(180deg, rgba(11,20,31,.92), rgba(9,15,24,.86)),
+        radial-gradient(320px 220px at 100% 0%, rgba(56,196,255,.08), transparent 70%);
+    }
+
+    .calloutHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .calloutTitle{
+      font-weight:900;
+      font-size:14px;
+      letter-spacing:.03em;
+    }
+
+    .calloutText{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .macroBadgeRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .macroPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       padding:8px 10px;
       border-radius:12px;
-      border:1px solid rgba(34,48,68,.7);
-      background: rgba(11,15,20,.35);
-      color: var(--muted);
+      border:1px solid rgba(97,135,177,.26);
+      background:rgba(11,19,29,.56);
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .macroPill b{color:var(--text)}
+
+    .shockGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .macroRead{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(95,132,173,.20);
+      background:rgba(8,14,22,.52);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .helperList{
+      display:grid;
+      gap:8px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .helperList li{
+      padding:9px 10px;
+      border-radius:12px;
+      border:1px solid rgba(96,132,171,.20);
+      background:rgba(9,15,24,.48);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .helperList b{color:var(--text)}
+
+    .chartCard{
+      min-width:0;
+    }
+
+    .chartTopBar{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(93,131,173,.18);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .chartTopBar .left,
+    .chartTopBar .right{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+
+    .miniField{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(91,129,171,.22);
+      background:rgba(10,17,27,.52);
+      color:var(--muted);
       font-size:12px;
       user-select:none;
       white-space:nowrap;
     }
-    .miniField input{width:92px; padding:8px 8px; border-radius:10px; font-size:12px;}
-    .miniField select{width:190px; padding:8px 8px; border-radius:10px; font-size:12px;}
+
+    .miniField input,
+    .miniField select{
+      width:96px;
+      padding:7px 8px;
+      border-radius:10px;
+      font-size:12px;
+    }
+
+    .miniField select{width:190px}
+
     .toggle{
-      display:flex; align-items:center; gap:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
       padding:8px 10px;
       border-radius:12px;
-      border:1px solid rgba(34,48,68,.7);
-      background: rgba(11,15,20,.35);
-      color: var(--muted);
+      border:1px solid rgba(91,129,171,.22);
+      background:rgba(10,17,27,.52);
+      color:var(--muted);
       font-size:12px;
       user-select:none;
       cursor:pointer;
       white-space:nowrap;
     }
-    .toggle input{width:auto; transform: translateY(1px);}
+
+    .toggle input{width:auto; transform:translateY(1px)}
+
     .speedGroup{
-      display:flex; align-items:center; gap:6px;
+      display:flex;
+      align-items:center;
+      gap:6px;
       padding:6px;
-      border-radius:12px;
-      border:1px solid rgba(34,48,68,.7);
-      background: rgba(11,15,20,.35);
+      border-radius:14px;
+      border:1px solid rgba(91,129,171,.22);
+      background:rgba(10,17,27,.52);
     }
+
     .speedBtn{
-      border:none; cursor:pointer;
+      border:none;
+      cursor:pointer;
       padding:7px 10px;
       border-radius:10px;
-      font-weight:900; font-size:12px;
-      background: rgba(159,176,195,.10);
-      border:1px solid rgba(159,176,195,.25);
-      color: rgba(231,238,247,.92);
+      font-weight:900;
+      font-size:12px;
+      background:rgba(159,176,195,.08);
+      border:1px solid rgba(159,176,195,.18);
+      color:rgba(237,244,255,.92);
     }
+
     .speedBtn.active{
-      background: rgba(100,181,255,.16);
-      border-color: rgba(100,181,255,.55);
-      color: rgba(212,235,255,.98);
+      background:linear-gradient(180deg, rgba(106,181,255,.26), rgba(106,181,255,.12));
+      border-color:rgba(106,181,255,.55);
+      color:#def0ff;
+      box-shadow:0 0 0 1px rgba(106,181,255,.10) inset;
     }
+
     .chartWrap{
-      height: 680px;
-      padding: 10px 12px 12px;
-      resize: vertical;
-      overflow: hidden;
-      min-height: 340px;
-      max-height: calc(100vh - 220px);
+      position:relative;
+      height:700px;
+      padding:12px 14px 14px;
+      resize:vertical;
+      overflow:hidden;
+      min-height:360px;
+      max-height:calc(100vh - 220px);
     }
+
     canvas{
       width:100%;
       height:100%;
       display:block;
-      border-radius:12px;
-      border:1px solid rgba(34,48,68,.7);
-      background: rgba(5,8,12,.65);
-      touch-action: none;
-      cursor: grab;
+      border-radius:16px;
+      border:1px solid rgba(98,136,178,.24);
+      background:
+        radial-gradient(700px 240px at 20% 0%, rgba(32,142,255,.08), transparent 65%),
+        radial-gradient(700px 240px at 80% 100%, rgba(255,80,126,.06), transparent 70%),
+        rgba(5,8,12,.78);
+      touch-action:none;
+      cursor:grab;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
     }
-    .overlayHelp{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
+
+    .toolRail{
+      position:absolute;
+      left:24px;
+      top:24px;
+      z-index:3;
+      display:grid;
+      gap:8px;
+      padding:10px;
+      border-radius:18px;
+      border:1px solid rgba(95,132,173,.26);
+      background:linear-gradient(180deg, rgba(11,18,28,.92), rgba(8,14,22,.86));
+      box-shadow:0 18px 34px rgba(0,0,0,.30);
+      backdrop-filter:blur(12px);
+    }
+
+    .toolBtn{
+      width:42px;
+      height:42px;
+      border:none;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-family:var(--display);
+      font-size:17px;
+      font-weight:900;
+      color:#d8eaff;
+      background:linear-gradient(180deg, rgba(141,169,204,.10), rgba(111,139,173,.04));
+      border:1px solid rgba(141,169,204,.16);
+      transition:transform .08s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+    }
+
+    .toolBtn:hover{
+      border-color:rgba(141,169,204,.34);
+      background:linear-gradient(180deg, rgba(141,169,204,.16), rgba(111,139,173,.08));
+    }
+
+    .toolBtn:active{transform:translateY(1px)}
+
+    .toolBtn.active{
+      color:#f3f8ff;
+      background:linear-gradient(180deg, rgba(106,181,255,.28), rgba(106,181,255,.14));
+      border-color:rgba(106,181,255,.60);
+      box-shadow:0 0 0 1px rgba(106,181,255,.14) inset;
+    }
+
+    .toolBtn.erase.active{
+      background:linear-gradient(180deg, rgba(255,105,126,.26), rgba(255,105,126,.12));
+      border-color:rgba(255,105,126,.52);
+      box-shadow:0 0 0 1px rgba(255,105,126,.14) inset;
+    }
+
+    .toolBadge{
+      position:absolute;
+      left:24px;
+      top:280px;
+      z-index:3;
+      padding:8px 11px;
+      border-radius:999px;
+      border:1px solid rgba(95,132,173,.24);
+      background:rgba(8,14,22,.86);
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:900;
+      backdrop-filter:blur(10px);
+    }
+
+    .chartLegend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding:0 14px 14px;
+    }
+
+    .legendPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(9,16,25,.54);
+      border:1px solid rgba(96,132,172,.18);
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .legendDot{
+      width:9px;
+      height:9px;
+      border-radius:999px;
+    }
+
+    .overlayHelp,
+    .startOverlay{
+      position:fixed;
+      inset:0;
       display:none;
-      z-index: 10;
       align-items:center;
       justify-content:center;
-      padding: 18px;
+      padding:18px;
     }
-    .overlayHelp.open{display:flex;}
-    .helpCard{
-      max-width: 860px;
-      width: 100%;
-      border-radius: 16px;
-      border:1px solid rgba(34,48,68,.95);
-      background: linear-gradient(180deg, rgba(17,24,36,.96), rgba(11,15,20,.92));
-      box-shadow: var(--shadow);
-      padding: 14px;
+
+    .overlayHelp{
+      background:rgba(0,0,0,.55);
+      backdrop-filter:blur(8px);
+      z-index:10;
     }
+
+    .overlayHelp.open{display:flex}
+
+    .helpCard,
+    .startCard{
+      width:min(900px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(94,132,173,.26);
+      background:linear-gradient(180deg, rgba(18,30,47,.98), rgba(10,18,29,.94));
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+
     .helpGrid{
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
     }
+
     .helpItem{
-      border:1px solid rgba(34,48,68,.7);
-      border-radius: 12px;
-      background: rgba(11,15,20,.35);
-      padding: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.35;
+      border:1px solid rgba(94,132,173,.20);
+      border-radius:14px;
+      background:rgba(9,15,24,.50);
+      padding:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.42;
     }
-    .helpItem b{ color: var(--text); }
-    .leftStack{display:grid; gap:14px; align-content:start;}
-    .macroGrid{display:grid; gap:10px;}
-    .macroBadgeRow{display:flex; flex-wrap:wrap; gap:8px;}
-    .macroPill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:12px; border:1px solid rgba(34,48,68,.7); background: rgba(11,15,20,.35); font-size:12px; color:var(--muted);}
-    .macroPill b{color:var(--text);}
-    .shockGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-    .macroRead{padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.7); background: rgba(11,15,20,.35); color:var(--muted); font-size:12px; line-height:1.45;}
+
+    .helpItem b{color:var(--text)}
 
     .startOverlay{
-      position: fixed;
-      inset: 0;
+      z-index:12;
       background:
-        radial-gradient(900px 600px at 20% 20%, rgba(124,58,237,.18), transparent 55%),
-        radial-gradient(900px 600px at 80% 80%, rgba(6,182,212,.16), transparent 55%),
-        rgba(0,0,0,.62);
-      backdrop-filter: blur(10px);
-      display:none;
-      z-index: 12;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
+        radial-gradient(900px 600px at 20% 20%, rgba(38,116,255,.20), transparent 55%),
+        radial-gradient(900px 600px at 80% 80%, rgba(35,215,255,.16), transparent 55%),
+        rgba(0,0,0,.60);
+      backdrop-filter:blur(12px);
     }
-    .startOverlay.open{display:flex;}
+
+    .startOverlay.open{display:flex}
+
     .startCard{
-      width:min(560px, 100%);
-      border-radius:20px;
-      border:1px solid rgba(34,48,68,.95);
-      background: linear-gradient(180deg, rgba(17,24,36,.98), rgba(11,15,20,.94));
-      box-shadow: var(--shadow);
-      padding: 18px;
+      width:min(620px, 100%);
+      padding:18px;
     }
+
     .startTitle{
-      font-size:22px;
+      font-family:var(--display);
+      font-size:24px;
+      line-height:1.06;
       font-weight:900;
-      margin:0 0 6px;
-      letter-spacing:.2px;
+      margin:0 0 8px;
+      letter-spacing:.02em;
     }
+
     .startSub{
       color:var(--muted);
       font-size:13px;
-      line-height:1.45;
+      line-height:1.55;
       margin-bottom:14px;
     }
+
     .quickPrices{
       display:flex;
       flex-wrap:wrap;
       gap:8px;
       margin-top:8px;
     }
+
     .chipBtn{
       border:none;
       cursor:pointer;
-      padding:8px 10px;
+      padding:8px 11px;
       border-radius:999px;
       font-weight:800;
       font-size:12px;
-      background: rgba(159,176,195,.10);
-      border:1px solid rgba(159,176,195,.25);
-      color: rgba(231,238,247,.95);
+      background:rgba(159,176,195,.08);
+      border:1px solid rgba(159,176,195,.18);
+      color:rgba(237,244,255,.95);
     }
-    @media (max-width: 1220px){
-      main{grid-template-columns: 1fr;}
-      .chartWrap{height:420px;}
-      .miniField input{width:110px;}
-      .miniField select{width:210px;}
+
+    .subtlePanel{
+      padding:10px 11px;
+      border-radius:14px;
+      border:1px solid rgba(95,132,173,.20);
+      background:rgba(9,15,24,.48);
+    }
+
+    @media (max-width: 1280px){
+      main{grid-template-columns:1fr}
+      .chartWrap{height:460px}
+    }
+
+    @media (max-width: 860px){
+      header{padding:12px}
+      main{padding:12px}
+      .grid.cols3{grid-template-columns:1fr}
+      .grid.cols2{grid-template-columns:1fr}
+      .helpGrid{grid-template-columns:1fr}
+      .shockGrid{grid-template-columns:1fr}
+      .chartTopBar .right{width:100%}
+      .miniField{white-space:normal}
+      .miniField select{width:150px}
+      .chartWrap{height:390px; max-height:none}
+      .toolRail{left:18px; top:18px}
+      .toolBadge{left:18px; top:270px}
+      .toolbarPills{justify-content:flex-start}
+      .title h1{font-size:19px}
     }
   </style>
 </head>
-
 <body>
 <header>
   <div class="row">
     <div class="title">
-      <h1>Market Sandbox — TV-like Chart 📈</h1>
+      <div class="eyebrow"><span class="dot"></span>Simulated order flow lab</div>
+      <h1>Market Sandbox</h1>
       <div class="sub">
-        <span class="kbd">Wheel</span> X zoom • <span class="kbd">Shift+Wheel</span> Y zoom •
-        <span class="kbd">Drag</span> X pan • <span class="kbd">Shift+Drag</span> Y pan •
-        <span class="kbd">Ctrl+Click</span> Limit • <span class="kbd">Alt+Click</span> Cancel •
-        <span class="kbd">?</span> Help
+        Intraday tape sandbox with ladder orders, liquidity sweeps, bracket exits, drawing tools, macro overlays, and a TV-like chart feel.
+        <span class="kbd">Wheel</span> X zoom,
+        <span class="kbd">Shift+Wheel</span> Y zoom,
+        <span class="kbd">Ctrl+Click</span> place limit,
+        <span class="kbd">Alt+Click</span> cancel nearest,
+        <span class="kbd">?</span> help.
       </div>
     </div>
 
-    <div class="row wrap">
+    <div class="toolbarPills">
       <div class="pill">Symbol: <b id="sym">NQ (sim)</b></div>
-      <div class="pill">Dev: <b>David Kyn</b></div>
+      <div class="pill">Motion: <b id="hdrMotion">Realistic NQ</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
       <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
       <div class="pill">Regime: <b id="hdrRegime">Balanced</b></div>
@@ -343,224 +889,304 @@
       <div class="pill">Pos: <b id="hdrPos">0</b></div>
       <div class="pill">uPnL: <b id="hdrPnL">—</b></div>
       <div class="pill">Speed: <b id="hdrSpeed">1.0x</b></div>
-      <div class="pill toast">Status: <b id="toast">Ready</b></div>
+      <div class="pill statusWarn toast">Status: <b id="toast">Ready</b></div>
     </div>
   </div>
 </header>
 
 <main>
   <div class="leftStack">
-  <div class="card">
-    <h2>Trading <small>market / limit / drip</small></h2>
-    <div class="content grid">
-      <div class="grid cols2">
-        <label>Quantity (qty)<input id="qty" type="number" step="1" min="1" value="1" /></label>
-        <label>Slippage (ticks)<input id="slip" type="number" step="1" min="0" value="1" /></label>
+    <section class="card">
+      <h2>Trading <small>market / limit / ladder / drip</small></h2>
+      <div class="content grid">
+        <div class="grid cols2">
+          <label>Quantity (qty)<input id="qty" type="number" step="1" min="1" value="1" /></label>
+          <label>Slippage (ticks)<input id="slip" type="number" step="1" min="0" value="1" /></label>
+        </div>
+
+        <div class="grid cols2">
+          <button class="btn good" id="buyMkt">Buy MKT</button>
+          <button class="btn bad" id="sellMkt">Sell MKT</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Limit order <small>manual level entry</small></div>
+        <div class="grid cols2">
+          <label>Limit side
+            <select id="limitSide">
+              <option value="buy">Buy Limit</option>
+              <option value="sell">Sell Limit</option>
+            </select>
+          </label>
+          <label>Limit price<input id="limitPrice" type="number" step="0.25" value="0" /></label>
+        </div>
+        <button class="btn neutral" id="placeLimit">Place Limit</button>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Ladder <small>multi-level resting orders</small></div>
+        <div class="grid cols3">
+          <label>Ladder side
+            <select id="ladderSide">
+              <option value="buy">Buy ladder</option>
+              <option value="sell">Sell ladder</option>
+            </select>
+          </label>
+          <label>Levels<input id="ladderLevels" type="number" step="1" min="1" value="8" /></label>
+          <label>Step (pts)<input id="ladderStep" type="number" step="0.25" min="0.25" value="5" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Start price<input id="ladderStart" type="number" step="0.25" value="0" /></label>
+          <label>Qty per level<input id="ladderQty" type="number" step="1" min="1" value="1" /></label>
+        </div>
+        <button class="btn warn" id="placeLadder">Place Ladder</button>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Drip execution <small>time or level conditioned</small></div>
+        <div class="grid cols3">
+          <label>Drip side
+            <select id="dripSide">
+              <option value="buy">Drip Buy</option>
+              <option value="sell">Drip Sell</option>
+            </select>
+          </label>
+          <label>Every (sec)<input id="dripEvery" type="number" min="0.2" step="0.1" value="2" /></label>
+          <label>Qty each<input id="dripQty" type="number" min="1" step="1" value="1" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Drip mode
+            <select id="dripMode">
+              <option value="instant" selected>Instant</option>
+              <option value="zone">Price zone</option>
+              <option value="touch_vwap">Touch VWAP</option>
+              <option value="touch_ma">Touch 20m SMA</option>
+            </select>
+          </label>
+          <label>Base touch zone (ticks)<input id="dripTouchTicks" type="number" min="1" step="1" value="2" /></label>
+        </div>
+        <div class="grid cols2" id="dripZoneWrap" style="display:none;">
+          <label>Zone from<input id="dripZoneFrom" type="number" step="0.25" value="0" /></label>
+          <label>Zone to<input id="dripZoneTo" type="number" step="0.25" value="0" /></label>
+        </div>
+        <div class="grid cols2">
+          <button class="btn neutral" id="dripToggle">Start Drip</button>
+          <button class="btn" id="dripStop">Stop</button>
+        </div>
+        <div class="tiny">VWAP and 20m SMA drip use an asymmetric rearm band: buy orders tolerate more room below the line, sell orders more room above it.</div>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Provide liquidity <small>two-sided resting quotes</small></div>
+        <div class="grid cols3">
+          <label>Qty / level<input id="lpQty" type="number" min="1" step="1" value="1" /></label>
+          <label>Levels<input id="lpLevels" type="number" min="1" max="8" step="1" value="2" /></label>
+          <label>Refresh (sec)<input id="lpRefreshSec" type="number" min="0.2" step="0.1" value="1.2" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Start offset (ticks)<input id="lpOffsetTicks" type="number" min="1" step="1" value="2" /></label>
+          <label>Step between levels (ticks)<input id="lpStepTicks" type="number" min="1" step="1" value="2" /></label>
+        </div>
+        <div class="grid cols2">
+          <button class="btn neutral" id="lpToggle">Start LP</button>
+          <button class="btn" id="lpStop">Stop LP</button>
+        </div>
+        <div class="tiny">LP keeps buy limits under price and sell limits above price, refreshing the quote grid on a timer.</div>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Position management <small>market flattening</small></div>
+        <div class="grid cols2">
+          <button class="btn" id="cancelAll">Cancel All</button>
+          <button class="btn" id="flatten">Flatten 100%</button>
+        </div>
+        <div class="grid cols2">
+          <button class="btn" id="flatten50">Flatten 50%</button>
+          <button class="btn" id="flatten25">Flatten 25%</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Exit targets <small>flatten at price</small></div>
+        <div class="grid cols3">
+          <label>Exit price<input id="exitPrice" type="number" min="0.25" step="0.25" value="0" /></label>
+          <label>Mode
+            <select id="exitMode">
+              <option value="full">Full</option>
+              <option value="50">50%</option>
+              <option value="25">25%</option>
+              <option value="custom">Custom qty</option>
+            </select>
+          </label>
+          <label>Custom qty<input id="exitQty" type="number" min="1" step="1" value="1" /></label>
+        </div>
+        <div class="grid cols2">
+          <button class="btn neutral" id="placeExitTarget">Place Exit Target</button>
+          <button class="btn" id="clearExitTargets">Clear Exit Targets</button>
+        </div>
       </div>
+    </section>
 
-      <div class="grid cols2">
-        <button class="btn good" id="buyMkt">⬆️ Buy MKT</button>
-        <button class="btn bad" id="sellMkt">⬇️ Sell MKT</button>
+
+
+<section class="card">
+  <h2>Chart Style <small>custom palette, glow, and cinematic look</small></h2>
+  <div class="content grid">
+    <div class="grid cols2">
+      <label>Style preset
+        <select id="stylePreset">
+          <option value="cinematic">Cinematic Blue</option>
+          <option value="emerald">Emerald Noir</option>
+          <option value="crimson">Crimson Night</option>
+          <option value="ice">Ice Silver</option>
+          <option value="mono">Mono Slate</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <label>Glow strength<input id="styleGlow" type="number" min="0" max="1.8" step="0.05" value="0.70" /></label>
+    </div>
+
+    <div class="grid cols2">
+      <label>Grid opacity<input id="styleGridAlpha" type="number" min="0.05" max="1.2" step="0.05" value="0.38" /></label>
+      <label>Vignette<input id="styleVignette" type="number" min="0" max="1" step="0.05" value="0.46" /></label>
+    </div>
+
+    <div class="grid cols3">
+      <label>Up candle<input id="styleUp" type="color" value="#4df0b2" /></label>
+      <label>Down candle<input id="styleDown" type="color" value="#ff6b88" /></label>
+      <label>Accent<input id="styleAccent" type="color" value="#7cc8ff" /></label>
+    </div>
+
+    <div class="grid cols2">
+      <label>VWAP / key level<input id="styleVwap" type="color" value="#ffd166" /></label>
+      <label>MA / drawings<input id="styleMa" type="color" value="#69b7ff" /></label>
+    </div>
+
+    <div class="grid cols2">
+      <label>Background top<input id="styleBgTop" type="color" value="#07111d" /></label>
+      <label>Background bottom<input id="styleBgBottom" type="color" value="#0d1826" /></label>
+    </div>
+
+    <div class="grid cols2">
+      <div class="toggle" id="styleCinematicWrap">
+        <input id="styleCinematic" type="checkbox" checked />
+        <span>Cinematic overlays</span>
       </div>
-
-      <div class="sep"></div>
-
-      <div class="grid cols2">
-        <label>Limit side
-          <select id="limitSide">
-            <option value="buy">Buy Limit</option>
-            <option value="sell">Sell Limit</option>
-          </select>
-        </label>
-        <label>Limit price<input id="limitPrice" type="number" step="0.25" value="0" /></label>
+      <div class="toggle" id="styleSpotlightWrap">
+        <input id="styleSpotlight" type="checkbox" checked />
+        <span>Spotlight glow</span>
       </div>
-      <button class="btn neutral" id="placeLimit">➕ Place Limit</button>
+    </div>
 
-      <div class="sep"></div>
+    <div class="btnRow">
+      <button class="btn neutral" id="applyStylePreset">Apply preset</button>
+      <button class="btn" id="resetStyle">Reset style</button>
+    </div>
 
-      <div class="grid cols3">
-        <label>Ladder side
-          <select id="ladderSide"><option value="buy">Buy ladder</option><option value="sell">Sell ladder</option></select>
-        </label>
-        <label>Levels<input id="ladderLevels" type="number" step="1" min="1" value="8" /></label>
-        <label>Step (pts)<input id="ladderStep" type="number" step="0.25" min="0.25" value="5" /></label>
-      </div>
-      <div class="grid cols2">
-        <label>Start price<input id="ladderStart" type="number" step="0.25" value="0" /></label>
-        <label>Qty per level<input id="ladderQty" type="number" step="1" min="1" value="1" /></label>
-      </div>
-      <button class="btn warn" id="placeLadder">🪜 Place Ladder</button>
-
-      <div class="sep"></div>
-
-      <div class="grid cols3">
-        <label>Drip side
-          <select id="dripSide">
-            <option value="buy">Drip Buy</option>
-            <option value="sell">Drip Sell</option>
-          </select>
-        </label>
-        <label>Every (sec)<input id="dripEvery" type="number" min="0.2" step="0.1" value="2" /></label>
-        <label>Qty each<input id="dripQty" type="number" min="1" step="1" value="1" /></label>
-      </div>
-      <div class="grid cols2">
-        <label>Drip mode
-          <select id="dripMode">
-            <option value="instant" selected>Instant</option>
-            <option value="zone">Price zone</option>
-            <option value="touch_vwap">Touch VWAP</option>
-            <option value="touch_ma">Touch 20m SMA</option>
-          </select>
-        </label>
-        <label>Base touch zone (ticks)<input id="dripTouchTicks" type="number" min="1" step="1" value="2" /></label>
-      </div>
-      <div class="grid cols2" id="dripZoneWrap" style="display:none;">
-        <label>Zone from<input id="dripZoneFrom" type="number" step="0.25" value="0" /></label>
-        <label>Zone to<input id="dripZoneTo" type="number" step="0.25" value="0" /></label>
-      </div>
-      <div class="grid cols2">
-        <button class="btn neutral" id="dripToggle">▶ Start Drip</button>
-        <button class="btn" id="dripStop">■ Stop</button>
-      </div>
-      <div class="muted" style="font-size:11px; margin-top:8px;">VWAP / 20m SMA drip uses an asymmetric hold zone: sell gives more room above the line, buy gives more room below. Rearms after price fully leaves and comes back.</div>
-
-      <div class="sep"></div>
-
-      <div class="grid cols2">
-        <button class="btn" id="cancelAll">Cancel All</button>
-        <button class="btn" id="flatten">Flatten 100% (MKT)</button>
-      </div>
-      <div class="grid cols2">
-        <button class="btn" id="flatten50">Flatten 50% (MKT)</button>
-        <button class="btn" id="flatten25">Flatten 25% (MKT)</button>
-      </div>
-
-      <div class="sep"></div>
-
-      <h2 style="border:none; padding:0; margin-top:2px;">Exit Targets <small>flatten at price</small></h2>
-      <div class="grid cols3">
-        <label>Exit price<input id="exitPrice" type="number" min="0.25" step="0.25" value="0" /></label>
-        <label>Mode
-          <select id="exitMode">
-            <option value="full">Full</option>
-            <option value="50">50%</option>
-            <option value="25">25%</option>
-            <option value="custom">Custom qty</option>
-          </select>
-        </label>
-        <label>Custom qty<input id="exitQty" type="number" min="1" step="1" value="1" /></label>
-      </div>
-      <div class="grid cols2">
-        <button class="btn neutral" id="placeExitTarget">🏁 Place Exit Target</button>
-        <button class="btn" id="clearExitTargets">✖ Clear Exit Targets</button>
-      </div>
-
-      <div class="sep"></div>
-
-      <h2 style="border:none; padding:0; margin-top:2px;">Liquidity Sweep <small>fake movement</small></h2>
-      <div class="grid cols3">
-        <label>Sweep side
-          <select id="manualSweepSide">
-            <option value="buy">Buy sweep (fake up)</option>
-            <option value="sell">Sell sweep (fake down)</option>
-          </select>
-        </label>
-        <label>Sweep strength
-          <select id="manualSweepStrength">
-            <option value="soft">Soft</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Hard</option>
-          </select>
-        </label>
-        <label>Sweep level price
-          <input id="manualSweepLevel" type="number" min="0.25" step="0.25" value="0" />
-        </label>
-      </div>
-      <button class="btn warn" id="executeManualSweep">⚡ Execute Sweep</button>
-
-      <div class="sep"></div>
-
-      <h2 style="border:none; padding:0; margin-top:2px;">Market Engine <small>volatility + timing</small></h2>
-
-      <div class="grid cols2">
-        <label>Volatility preset
-          <select id="volPreset">
-            <option value="nyopen">NY Open Vol</option>
-            <option value="nykz" selected>NY Killzone</option>
-            <option value="london">London</option>
-            <option value="premarket">Premarket</option>
-            <option value="asia">Asia</option>
-          </select>
-        </label>
-        <label>Volatility (1–16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="6.8" /></label>
-      </div>
-
-      <div class="grid cols2">
-        <label>Base ticks / sim-sec (20–200)<input id="simHzBase" type="number" step="1" min="20" max="200" value="75" /></label>
-        <label>Impact (0–20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
-      </div>
-
-      <div class="grid cols3">
-        <label>Tick size<input id="tick" type="number" step="0.01" min="0.01" value="0.25" /></label>
-        <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
-        <label>Right space (bars)<input id="futureBars" type="number" step="5" min="0" max="300" value="40" /></label>
-      </div>
-
-      <div class="grid cols2">
-        <label>Timeframe
-          <select id="timeframe">
-            <option value="1">1s</option>
-            <option value="5" selected>5s</option>
-            <option value="15">15s</option>
-            <option value="60">1m</option>
-            <option value="180">3m</option>
-            <option value="300">5m</option>
-            <option value="900">15m</option>
-            <option value="3600">1h</option>
-          </select>
-        </label>
-        <label>Bars on screen<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></label>
-      </div>
-
-      <div class="grid cols2">
-        <label>Bias
-          <select id="biasMode">
-            <option value="neutral" selected>Neutral</option>
-            <option value="bullish">Bullish</option>
-            <option value="bearish">Bearish</option>
-          </select>
-        </label>
-        <label>Bias strength (0–10)<input id="biasStrength" type="number" min="0" max="10" step="0.1" value="3" /></label>
-      </div>
-
-      <div class="grid cols2">
-        <label>Order flow profile
-          <select id="orderFlowProfile">
-            <option value="realistic" selected>Realistic OF</option>
-            <option value="auction">Balanced auction</option>
-            <option value="trend">Trend day</option>
-            <option value="thin">Thin book</option>
-          </select>
-        </label>
-        <label>Flow intensity (0.5–2.0)<input id="flowIntensity" type="number" min="0.5" max="2" step="0.1" value="0.9" /></label>
-      </div>
-
-      <div class="grid cols2">
-        <button class="btn neutral" id="pause">⏸ Pause</button>
-        <button class="btn neutral" id="reset">🔁 Reset</button>
+    <div class="stylePreview">
+      This one actually changes the canvas render: candle colors, line colors, chart background, grid strength, glow, and the cinematic overlay.
+      <div class="styleSwatchRow">
+        <span class="styleSwatch" id="stylePreviewUp"></span>
+        <span class="styleSwatch" id="stylePreviewDown"></span>
+        <span class="styleSwatch" id="stylePreviewAccent"></span>
+        <span class="styleSwatch" id="stylePreviewVwap"></span>
+        <span class="styleSwatch" id="stylePreviewBg"></span>
       </div>
     </div>
   </div>
+</section>
 
+<section class="card">
+  <h2>Liquidity & Engine <small>sweeps, volatility, and order-flow model</small></h2>
+      <div class="content grid">
+        <div class="sectionLabel">Liquidity sweep <small>scripted stop run / reclaim</small></div>
+        <div class="grid cols3">
+          <label>Sweep side
+            <select id="manualSweepSide">
+              <option value="buy">Buy sweep (fake up)</option>
+              <option value="sell">Sell sweep (fake down)</option>
+            </select>
+          </label>
+          <label>Sweep strength
+            <select id="manualSweepStrength">
+              <option value="soft">Soft</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+          <label>Sweep level price<input id="manualSweepLevel" type="number" min="0.25" step="0.25" value="0" /></label>
+        </div>
+        <button class="btn warn" id="executeManualSweep">Execute Sweep</button>
+
+        <div class="sep"></div>
+
+        <div class="sectionLabel">Market engine <small>session behavior and tape feel</small></div>
+        <div class="grid cols2">
+          <label>Volatility preset
+            <select id="volPreset">
+              <option value="nyopen">NY Open Vol</option>
+              <option value="nykz" selected>NY Killzone</option>
+              <option value="london">London</option>
+              <option value="premarket">Premarket</option>
+              <option value="asia">Asia</option>
+            </select>
+          </label>
+          <label>Volatility (1-16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="6.8" /></label>
+        </div>
+        <div class="grid cols2">
+          <label>Impact (0-20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
+          <label>Base ticks / sim-sec<input id="simHzBase" type="number" step="1" min="20" max="200" value="75" /></label>
+        </div>
+
+        <div class="grid cols2">
+          <label>Tick size<input id="tick" type="number" step="0.01" min="0.01" value="0.25" /></label>
+          <label>Spread (ticks)<input id="spread" type="number" step="1" min="0" value="1" /></label>
+        </div>
+
+        <label>Right space (bars)<input id="futureBars" type="number" step="5" min="0" max="300" value="40" /></label>
+
+        <div class="grid cols2">
+          <label>Bias
+            <select id="biasMode">
+              <option value="neutral" selected>Neutral</option>
+              <option value="bullish">Bullish</option>
+              <option value="bearish">Bearish</option>
+            </select>
+          </label>
+          <label>Bias strength (0-10)<input id="biasStrength" type="number" min="0" max="10" step="0.1" value="3" /></label>
+        </div>
+
+        <div class="grid cols2">
+          <label>Order flow profile
+            <select id="orderFlowProfile">
+              <option value="realistic" selected>Realistic OF</option>
+              <option value="auction">Balanced auction</option>
+              <option value="trend">Trend day</option>
+              <option value="thin">Thin book</option>
+            </select>
+          </label>
+          <label>Flow intensity (0.5-2.0)<input id="flowIntensity" type="number" min="0.5" max="2" step="0.1" value="0.9" /></label>
+        </div>
+
+        <div class="sep"></div>
+
+        <ul class="helperList">
+          <li><b>Ctrl+Click</b> on the chart places a limit at the crosshair. Left click buys, right click sells.</li>
+          <li><b>Alt+Click</b> near a resting order removes the closest limit line.</li>
+          <li><b>Space</b> pauses the engine so you can step through tape one tick at a time.</li>
+        </ul>
+      </div>
+    </section>
   </div>
 
-  <section class="card">
-    <h2>Chart <small>sandbox</small></h2>
+  <section class="card chartCard">
+    <h2>Chart <small>tape view, drawings, persistence, and replay controls</small></h2>
 
     <div class="chartTopBar">
       <div class="left">
-        <button class="btn good" id="buyMktTop" title="Hotkey: B">⬆️ Buy</button>
-        <button class="btn bad" id="sellMktTop" title="Hotkey: S">⬇️ Sell</button>
+        <button class="btn good" id="buyMktTop" title="Hotkey: B">Buy</button>
+        <button class="btn bad" id="sellMktTop" title="Hotkey: S">Sell</button>
 
         <div class="toggle" id="followWrap" title="Hotkey: F">
           <input id="follow" type="checkbox" checked />
@@ -581,7 +1207,9 @@
           <button class="speedBtn" data-speed="20">20x</button>
         </div>
 
-        <button class="btn small neutral" id="stepTick" title="Step 1 tick (paused)">⏭ Step</button>
+        <button class="btn small neutral" id="stepTick" title="Step 1 tick (paused)">Step</button>
+        <button class="btn small neutral" id="pause" title="Hotkey: Space">Pause</button>
+        <button class="btn small neutral" id="reset" title="Reset simulation">Reset</button>
 
         <div class="miniField">
           Tool
@@ -594,8 +1222,8 @@
           </select>
         </div>
 
-        <button class="btn small" id="undo" title="Ctrl+Z">↩ Undo</button>
-        <button class="btn small" id="clearDraw">🧼 Clear</button>
+        <button class="btn small" id="undo" title="Ctrl+Z">Undo</button>
+        <button class="btn small" id="clearDraw">Clear Draw</button>
 
         <div class="toggle" id="indVolWrap">
           <input id="indVol" type="checkbox" checked />
@@ -610,22 +1238,56 @@
           <span>20m SMA</span>
         </div>
 
-        <button class="btn small neutral" id="openHelp" title="Hotkey: ?">❔ Help</button>
+        <div class="toggle" id="showOwnLimitsWrap">
+          <input id="showOwnLimits" type="checkbox" checked />
+          <span>Show my limits</span>
+        </div>
       </div>
 
       <div class="right">
-        <div class="miniField mono">
-          Ctrl+Click = Limit (LMB buy / RMB sell) • Alt+Click = Cancel nearest • Pinch = X zoom • Two-finger drag = Y pan
+        <div class="miniField">
+          TF
+          <select id="timeframe">
+            <option value="1">1s</option>
+            <option value="5" selected>5s</option>
+            <option value="15">15s</option>
+            <option value="60">1m</option>
+            <option value="180">3m</option>
+            <option value="300">5m</option>
+            <option value="900">15m</option>
+            <option value="3600">1h</option>
+          </select>
         </div>
+        <div class="miniField">Bars<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></div>
+        <button class="btn small" id="resetView">Reset View</button>
+        <button class="btn small" id="saveConfig">Save Layout</button>
+        <button class="btn small" id="loadConfig">Load Layout</button>
+        <button class="btn small neutral" id="openHelp" title="Hotkey: ?">Help</button>
       </div>
     </div>
 
     <div class="chartWrap">
+      <div class="toolRail" id="toolRail" aria-label="Drawing tools" style="display:none;">
+        <button class="toolBtn active" data-tool="cursor" title="Cursor (1)">＋</button>
+        <button class="toolBtn" data-tool="trend" title="Trendline (2)">／</button>
+        <button class="toolBtn" data-tool="rect" title="Rectangle (3)">▭</button>
+        <button class="toolBtn" data-tool="hline" title="Horizontal line (4)">═</button>
+        <button class="toolBtn erase" data-tool="erase" title="Eraser (5)">⌫</button>
+      </div>
+      <div class="toolBadge" id="toolBadge" style="display:none;">Cursor</div>
       <canvas id="chart"></canvas>
     </div>
 
+    <div class="chartLegend">
+      <div class="legendPill"><span class="legendDot" id="legendUpDot" style="background:#39d48d"></span>Up candles</div>
+      <div class="legendPill"><span class="legendDot" id="legendDownDot" style="background:#ff697e"></span>Down candles</div>
+      <div class="legendPill"><span class="legendDot" id="legendVwapDot" style="background:#ffcf5b"></span>VWAP / liquidity refs</div>
+      <div class="legendPill"><span class="legendDot" id="legendMaDot" style="background:#6ab5ff"></span>20m SMA / drawing accents</div>
+      <div class="legendPill mono">Ctrl+Click = limit, Alt+Click = cancel, Shift+Drag = Y pan</div>
+    </div>
+
     <div class="content">
-      <div class="row wrap">
+      <div class="statGrid">
         <div class="stat"><div class="k">Last</div><div class="v" id="stLast">—</div></div>
         <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
         <div class="stat"><div class="k">Net Pos</div><div class="v" id="stPos">0</div></div>
@@ -634,41 +1296,42 @@
         <div class="stat"><div class="k">Delta</div><div class="v" id="stDelta">0.00</div></div>
         <div class="stat"><div class="k">Absorb</div><div class="v" id="stAbsorb">0.00</div></div>
         <div class="stat"><div class="k">uPnL</div><div class="v" id="stPnL">—</div></div>
+        <div class="stat"><div class="k">Automation</div><div class="v" id="stDrip">Off</div></div>
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
       </div>
+
     </div>
   </section>
 </main>
 
 <div class="overlayHelp" id="helpOverlay">
   <div class="helpCard">
-    <div class="row" style="justify-content:space-between; align-items:center;">
-      <div style="font-weight:900;">Hotkeys / Controls</div>
-      <button class="btn small" id="closeHelp">✖ Close</button>
+    <div class="row" style="justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div style="font-weight:900; letter-spacing:.04em; text-transform:uppercase;">Controls and shortcuts</div>
+      <button class="btn small" id="closeHelp">Close</button>
     </div>
     <div class="helpGrid">
-      <div class="helpItem"><b>B</b> Buy Market • <b>S</b> Sell Market</div>
-      <div class="helpItem"><b>Space</b> Pause/Resume • <b>Step</b> = 1 tick (paused)</div>
-      <div class="helpItem"><b>F</b> Auto-follow on/off</div>
-      <div class="helpItem"><b>C</b> Cancel All • <b>X</b> Flatten</div>
-      <div class="helpItem"><b>Ctrl+Z</b> Undo drawing</div>
-      <div class="helpItem"><b>1-5</b> Tools (Cursor/Trend/Rect/HLine/Eraser)</div>
-      <div class="helpItem"><b>Ctrl+Click</b> Place Limit (LMB=BUY, RMB=SELL)</div>
-      <div class="helpItem"><b>Alt+Click</b> Cancel nearest limit</div>
-      <div class="helpItem"><b>Wheel</b> X zoom • <b>Shift+Wheel</b> Y zoom</div>
-      <div class="helpItem"><b>Drag</b> X pan • <b>Shift+Drag</b> Y pan</div>
-      <div class="helpItem"><b>Pinch</b> X zoom (mobile) • <b>Two-finger drag</b> Y pan (mobile)</div>
-      <div class="helpItem"><b>+</b>/<b>-</b> qty +/-</div>
-      <div class="helpItem"><b>?</b> open/close help</div>
+      <div class="helpItem"><b>B</b> Buy market, <b>S</b> sell market.</div>
+      <div class="helpItem"><b>Space</b> pause / resume. <b>Step</b> advances one simulated tick when paused.</div>
+      <div class="helpItem"><b>F</b> toggles auto-follow.</div>
+      <div class="helpItem"><b>C</b> cancels all working limits. <b>X</b> flattens at market.</div>
+      <div class="helpItem"><b>Ctrl+Z</b> undoes the latest drawing.</div>
+      <div class="helpItem"><b>1-5</b> swap tools: cursor, trendline, rectangle, h-line, eraser.</div>
+      <div class="helpItem"><b>Ctrl+Click</b> places a limit at the cursor. Left click buys, right click sells.</div>
+      <div class="helpItem"><b>Alt+Click</b> cancels the nearest limit order line.</div>
+      <div class="helpItem"><b>Wheel</b> zooms the x-axis. <b>Shift+Wheel</b> zooms the y-axis.</div>
+      <div class="helpItem"><b>Drag</b> pans along time. <b>Shift+Drag</b> pans price vertically.</div>
+      <div class="helpItem"><b>Pinch</b> zooms x on touch devices. Two-finger drag pans y.</div>
+      <div class="helpItem"><b>+</b> and <b>-</b> change order quantity quickly.</div>
     </div>
   </div>
 </div>
 
 <div class="startOverlay open" id="startOverlay">
   <div class="startCard">
-    <div class="startTitle">Set starting price & market model</div>
+    <div class="startTitle">Set the opening tape</div>
     <div class="startSub">
-      Choose the initial market price, motion profile and order-flow model. This does not make the sim equal to live CME, but it now behaves calmer and much closer to a controlled intraday market.
+      Pick the starting price, motion profile, and order-flow model. The engine is still a sandbox, but these controls make it feel closer to a deliberate intraday tape instead of random candles.
     </div>
     <div class="grid">
       <label>Starting price
@@ -695,8 +1358,8 @@
           <option value="thin">Thin book</option>
         </select>
       </label>
-      <div class="muted" style="font-size:12px; line-height:1.35;">
-        One candle is no longer hard-capped like a brick wall. Strong flow can still stretch the current candle, but without teleporting 100+ points too easily.
+      <div class="subtlePanel tiny">
+        A live bar is no longer allowed to teleport endlessly. Strong flow can still stretch a candle, but the bar now respects a dynamic range cap based on volatility, pressure, and sweep state.
       </div>
       <div class="row wrap" style="margin-top:6px;">
         <button class="btn neutral" id="startMenuBegin">Start simulation</button>
@@ -710,8 +1373,9 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  const lerp  = (a,b,t) => a + (b-a)*t;
+  const lerp = (a, b, t) => a + (b - a) * t;
   const roundTo = (x, step) => Math.round(x / step) * step;
+  const STORAGE_KEY = "market-sandbox-layout-v2";
 
   function decimalsFor(step){
     if (!Number.isFinite(step) || step <= 0) return 2;
@@ -729,11 +1393,11 @@
   }
 
   const VOL_PRESETS = {
-    nyopen:    { name:"NY Open Vol", vol: 8.4 },
-    nykz:      { name:"NY Killzone", vol: 6.8 },
-    london:    { name:"London",      vol: 4.8 },
-    premarket: { name:"Premarket",   vol: 3.5 },
-    asia:      { name:"Asia",        vol: 2.6 },
+    nyopen:    { name:"NY Open Vol", vol:8.4 },
+    nykz:      { name:"NY Killzone", vol:6.8 },
+    london:    { name:"London", vol:4.8 },
+    premarket: { name:"Premarket", vol:3.5 },
+    asia:      { name:"Asia", vol:2.6 }
   };
 
   const MOTION_PROFILES = {
@@ -744,7 +1408,7 @@
       jumpScaleMul: 0.18,
       maxVelMul: 0.30,
       flowMul: 0.62,
-      barCap: { 1: 5, 5: 10, 15: 18, 60: 42, 180: 66, 300: 95, 900: 160, 3600: 320 }
+      barCap: { 1:5, 5:10, 15:18, 60:42, 180:66, 300:95, 900:160, 3600:320 }
     },
     realistic: {
       name: "Realistic NQ",
@@ -753,7 +1417,7 @@
       jumpScaleMul: 0.26,
       maxVelMul: 0.38,
       flowMul: 0.70,
-      barCap: { 1: 7, 5: 13, 15: 24, 60: 56, 180: 88, 300: 120, 900: 190, 3600: 380 }
+      barCap: { 1:7, 5:13, 15:24, 60:56, 180:88, 300:120, 900:190, 3600:380 }
     },
     volatile: {
       name: "Volatile session",
@@ -762,7 +1426,7 @@
       jumpScaleMul: 0.38,
       maxVelMul: 0.50,
       flowMul: 0.82,
-      barCap: { 1: 10, 5: 18, 15: 34, 60: 80, 180: 125, 300: 160, 900: 250, 3600: 520 }
+      barCap: { 1:10, 5:18, 15:34, 60:80, 180:125, 300:160, 900:250, 3600:520 }
     }
   };
 
@@ -774,7 +1438,7 @@
       stopBurst: 1.0,
       flowImpact: 1.0,
       trendPersistence: 1.0,
-      regimeWeights: { balanced: 0.28, bid: 0.13, offer: 0.13, trendUp: 0.12, trendDown: 0.12, compression: 0.12, expansion: 0.10 }
+      regimeWeights: { balanced:0.28, bid:0.13, offer:0.13, trendUp:0.12, trendDown:0.12, compression:0.12, expansion:0.10 }
     },
     auction: {
       name: "Balanced auction",
@@ -783,7 +1447,7 @@
       stopBurst: 0.90,
       flowImpact: 0.86,
       trendPersistence: 0.88,
-      regimeWeights: { balanced: 0.38, bid: 0.10, offer: 0.10, trendUp: 0.08, trendDown: 0.08, compression: 0.16, expansion: 0.10 }
+      regimeWeights: { balanced:0.38, bid:0.10, offer:0.10, trendUp:0.08, trendDown:0.08, compression:0.16, expansion:0.10 }
     },
     trend: {
       name: "Trend day",
@@ -792,7 +1456,7 @@
       stopBurst: 1.10,
       flowImpact: 1.10,
       trendPersistence: 1.18,
-      regimeWeights: { balanced: 0.16, bid: 0.14, offer: 0.14, trendUp: 0.20, trendDown: 0.20, compression: 0.06, expansion: 0.10 }
+      regimeWeights: { balanced:0.16, bid:0.14, offer:0.14, trendUp:0.20, trendDown:0.20, compression:0.06, expansion:0.10 }
     },
     thin: {
       name: "Thin book",
@@ -801,49 +1465,185 @@
       stopBurst: 1.24,
       flowImpact: 1.20,
       trendPersistence: 0.96,
-      regimeWeights: { balanced: 0.18, bid: 0.16, offer: 0.16, trendUp: 0.13, trendDown: 0.13, compression: 0.08, expansion: 0.16 }
+      regimeWeights: { balanced:0.18, bid:0.16, offer:0.16, trendUp:0.13, trendDown:0.13, compression:0.08, expansion:0.16 }
     }
   };
 
   const REGIME_LIBRARY = {
-    balanced:   { buy: 1.00, sell: 1.00, drift: 0.00 },
-    bid:        { buy: 1.18, sell: 0.90, drift: 0.10 },
-    offer:      { buy: 0.90, sell: 1.18, drift: -0.10 },
-    trendUp:    { buy: 1.32, sell: 0.82, drift: 0.18 },
-    trendDown:  { buy: 0.82, sell: 1.32, drift: -0.18 },
-    compression:{ buy: 0.94, sell: 0.94, drift: 0.00 },
-    expansion:  { buy: 1.14, sell: 1.14, drift: 0.00 }
+    balanced:   { buy:1.00, sell:1.00, drift:0.00 },
+    bid:        { buy:1.18, sell:0.90, drift:0.10 },
+    offer:      { buy:0.90, sell:1.18, drift:-0.10 },
+    trendUp:    { buy:1.32, sell:0.82, drift:0.18 },
+    trendDown:  { buy:0.82, sell:1.32, drift:-0.18 },
+    compression:{ buy:0.94, sell:0.94, drift:0.00 },
+    expansion:  { buy:1.14, sell:1.14, drift:0.00 }
   };
 
   const MACRO_PRESETS = {
     balanced:    { rates:0, inflation:0, growth:0, earnings:0, risk:0, read:"Balanced tape. Macro is not leaning hard either way." },
-    goldilocks:  { rates:1, inflation:1, growth:0, earnings:1, risk:1, read:"Cooling inflation + easier Fed expectations keep tech supported." },
-    hawkish:     { rates:-1, inflation:-1, growth:1, earnings:0, risk:-1, read:"Hot data and a hawkish Fed lean push yields up and pressure NQ." },
+    goldilocks:  { rates:1, inflation:1, growth:0, earnings:1, risk:1, read:"Cooling inflation with easier rate expectations keeps growth and semis supported." },
+    hawkish:     { rates:-1, inflation:-1, growth:1, earnings:0, risk:-1, read:"Hot data and a hawkish Fed lean push yields up and keep pressure on NQ." },
     growthscare: { rates:0, inflation:0, growth:-1, earnings:-1, risk:-1, read:"Growth scare tape. Weak demand and cautious risk tone drag tech lower." },
-    aibid:       { rates:0, inflation:0, growth:1, earnings:1, risk:1, read:"Semis and megacap momentum are carrying the tape higher." },
-    riskoff:     { rates:-1, inflation:0, growth:-1, earnings:-1, risk:-1, read:"Broad de-risking tape. Buyers fade and downside moves extend easier." }
+    aibid:       { rates:0, inflation:0, growth:1, earnings:1, risk:1, read:"AI leadership and megacap momentum provide a durable upward undertow." },
+    riskoff:     { rates:-1, inflation:0, growth:-1, earnings:-1, risk:-1, read:"Broad de-risking tape. Buyers fade more quickly and downside moves extend easier." }
   };
 
-  const MACRO_SHOCKS = {
-    fomcDovish:  { label:"FOMC dovish",  dir: 1, strength:0.95, ttl:90, sigma:0.18 },
-    fomcHawkish: { label:"FOMC hawkish", dir:-1, strength:0.95, ttl:90, sigma:0.22 },
-    cpiCool:     { label:"CPI cool",     dir: 1, strength:0.78, ttl:75, sigma:0.14 },
-    cpiHot:      { label:"CPI hot",      dir:-1, strength:0.78, ttl:75, sigma:0.16 },
-    nvdaBeat:    { label:"NVDA beat",    dir: 1, strength:0.62, ttl:60, sigma:0.12 },
-    nvdaMiss:    { label:"NVDA miss",    dir:-1, strength:0.62, ttl:60, sigma:0.12 },
-    riskOn:      { label:"Risk-on",      dir: 1, strength:0.52, ttl:55, sigma:0.10 },
-    riskOff:     { label:"Risk-off",     dir:-1, strength:0.58, ttl:55, sigma:0.12 }
-  };
+const MACRO_SHOCKS = {
+  fomcDovish:  { label:"FOMC dovish", dir:1, strength:0.95, ttl:90, sigma:0.18 },
+  fomcHawkish: { label:"FOMC hawkish", dir:-1, strength:0.95, ttl:90, sigma:0.22 },
+  cpiCool:     { label:"CPI cool", dir:1, strength:0.78, ttl:75, sigma:0.14 },
+  cpiHot:      { label:"CPI hot", dir:-1, strength:0.78, ttl:75, sigma:0.16 },
+  nvdaBeat:    { label:"NVDA beat", dir:1, strength:0.62, ttl:60, sigma:0.12 },
+  nvdaMiss:    { label:"NVDA miss", dir:-1, strength:0.62, ttl:60, sigma:0.12 },
+  riskOn:      { label:"Risk-on", dir:1, strength:0.52, ttl:55, sigma:0.10 },
+  riskOff:     { label:"Risk-off", dir:-1, strength:0.58, ttl:55, sigma:0.12 }
+};
 
-  const canvas = $("chart");
+const DEFAULT_STYLE_PRESET_KEY = "cinematic";
+const CHART_STYLE_PRESETS = {
+  cinematic: {
+    up: "#4df0b2",
+    down: "#ff6b88",
+    accent: "#7cc8ff",
+    vwap: "#ffd166",
+    ma: "#69b7ff",
+    bgTop: "#07111d",
+    bgBottom: "#0d1826",
+    glow: 0.70,
+    gridAlpha: 0.38,
+    vignette: 0.46,
+    cinematic: true,
+    spotlight: true
+  },
+  emerald: {
+    up: "#59f7c8",
+    down: "#ff8c7a",
+    accent: "#64ffd5",
+    vwap: "#ffe08a",
+    ma: "#41d6ff",
+    bgTop: "#071714",
+    bgBottom: "#0b1116",
+    glow: 0.62,
+    gridAlpha: 0.34,
+    vignette: 0.52,
+    cinematic: true,
+    spotlight: true
+  },
+  crimson: {
+    up: "#ffb86a",
+    down: "#ff547d",
+    accent: "#ff7ca8",
+    vwap: "#ffd17a",
+    ma: "#ff9dbc",
+    bgTop: "#180910",
+    bgBottom: "#0f0a12",
+    glow: 0.78,
+    gridAlpha: 0.30,
+    vignette: 0.58,
+    cinematic: true,
+    spotlight: true
+  },
+  ice: {
+    up: "#7df2d7",
+    down: "#ff7d92",
+    accent: "#b7d9ff",
+    vwap: "#fff0b2",
+    ma: "#8ac7ff",
+    bgTop: "#0b1722",
+    bgBottom: "#101722",
+    glow: 0.48,
+    gridAlpha: 0.24,
+    vignette: 0.34,
+    cinematic: false,
+    spotlight: true
+  },
+  mono: {
+    up: "#d9e4ef",
+    down: "#8894a2",
+    accent: "#b7c2ce",
+    vwap: "#f1f4f7",
+    ma: "#c9d4df",
+    bgTop: "#101316",
+    bgBottom: "#0a0d10",
+    glow: 0.24,
+    gridAlpha: 0.22,
+    vignette: 0.42,
+    cinematic: false,
+    spotlight: false
+  }
+};
+
+function hexToRgb(hex) {
+  const raw = String(hex || "").trim().replace("#", "");
+  const expanded = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+  const safe = /^[0-9a-fA-F]{6}$/.test(expanded) ? expanded : "6ab5ff";
+  return {
+    r: parseInt(safe.slice(0, 2), 16),
+    g: parseInt(safe.slice(2, 4), 16),
+    b: parseInt(safe.slice(4, 6), 16)
+  };
+}
+
+function rgba(hex, alpha = 1) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${clamp(alpha, 0, 1)})`;
+}
+
+function buildStylePreset(key = DEFAULT_STYLE_PRESET_KEY) {
+  const preset = CHART_STYLE_PRESETS[key] || CHART_STYLE_PRESETS[DEFAULT_STYLE_PRESET_KEY];
+  return { preset: key, ...preset };
+}
+
+function applyStylePresetToInputs(key) {
+  const preset = CHART_STYLE_PRESETS[key] || CHART_STYLE_PRESETS[DEFAULT_STYLE_PRESET_KEY];
+  $("stylePreset").value = CHART_STYLE_PRESETS[key] ? key : "custom";
+  $("styleUp").value = preset.up;
+  $("styleDown").value = preset.down;
+  $("styleAccent").value = preset.accent;
+  $("styleVwap").value = preset.vwap;
+  $("styleMa").value = preset.ma;
+  $("styleBgTop").value = preset.bgTop;
+  $("styleBgBottom").value = preset.bgBottom;
+  $("styleGlow").value = String(preset.glow);
+  $("styleGridAlpha").value = String(preset.gridAlpha);
+  $("styleVignette").value = String(preset.vignette);
+  $("styleCinematic").checked = !!preset.cinematic;
+  $("styleSpotlight").checked = !!preset.spotlight;
+}
+
+function syncChartStyleUi() {
+  const style = state.style || buildStylePreset();
+  const setBg = (id, value) => {
+    const el = $(id);
+    if (el) el.style.background = value;
+  };
+  setBg("stylePreviewUp", style.up);
+  setBg("stylePreviewDown", style.down);
+  setBg("stylePreviewAccent", style.accent);
+  setBg("stylePreviewVwap", style.vwap);
+  setBg("stylePreviewBg", `linear-gradient(180deg, ${style.bgTop}, ${style.bgBottom})`);
+  setBg("legendUpDot", style.up);
+  setBg("legendDownDot", style.down);
+  setBg("legendVwapDot", style.vwap);
+  setBg("legendMaDot", style.ma);
+}
+
+const canvas = $("chart");
   const ctx = canvas.getContext("2d", { alpha:true });
+  const TOOL_LABELS = {
+    cursor: "Cursor",
+    trend: "Trendline",
+    rect: "Rectangle",
+    hline: "Horizontal line",
+    erase: "Eraser"
+  };
 
   const state = {
     symbol: "NQ (sim)",
     tickSize: 0.25,
     spreadTicks: 1,
-    p: { vol: 6.8, impact: 8, simHzBase: 75, fillProb: 0.92 },
-    target: { vol: 6.8, impact: 8, simHzBase: 75, fillProb: 0.92 },
+    p: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
+    target: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
     volPresetKey: "nykz",
     speedMul: 1,
     paused: false,
@@ -852,17 +1652,17 @@
     motionProfileKey: "realistic",
     orderFlowProfileKey: "realistic",
     flowIntensity: 0.9,
-    bias: { mode: "neutral", strength: 3 },
+    bias: { mode:"neutral", strength:3 },
     news: {
       preset: "balanced",
-      rates: 0,
-      inflation: 0,
-      growth: 0,
-      earnings: 0,
-      risk: 0,
-      shock: null
+      rates:0,
+      inflation:0,
+      growth:0,
+      earnings:0,
+      risk:0,
+      shock:null
     },
-    sweep: { enabled: true, power: 4.2, event: null, cooldownUntil: 0 },
+    sweep: { enabled:true, power:4.2, event:null, cooldownUntil:0 },
     orderFlow: {
       regime: "balanced",
       regimeUntil: 0,
@@ -872,7 +1672,7 @@
       deltaEma: 0,
       pressure: 0,
       absorption: 0,
-      snapshot: { above: [], below: [], range: 20, eqh: [], eql: [] },
+      snapshot: { above:[], below:[], range:20, eqh:[], eql:[] },
       postImpulse: null,
       lastLevelTake: null,
       lastAbsorbSide: null
@@ -920,12 +1720,23 @@
       zoneTo:null,
       entered:false
     },
+    lp: {
+      on: false,
+      qtyEach: 1,
+      levels: 2,
+      offsetTicks: 2,
+      stepTicks: 2,
+      refreshSec: 1.2,
+      lastRefreshAt: -1
+    },
     view: {
       visibleBars: 160,
       futureBars: 40,
       follow: true,
-      end: 0.0,
+      end: 0,
+      showOwnLimits: true
     },
+    style: buildStylePreset(),
     y: { auto:true, scale:1.0, offset:0.0 },
     pointers: new Map(),
     dragStart: null,
@@ -947,6 +1758,22 @@
     state.toastUntil = performance.now() + 1800;
   }
 
+  function syncToolUi() {
+    if ($("tool")) $("tool").value = state.tool;
+    document.querySelectorAll(".toolBtn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tool === state.tool);
+    });
+    if ($("toolBadge")) $("toolBadge").textContent = TOOL_LABELS[state.tool] || "Cursor";
+  }
+
+  function setTool(tool) {
+    state.tool = tool;
+    $("tool").value = tool;
+    state.pending = null;
+    if (state.tool === "cursor") state.cross.on = true;
+    syncToolUi();
+  }
+
   function getMotionProfile() {
     return MOTION_PROFILES[state.motionProfileKey] || MOTION_PROFILES.realistic;
   }
@@ -960,8 +1787,8 @@
       balanced: "Balanced",
       bid: "Bid stack",
       offer: "Offer stack",
-      trendUp: "Trend ↑",
-      trendDown: "Trend ↓",
+      trendUp: "Trend up",
+      trendDown: "Trend down",
       compression: "Compression",
       expansion: "Expansion"
     };
@@ -970,7 +1797,7 @@
 
   function getDeltaLabel() {
     const d = Number.isFinite(state.orderFlow.deltaEma) ? state.orderFlow.deltaEma : 0;
-    const arrow = d > 0.04 ? "↑" : d < -0.04 ? "↓" : "•";
+    const arrow = d > 0.04 ? "Up" : d < -0.04 ? "Down" : "Flat";
     return `${arrow} ${(d * 100).toFixed(1)}%`;
   }
 
@@ -983,59 +1810,29 @@
     const base = getBarRangeCap(tfSec);
     if (!Number.isFinite(base) || base <= 0) return base;
 
-    const flowBoost =
-      Math.min(base * 0.90, Math.abs(state.sim.flow || 0) * state.tickSize * 2.4);
-
-    const velBoost =
-      Math.min(base * 0.75, Math.abs(state.sim.vel || 0) * 5.5);
-
-    const pressureBoost =
-      base * Math.min(0.55, Math.abs(state.orderFlow.pressure || 0) * 0.65);
-
-    const deltaBoost =
-      base * Math.min(0.35, Math.abs(state.orderFlow.deltaEma || 0) * 0.55);
-
-    const sweepBoost =
-      (state.sweep.event && state.curBar && state.curBar.key === (barKey ?? state.curBar.key))
-        ? Math.max(0, state.sweep.event.extraBarCap || 0)
-        : 0;
+    const flowBoost = Math.min(base * 0.90, Math.abs(state.sim.flow || 0) * state.tickSize * 2.4);
+    const velBoost = Math.min(base * 0.75, Math.abs(state.sim.vel || 0) * 5.5);
+    const pressureBoost = base * Math.min(0.55, Math.abs(state.orderFlow.pressure || 0) * 0.65);
+    const deltaBoost = base * Math.min(0.35, Math.abs(state.orderFlow.deltaEma || 0) * 0.55);
+    const sweepBoost = (state.sweep.event && state.curBar && state.curBar.key === (barKey ?? state.curBar.key))
+      ? Math.max(0, state.sweep.event.extraBarCap || 0)
+      : 0;
 
     return base + flowBoost + velBoost + pressureBoost + deltaBoost + sweepBoost;
   }
 
   function clampCandidateToBarRange(candidatePrice, barKey) {
-    return candidatePrice;
-  }
-
-  function applyMacroPreset(key, silent=false) {
-    const preset = MACRO_PRESETS[key] || MACRO_PRESETS.balanced;
-    state.news.preset = key in MACRO_PRESETS ? key : "balanced";
-    state.news.rates = preset.rates;
-    state.news.inflation = preset.inflation;
-    state.news.growth = preset.growth;
-    state.news.earnings = preset.earnings;
-    state.news.risk = preset.risk;
-    if ($("macroPreset")) $("macroPreset").value = state.news.preset;
-    if ($("macroRates")) $("macroRates").value = String(state.news.rates);
-    if ($("macroInflation")) $("macroInflation").value = String(state.news.inflation);
-    if ($("macroGrowth")) $("macroGrowth").value = String(state.news.growth);
-    if ($("macroEarnings")) $("macroEarnings").value = String(state.news.earnings);
-    if ($("macroRisk")) $("macroRisk").value = String(state.news.risk);
-    if (!silent) toast(`Macro preset: ${$("macroPreset").selectedOptions[0].textContent}`);
-    renderMacroPanel();
-  }
-
-  function syncMacroFromUI() {
-    state.news.preset = $("macroPreset")?.value || state.news.preset || "balanced";
-    state.news.rates = clamp(Number($("macroRates")?.value || 0), -1, 1);
-    state.news.inflation = clamp(Number($("macroInflation")?.value || 0), -1, 1);
-    state.news.growth = clamp(Number($("macroGrowth")?.value || 0), -1, 1);
-    state.news.earnings = clamp(Number($("macroEarnings")?.value || 0), -1, 1);
-    state.news.risk = clamp(Number($("macroRisk")?.value || 0), -1, 1);
+    const activeBar = state.curBar && state.curBar.key === barKey ? state.curBar : null;
+    if (!activeBar) return candidatePrice;
+    const cap = getDynamicBarRangeCap(state.tfSec, barKey);
+    if (!Number.isFinite(cap) || cap <= 0) return candidatePrice;
+    const hi = activeBar.o + cap;
+    const lo = activeBar.o - cap;
+    return roundTo(clamp(candidatePrice, lo, hi), state.tickSize);
   }
 
   function getMacroComposite() {
-    return { bias: 0, volBoost: 0, flowBias: 0, read: "Macro disabled." };
+    return { bias:0, volBoost:0, flowBias:0, read:"Macro disabled." };
   }
 
   function getMacroShockLive() {
@@ -1043,18 +1840,10 @@
   }
 
   function getMacroShock() {
-    return { dir: 0, live: 0, sigma: 0, label: "calm" };
-  }
-
-  function triggerMacroShock(key) {
-    return;
+    return { dir:0, live:0, sigma:0, label:"Calm" };
   }
 
   function decayMacroShock(dt) {
-    return;
-  }
-
-  function renderMacroPanel() {
     return;
   }
 
@@ -1065,8 +1854,110 @@
     return p;
   }
 
+  function getUiSnapshot() {
+    const ids = [
+      "qty","slip","limitSide","limitPrice","ladderSide","ladderLevels","ladderStep","ladderStart","ladderQty",
+      "dripSide","dripEvery","dripQty","dripMode","dripTouchTicks","dripZoneFrom","dripZoneTo",
+      "lpQty","lpLevels","lpRefreshSec","lpOffsetTicks","lpStepTicks","exitPrice","exitMode","exitQty",
+      "manualSweepSide","manualSweepStrength","manualSweepLevel","volPreset","volValue","simHzBase","impact","tick","spread","futureBars",
+      "timeframe","visibleBars","biasMode","biasStrength","orderFlowProfile","flowIntensity","tool",
+      "stylePreset","styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleBgTop","styleBgBottom"
+    ];
+    const values = {};
+    ids.forEach((id) => {
+      const el = $(id);
+      if (el) values[id] = el.value;
+    });
+    values.follow = $("follow").checked;
+    values.autoY = $("autoY").checked;
+    values.indVol = $("indVol").checked;
+    values.indVwap = $("indVwap").checked;
+    values.indMa = $("indMa").checked;
+    values.showOwnLimits = $("showOwnLimits").checked;
+    values.styleCinematic = $("styleCinematic").checked;
+    values.styleSpotlight = $("styleSpotlight").checked;
+    values.speedMul = state.speedMul;
+    values.motionProfileKey = state.motionProfileKey;
+    values.orderFlowProfileKey = state.orderFlowProfileKey;
+    values.lpOn = state.lp.on;
+    return values;
+  }
+
+  function applyUiSnapshot(values, silent = false) {
+    if (!values) return;
+    Object.entries(values).forEach(([id, value]) => {
+      const el = $(id);
+      if (!el) return;
+      if (typeof el.checked === "boolean" && typeof value === "boolean") el.checked = value;
+      else el.value = value;
+    });
+
+    if (typeof values.follow === "boolean") $("follow").checked = values.follow;
+    if (typeof values.autoY === "boolean") $("autoY").checked = values.autoY;
+    if (typeof values.indVol === "boolean") $("indVol").checked = values.indVol;
+    if (typeof values.indVwap === "boolean") $("indVwap").checked = values.indVwap;
+    if (typeof values.indMa === "boolean") $("indMa").checked = values.indMa;
+    if (typeof values.showOwnLimits === "boolean") $("showOwnLimits").checked = values.showOwnLimits;
+    if (typeof values.styleCinematic === "boolean") $("styleCinematic").checked = values.styleCinematic;
+    if (typeof values.styleSpotlight === "boolean") $("styleSpotlight").checked = values.styleSpotlight;
+
+    state.speedMul = clamp(Number(values.speedMul || state.speedMul || 1), 0.1, 50);
+    document.querySelectorAll(".speedBtn").forEach((btn) => {
+      btn.classList.toggle("active", Number(btn.dataset.speed) === state.speedMul);
+    });
+
+    if (values.motionProfileKey && MOTION_PROFILES[values.motionProfileKey]) {
+      state.motionProfileKey = values.motionProfileKey;
+      $("startMotionProfile").value = values.motionProfileKey;
+    }
+    if (values.orderFlowProfileKey && ORDERFLOW_PROFILES[values.orderFlowProfileKey]) {
+      state.orderFlowProfileKey = values.orderFlowProfileKey;
+      $("startOrderFlowProfile").value = values.orderFlowProfileKey;
+      $("orderFlowProfile").value = values.orderFlowProfileKey;
+    }
+
+    updateDripUI();
+    applySettingsFromUI();
+    if (typeof values.lpOn === "boolean") {
+      if (values.lpOn) startLiquidityProvider(true);
+      else stopLiquidityProvider(null);
+    }
+    if (!silent) toast("Layout loaded");
+  }
+
+  function saveLayout() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getUiSnapshot()));
+    toast("Layout saved");
+  }
+
+  function loadLayout() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      toast("No saved layout yet");
+      return;
+    }
+    try {
+      applyUiSnapshot(JSON.parse(raw));
+    } catch {
+      toast("Saved layout could not be parsed");
+    }
+  }
+
+  function resetView() {
+    state.view.follow = true;
+    $("follow").checked = true;
+    state.y.auto = true;
+    $("autoY").checked = true;
+    state.y.scale = 1;
+    state.y.offset = 0;
+    const all = getAllBarsForRender();
+    state.view.end = Math.max(0, all.length - 1) + state.view.futureBars;
+    toast("View reset");
+  }
+
   function bootstrapMarket() {
     stopDrip();
+    stopLiquidityProvider(null);
 
     state.sim.price = state.initialPrice;
     state.sim.drift = 0;
@@ -1108,7 +1999,7 @@
       deltaEma: 0,
       pressure: 0,
       absorption: 0,
-      snapshot: { above: [], below: [], range: 20, eqh: [], eql: [] },
+      snapshot: { above:[], below:[], range:20, eqh:[], eql:[] },
       postImpulse: null,
       lastLevelTake: null,
       lastAbsorbSide: null
@@ -1131,7 +2022,7 @@
     const savedHz = state.p.simHzBase;
     state.paused = true;
     state.p.simHzBase = warmHz;
-    for (let i=0;i<warmTicks;i++) stepSimulationOnce();
+    for (let i = 0; i < warmTicks; i++) stepSimulationOnce();
     state.p.simHzBase = savedHz;
     state.paused = savedPaused;
 
@@ -1144,8 +2035,9 @@
     $("limitPrice").value = state.sim.price.toFixed(dec);
     $("ladderStart").value = state.sim.price.toFixed(dec);
     $("exitPrice").value = state.sim.price.toFixed(dec);
-    if ($("dripZoneFrom")) $("dripZoneFrom").value = state.sim.price.toFixed(dec);
-    if ($("dripZoneTo")) $("dripZoneTo").value = state.sim.price.toFixed(dec);
+    $("manualSweepLevel").value = state.sim.price.toFixed(dec);
+    $("dripZoneFrom").value = state.sim.price.toFixed(dec);
+    $("dripZoneTo").value = state.sim.price.toFixed(dec);
   }
 
   function startFromMenu(forceValue=null) {
@@ -1153,12 +2045,12 @@
     const price = setInitialPrice(raw);
     state.motionProfileKey = $("startMotionProfile").value || "realistic";
     state.orderFlowProfileKey = $("startOrderFlowProfile").value || "realistic";
-    if ($("orderFlowProfile")) $("orderFlowProfile").value = state.orderFlowProfileKey;
+    $("orderFlowProfile").value = state.orderFlowProfileKey;
     $("startPriceInput").value = price.toFixed(decimalsFor(state.tickSize));
     bootstrapMarket();
     state.started = true;
     $("startOverlay").classList.remove("open");
-    toast(`Started at ${price.toFixed(decimalsFor(state.tickSize))} • ${getMotionProfile().name}`);
+    toast(`Started at ${price.toFixed(decimalsFor(state.tickSize))} with ${getMotionProfile().name}`);
   }
 
   function resizeCanvasToDisplaySize() {
@@ -1175,12 +2067,12 @@
   window.addEventListener("resize", resizeCanvasToDisplaySize);
 
   function setVolPreset(key) {
-    const p = VOL_PRESETS[key] || VOL_PRESETS.nykz;
+    const preset = VOL_PRESETS[key] || VOL_PRESETS.nykz;
     state.volPresetKey = key;
-    $("hdrVol").textContent = p.name;
-    $("volValue").value = String(p.vol);
-    state.target.vol = p.vol;
-    toast(`Vol preset: ${p.name}`);
+    $("hdrVol").textContent = preset.name;
+    $("volValue").value = String(preset.vol);
+    state.target.vol = preset.vol;
+    toast(`Vol preset: ${preset.name}`);
   }
 
   function getBiasLabel() {
@@ -1192,7 +2084,7 @@
   function getBidAsk() {
     const spread = state.spreadTicks * state.tickSize;
     const mid = state.sim.price;
-    return { bid: mid - spread/2, ask: mid + spread/2 };
+    return { bid: mid - spread / 2, ask: mid + spread / 2 };
   }
 
   function computeUPnL() {
@@ -1212,30 +2104,21 @@
     if (!silent) toast("Exit targets cleared");
   }
 
-  function armBracketsFromAvg() {
-    if (!state.pos || state.avg == null) { toast("Open a position first"); return; }
-    const tpOff = Math.max(state.tickSize, Number($("tpOffset").value || 0));
-    const slOff = Math.max(state.tickSize, Number($("slOffset").value || 0));
-    if (state.pos > 0) {
-      state.brackets.tp = roundTo(state.avg + tpOff, state.tickSize);
-      state.brackets.sl = roundTo(state.avg - slOff, state.tickSize);
-    } else {
-      state.brackets.tp = roundTo(state.avg - tpOff, state.tickSize);
-      state.brackets.sl = roundTo(state.avg + slOff, state.tickSize);
-    }
-    state.brackets.armed = true;
-    toast("TP/SL armed");
-  }
-
   function placeExitTarget(price, mode, customQty) {
-    if (!state.pos || state.avg == null) { toast("Open a position first"); return; }
+    if (!state.pos || state.avg == null) {
+      toast("Open a position first");
+      return;
+    }
     price = roundTo(price, state.tickSize);
-    if (!Number.isFinite(price) || price <= 0) { toast("Enter a valid exit price"); return; }
+    if (!Number.isFinite(price) || price <= 0) {
+      toast("Enter a valid exit price");
+      return;
+    }
 
     const forSide = state.pos > 0 ? "long" : "short";
-    let trigger;
-    if (forSide === "long") trigger = price >= state.sim.price ? "gte" : "lte";
-    else trigger = price <= state.sim.price ? "lte" : "gte";
+    const trigger = forSide === "long"
+      ? (price >= state.sim.price ? "gte" : "lte")
+      : (price <= state.sim.price ? "lte" : "gte");
 
     const id = state.nextExitId++;
     state.exitTargets.push({
@@ -1324,15 +2207,24 @@
     toast(`${side.toUpperCase()} MKT filled`);
   }
 
-  function placeLimit(side, price, qty) {
+  function placeLimit(side, price, qty, meta = {}) {
     price = roundTo(price, state.tickSize);
     const id = state.nextOrderId++;
-    state.limits.push({ id, side, price, qty, left: qty, createdAt: state.simTime });
-    toast(`Limit placed (#${id})`);
+    state.limits.push({
+      id,
+      side,
+      price,
+      qty,
+      left:qty,
+      createdAt:state.simTime,
+      source: meta.source || "manual",
+      silent: !!meta.silent
+    });
+    if (!meta.silent) toast(`Limit placed (#${id})`);
   }
 
   function cancelOrder(id) {
-    const idx = state.limits.findIndex(o => o.id === id);
+    const idx = state.limits.findIndex((o) => o.id === id);
     if (idx >= 0) {
       state.limits.splice(idx, 1);
       toast(`Limit cancelled (#${id})`);
@@ -1342,11 +2234,27 @@
   function cancelAll() {
     const n = state.limits.length;
     state.limits = [];
+    if (state.lp.on) {
+      state.lp.on = false;
+      state.lp.lastRefreshAt = -1;
+      updateLpUI();
+      toast(`Cancelled ${n} orders and stopped LP`);
+      return;
+    }
     toast(`Cancelled ${n} orders`);
   }
 
+  function cancelLpOrders() {
+    const before = state.limits.length;
+    state.limits = state.limits.filter((o) => o.source !== "lp");
+    return before - state.limits.length;
+  }
+
   function flatten() {
-    if (state.pos === 0) { toast("Position already flat"); return; }
+    if (state.pos === 0) {
+      toast("Position already flat");
+      return;
+    }
     const qty = Math.abs(state.pos);
     const side = state.pos > 0 ? "sell" : "buy";
     marketOrder(side, qty, getSlip());
@@ -1356,13 +2264,16 @@
   }
 
   function partialFlatten(percent) {
-    if (state.pos === 0) { toast("Position already flat"); return; }
+    if (state.pos === 0) {
+      toast("Position already flat");
+      return;
+    }
     const abs = Math.abs(state.pos);
     const pct = clamp(percent, 0, 1);
     const qty = pct >= 1 ? abs : Math.max(1, Math.round(abs * pct));
     const side = state.pos > 0 ? "sell" : "buy";
     marketOrder(side, qty, getSlip());
-    toast(`Flatten ${Math.round(pct*100)}% done`);
+    toast(`Flatten ${Math.round(pct * 100)}% done`);
   }
 
   function placeLadder(side, start, levels, step, qtyPerLevel) {
@@ -1374,15 +2285,69 @@
     }
   }
 
+  function updateLpUI() {
+    if (!$("lpToggle")) return;
+    $("lpToggle").textContent = state.lp.on ? "LP Running" : "Start LP";
+  }
+
+  function refreshLiquidityProvider(force = false, silent = false) {
+    if (!state.lp.on) return;
+    const refreshSec = Math.max(0.2, Number(state.lp.refreshSec) || 1.2);
+    if (!force && state.simTime - state.lp.lastRefreshAt < refreshSec) return;
+
+    const levels = clamp(Math.floor(state.lp.levels || 1), 1, 8);
+    const qtyEach = Math.max(1, Math.floor(state.lp.qtyEach || 1));
+    const offsetTicks = Math.max(1, Math.floor(state.lp.offsetTicks || 1));
+    const stepTicks = Math.max(1, Math.floor(state.lp.stepTicks || 1));
+    const { bid, ask } = getBidAsk();
+    const dec = decimalsFor(state.tickSize);
+
+    cancelLpOrders();
+
+    for (let i = 0; i < levels; i++) {
+      const ticksAway = offsetTicks + i * stepTicks;
+      const buyPrice = roundTo(bid - ticksAway * state.tickSize, state.tickSize);
+      const sellPrice = roundTo(ask + ticksAway * state.tickSize, state.tickSize);
+      placeLimit("buy", buyPrice, qtyEach, { source:"lp", silent:true });
+      placeLimit("sell", sellPrice, qtyEach, { source:"lp", silent:true });
+    }
+
+    state.lp.lastRefreshAt = state.simTime;
+    if (force && !silent) toast(`LP quoting ${levels} x ${qtyEach} around ${state.sim.price.toFixed(dec)}`);
+  }
+
+  function stopLiquidityProvider(message = "LP stopped") {
+    cancelLpOrders();
+    state.lp.on = false;
+    state.lp.lastRefreshAt = -1;
+    updateLpUI();
+    if (message) toast(message);
+  }
+
+  function startLiquidityProvider(silent = false) {
+    state.lp.qtyEach = Math.max(1, Math.floor(Number($("lpQty").value || 1)));
+    state.lp.levels = clamp(Math.floor(Number($("lpLevels").value || 1)), 1, 8);
+    state.lp.refreshSec = clamp(Number($("lpRefreshSec").value || 1.2), 0.2, 999);
+    state.lp.offsetTicks = Math.max(1, Math.floor(Number($("lpOffsetTicks").value || 1)));
+    state.lp.stepTicks = Math.max(1, Math.floor(Number($("lpStepTicks").value || 1)));
+    state.lp.on = true;
+    state.lp.lastRefreshAt = -1;
+    updateLpUI();
+    refreshLiquidityProvider(true, silent);
+  }
+
   function cancelNearestLimitByPrice(price) {
     if (!state.limits.length) return false;
     let best = null;
     for (const o of state.limits) {
       const d = Math.abs(o.price - price);
-      if (!best || d < best.d) best = { d, id: o.id };
+      if (!best || d < best.d) best = { d, id:o.id };
     }
     const maxDelta = state.tickSize * 6;
-    if (best && best.d <= maxDelta) { cancelOrder(best.id); return true; }
+    if (best && best.d <= maxDelta) {
+      cancelOrder(best.id);
+      return true;
+    }
     return false;
   }
 
@@ -1391,7 +2356,10 @@
     const filledIds = [];
 
     for (const o of state.limits) {
-      if (o.left <= 0) { filledIds.push(o.id); continue; }
+      if (o.left <= 0) {
+        filledIds.push(o.id);
+        continue;
+      }
 
       const crossed = (o.side === "buy") ? (ask <= o.price) : (bid >= o.price);
       if (!crossed) continue;
@@ -1400,7 +2368,7 @@
       const distTicks = dist / Math.max(1e-9, state.tickSize);
       const boost = clamp(distTicks / 4, 0, 1);
       const base = clamp(state.p.fillProb, 0.55, 0.99);
-      const prob = clamp(base + 0.12*boost, 0.55, 0.995);
+      const prob = clamp(base + 0.12 * boost, 0.55, 0.995);
       if (Math.random() > prob) continue;
 
       const chunk = Math.max(1, Math.floor(Math.max(1, o.qty) * (0.35 + 0.55 * prob)));
@@ -1408,11 +2376,10 @@
 
       o.left -= fillQty;
       applyFill(o.side, fillQty, o.price);
-
       if (o.left <= 0) filledIds.push(o.id);
     }
 
-    if (filledIds.length) state.limits = state.limits.filter(o => !filledIds.includes(o.id));
+    if (filledIds.length) state.limits = state.limits.filter((o) => !filledIds.includes(o.id));
   }
 
   function checkBrackets() {
@@ -1431,7 +2398,6 @@
         marketOrder("sell", abs, getSlip());
         clearBrackets(true);
         toast("TP hit");
-        return;
       }
     } else {
       if (state.brackets.sl != null && ask >= state.brackets.sl) {
@@ -1444,18 +2410,18 @@
         marketOrder("buy", abs, getSlip());
         clearBrackets(true);
         toast("TP hit");
-        return;
       }
     }
   }
 
-  function barKeyForTime(t, tfSec) { return Math.floor(t / tfSec); }
+  function barKeyForTime(t, tfSec) {
+    return Math.floor(t / tfSec);
+  }
 
   function ensureBarForTick(t, price, vol) {
     const key = barKeyForTime(t, state.tfSec);
-
     if (!state.curBar) {
-      state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
+      state.curBar = { key, idx:key, o:price, h:price, l:price, c:price, v:vol };
       return;
     }
 
@@ -1468,11 +2434,8 @@
     }
 
     state.bars.push(state.curBar);
-    if (Number.isFinite(state.maxBars) && state.bars.length > state.maxBars) {
-      state.bars.shift();
-    }
-
-    state.curBar = { key, idx: key, o: price, h: price, l: price, c: price, v: vol };
+    if (Number.isFinite(state.maxBars) && state.bars.length > state.maxBars) state.bars.shift();
+    state.curBar = { key, idx:key, o:price, h:price, l:price, c:price, v:vol };
     state.indCache.len = 0;
   }
 
@@ -1490,7 +2453,7 @@
     if (state.view.follow) state.view.end = maxEnd;
     else state.view.end = clamp(state.view.end, Math.max(0, state.view.visibleBars - 1), maxEnd);
 
-    toast(`Timeframe: ${tfSec >= 60 ? (tfSec/60 + "m") : (tfSec + "s")}`);
+    toast(`Timeframe: ${tfSec >= 60 ? (tfSec / 60 + "m") : (tfSec + "s")}`);
   }
 
   function getAllBarsForRender() {
@@ -1503,20 +2466,18 @@
     const all = getAllBarsForRender();
     const n = all.length;
     const vis = clamp(state.view.visibleBars, 20, 700);
-
     const last = Math.max(0, n - 1);
     const maxEnd = last + state.view.futureBars;
 
     let end = state.view.follow ? maxEnd : state.view.end;
     end = clamp(end, Math.max(0, vis - 1), maxEnd);
-
     const start = end - vis + 1;
     return { all, n, last, vis, start, end, maxEnd };
   }
 
   function computeAutoPriceRange(vwin) {
-    let min = Infinity, max = -Infinity;
-
+    let min = Infinity;
+    let max = -Infinity;
     const i0 = Math.floor(vwin.start);
     const i1 = Math.ceil(vwin.end);
 
@@ -1533,8 +2494,14 @@
     }
 
     if (state.brackets.armed) {
-      if (state.brackets.tp != null) { min = Math.min(min, state.brackets.tp); max = Math.max(max, state.brackets.tp); }
-      if (state.brackets.sl != null) { min = Math.min(min, state.brackets.sl); max = Math.max(max, state.brackets.sl); }
+      if (state.brackets.tp != null) {
+        min = Math.min(min, state.brackets.tp);
+        max = Math.max(max, state.brackets.tp);
+      }
+      if (state.brackets.sl != null) {
+        min = Math.min(min, state.brackets.sl);
+        max = Math.max(max, state.brackets.sl);
+      }
     }
 
     for (const t of state.exitTargets) {
@@ -1564,29 +2531,26 @@
     }
 
     const pad = (max - min) * 0.12 + state.tickSize * 18;
-    return { min: min - pad, max: max + pad };
+    return { min:min - pad, max:max + pad };
   }
 
   function computeViewPriceRange(autoRange) {
     if (state.y.auto) return autoRange;
-
     const cAuto = (autoRange.min + autoRange.max) / 2;
     const c = cAuto + state.y.offset;
     const halfAuto = (autoRange.max - autoRange.min) / 2;
-    const half = halfAuto * clamp(state.y.scale, 0.20, 12.0);
-
-    return { min: c - half, max: c + half };
+    const half = halfAuto * clamp(state.y.scale, 0.20, 12);
+    return { min:c - half, max:c + half };
   }
 
   function buildGeo(vwin, pr) {
     const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-
+    const w = rect.width;
+    const h = rect.height;
     const leftPad = 74;
     const rightPad = 14;
     const topPad = 10;
     const bottomPad = 26;
-
     const volPanelH = state.indicators.vol ? Math.max(78, Math.floor((h - topPad - bottomPad) * 0.22)) : 0;
     const volGap = volPanelH ? 8 : 0;
 
@@ -1609,16 +2573,19 @@
     };
 
     const posOfX = (x) => vwin.start + (x - plotX0) / stepPx;
-    const xOfPos = (pos) => plotX0 + (pos - vwin.start) * stepPx + gap/2;
-    const xCenterOfPos = (pos) => xOfPos(pos) + candleW/2;
-
+    const xOfPos = (pos) => plotX0 + (pos - vwin.start) * stepPx + gap / 2;
+    const xCenterOfPos = (pos) => xOfPos(pos) + candleW / 2;
     const pricePerPx = (pr.max - pr.min) / Math.max(10, (priceY1 - priceY0));
-    return { w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,priceY0,priceY1,volY0,volY1,volPanelH,stepPx,candleW,gap,yOf,posOfX,xOfPos,xCenterOfPos,pricePerPx };
+
+    return {
+      w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,priceY0,priceY1,volY0,volY1,volPanelH,
+      stepPx,candleW,gap,yOf,posOfX,xOfPos,xCenterOfPos,pricePerPx
+    };
   }
 
   function canvasPointFromClient(e) {
     const r = canvas.getBoundingClientRect();
-    return { x: (e.clientX - r.left), y: (e.clientY - r.top) };
+    return { x:e.clientX - r.left, y:e.clientY - r.top };
   }
 
   function priceFromY(y, pr, geo) {
@@ -1627,7 +2594,7 @@
     return roundTo(p, state.tickSize);
   }
 
-  function niceStep(range, targetTicks=8) {
+  function niceStep(range, targetTicks = 8) {
     const raw = range / targetTicks;
     const pow = Math.pow(10, Math.floor(Math.log10(raw)));
     const frac = raw / pow;
@@ -1640,7 +2607,8 @@
   }
 
   function posForIdx(idx, all) {
-    let lo = 0, hi = all.length - 1;
+    let lo = 0;
+    let hi = all.length - 1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
       const v = all[mid].idx;
@@ -1654,26 +2622,23 @@
   function computeIndicators(allBars) {
     const tfSec = state.tfSec;
     const len = allBars.length;
-
-    const wantMa = state.indicators.ma;
-    const wantVwap = state.indicators.vwap;
-
     const maN = Math.max(1, Math.round((20 * 60) / tfSec));
 
-    if (state.indCache.tfSec === tfSec &&
-        state.indCache.len === len &&
-        state.indCache.maN === maN &&
-        state.indCache.vwap.length === len &&
-        state.indCache.ma.length === len) {
-      return state.indCache;
-    }
+    if (
+      state.indCache.tfSec === tfSec &&
+      state.indCache.len === len &&
+      state.indCache.maN === maN &&
+      state.indCache.vwap.length === len &&
+      state.indCache.ma.length === len
+    ) return state.indCache;
 
     const vwap = new Array(len).fill(null);
     const ma = new Array(len).fill(null);
 
-    if (wantVwap) {
-      let cumPV = 0, cumV = 0;
-      for (let i=0;i<len;i++) {
+    if (state.indicators.vwap) {
+      let cumPV = 0;
+      let cumV = 0;
+      for (let i = 0; i < len; i++) {
         const b = allBars[i];
         const v = Math.max(1, b.v || 1);
         const tp = (b.h + b.l + b.c) / 3;
@@ -1683,9 +2648,9 @@
       }
     }
 
-    if (wantMa) {
+    if (state.indicators.ma) {
       let sum = 0;
-      for (let i=0;i<len;i++) {
+      for (let i = 0; i < len; i++) {
         sum += allBars[i].c;
         if (i >= maN) sum -= allBars[i - maN].c;
         if (i >= maN - 1) ma[i] = sum / maN;
@@ -1701,9 +2666,9 @@
     if (!allBars.length) return null;
 
     if (kind === "vwap") {
-      let cumPV = 0, cumV = 0;
-      for (let i=0;i<allBars.length;i++) {
-        const b = allBars[i];
+      let cumPV = 0;
+      let cumV = 0;
+      for (const b of allBars) {
         const v = Math.max(1, b.v || 1);
         const tp = (b.h + b.l + b.c) / 3;
         cumPV += tp * v;
@@ -1734,18 +2699,15 @@
   }
 
   function updateDripUI() {
-    const mode = $("dripMode") ? $("dripMode").value : "instant";
-    const zoneWrap = $("dripZoneWrap");
-    const touchTicks = $("dripTouchTicks");
-    if (zoneWrap) zoneWrap.style.display = mode === "zone" ? "grid" : "none";
-    if (touchTicks) touchTicks.disabled = !(mode === "touch_vwap" || mode === "touch_ma");
+    const mode = $("dripMode").value;
+    $("dripZoneWrap").style.display = mode === "zone" ? "grid" : "none";
+    $("dripTouchTicks").disabled = !(mode === "touch_vwap" || mode === "touch_ma");
 
-    if (!$("dripToggle")) return;
     if (!state.drip.on) {
-      $("dripToggle").textContent = "▶ Start Drip";
+      $("dripToggle").textContent = "Start Drip";
       return;
     }
-    $("dripToggle").textContent = state.drip.entered ? "⏸ Drip Running" : "⏳ Drip Armed";
+    $("dripToggle").textContent = state.drip.entered ? "Drip Running" : "Drip Armed";
   }
 
   function getDripModeLabel(mode) {
@@ -1767,27 +2729,24 @@
 
     const baseTicks = Math.max(1, Math.abs(state.drip.touchTicks || 1));
     const base = Math.max(state.tickSize, baseTicks * state.tickSize);
-
     const favorMul = entered ? 2.15 : 1.65;
     const opposeMul = entered ? 1.05 : 0.75;
 
     if ((side || "buy") === "sell") {
-      return { center, low: center - (opposeMul * base), high: center + (favorMul * base) };
+      return { center, low:center - (opposeMul * base), high:center + (favorMul * base) };
     }
-    return { center, low: center - (favorMul * base), high: center + (opposeMul * base) };
+    return { center, low:center - (favorMul * base), high:center + (opposeMul * base) };
   }
 
   function canRunDripNow(prevPrice = state.sim.price, nextPrice = state.sim.price) {
     if (!state.drip.on) return false;
     const mode = state.drip.mode || "instant";
-
     if (mode === "instant") return true;
 
     if (mode === "zone") {
       const a = state.drip.zoneFrom;
       const b = state.drip.zoneTo;
       if (!Number.isFinite(a) || !Number.isFinite(b) || a === b) return false;
-
       const low = Math.min(a, b);
       const high = Math.max(a, b);
       const inside = priceInsideBand(nextPrice, low, high) || segmentTouchesBand(prevPrice, nextPrice, low, high);
@@ -1806,7 +2765,6 @@
     const kind = mode === "touch_ma" ? "ma" : "vwap";
     const armBand = getIndicatorDripBand(kind, state.drip.side, false);
     if (!armBand) return false;
-
     const holdBand = getIndicatorDripBand(kind, state.drip.side, true) || armBand;
     const activeBand = state.drip.entered ? holdBand : armBand;
     const inside = priceInsideBand(nextPrice, activeBand.low, activeBand.high) ||
@@ -1832,17 +2790,20 @@
     marketOrder(state.drip.side, state.drip.qtyEach, getSlip());
   }
 
-  function distPointToSegment(px,py, x1,y1, x2,y2) {
-    const dx = x2 - x1, dy = y2 - y1;
-    if (dx === 0 && dy === 0) return Math.hypot(px-x1, py-y1);
-    const t = ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy);
+  function distPointToSegment(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
+    const t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
     const tt = clamp(t, 0, 1);
-    const cx = x1 + tt*dx, cy = y1 + tt*dy;
-    return Math.hypot(px-cx, py-cy);
+    const cx = x1 + tt * dx;
+    const cy = y1 + tt * dy;
+    return Math.hypot(px - cx, py - cy);
   }
 
   function hitTestDrawing(pt, vwin, pr, geo) {
-    const px = pt.x, py = pt.y;
+    const px = pt.x;
+    const py = pt.y;
     const all = vwin.all;
 
     for (let k = state.drawings.length - 1; k >= 0; k--) {
@@ -1856,23 +2817,29 @@
       if (d.type === "trend") {
         const p1 = posForIdx(d.x1, all);
         const p2 = posForIdx(d.x2, all);
-        const x1 = geo.xCenterOfPos(p1), y1 = geo.yOf(d.y1);
-        const x2 = geo.xCenterOfPos(p2), y2 = geo.yOf(d.y2);
-        if (distPointToSegment(px,py,x1,y1,x2,y2) <= 7) return k;
+        const x1 = geo.xCenterOfPos(p1);
+        const y1 = geo.yOf(d.y1);
+        const x2 = geo.xCenterOfPos(p2);
+        const y2 = geo.yOf(d.y2);
+        if (distPointToSegment(px, py, x1, y1, x2, y2) <= 7) return k;
       }
 
       if (d.type === "rect") {
         const p1 = posForIdx(d.x1, all);
         const p2 = posForIdx(d.x2, all);
-        const x1 = geo.xOfPos(p1), x2 = geo.xOfPos(p2);
-        const y1 = geo.yOf(d.y1), y2 = geo.yOf(d.y2);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
+        const x1 = geo.xOfPos(p1);
+        const x2 = geo.xOfPos(p2);
+        const y1 = geo.yOf(d.y1);
+        const y2 = geo.yOf(d.y2);
+        const l = Math.min(x1, x2);
+        const r = Math.max(x1, x2);
+        const t = Math.min(y1, y2);
+        const b = Math.max(y1, y2);
         const onEdge = (
-          (Math.abs(px-l)<=6 && py>=t && py<=b) ||
-          (Math.abs(px-r)<=6 && py>=t && py<=b) ||
-          (Math.abs(py-t)<=6 && px>=l && px<=r) ||
-          (Math.abs(py-b)<=6 && px>=l && px<=r)
+          (Math.abs(px - l) <= 6 && py >= t && py <= b) ||
+          (Math.abs(px - r) <= 6 && py >= t && py <= b) ||
+          (Math.abs(py - t) <= 6 && px >= l && px <= r) ||
+          (Math.abs(py - b) <= 6 && px >= l && px <= r)
         );
         if (onEdge) return k;
       }
@@ -1904,10 +2871,10 @@
         g.anchor = (g.anchor * (g.items.length - 1) + lv.price) / g.items.length;
         g.lastIdx = Math.max(g.lastIdx, lv.idx || 0);
       } else {
-        groups.push({ anchor: lv.price, items: [lv], lastIdx: lv.idx || 0 });
+        groups.push({ anchor:lv.price, items:[lv], lastIdx:lv.idx || 0 });
       }
     }
-    return groups.map(g => ({
+    return groups.map((g) => ({
       price: roundTo(g.anchor, state.tickSize),
       count: g.items.length,
       idx: g.lastIdx,
@@ -1920,9 +2887,8 @@
     const px = state.sim.price;
     const density = getOrderFlowProfile().liquidityDensity * state.flowIntensity;
     const ageMul = (idx) => 1 + Math.max(0, 1 - (info.bars.length - 1 - idx) / 120) * 0.35;
-
-    const eqh = clusterPriceLevels(info.highs, 2.5).filter(x => x.count >= 2);
-    const eql = clusterPriceLevels(info.lows, 2.5).filter(x => x.count >= 2);
+    const eqh = clusterPriceLevels(info.highs, 2.5).filter((x) => x.count >= 2);
+    const eql = clusterPriceLevels(info.lows, 2.5).filter((x) => x.count >= 2);
 
     const above = [];
     const below = [];
@@ -1930,58 +2896,144 @@
     for (const h of info.highs) {
       if (h.price > px + state.tickSize * 1.5) {
         above.push({
-          price: h.price,
-          distance: h.price - px,
-          strength: 0.90 * density * ageMul(h.idx),
-          label: "swing high",
-          kind: "high",
-          eq: false
+          price:h.price,
+          distance:h.price - px,
+          strength:0.90 * density * ageMul(h.idx),
+          label:"swing high",
+          kind:"high",
+          eq:false
         });
       }
     }
+
     for (const l of info.lows) {
       if (l.price < px - state.tickSize * 1.5) {
         below.push({
-          price: l.price,
-          distance: px - l.price,
-          strength: 0.90 * density * ageMul(l.idx),
-          label: "swing low",
-          kind: "low",
-          eq: false
+          price:l.price,
+          distance:px - l.price,
+          strength:0.90 * density * ageMul(l.idx),
+          label:"swing low",
+          kind:"low",
+          eq:false
         });
       }
     }
+
     for (const h of eqh) {
       if (h.price > px + state.tickSize * 1.5) {
         above.push({
-          price: h.price,
-          distance: h.price - px,
-          strength: 1.20 * h.strength * density * ageMul(h.idx),
-          label: "EQH",
-          kind: "eqh",
-          eq: true
+          price:h.price,
+          distance:h.price - px,
+          strength:1.20 * h.strength * density * ageMul(h.idx),
+          label:"EQH",
+          kind:"eqh",
+          eq:true
         });
       }
     }
+
     for (const l of eql) {
       if (l.price < px - state.tickSize * 1.5) {
         below.push({
-          price: l.price,
-          distance: px - l.price,
-          strength: 1.20 * l.strength * density * ageMul(l.idx),
-          label: "EQL",
-          kind: "eql",
-          eq: true
+          price:l.price,
+          distance:px - l.price,
+          strength:1.20 * l.strength * density * ageMul(l.idx),
+          label:"EQL",
+          kind:"eql",
+          eq:true
         });
       }
     }
 
     const compact = (arr) => arr
       .sort((a, b) => a.distance - b.distance || b.strength - a.strength)
-      .filter((x, idx, src) => idx === src.findIndex(y => Math.abs(y.price - x.price) <= state.tickSize * 1.5))
+      .filter((x, idx, src) => idx === src.findIndex((y) => Math.abs(y.price - x.price) <= state.tickSize * 1.5))
       .slice(0, 4);
 
-    return { bars: info.bars, highs: info.highs, lows: info.lows, range: info.range, eqh, eql, above: compact(above), below: compact(below) };
+    return { bars:info.bars, highs:info.highs, lows:info.lows, range:info.range, eqh, eql, above:compact(above), below:compact(below) };
+  }
+
+  function getOwnLimitQtyAt(price, side) {
+    let total = 0;
+    for (const o of state.limits) {
+      if (o.side !== side) continue;
+      if (Math.abs(o.price - price) <= state.tickSize * 0.5) total += Math.max(0, o.left || 0);
+    }
+    return total;
+  }
+
+  function estimateDepthSize(price, side, mid, snapshot) {
+    const profile = getOrderFlowProfile();
+    const density = profile.liquidityDensity * state.flowIntensity;
+    const ticksAway = Math.abs(price - mid) / Math.max(state.tickSize, 1e-9);
+    let size = Math.round((18 + ticksAway * 2.4) * density + Math.abs(Math.sin(price * 0.019)) * 10);
+
+    if (side === "bid" && price <= mid) size += Math.max(0, Math.round(7 - ticksAway * 0.45));
+    if (side === "ask" && price >= mid) size += Math.max(0, Math.round(7 - ticksAway * 0.45));
+
+    const focus = side === "bid" ? snapshot.below : snapshot.above;
+    for (const lvl of focus.slice(0, 4)) {
+      if (Math.abs(lvl.price - price) <= state.tickSize * 1.1) {
+        size += Math.round(9 + lvl.strength * 11);
+      }
+    }
+
+    return Math.max(0, size);
+  }
+
+  function buildDepthBook(levelCount = 44, includeOwnOrders = true, showOwnTags = state.view.showOwnLimits) {
+    const levels = clamp(Math.floor(levelCount || 44), 20, 120);
+    const mid = roundTo(state.sim.price, state.tickSize);
+    const snapshot = state.orderFlow.snapshot || buildLiquiditySnapshot();
+    const rows = [];
+    let maxBid = 1;
+    let maxAsk = 1;
+
+    for (let offset = levels; offset >= -levels; offset--) {
+      const price = roundTo(mid + offset * state.tickSize, state.tickSize);
+      const ownBid = getOwnLimitQtyAt(price, "buy");
+      const ownAsk = getOwnLimitQtyAt(price, "sell");
+      const baseBid = offset <= 0 ? estimateDepthSize(price, "bid", mid, snapshot) : 0;
+      const baseAsk = offset >= 0 ? estimateDepthSize(price, "ask", mid, snapshot) : 0;
+      const bid = baseBid + (includeOwnOrders ? ownBid : 0);
+      const ask = baseAsk + (includeOwnOrders ? ownAsk : 0);
+
+      maxBid = Math.max(maxBid, bid);
+      maxAsk = Math.max(maxAsk, ask);
+
+      rows.push({
+        offset,
+        price,
+        bid,
+        ask,
+        ownBid: showOwnTags ? ownBid : 0,
+        ownAsk: showOwnTags ? ownAsk : 0,
+        current: offset === 0
+      });
+    }
+
+    return { rows, maxBid, maxAsk, mid };
+  }
+
+  function computeDepthInfluence(levelSpan = 7) {
+    const book = buildDepthBook(levelSpan, true, false);
+    let bidSupport = 0;
+    let askResistance = 0;
+
+    for (const row of book.rows) {
+      const dist = Math.abs(row.offset);
+      if (dist === 0 || dist > levelSpan) continue;
+      const weight = 1 / (0.7 + dist * 0.55);
+      if (row.offset < 0) bidSupport += row.bid * weight;
+      if (row.offset > 0) askResistance += row.ask * weight;
+    }
+
+    const total = bidSupport + askResistance + 1;
+    return {
+      imbalance: (bidSupport - askResistance) / total,
+      bidBrake: clamp(bidSupport / total, 0, 1),
+      askBrake: clamp(askResistance / total, 0, 1)
+    };
   }
 
   function maybeShiftOrderFlowRegime(volKnob) {
@@ -2056,6 +3108,7 @@
       state.orderFlow.lastAbsorbSide = "up";
       if (resist > 0.65 && Math.random() < 0.05 + prox * 0.08) sellAgg += resist * 0.14;
     }
+
     if (below && below.distance <= absorbWindow && sellAgg >= buyAgg * 0.88) {
       const prox = clamp(1 - below.distance / absorbWindow, 0, 1);
       const resist = prox * below.strength * 0.58 * profile.absorption;
@@ -2074,7 +3127,7 @@
     state.orderFlow.pressure = lerp(state.orderFlow.pressure, clamp(rawDelta + regime.drift * 0.30 + absorption * 0.14, -1, 1), 0.06);
 
     const impulse = (state.orderFlow.deltaEma * (0.20 + volKnob * 0.010) + absorption * 0.08) * state.tickSize * profile.flowImpact;
-    return { impulse, snapshot: snap };
+    return { impulse, snapshot:snap };
   }
 
   function chooseSweepPostBehavior(dir, source = "auto", mode = "normal", sideInfo = null) {
@@ -2093,9 +3146,7 @@
     if (mode === "soft") reverse += 0.06;
     if (mode === "hard") cont += 0.08;
     if (source === "auto") reverse += 0.04;
-
-    const picked = weightedPick({ reverse, continue: cont, fake });
-    return picked;
+    return weightedPick({ reverse, continue:cont, fake });
   }
 
   function armPostLiquidityImpulse(dir, levelStrength = 1, eq = false) {
@@ -2108,7 +3159,7 @@
     let fake = 0.14 + (eq ? 0.08 : 0.03);
     if (state.orderFlow.regime === "balanced" || state.orderFlow.regime === "compression") reverse += 0.10;
     if ((state.orderFlow.regime === "trendUp" && dir === "up") || (state.orderFlow.regime === "trendDown" && dir === "down")) cont += 0.16;
-    const outcome = weightedPick({ reverse, continue: cont, fake });
+    const outcome = weightedPick({ reverse, continue:cont, fake });
     state.orderFlow.postImpulse = {
       outcome,
       dir,
@@ -2149,14 +3200,14 @@
     let taken = null;
     for (const lvl of snap.above.slice(0, 2)) {
       if (prevPrice < lvl.price && newPrice >= lvl.price) {
-        taken = { ...lvl, dir: "up" };
+        taken = { ...lvl, dir:"up" };
         break;
       }
     }
     if (!taken) {
       for (const lvl of snap.below.slice(0, 2)) {
         if (prevPrice > lvl.price && newPrice <= lvl.price) {
-          taken = { ...lvl, dir: "down" };
+          taken = { ...lvl, dir:"down" };
           break;
         }
       }
@@ -2167,7 +3218,7 @@
       return;
     }
 
-    state.orderFlow.lastLevelTake = { level: taken.price, dir: taken.dir, at: state.simTime, label: taken.label };
+    state.orderFlow.lastLevelTake = { level:taken.price, dir:taken.dir, at:state.simTime, label:taken.label };
     const sign = taken.dir === "up" ? 1 : -1;
     state.sim.flow += sign * (0.45 + taken.strength * 0.18);
     state.sim.vel += sign * state.tickSize * (0.20 + taken.strength * 0.10);
@@ -2178,35 +3229,27 @@
     const bars = getAllBarsForRender();
     const highs = [];
     const lows = [];
-
-    if (bars.length < 12) return { bars, highs, lows, range: 20 * state.tickSize };
+    if (bars.length < 12) return { bars, highs, lows, range:20 * state.tickSize };
 
     const from = Math.max(3, bars.length - 140);
     const to = bars.length - 3;
 
     for (let i = from; i <= to; i++) {
       const b = bars[i];
-
-      const isHigh =
-        b.h >= bars[i-1].h && b.h > bars[i-2].h &&
-        b.h >= bars[i+1].h && b.h > bars[i+2].h;
-
-      const isLow =
-        b.l <= bars[i-1].l && b.l < bars[i-2].l &&
-        b.l <= bars[i+1].l && b.l < bars[i+2].l;
-
-      if (isHigh) highs.push({ idx: i, price: roundTo(b.h, state.tickSize) });
-      if (isLow) lows.push({ idx: i, price: roundTo(b.l, state.tickSize) });
+      const isHigh = b.h >= bars[i - 1].h && b.h > bars[i - 2].h && b.h >= bars[i + 1].h && b.h > bars[i + 2].h;
+      const isLow = b.l <= bars[i - 1].l && b.l < bars[i - 2].l && b.l <= bars[i + 1].l && b.l < bars[i + 2].l;
+      if (isHigh) highs.push({ idx:i, price:roundTo(b.h, state.tickSize) });
+      if (isLow) lows.push({ idx:i, price:roundTo(b.l, state.tickSize) });
     }
 
     const recent = bars.slice(Math.max(0, bars.length - 50));
-    let hi = -Infinity, lo = Infinity;
+    let hi = -Infinity;
+    let lo = Infinity;
     for (const b of recent) {
       hi = Math.max(hi, b.h);
       lo = Math.min(lo, b.l);
     }
     const range = Number.isFinite(hi) && Number.isFinite(lo) ? Math.max(hi - lo, 20 * state.tickSize) : 20 * state.tickSize;
-
     return { bars, highs, lows, range };
   }
 
@@ -2225,7 +3268,7 @@
 
     if (dir === "up") {
       const above = info.highs
-        .filter(x => x.price > px + minDist && x.price - px <= maxDist)
+        .filter((x) => x.price > px + minDist && x.price - px <= maxDist)
         .sort((a, b) => scoreCandidate(a) - scoreCandidate(b));
 
       if (above.length) {
@@ -2240,7 +3283,6 @@
       }
 
       if (!allowFallback || requireNearby) return null;
-
       const fallback = roundTo(px + Math.max(Math.min(info.range * 0.30, 26 * state.tickSize), 12 * state.tickSize), state.tickSize);
       return {
         level: fallback,
@@ -2252,7 +3294,7 @@
     }
 
     const below = info.lows
-      .filter(x => x.price < px - minDist && px - x.price <= maxDist)
+      .filter((x) => x.price < px - minDist && px - x.price <= maxDist)
       .sort((a, b) => scoreCandidate(a) - scoreCandidate(b));
 
     if (below.length) {
@@ -2267,7 +3309,6 @@
     }
 
     if (!allowFallback || requireNearby) return null;
-
     const fallback = roundTo(px - Math.max(Math.min(info.range * 0.30, 26 * state.tickSize), 12 * state.tickSize), state.tickSize);
     return {
       level: fallback,
@@ -2275,12 +3316,12 @@
       range: info.range,
       distance: Math.abs(fallback - px),
       isFallback: true
-      };
+    };
   }
 
   function chooseAutoSweepDirection() {
-    const up = pickSweepLevel("up", { allowFallback: false, requireNearby: true });
-    const down = pickSweepLevel("down", { allowFallback: false, requireNearby: true });
+    const up = pickSweepLevel("up", { allowFallback:false, requireNearby:true });
+    const down = pickSweepLevel("down", { allowFallback:false, requireNearby:true });
     const bars = getAllBarsForRender();
     if (bars.length < 12) return null;
 
@@ -2289,13 +3330,8 @@
     const momentum = last - prev;
     const momTicks = momentum / Math.max(state.tickSize, 1e-9);
 
-    const upScore = up
-      ? Math.max(0, 55 - up.distance / state.tickSize) + Math.max(0, momTicks * 0.75)
-      : -999;
-
-    const downScore = down
-      ? Math.max(0, 55 - down.distance / state.tickSize) + Math.max(0, -momTicks * 0.75)
-      : -999;
+    const upScore = up ? Math.max(0, 55 - up.distance / state.tickSize) + Math.max(0, momTicks * 0.75) : -999;
+    const downScore = down ? Math.max(0, 55 - down.distance / state.tickSize) + Math.max(0, -momTicks * 0.75) : -999;
 
     if (upScore < 6 && downScore < 6) return null;
     if (Math.abs(upScore - downScore) < 3) return Math.random() > 0.5 ? "up" : "down";
@@ -2309,49 +3345,49 @@
   function getManualSweepConfig(strength) {
     const map = {
       soft: {
-        mode: "soft",
-        power: 3.2,
-        overshootPts: [0.50, 1.25],
-        sweepBaseSec: 6.5,
-        sweepPerPointSec: 0.095,
-        revertBaseSec: 3.6,
-        revertPerPointSec: 0.05,
-        forceMul: 0.40,
-        pulseMul: 0.34,
-        directMul: 0.006,
-        reachPolicy: "probe"
+        mode:"soft",
+        power:3.2,
+        overshootPts:[0.50, 1.25],
+        sweepBaseSec:6.5,
+        sweepPerPointSec:0.095,
+        revertBaseSec:3.6,
+        revertPerPointSec:0.05,
+        forceMul:0.40,
+        pulseMul:0.34,
+        directMul:0.006,
+        reachPolicy:"probe"
       },
       normal: {
-        mode: "normal",
-        power: 5.2,
-        overshootPts: [0.75, 2.0],
-        sweepBaseSec: 4.8,
-        sweepPerPointSec: 0.065,
-        revertBaseSec: 3.0,
-        revertPerPointSec: 0.045,
-        forceMul: 0.60,
-        pulseMul: 0.26,
-        directMul: 0.016,
-        reachPolicy: "test"
+        mode:"normal",
+        power:5.2,
+        overshootPts:[0.75, 2.0],
+        sweepBaseSec:4.8,
+        sweepPerPointSec:0.065,
+        revertBaseSec:3.0,
+        revertPerPointSec:0.045,
+        forceMul:0.60,
+        pulseMul:0.26,
+        directMul:0.016,
+        reachPolicy:"test"
       },
       hard: {
-        mode: "hard",
-        power: 8.0,
-        overshootPts: [1.25, 3.0],
-        sweepBaseSec: 3.8,
-        sweepPerPointSec: 0.05,
-        revertBaseSec: 2.6,
-        revertPerPointSec: 0.04,
-        forceMul: 0.90,
-        pulseMul: 0.18,
-        directMul: 0.040,
-        reachPolicy: "take"
+        mode:"hard",
+        power:8.0,
+        overshootPts:[1.25, 3.0],
+        sweepBaseSec:3.8,
+        sweepPerPointSec:0.05,
+        revertBaseSec:2.6,
+        revertPerPointSec:0.04,
+        forceMul:0.90,
+        pulseMul:0.18,
+        directMul:0.040,
+        reachPolicy:"take"
       }
     };
     return map[strength] || map.normal;
   }
 
-  function createSweepEvent(dir, power=5, immediate=false, source="auto", manualLevel=null, manualConfig=null) {
+  function createSweepEvent(dir, power = 5, immediate = false, source = "auto", manualLevel = null, manualConfig = null) {
     let sideInfo = null;
 
     if (Number.isFinite(manualLevel)) {
@@ -2365,7 +3401,7 @@
         isFallback: false
       };
     } else {
-      sideInfo = pickSweepLevel(dir, { allowFallback: true, requireNearby: !immediate && source === "auto" });
+      sideInfo = pickSweepLevel(dir, { allowFallback:true, requireNearby:!immediate && source === "auto" });
     }
 
     if (!sideInfo || !Number.isFinite(sideInfo.level)) return false;
@@ -2377,7 +3413,13 @@
     const distancePts = distance;
     const baseCap = getBarRangeCap(state.tfSec);
 
-    let sweepSec, revertSec, overshootPtsMin, overshootPtsMax, force, extraBarCap, reachPolicy;
+    let sweepSec;
+    let revertSec;
+    let overshootPtsMin;
+    let overshootPtsMax;
+    let force;
+    let extraBarCap;
+    let reachPolicy;
     let pulseMul = 0.15;
     let directMul = 0.04;
 
@@ -2413,13 +3455,9 @@
     const postBehavior = chooseSweepPostBehavior(dir, source, manualConfig?.mode || "normal", sideInfo);
     const target1 = roundTo(sideInfo.level + sign * overshoot, state.tickSize);
     let target2;
-    if (postBehavior === "continue") {
-      target2 = roundTo(sideInfo.level + sign * Math.max(returnDepth * 0.85, overshoot * 1.8), state.tickSize);
-    } else if (postBehavior === "fake") {
-      target2 = roundTo(sideInfo.level - sign * Math.max(returnDepth * 0.45, 2 * state.tickSize), state.tickSize);
-    } else {
-      target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
-    }
+    if (postBehavior === "continue") target2 = roundTo(sideInfo.level + sign * Math.max(returnDepth * 0.85, overshoot * 1.8), state.tickSize);
+    else if (postBehavior === "fake") target2 = roundTo(sideInfo.level - sign * Math.max(returnDepth * 0.45, 2 * state.tickSize), state.tickSize);
+    else target2 = roundTo(sideInfo.level - sign * returnDepth, state.tickSize);
 
     const sweepTicks = secToSimTicks(clamp(sweepSec, 2.0, source === "manual" ? 40 : 16));
     const revertTicks = secToSimTicks(clamp(revertSec, 1.5, source === "manual" ? 24 : 12));
@@ -2427,17 +3465,17 @@
     state.sweep.event = {
       dir,
       source,
-      phase: "sweep",
-      power: pwr,
-      level: roundTo(sideInfo.level, state.tickSize),
-      levelKind: sideInfo.kind,
-      isFallback: !!sideInfo.isFallback,
+      phase:"sweep",
+      power:pwr,
+      level:roundTo(sideInfo.level, state.tickSize),
+      levelKind:sideInfo.kind,
+      isFallback:!!sideInfo.isFallback,
       target1,
       target2,
       sweepTicks,
-      sweepTicksMax: sweepTicks,
+      sweepTicksMax:sweepTicks,
       revertTicks,
-      revertTicksMax: revertTicks,
+      revertTicksMax:revertTicks,
       force,
       extraBarCap,
       distanceTicks,
@@ -2445,11 +3483,11 @@
       reachPolicy,
       pulseMul,
       directMul,
-      mode: manualConfig?.mode || null,
+      mode:manualConfig?.mode || null,
       postBehavior,
-      startedAt: state.simTime,
-      extended: false,
-      tookLevel: false
+      startedAt:state.simTime,
+      extended:false,
+      tookLevel:false
     };
 
     if (source === "manual") {
@@ -2459,7 +3497,6 @@
       state.sim.vel += sign * force * 0.55;
       state.sim.flow += sign * (0.4 + pwr * 0.08);
     }
-
     return true;
   }
 
@@ -2475,11 +3512,11 @@
     if (manualLevel != null) {
       const minGap = state.tickSize;
       if (dir === "up" && manualLevel <= state.sim.price + minGap) {
-        toast("For buy sweep set level above current price");
+        toast("For a buy sweep set level above current price");
         return;
       }
       if (dir === "down" && manualLevel >= state.sim.price - minGap) {
-        toast("For sell sweep set level below current price");
+        toast("For a sell sweep set level below current price");
         return;
       }
     }
@@ -2493,7 +3530,7 @@
 
     toast(
       manualLevel != null
-        ? `${dir === "up" ? "Manual buy" : "Manual sell"} ${cfg.mode} sweep → ${manualLevel.toFixed(decimalsFor(state.tickSize))}`
+        ? `${dir === "up" ? "Manual buy" : "Manual sell"} ${cfg.mode} sweep to ${manualLevel.toFixed(decimalsFor(state.tickSize))}`
         : `${dir === "up" ? "Manual buy" : "Manual sell"} ${cfg.mode} sweep`
     );
   }
@@ -2507,8 +3544,7 @@
 
     const dir = chooseAutoSweepDirection();
     if (!dir) return;
-
-    const sideInfo = pickSweepLevel(dir, { allowFallback: false, requireNearby: true });
+    const sideInfo = pickSweepLevel(dir, { allowFallback:false, requireNearby:true });
     if (!sideInfo) return;
 
     const distTicks = sideInfo.distance / Math.max(state.tickSize, 1e-9);
@@ -2520,7 +3556,7 @@
 
     if (createSweepEvent(dir, state.sweep.power, false, "auto")) {
       state.sweep.cooldownUntil = state.simTime + 70 + Math.random() * 150;
-      toast(dir === "up" ? "Auto sweep ↑" : "Auto sweep ↓");
+      toast(dir === "up" ? "Auto sweep up" : "Auto sweep down");
     }
   }
 
@@ -2558,7 +3594,6 @@
           ? -sign * ev.force * pullMul * (0.55 + Math.random() * 0.65)
           : 0;
         const jitter = randn() * ev.force * jitterMul;
-
         dp += burstPush + chasePush + pullback + jitter;
 
         if (ev.mode === "hard" && burst > 0.35 && remainingTicks > 5) {
@@ -2571,11 +3606,8 @@
       }
 
       ev.sweepTicks -= 1;
-
-      const hitLevel = (ev.dir === "up" && state.sim.price >= ev.level) ||
-                       (ev.dir === "down" && state.sim.price <= ev.level);
-      const hitTarget = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) ||
-                        (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
+      const hitLevel = (ev.dir === "up" && state.sim.price >= ev.level) || (ev.dir === "down" && state.sim.price <= ev.level);
+      const hitTarget = (ev.dir === "up" && state.sim.price >= ev.target1 - state.tickSize) || (ev.dir === "down" && state.sim.price <= ev.target1 + state.tickSize);
 
       if (hitLevel) ev.tookLevel = true;
 
@@ -2611,318 +3643,456 @@
       }
 
       ev.revertTicks -= 1;
-
-      const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) ||
-                  (ev.dir === "down" && state.sim.price >= ev.target2 - state.tickSize);
-
+      const hit = (ev.dir === "up" && state.sim.price <= ev.target2 + state.tickSize) || (ev.dir === "down" && state.sim.price >= ev.target2 - state.tickSize);
       if (hit || ev.revertTicks <= 0) state.sweep.event = null;
     }
 
     return dp;
   }
 
-  function drawChart() {
-    resizeCanvasToDisplaySize();
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
 
-    ctx.clearRect(0,0,w,h);
+function drawChart() {
+  resizeCanvasToDisplaySize();
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
 
-    const vwin = getViewWindow();
-    if (vwin.n < 2) return;
+  const vwin = getViewWindow();
+  if (vwin.n < 2) return;
 
-    const autoRange = computeAutoPriceRange(vwin);
-    const pr = computeViewPriceRange(autoRange);
-    const geo = buildGeo(vwin, pr);
+  const autoRange = computeAutoPriceRange(vwin);
+  const pr = computeViewPriceRange(autoRange);
+  const geo = buildGeo(vwin, pr);
+  const dec = decimalsFor(state.tickSize);
+  const style = state.style || buildStylePreset();
+  const plotW = geo.plotX1 - geo.plotX0;
+  const plotH = geo.priceY1 - geo.priceY0;
+  const gridAlpha = clamp(style.gridAlpha, 0.05, 1.2);
+  const glow = clamp(style.glow, 0, 1.8);
+  const vignette = clamp(style.vignette, 0, 1);
 
-    const dec = decimalsFor(state.tickSize);
+  const axisText = "rgba(226,236,248,0.96)";
+  const axisSoft = rgba(style.accent, 0.18 + gridAlpha * 0.18);
+  const gridStrong = rgba(style.accent, 0.12 + gridAlpha * 0.34);
+  const gridWeak = rgba(style.accent, 0.06 + gridAlpha * 0.16);
+  const bandFill = rgba(style.accent, 0.06 + glow * 0.03);
+  const upStroke = rgba(style.up, 0.96);
+  const downStroke = rgba(style.down, 0.96);
+  const upFill = rgba(style.up, 0.24 + glow * 0.06);
+  const downFill = rgba(style.down, 0.24 + glow * 0.06);
+  const maStroke = rgba(style.ma, 0.92);
+  const vwapStroke = rgba(style.vwap, 0.92);
 
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = "rgba(5,8,12,0.35)";
-    ctx.fillRect(geo.plotX0, geo.priceY0, geo.plotX1-geo.plotX0, geo.priceY1-geo.priceY0);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(geo.plotX0, geo.priceY0, plotW, plotH);
+  ctx.clip();
 
-    ctx.fillStyle = "rgba(11,15,20,0.55)";
-    ctx.fillRect(0, 0, geo.leftPad, h);
+  const plotGrad = ctx.createLinearGradient(0, geo.priceY0, 0, geo.priceY1);
+  plotGrad.addColorStop(0, rgba(style.bgTop, 0.98));
+  plotGrad.addColorStop(1, rgba(style.bgBottom, 0.98));
+  ctx.fillStyle = plotGrad;
+  ctx.fillRect(geo.plotX0, geo.priceY0, plotW, plotH);
 
-    ctx.strokeStyle = "rgba(34,48,68,0.9)";
+  if (style.cinematic) {
+    const glowA = ctx.createRadialGradient(
+      geo.plotX0 + plotW * 0.18, geo.priceY0 + plotH * 0.08, 0,
+      geo.plotX0 + plotW * 0.18, geo.priceY0 + plotH * 0.08, Math.max(plotW, plotH) * 0.72
+    );
+    glowA.addColorStop(0, rgba(style.accent, 0.17 + glow * 0.10));
+    glowA.addColorStop(1, rgba(style.accent, 0));
+    ctx.fillStyle = glowA;
+    ctx.fillRect(geo.plotX0, geo.priceY0, plotW, plotH);
+
+    const glowB = ctx.createRadialGradient(
+      geo.plotX0 + plotW * 0.78, geo.priceY0 + plotH * 0.18, 0,
+      geo.plotX0 + plotW * 0.78, geo.priceY0 + plotH * 0.18, Math.max(plotW, plotH) * 0.66
+    );
+    glowB.addColorStop(0, rgba(style.vwap, 0.11 + glow * 0.07));
+    glowB.addColorStop(1, rgba(style.vwap, 0));
+    ctx.fillStyle = glowB;
+    ctx.fillRect(geo.plotX0, geo.priceY0, plotW, plotH);
+
+    ctx.fillStyle = "rgba(255,255,255,0.018)";
+    for (let sy = geo.priceY0 + 1; sy < geo.priceY1; sy += 4) {
+      ctx.fillRect(geo.plotX0, sy, plotW, 1);
+    }
+  }
+
+  if (style.spotlight) {
+    const spot = ctx.createRadialGradient(
+      geo.plotX0 + plotW * 0.50, geo.priceY0 + plotH * 0.05, 0,
+      geo.plotX0 + plotW * 0.50, geo.priceY0 + plotH * 0.05, plotW * 0.75
+    );
+    spot.addColorStop(0, "rgba(255,255,255,0.055)");
+    spot.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = spot;
+    ctx.fillRect(geo.plotX0, geo.priceY0, plotW, plotH);
+  }
+
+  if (vignette > 0.01) {
+    const vignetteGrad = ctx.createRadialGradient(
+      geo.plotX0 + plotW * 0.50, geo.priceY0 + plotH * 0.45, plotW * 0.10,
+      geo.plotX0 + plotW * 0.50, geo.priceY0 + plotH * 0.45, Math.max(plotW, plotH) * 0.82
+    );
+    vignetteGrad.addColorStop(0, "rgba(0,0,0,0)");
+    vignetteGrad.addColorStop(1, `rgba(0,0,0,${0.20 + vignette * 0.42})`);
+    ctx.fillStyle = vignetteGrad;
+    ctx.fillRect(geo.plotX0, geo.priceY0, plotW, plotH);
+  }
+  ctx.restore();
+
+  const sideGrad = ctx.createLinearGradient(0, 0, 0, h);
+  sideGrad.addColorStop(0, rgba(style.bgTop, 0.74));
+  sideGrad.addColorStop(1, rgba(style.bgBottom, 0.88));
+  ctx.fillStyle = sideGrad;
+  ctx.fillRect(0, 0, geo.leftPad, h);
+
+  ctx.strokeStyle = rgba(style.accent, 0.55);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(geo.leftPad + 0.5, 0);
+  ctx.lineTo(geo.leftPad + 0.5, h);
+  ctx.stroke();
+
+  let step = niceStep(pr.max - pr.min, 8);
+  step = Math.max(state.tickSize, roundTo(step, state.tickSize));
+  const startP = Math.floor(pr.min / step) * step;
+
+  ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.textBaseline = "middle";
+
+  for (let p = startP; p <= pr.max + step; p += step) {
+    const price = roundTo(p, state.tickSize);
+    const y = geo.yOf(price);
+
+    ctx.strokeStyle = gridWeak;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(geo.leftPad + 0.5, 0);
-    ctx.lineTo(geo.leftPad + 0.5, h);
+    ctx.moveTo(geo.plotX0, y);
+    ctx.lineTo(geo.plotX1, y);
     ctx.stroke();
 
-    let step = niceStep(pr.max - pr.min, 8);
-    step = Math.max(state.tickSize, roundTo(step, state.tickSize));
-    const startP = Math.floor(pr.min / step) * step;
+    ctx.fillStyle = axisText;
+    ctx.fillText(price.toFixed(dec), 8, y);
+  }
 
-    ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
-    ctx.textBaseline = "middle";
+  const every = Math.max(8, Math.round(vwin.vis / 10));
+  for (let i = 0; i <= vwin.vis; i += every) {
+    const pos = vwin.start + i;
+    const x = geo.xCenterOfPos(pos);
+    ctx.strokeStyle = gridStrong;
+    ctx.beginPath();
+    ctx.moveTo(x, geo.priceY0);
+    ctx.lineTo(x, geo.priceY1);
+    ctx.stroke();
+  }
 
-    for (let p = startP; p <= pr.max + step; p += step) {
-      const price = roundTo(p, state.tickSize);
-      const y = geo.yOf(price);
+  const { bid, ask } = getBidAsk();
+  const yBid = geo.yOf(bid);
+  const yAsk = geo.yOf(ask);
+  ctx.fillStyle = bandFill;
+  ctx.fillRect(geo.plotX0, Math.min(yBid, yAsk), plotW, Math.abs(yBid - yAsk));
 
-      ctx.strokeStyle = "rgba(34,48,68,0.45)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(geo.plotX0, y);
-      ctx.lineTo(geo.plotX1, y);
-      ctx.stroke();
+  const i0 = Math.floor(vwin.start);
+  const i1 = Math.ceil(vwin.end);
+  for (let i = i0; i <= i1; i++) {
+    if (i < 0 || i >= vwin.n) continue;
+    const b = vwin.all[i];
+    const x = geo.xOfPos(i);
+    const yO = geo.yOf(b.o);
+    const yH = geo.yOf(b.h);
+    const yL = geo.yOf(b.l);
+    const yC = geo.yOf(b.c);
+    const up = b.c >= b.o;
 
-      ctx.fillStyle = "rgba(159,176,195,0.95)";
-      ctx.fillText(price.toFixed(dec), 8, y);
+    ctx.save();
+    ctx.strokeStyle = up ? upStroke : downStroke;
+    ctx.fillStyle = up ? upFill : downFill;
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 8 + glow * 10;
+    ctx.shadowColor = up ? rgba(style.up, 0.30 + glow * 0.10) : rgba(style.down, 0.30 + glow * 0.10);
+
+    ctx.beginPath();
+    ctx.moveTo(x + geo.candleW / 2, yH);
+    ctx.lineTo(x + geo.candleW / 2, yL);
+    ctx.stroke();
+
+    const bodyTop = Math.min(yO, yC);
+    const bodyH = Math.max(2, Math.abs(yC - yO));
+    ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
+    ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
+    ctx.restore();
+  }
+
+  const allBars = getAllBarsForRender();
+  const ind = computeIndicators(allBars);
+
+  function drawLine(series, color, width = 2) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.shadowBlur = 5 + glow * 8;
+    ctx.shadowColor = color;
+    ctx.beginPath();
+    let started = false;
+    for (let i = i0; i <= i1; i++) {
+      if (i < 0 || i >= vwin.n) continue;
+      const val = series[i];
+      if (val == null) continue;
+      const x = geo.xCenterOfPos(i);
+      const y = geo.yOf(val);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else ctx.lineTo(x, y);
     }
+    if (started) ctx.stroke();
+    ctx.restore();
+  }
 
-    ctx.strokeStyle = "rgba(34,48,68,0.35)";
-    const every = Math.max(8, Math.round(vwin.vis/10));
-    for (let i=0; i<=vwin.vis; i+=every) {
-      const pos = vwin.start + i;
-      const x = geo.xCenterOfPos(pos);
-      ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
+  if (state.indicators.vwap) drawLine(ind.vwap, vwapStroke, 2.1);
+  if (state.indicators.ma) drawLine(ind.ma, maStroke, 2);
+
+  if (state.indicators.vol && geo.volPanelH > 0) {
+    const volGrad = ctx.createLinearGradient(0, geo.volY0, 0, geo.volY1);
+    volGrad.addColorStop(0, rgba(style.bgTop, 0.60));
+    volGrad.addColorStop(1, rgba(style.bgBottom, 0.80));
+    ctx.fillStyle = volGrad;
+    ctx.fillRect(geo.plotX0, geo.volY0, plotW, geo.volY1 - geo.volY0);
+
+    let maxV = 1;
+    for (let i = i0; i <= i1; i++) {
+      if (i < 0 || i >= vwin.n) continue;
+      maxV = Math.max(maxV, vwin.all[i].v || 1);
     }
-
-    const { bid, ask } = getBidAsk();
-    const yBid = geo.yOf(bid), yAsk = geo.yOf(ask);
-    ctx.fillStyle = "rgba(159,176,195,0.08)";
-    ctx.fillRect(geo.plotX0, Math.min(yBid,yAsk), geo.plotX1-geo.plotX0, Math.abs(yBid-yAsk));
-
-    const i0 = Math.floor(vwin.start);
-    const i1 = Math.ceil(vwin.end);
 
     for (let i = i0; i <= i1; i++) {
       if (i < 0 || i >= vwin.n) continue;
       const b = vwin.all[i];
-
-      const x = geo.xOfPos(i);
-      const yO = geo.yOf(b.o), yH = geo.yOf(b.h), yL = geo.yOf(b.l), yC = geo.yOf(b.c);
       const up = b.c >= b.o;
-
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(x + geo.candleW/2, yH);
-      ctx.lineTo(x + geo.candleW/2, yL);
-      ctx.stroke();
-
-      const bodyTop = Math.min(yO, yC);
-      const bodyH = Math.max(2, Math.abs(yC - yO));
-      ctx.fillStyle = up ? "rgba(61,220,151,0.30)" : "rgba(255,91,110,0.28)";
-      ctx.strokeStyle = up ? "rgba(61,220,151,0.95)" : "rgba(255,91,110,0.95)";
-      ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
-      ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
+      const x = geo.xOfPos(i);
+      const vh = ((b.v || 1) / maxV) * (geo.volY1 - geo.volY0 - 6);
+      const y = geo.volY1 - vh;
+      ctx.fillStyle = up ? rgba(style.up, 0.20 + glow * 0.04) : rgba(style.down, 0.20 + glow * 0.04);
+      ctx.fillRect(x, y, geo.candleW, vh);
     }
 
-    const allBars = getAllBarsForRender();
-    const ind = computeIndicators(allBars);
+    ctx.strokeStyle = axisSoft;
+    ctx.beginPath();
+    ctx.moveTo(geo.plotX0, geo.volY0 + 0.5);
+    ctx.lineTo(geo.plotX1, geo.volY0 + 0.5);
+    ctx.stroke();
+  }
 
-    function drawLine(series, color) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      let started = false;
-      for (let i = i0; i <= i1; i++) {
-        if (i < 0 || i >= vwin.n) continue;
-        const val = series[i];
-        if (val == null) continue;
-        const x = geo.xCenterOfPos(i);
-        const y = geo.yOf(val);
-        if (!started) { ctx.moveTo(x,y); started = true; }
-        else ctx.lineTo(x,y);
-      }
-      if (started) ctx.stroke();
-    }
-
-    if (state.indicators.vwap) drawLine(ind.vwap, "rgba(255,207,91,0.85)");
-    if (state.indicators.ma)   drawLine(ind.ma,   "rgba(100,181,255,0.85)");
-
-    if (state.indicators.vol && geo.volPanelH > 0) {
-      ctx.fillStyle = "rgba(5,8,12,0.35)";
-      ctx.fillRect(geo.plotX0, geo.volY0, geo.plotX1-geo.plotX0, geo.volY1-geo.volY0);
-
-      let maxV = 1;
-      for (let i = i0; i <= i1; i++) {
-        if (i < 0 || i >= vwin.n) continue;
-        maxV = Math.max(maxV, vwin.all[i].v || 1);
-      }
-
-      for (let i = i0; i <= i1; i++) {
-        if (i < 0 || i >= vwin.n) continue;
-        const b = vwin.all[i];
-        const up = b.c >= b.o;
-        const x = geo.xOfPos(i);
-        const vh = ((b.v || 1) / maxV) * (geo.volY1 - geo.volY0 - 6);
-        const y = geo.volY1 - vh;
-        ctx.fillStyle = up ? "rgba(61,220,151,0.22)" : "rgba(255,91,110,0.20)";
-        ctx.fillRect(x, y, geo.candleW, vh);
-      }
-
-      ctx.strokeStyle = "rgba(34,48,68,0.6)";
-      ctx.beginPath();
-      ctx.moveTo(geo.plotX0, geo.volY0 + 0.5);
-      ctx.lineTo(geo.plotX1, geo.volY0 + 0.5);
-      ctx.stroke();
-    }
-
+  if (state.view.showOwnLimits) {
     for (const o of state.limits) {
       const y = geo.yOf(o.price);
-      ctx.strokeStyle = o.side === "buy" ? "rgba(61,220,151,0.65)" : "rgba(255,91,110,0.65)";
+      const sideColor = o.side === "buy" ? style.up : style.down;
+      ctx.save();
+      ctx.strokeStyle = rgba(sideColor, 0.75);
       ctx.lineWidth = 1.5;
+      ctx.shadowBlur = 4 + glow * 4;
+      ctx.shadowColor = rgba(sideColor, 0.28);
       ctx.beginPath();
       ctx.moveTo(geo.plotX0, y);
       ctx.lineTo(geo.plotX1, y);
       ctx.stroke();
-
-      ctx.fillStyle = o.side === "buy" ? "rgba(61,220,151,0.9)" : "rgba(255,91,110,0.9)";
+      ctx.restore();
+      ctx.fillStyle = rgba(sideColor, 0.95);
       ctx.fillText(`${o.side.toUpperCase()} ${o.price.toFixed(dec)} (${o.left})`, geo.plotX0 + 10, y - 10);
     }
+  }
 
-    if (state.brackets.armed) {
-      if (state.brackets.tp != null) {
-        const y = geo.yOf(state.brackets.tp);
-        ctx.strokeStyle = "rgba(61,220,151,0.90)";
-        ctx.setLineDash([8,4]);
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(189,248,222,0.98)";
-        ctx.fillText(`TP ${state.brackets.tp.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
-      }
-      if (state.brackets.sl != null) {
-        const y = geo.yOf(state.brackets.sl);
-        ctx.strokeStyle = "rgba(255,91,110,0.90)";
-        ctx.setLineDash([8,4]);
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(255,208,215,0.98)";
-        ctx.fillText(`SL ${state.brackets.sl.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
-      }
-    }
-
-    for (const t of state.exitTargets) {
-      const y = geo.yOf(t.price);
-      ctx.strokeStyle = "rgba(180,160,255,0.95)";
-      ctx.setLineDash([5,5]);
-      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
+  if (state.brackets.armed) {
+    if (state.brackets.tp != null) {
+      const y = geo.yOf(state.brackets.tp);
+      ctx.strokeStyle = rgba(style.up, 0.92);
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(220,210,255,0.98)";
-      ctx.fillText(`EXIT ${t.mode.toUpperCase()} ${t.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
+      ctx.fillStyle = rgba(style.up, 0.96);
+      ctx.fillText(`TP ${state.brackets.tp.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
     }
-
-    if (state.sweep.event) {
-      const ev = state.sweep.event;
-
-      if (Number.isFinite(ev.level)) {
-        const yLevel = geo.yOf(ev.level);
-        ctx.strokeStyle = ev.dir === "up" ? "rgba(255,207,91,0.95)" : "rgba(255,140,140,0.95)";
-        ctx.setLineDash([8,4]);
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, yLevel); ctx.lineTo(geo.plotX1, yLevel); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = ev.dir === "up" ? "rgba(255,232,178,0.98)" : "rgba(255,208,215,0.98)";
-        ctx.fillText(`${ev.source === "manual" ? "MANUAL" : "AUTO"} SWEEP LVL ${ev.level.toFixed(dec)}`, geo.plotX0 + 10, yLevel - 10);
-      }
-
-      if (Number.isFinite(ev.target1)) {
-        const yT1 = geo.yOf(ev.target1);
-        ctx.strokeStyle = ev.dir === "up" ? "rgba(61,220,151,0.85)" : "rgba(255,91,110,0.85)";
-        ctx.setLineDash([3,4]);
-        ctx.beginPath(); ctx.moveTo(geo.plotX0 + 70, yT1); ctx.lineTo(geo.plotX1, yT1); ctx.stroke();
-        ctx.setLineDash([]);
-      }
+    if (state.brackets.sl != null) {
+      const y = geo.yOf(state.brackets.sl);
+      ctx.strokeStyle = rgba(style.down, 0.92);
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = rgba(style.down, 0.96);
+      ctx.fillText(`SL ${state.brackets.sl.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
     }
+  }
 
-    for (const d of state.drawings) {
-      if (d.type === "hline") {
-        const y = geo.yOf(d.p);
-        ctx.strokeStyle = "rgba(255,207,91,0.70)";
-        ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-      }
-      if (d.type === "trend") {
-        const p1 = posForIdx(d.x1, vwin.all);
-        const p2 = posForIdx(d.x2, vwin.all);
-        const x1 = geo.xCenterOfPos(p1), y1 = geo.yOf(d.y1);
-        const x2 = geo.xCenterOfPos(p2), y2 = geo.yOf(d.y2);
-        ctx.strokeStyle = "rgba(100,181,255,0.85)";
-        ctx.lineWidth = 2.0;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      }
-      if (d.type === "rect") {
-        const p1 = posForIdx(d.x1, vwin.all);
-        const p2 = posForIdx(d.x2, vwin.all);
-        const x1 = geo.xOfPos(p1), x2 = geo.xOfPos(p2);
-        const y1 = geo.yOf(d.y1), y2 = geo.yOf(d.y2);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
-        ctx.fillStyle = "rgba(100,181,255,0.10)";
-        ctx.strokeStyle = "rgba(100,181,255,0.70)";
-        ctx.lineWidth = 1.8;
-        ctx.fillRect(l,t,r-l,b-t);
-        ctx.strokeRect(l,t,r-l,b-t);
-      }
+  for (const t of state.exitTargets) {
+    const y = geo.yOf(t.price);
+    ctx.strokeStyle = rgba(style.accent, 0.96);
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(geo.plotX0, y);
+    ctx.lineTo(geo.plotX1, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = rgba(style.accent, 0.98);
+    ctx.fillText(`EXIT ${t.mode.toUpperCase()} ${t.price.toFixed(dec)}`, geo.plotX0 + 10, y - 10);
+  }
+
+  if (state.sweep.event) {
+    const ev = state.sweep.event;
+    if (Number.isFinite(ev.level)) {
+      const yLevel = geo.yOf(ev.level);
+      ctx.strokeStyle = ev.dir === "up" ? rgba(style.vwap, 0.96) : rgba(style.down, 0.88);
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, yLevel);
+      ctx.lineTo(geo.plotX1, yLevel);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = ev.dir === "up" ? rgba(style.vwap, 0.98) : rgba(style.down, 0.96);
+      ctx.fillText(`${ev.source === "manual" ? "MANUAL" : "AUTO"} SWEEP LVL ${ev.level.toFixed(dec)}`, geo.plotX0 + 10, yLevel - 10);
     }
+    if (Number.isFinite(ev.target1)) {
+      const yT1 = geo.yOf(ev.target1);
+      ctx.strokeStyle = ev.dir === "up" ? rgba(style.up, 0.86) : rgba(style.down, 0.86);
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0 + 70, yT1);
+      ctx.lineTo(geo.plotX1, yT1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
 
-    if (state.pending && state.cross.idx != null && state.cross.price != null) {
-      const p = state.pending;
+  for (const d of state.drawings) {
+    if (d.type === "hline") {
+      const y = geo.yOf(d.p);
+      ctx.strokeStyle = rgba(style.vwap, 0.72);
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(geo.plotX0, y);
+      ctx.lineTo(geo.plotX1, y);
+      ctx.stroke();
+    }
+    if (d.type === "trend") {
+      const p1 = posForIdx(d.x1, vwin.all);
+      const p2 = posForIdx(d.x2, vwin.all);
+      const x1 = geo.xCenterOfPos(p1);
+      const y1 = geo.yOf(d.y1);
+      const x2 = geo.xCenterOfPos(p2);
+      const y2 = geo.yOf(d.y2);
       ctx.save();
-      ctx.globalAlpha = 0.9;
-
-      if (p.type === "trend") {
-        const p1 = posForIdx(p.x1, vwin.all);
-        const p2 = posForIdx(state.cross.idx, vwin.all);
-        const x1 = geo.xCenterOfPos(p1), y1 = geo.yOf(p.y1);
-        const x2 = geo.xCenterOfPos(p2), y2 = geo.yOf(state.cross.price);
-        ctx.strokeStyle = "rgba(100,181,255,0.65)";
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      }
-
-      if (p.type === "rect") {
-        const p1 = posForIdx(p.x1, vwin.all);
-        const p2 = posForIdx(state.cross.idx, vwin.all);
-        const x1 = geo.xOfPos(p1), y1 = geo.yOf(p.y1);
-        const x2 = geo.xOfPos(p2), y2 = geo.yOf(state.cross.price);
-        const l = Math.min(x1,x2), r = Math.max(x1,x2);
-        const t = Math.min(y1,y2), b = Math.max(y1,y2);
-        ctx.fillStyle = "rgba(100,181,255,0.08)";
-        ctx.strokeStyle = "rgba(100,181,255,0.55)";
-        ctx.lineWidth = 1.5;
-        ctx.fillRect(l,t,r-l,b-t);
-        ctx.strokeRect(l,t,r-l,b-t);
-      }
-
+      ctx.strokeStyle = rgba(style.ma, 0.90);
+      ctx.shadowBlur = 5 + glow * 5;
+      ctx.shadowColor = rgba(style.ma, 0.24);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
       ctx.restore();
     }
+    if (d.type === "rect") {
+      const p1 = posForIdx(d.x1, vwin.all);
+      const p2 = posForIdx(d.x2, vwin.all);
+      const x1 = geo.xOfPos(p1);
+      const x2 = geo.xOfPos(p2);
+      const y1 = geo.yOf(d.y1);
+      const y2 = geo.yOf(d.y2);
+      const l = Math.min(x1, x2);
+      const r = Math.max(x1, x2);
+      const t = Math.min(y1, y2);
+      const b = Math.max(y1, y2);
+      ctx.fillStyle = rgba(style.ma, 0.10 + glow * 0.03);
+      ctx.strokeStyle = rgba(style.ma, 0.72);
+      ctx.lineWidth = 1.8;
+      ctx.fillRect(l, t, r - l, b - t);
+      ctx.strokeRect(l, t, r - l, b - t);
+    }
+  }
 
-    const yLast = geo.yOf(state.sim.price);
-    ctx.fillStyle = "rgba(100,181,255,0.20)";
-    ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
-    ctx.strokeStyle = "rgba(100,181,255,0.70)";
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad-1, 23);
-    ctx.fillStyle = "rgba(211,236,255,0.98)";
-    ctx.fillText(state.sim.price.toFixed(dec), 8, yLast);
+  if (state.pending && state.cross.idx != null && state.cross.price != null) {
+    const p = state.pending;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
 
-    if (state.cross.on && state.cross.price != null) {
-      const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
-      const y = clamp(state.cross.y, geo.priceY0, geo.priceY1);
-
-      ctx.strokeStyle = "rgba(159,176,195,0.55)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(geo.plotX0, y); ctx.lineTo(geo.plotX1, y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x, geo.priceY0); ctx.lineTo(x, geo.priceY1); ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = "rgba(159,176,195,0.14)";
-      ctx.fillRect(0, y - 12, geo.leftPad, 24);
-      ctx.strokeStyle = "rgba(159,176,195,0.55)";
-      ctx.strokeRect(0.5, y - 11.5, geo.leftPad-1, 23);
-      ctx.fillStyle = "rgba(231,238,247,0.98)";
-      ctx.fillText(state.cross.price.toFixed(dec), 8, y);
+    if (p.type === "trend") {
+      const p1 = posForIdx(p.x1, vwin.all);
+      const p2 = posForIdx(state.cross.idx, vwin.all);
+      const x1 = geo.xCenterOfPos(p1);
+      const y1 = geo.yOf(p.y1);
+      const x2 = geo.xCenterOfPos(p2);
+      const y2 = geo.yOf(state.cross.price);
+      ctx.strokeStyle = rgba(style.ma, 0.68);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
     }
 
-    $("stWin").textContent =
-      `${state.view.follow ? "FOLLOW" : "FREE"} | start ${vwin.start.toFixed(2)} → end ${vwin.end.toFixed(2)} | vis ${vwin.vis}`;
+    if (p.type === "rect") {
+      const p1 = posForIdx(p.x1, vwin.all);
+      const p2 = posForIdx(state.cross.idx, vwin.all);
+      const x1 = geo.xOfPos(p1);
+      const y1 = geo.yOf(p.y1);
+      const x2 = geo.xOfPos(p2);
+      const y2 = geo.yOf(state.cross.price);
+      const l = Math.min(x1, x2);
+      const r = Math.max(x1, x2);
+      const t = Math.min(y1, y2);
+      const b = Math.max(y1, y2);
+      ctx.fillStyle = rgba(style.ma, 0.08);
+      ctx.strokeStyle = rgba(style.ma, 0.58);
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(l, t, r - l, b - t);
+      ctx.strokeRect(l, t, r - l, b - t);
+    }
+    ctx.restore();
   }
+
+  const yLast = geo.yOf(state.sim.price);
+  ctx.fillStyle = rgba(style.accent, 0.22 + glow * 0.04);
+  ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
+  ctx.strokeStyle = rgba(style.accent, 0.78);
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad - 1, 23);
+  ctx.fillStyle = axisText;
+  ctx.fillText(state.sim.price.toFixed(dec), 8, yLast);
+
+  if (state.cross.on && state.cross.price != null) {
+    const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
+    const y = clamp(state.cross.y, geo.priceY0, geo.priceY1);
+    ctx.strokeStyle = rgba(style.accent, 0.52);
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(geo.plotX0, y);
+    ctx.lineTo(geo.plotX1, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, geo.priceY0);
+    ctx.lineTo(x, geo.priceY1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = rgba(style.accent, 0.14);
+    ctx.fillRect(0, y - 12, geo.leftPad, 24);
+    ctx.strokeStyle = rgba(style.accent, 0.58);
+    ctx.strokeRect(0.5, y - 11.5, geo.leftPad - 1, 23);
+    ctx.fillStyle = "rgba(235,241,248,0.98)";
+    ctx.fillText(state.cross.price.toFixed(dec), 8, y);
+  }
+
+  $("stWin").textContent = `${state.view.follow ? "FOLLOW" : "FREE"} | ${vwin.start.toFixed(2)} -> ${vwin.end.toFixed(2)} | vis ${vwin.vis}`;
+}
 
   function renderStats() {
     const { bid, ask } = getBidAsk();
@@ -2937,6 +4107,7 @@
     $("hdrBias").textContent = getBiasLabel();
     $("hdrRegime").textContent = getRegimeLabel();
     $("hdrDelta").textContent = getDeltaLabel();
+    $("hdrMotion").textContent = getMotionProfile().name;
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
@@ -2946,52 +4117,73 @@
     $("stDelta").textContent = getDeltaLabel();
     $("stAbsorb").textContent = state.orderFlow.absorption.toFixed(2);
     $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
+    const autoStates = [];
+    if (state.drip.on) autoStates.push(`Drip ${state.drip.side.toUpperCase()} ${getDripModeLabel(state.drip.mode)}`);
+    if (state.lp.on) autoStates.push(`LP ${state.lp.levels}x${state.lp.qtyEach}`);
+    $("stDrip").textContent = autoStates.length ? autoStates.join(" | ") : "Off";
 
-    renderMacroPanel();
     if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
   }
 
   function getQty() {
-    const q = Number($("qty").value || 1);
-    return Math.max(1, Math.floor(q));
+    return Math.max(1, Math.floor(Number($("qty").value || 1)));
   }
+
   function setQty(v) {
     $("qty").value = String(Math.max(1, Math.floor(v)));
   }
+
   function getSlip() {
-    const s = Number($("slip").value || 0);
-    return Math.max(0, Math.floor(s));
+    return Math.max(0, Math.floor(Number($("slip").value || 0)));
   }
 
   function applySettingsFromUI() {
     state.tickSize = Number($("tick").value) || 0.25;
     state.spreadTicks = Math.max(0, Number($("spread").value || 1));
-
     state.view.visibleBars = clamp(Number($("visibleBars").value || 160), 20, 700);
-    state.view.futureBars  = clamp(Number($("futureBars").value || 40), 0, 300);
-
+    state.view.futureBars = clamp(Number($("futureBars").value || 40), 0, 300);
     state.view.follow = $("follow").checked;
+    state.view.showOwnLimits = $("showOwnLimits").checked;
     state.y.auto = $("autoY").checked;
 
     state.target.simHzBase = clamp(Number($("simHzBase").value || 75), 20, 200);
-    state.target.impact    = clamp(Number($("impact").value || 8), 0, 20);
+    state.target.impact = clamp(Number($("impact").value || 8), 0, 20);
+    state.target.vol = clamp(Number($("volValue").value || state.target.vol), 1, 16);
 
-    const volManual = clamp(Number($("volValue").value || state.target.vol), 1, 16);
-    state.target.vol = volManual;
-
-    state.indicators.vol  = $("indVol").checked;
+    state.indicators.vol = $("indVol").checked;
     state.indicators.vwap = $("indVwap").checked;
-    state.indicators.ma   = $("indMa").checked;
+    state.indicators.ma = $("indMa").checked;
 
     state.tool = $("tool").value;
-
     state.bias.mode = $("biasMode").value;
     state.bias.strength = clamp(Number($("biasStrength").value || 0), 0, 10);
-
     state.orderFlowProfileKey = $("orderFlowProfile").value || state.orderFlowProfileKey || "realistic";
     state.flowIntensity = clamp(Number($("flowIntensity").value || 0.9), 0.5, 2.0);
+    state.lp.qtyEach = Math.max(1, Math.floor(Number($("lpQty").value || state.lp.qtyEach || 1)));
+    state.lp.levels = clamp(Math.floor(Number($("lpLevels").value || state.lp.levels || 1)), 1, 8);
+    state.lp.refreshSec = clamp(Number($("lpRefreshSec").value || state.lp.refreshSec || 1.2), 0.2, 999);
+    state.lp.offsetTicks = Math.max(1, Math.floor(Number($("lpOffsetTicks").value || state.lp.offsetTicks || 1)));
+    state.lp.stepTicks = Math.max(1, Math.floor(Number($("lpStepTicks").value || state.lp.stepTicks || 1)));
 
-    syncMacroFromUI();
+    state.style = {
+      preset: $("stylePreset").value || "custom",
+      up: $("styleUp").value || "#39d48d",
+      down: $("styleDown").value || "#ff697e",
+      accent: $("styleAccent").value || "#6ab5ff",
+      vwap: $("styleVwap").value || "#ffcf5b",
+      ma: $("styleMa").value || "#6ab5ff",
+      bgTop: $("styleBgTop").value || "#07111d",
+      bgBottom: $("styleBgBottom").value || "#0d1826",
+      glow: clamp(Number($("styleGlow").value || 0.7), 0, 1.8),
+      gridAlpha: clamp(Number($("styleGridAlpha").value || 0.38), 0.05, 1.2),
+      vignette: clamp(Number($("styleVignette").value || 0.46), 0, 1),
+      cinematic: $("styleCinematic").checked,
+      spotlight: $("styleSpotlight").checked
+    };
+
+    syncToolUi();
+    updateLpUI();
+    syncChartStyleUi();
   }
 
   function smoothParams() {
@@ -3007,27 +4199,21 @@
     const volKnob = clamp(state.p.vol, 1, 16);
     const impact = clamp(state.p.impact, 0, 20);
     const macro = getMacroComposite();
-
-    const biasDir =
-      state.bias.mode === "bullish" ? 1 :
-      state.bias.mode === "bearish" ? -1 : 0;
-
+    const biasDir = state.bias.mode === "bullish" ? 1 : state.bias.mode === "bearish" ? -1 : 0;
     const biasStrength = clamp(state.bias.strength, 0, 10);
     const motion = getMotionProfile();
 
     state.sim.flow *= state.sim.flowDecay;
-
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
     decayMacroShock(dt);
     const shock = getMacroShock();
-
     const flowCore = updateOrderFlowCore(volKnob);
+    const depthInfluence = computeDepthInfluence(7);
 
     if (state.simTime >= state.sim.nextRegimeT) {
       const randomDrift = randn() * (0.07 + 0.022 * (volKnob / 10));
       const biasDrift = biasDir * biasStrength * (0.016 + 0.0045 * volKnob);
-
       const macroDrift = macro.bias * (0.018 + 0.003 * volKnob);
       const shockDrift = shock.dir * shock.live * (0.016 + 0.002 * volKnob);
       state.sim.driftTarget = randomDrift + biasDrift + macroDrift + shockDrift;
@@ -3048,20 +4234,22 @@
 
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
-
     state.sim.flow += (macro.flowBias * 0.016 + shock.dir * shock.live * 0.030) * state.flowIntensity;
 
-    dp += (state.sim.flow) * (impact * state.tickSize * 0.011 * motion.flowMul);
+    dp += state.sim.flow * (impact * state.tickSize * 0.011 * motion.flowMul);
     dp += flowCore.impulse * 0.58;
     dp += macro.bias * state.tickSize * 0.018 * motion.flowMul;
     dp += shock.dir * shock.live * state.tickSize * (0.12 + 0.010 * volKnob);
+    dp += depthInfluence.imbalance * state.tickSize * (0.075 + 0.003 * impact);
+
+    if (dp > 0) dp *= 1 - Math.min(0.58, depthInfluence.askBrake * 0.44);
+    else if (dp < 0) dp *= 1 - Math.min(0.58, depthInfluence.bidBrake * 0.44);
 
     maybeStartSweepEvent(volKnob);
     dp = applySweepEvent(dp);
     dp = applyPostLiquidityImpulse(dp);
 
     state.sim.vel = state.sim.vel * 0.66 + dp * 0.80;
-
     const jp = state.sim.jumpProb * motion.jumpProbMul * (0.34 + 0.028 * volKnob);
     if (Math.random() < jp) {
       const dir = Math.sign(randn()) || 1;
@@ -3086,7 +4274,7 @@
       Math.floor(Math.abs(state.sim.flow) * 0.16);
 
     state.tickCount++;
-    state.ticks.push({ t: state.simTime, p: state.sim.price, v: tickVol });
+    state.ticks.push({ t:state.simTime, p:state.sim.price, v:tickVol });
 
     if (Number.isFinite(state.maxTicks) && state.ticks.length > state.maxTicks) {
       state.ticks.splice(0, 35000);
@@ -3096,6 +4284,7 @@
 
     ensureBarForTick(state.simTime, state.sim.price, tickVol);
     updateDripEngine(prevPrice, state.sim.price);
+    refreshLiquidityProvider();
     matchLimits();
     checkBrackets();
     checkExitTargets();
@@ -3125,43 +4314,38 @@
     const autoRange = computeAutoPriceRange(vwin);
     const viewRange = computeViewPriceRange(autoRange);
     const geo = buildGeo(vwin, viewRange);
-
     const pt = canvasPointFromClient(e);
-    const xFrac = clamp((pt.x - geo.plotX0) / Math.max(10, geo.plotX1-geo.plotX0), 0, 1);
-
-    const dir = (e.deltaY > 0) ? +1 : -1;
+    const xFrac = clamp((pt.x - geo.plotX0) / Math.max(10, geo.plotX1 - geo.plotX0), 0, 1);
+    const dir = e.deltaY > 0 ? 1 : -1;
 
     if (e.shiftKey) {
       const anchorPrice = priceFromY(pt.y, viewRange, geo);
-      const factor = (dir < 0) ? 0.88 : 1.14;
-
-      if (state.y.auto) { state.y.auto = false; $("autoY").checked = false; }
+      const factor = dir < 0 ? 0.88 : 1.14;
+      if (state.y.auto) {
+        state.y.auto = false;
+        $("autoY").checked = false;
+      }
 
       const oldScale = state.y.scale;
-      const newScale = clamp(oldScale * factor, 0.20, 12.0);
-
+      const newScale = clamp(oldScale * factor, 0.20, 12);
       const cAuto = (autoRange.min + autoRange.max) / 2;
       const c0 = cAuto + state.y.offset;
       const half0 = ((autoRange.max - autoRange.min) / 2) * oldScale;
-
-      const t = (anchorPrice - (c0 - half0)) / (2*half0);
+      const t = (anchorPrice - (c0 - half0)) / (2 * half0);
       const half1 = ((autoRange.max - autoRange.min) / 2) * newScale;
-
-      const min1 = anchorPrice - t * (2*half1);
+      const min1 = anchorPrice - t * (2 * half1);
       const c1 = min1 + half1;
-
       state.y.scale = newScale;
       state.y.offset = c1 - cAuto;
       return;
     }
 
-    const factor = (dir < 0) ? 0.85 : 1.18;
+    const factor = dir < 0 ? 0.85 : 1.18;
     const oldVis = state.view.visibleBars;
     const newVis = clamp(Math.round(oldVis * factor), 20, 700);
     if (newVis === oldVis) return;
 
     disableFollowKeepEnd();
-
     const anchorPos = vwin.start + xFrac * (vwin.vis - 1);
     state.view.visibleBars = newVis;
     $("visibleBars").value = String(newVis);
@@ -3170,7 +4354,6 @@
     const all = getAllBarsForRender();
     const last = Math.max(0, all.length - 1);
     const maxEnd = last + state.view.futureBars;
-
     state.view.end = clamp(endTarget, Math.max(0, newVis - 1), maxEnd);
     state.cross.on = true;
   }, { passive:false });
@@ -3181,71 +4364,68 @@
 
   canvas.addEventListener("pointerdown", (e) => {
     canvas.setPointerCapture(e.pointerId);
-    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
+    state.pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
     applySettingsFromUI();
 
     tapCandidate = {
-      id: e.pointerId,
-      x: e.clientX, y: e.clientY,
-      t: performance.now(),
-      ctrl: e.ctrlKey,
-      alt: e.altKey,
-      shift: e.shiftKey,
-      button: e.button
+      id:e.pointerId,
+      x:e.clientX,
+      y:e.clientY,
+      t:performance.now(),
+      ctrl:e.ctrlKey,
+      alt:e.altKey,
+      shift:e.shiftKey,
+      button:e.button
     };
 
     if (state.pointers.size === 1) {
       disableFollowKeepEnd();
       canvas.style.cursor = "grabbing";
-
       const vwin = getViewWindow();
       const autoRange = computeAutoPriceRange(vwin);
       const pr = computeViewPriceRange(autoRange);
       const geo = buildGeo(vwin, pr);
-
       state.cross.on = true;
 
       if (e.shiftKey) {
-        if (state.y.auto) { state.y.auto = false; $("autoY").checked = false; }
-        state.yDragStart = { y: e.clientY, offset: state.y.offset, pricePerPx: geo.pricePerPx };
+        if (state.y.auto) {
+          state.y.auto = false;
+          $("autoY").checked = false;
+        }
+        state.yDragStart = { y:e.clientY, offset:state.y.offset, pricePerPx:geo.pricePerPx };
         state.dragStart = null;
       } else {
-        state.dragStart = { x: e.clientX, end: state.view.follow ? vwin.end : state.view.end, stepPx: geo.stepPx };
+        state.dragStart = { x:e.clientX, end:state.view.follow ? vwin.end : state.view.end, stepPx:geo.stepPx };
         state.yDragStart = null;
       }
-
       state.gestureStart = null;
     }
 
     if (state.pointers.size === 2) {
       disableFollowKeepEnd();
-
       const pts = [...state.pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       const midX = (pts[0].x + pts[1].x) / 2;
       const midY = (pts[0].y + pts[1].y) / 2;
-
       const vwin = getViewWindow();
       const autoRange = computeAutoPriceRange(vwin);
       const pr = computeViewPriceRange(autoRange);
       const geo = buildGeo(vwin, pr);
-
-      const ptCss = canvasPointFromClient({ clientX: midX, clientY: midY });
-      const xFrac = clamp((ptCss.x - geo.plotX0) / Math.max(10, geo.plotX1-geo.plotX0), 0, 1);
+      const ptCss = canvasPointFromClient({ clientX:midX, clientY:midY });
+      const xFrac = clamp((ptCss.x - geo.plotX0) / Math.max(10, geo.plotX1 - geo.plotX0), 0, 1);
       const anchorPos = vwin.start + xFrac * (vwin.vis - 1);
 
       state.gestureStart = {
         dist,
-        midX, midY,
-        vis: state.view.visibleBars,
-        end: state.view.end,
+        midX,
+        midY,
+        vis:state.view.visibleBars,
+        end:state.view.end,
         anchorPos,
         xFrac,
-        yOffset: state.y.offset,
-        pricePerPx: geo.pricePerPx
+        yOffset:state.y.offset,
+        pricePerPx:geo.pricePerPx
       };
-
       state.dragStart = null;
       state.yDragStart = null;
       state.cross.on = false;
@@ -3254,8 +4434,7 @@
 
   canvas.addEventListener("pointermove", (e) => {
     if (!state.pointers.has(e.pointerId)) return;
-    state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
+    state.pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
     applySettingsFromUI();
 
     if (state.pointers.size === 2 && state.gestureStart) {
@@ -3263,14 +4442,12 @@
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       const midX = (pts[0].x + pts[1].x) / 2;
       const midY = (pts[0].y + pts[1].y) / 2;
-
       const ratio = dist / Math.max(1, state.gestureStart.dist);
       const newVis = clamp(Math.round(state.gestureStart.vis / ratio), 20, 700);
       state.view.visibleBars = newVis;
       $("visibleBars").value = String(newVis);
 
       const endTarget = state.gestureStart.anchorPos + (1 - state.gestureStart.xFrac) * (newVis - 1);
-
       const all = getAllBarsForRender();
       const last = Math.max(0, all.length - 1);
       const maxEnd = last + state.view.futureBars;
@@ -3278,10 +4455,12 @@
 
       const dy = midY - state.gestureStart.midY;
       if (Math.abs(dy) > 1.5) {
-        if (state.y.auto) { state.y.auto = false; $("autoY").checked = false; }
+        if (state.y.auto) {
+          state.y.auto = false;
+          $("autoY").checked = false;
+        }
         state.y.offset = state.gestureStart.yOffset + (-dy) * state.gestureStart.pricePerPx;
       }
-
       return;
     }
 
@@ -3294,12 +4473,9 @@
       const dx = e.clientX - state.dragStart.x;
       const barsDelta = dx / Math.max(2, state.dragStart.stepPx);
       const endTarget = state.dragStart.end - barsDelta;
-
       const vwin = getViewWindow();
-      const all = vwin.all;
-      const last = Math.max(0, all.length - 1);
+      const last = Math.max(0, vwin.all.length - 1);
       const maxEnd = last + state.view.futureBars;
-
       state.view.end = clamp(endTarget, Math.max(0, state.view.visibleBars - 1), maxEnd);
     }
 
@@ -3309,17 +4485,14 @@
       const autoRange = computeAutoPriceRange(vwin);
       const pr = computeViewPriceRange(autoRange);
       const geo = buildGeo(vwin, pr);
-
       const posF = geo.posOfX(pt.x);
       const pos = Math.round(posF);
       if (pos >= 0 && pos < vwin.n) {
-        const idx = vwin.all[pos].idx;
-        const price = priceFromY(pt.y, pr, geo);
         state.cross.x = pt.x;
         state.cross.y = pt.y;
         state.cross.pos = pos;
-        state.cross.idx = idx;
-        state.cross.price = price;
+        state.cross.idx = vwin.all[pos].idx;
+        state.cross.price = priceFromY(pt.y, pr, geo);
         state.cross.on = true;
       }
     }
@@ -3328,11 +4501,9 @@
   function handleTap(clientX, clientY, mods) {
     const vwin = getViewWindow();
     if (vwin.n < 2) return;
-
     const autoRange = computeAutoPriceRange(vwin);
     const pr = computeViewPriceRange(autoRange);
     const geo = buildGeo(vwin, pr);
-
     const pt = canvasPointFromClient({ clientX, clientY });
     if (pt.x < geo.plotX0 || pt.x > geo.plotX1 || pt.y < geo.priceY0 || pt.y > geo.priceY1) return;
 
@@ -3347,8 +4518,9 @@
       if (!ok) toast("No nearby limit to cancel");
       return;
     }
+
     if (mods && mods.ctrl) {
-      const side = (mods.button === 2) ? "sell" : "buy";
+      const side = mods.button === 2 ? "sell" : "buy";
       placeLimit(side, price, getQty());
       return;
     }
@@ -3359,20 +4531,28 @@
       state.pending = null;
       return;
     }
+
     if (state.tool === "hline") {
-      state.drawings.push({ type:"hline", p: price });
+      state.drawings.push({ type:"hline", p:price });
       state.pending = null;
       return;
     }
+
     if (state.tool === "trend") {
-      if (!state.pending) state.pending = { type:"trend", x1: idx, y1: price };
-      else { state.drawings.push({ type:"trend", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
+      if (!state.pending) state.pending = { type:"trend", x1:idx, y1:price };
+      else {
+        state.drawings.push({ type:"trend", x1:state.pending.x1, y1:state.pending.y1, x2:idx, y2:price });
+        state.pending = null;
+      }
       return;
     }
+
     if (state.tool === "rect") {
-      if (!state.pending) state.pending = { type:"rect", x1: idx, y1: price };
-      else { state.drawings.push({ type:"rect", x1: state.pending.x1, y1: state.pending.y1, x2: idx, y2: price }); state.pending = null; }
-      return;
+      if (!state.pending) state.pending = { type:"rect", x1:idx, y1:price };
+      else {
+        state.drawings.push({ type:"rect", x1:state.pending.x1, y1:state.pending.y1, x2:idx, y2:price });
+        state.pending = null;
+      }
     }
   }
 
@@ -3383,8 +4563,7 @@
       const dt = performance.now() - tapCandidate.t;
       const dx = Math.abs(e.clientX - tapCandidate.x);
       const dy = Math.abs(e.clientY - tapCandidate.y);
-      const isTap = (dt < 260 && dx < 8 && dy < 8);
-      if (isTap) handleTap(e.clientX, e.clientY, tapCandidate);
+      if (dt < 260 && dx < 8 && dy < 8) handleTap(e.clientX, e.clientY, tapCandidate);
       tapCandidate = null;
     }
 
@@ -3396,10 +4575,9 @@
       if (state.tool !== "cursor") state.cross.on = false;
     }
 
-    if (state.pointers.size === 1) {
-      state.gestureStart = null;
-    }
+    if (state.pointers.size === 1) state.gestureStart = null;
   }
+
   canvas.addEventListener("pointerup", pointerUpCommon);
   canvas.addEventListener("pointercancel", pointerUpCommon);
 
@@ -3407,7 +4585,10 @@
     e.preventDefault();
     state.y.auto = !state.y.auto;
     $("autoY").checked = state.y.auto;
-    if (state.y.auto) { state.y.scale = 1.0; state.y.offset = 0.0; }
+    if (state.y.auto) {
+      state.y.scale = 1;
+      state.y.offset = 0;
+    }
   });
 
   function buyMarket(){ marketOrder("buy", getQty(), getSlip()); }
@@ -3417,41 +4598,61 @@
   $("sellMkt").addEventListener("click", sellMarket);
   $("buyMktTop").addEventListener("click", buyMarket);
   $("sellMktTop").addEventListener("click", sellMarket);
+  $("resetView").addEventListener("click", resetView);
+  $("saveConfig").addEventListener("click", saveLayout);
+  $("loadConfig").addEventListener("click", loadLayout);
 
   $("followWrap").addEventListener("click", (e) => {
     if (e.target.tagName !== "INPUT") $("follow").checked = !$("follow").checked;
     state.view.follow = $("follow").checked;
-
     const all = getAllBarsForRender();
     const last = Math.max(0, all.length - 1);
     const maxEnd = last + state.view.futureBars;
-
-    if (state.view.follow) {
-      state.view.end = maxEnd;
-    } else {
-      state.view.end = clamp(state.view.end, Math.max(0, state.view.visibleBars - 1), maxEnd);
-    }
+    if (state.view.follow) state.view.end = maxEnd;
+    else state.view.end = clamp(state.view.end, Math.max(0, state.view.visibleBars - 1), maxEnd);
   });
 
   $("autoYWrap").addEventListener("click", (e) => {
     if (e.target.tagName !== "INPUT") $("autoY").checked = !$("autoY").checked;
     state.y.auto = $("autoY").checked;
-    if (state.y.auto) { state.y.scale = 1.0; state.y.offset = 0.0; }
+    if (state.y.auto) {
+      state.y.scale = 1;
+      state.y.offset = 0;
+    }
+  });
+
+  document.querySelectorAll(".toolBtn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setTool(btn.dataset.tool);
+    });
+  });
+
+  $("showOwnLimitsWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("showOwnLimits").checked = !$("showOwnLimits").checked;
+    state.view.showOwnLimits = $("showOwnLimits").checked;
   });
 
   $("tool").addEventListener("change", () => {
-    state.tool = $("tool").value;
-    state.pending = null;
-    if (state.tool === "cursor") state.cross.on = true;
+    setTool($("tool").value);
   });
 
-  $("undo").addEventListener("click", () => { if (state.pending) state.pending=null; else state.drawings.pop(); });
-  $("clearDraw").addEventListener("click", () => { state.pending=null; state.drawings=[]; });
+  $("undo").addEventListener("click", () => {
+    if (state.pending) state.pending = null;
+    else state.drawings.pop();
+  });
+
+  $("clearDraw").addEventListener("click", () => {
+    state.pending = null;
+    state.drawings = [];
+  });
 
   $("placeLimit").addEventListener("click", () => {
     const side = $("limitSide").value;
     const price = Number($("limitPrice").value || 0);
-    if (!Number.isFinite(price) || price <= 0) { toast("Enter a valid limit price"); return; }
+    if (!Number.isFinite(price) || price <= 0) {
+      toast("Enter a valid limit price");
+      return;
+    }
     placeLimit(side, price, getQty());
   });
 
@@ -3461,19 +4662,19 @@
     const step = Number($("ladderStep").value || state.tickSize);
     const qtyPer = Math.max(1, Math.floor(Number($("ladderQty").value || 1)));
     let start = Number($("ladderStart").value || 0);
-    if (!Number.isFinite(start) || start <= 0) { start = state.sim.price; $("ladderStart").value = start.toFixed(decimalsFor(state.tickSize)); }
+    if (!Number.isFinite(start) || start <= 0) {
+      start = state.sim.price;
+      $("ladderStart").value = start.toFixed(decimalsFor(state.tickSize));
+    }
     placeLadder(side, start, levels, step, qtyPer);
   });
 
   $("placeExitTarget").addEventListener("click", () => {
-    const price = Number($("exitPrice").value || 0);
-    const mode = $("exitMode").value;
-    const qty = Number($("exitQty").value || 1);
-    placeExitTarget(price, mode, qty);
+    placeExitTarget(Number($("exitPrice").value || 0), $("exitMode").value, Number($("exitQty").value || 1));
   });
+
   $("clearExitTargets").addEventListener("click", () => clearExitTargets());
   $("executeManualSweep").addEventListener("click", () => executeManualSweep($("manualSweepSide").value, $("manualSweepStrength").value));
-
   $("cancelAll").addEventListener("click", cancelAll);
   $("flatten").addEventListener("click", flatten);
   $("flatten50").addEventListener("click", () => partialFlatten(0.5));
@@ -3481,46 +4682,95 @@
 
   $("pause").addEventListener("click", () => {
     state.paused = !state.paused;
-    $("pause").textContent = state.paused ? "▶ Resume" : "⏸ Pause";
+    $("pause").textContent = state.paused ? "Resume" : "Pause";
     toast(state.paused ? "Paused" : "Running");
   });
 
   $("stepTick").addEventListener("click", () => {
-    if (!state.paused) { toast("Pause first to step"); return; }
+    if (!state.paused) {
+      toast("Pause first to step");
+      return;
+    }
     stepSimulationOnce();
   });
 
-  document.querySelectorAll(".speedBtn").forEach(btn => {
+  document.querySelectorAll(".speedBtn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const v = Number(btn.dataset.speed || "1");
       state.speedMul = clamp(v, 0.1, 50);
-      document.querySelectorAll(".speedBtn").forEach(b => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".speedBtn").forEach((b) => b.classList.toggle("active", b === btn));
       toast(`Speed: ${state.speedMul}x`);
     });
   });
 
-  $("volPreset").addEventListener("change", () => setVolPreset($("volPreset").value));
+$("volPreset").addEventListener("change", () => setVolPreset($("volPreset").value));
+$("timeframe").addEventListener("change", () => rebuildBars(Math.max(1, Number($("timeframe").value || 5))));
+$("dripMode").addEventListener("change", updateDripUI);
 
-  $("timeframe").addEventListener("change", () => {
-    const sec = Math.max(1, Number($("timeframe").value || 5));
-    rebuildBars(sec);
+$("applyStylePreset").addEventListener("click", () => {
+  const key = $("stylePreset").value;
+  if (key === "custom") {
+    toast("Pick an actual preset first");
+    return;
+  }
+  applyStylePresetToInputs(key);
+  applySettingsFromUI();
+  toast("Style preset applied");
+});
+
+$("resetStyle").addEventListener("click", () => {
+  applyStylePresetToInputs(DEFAULT_STYLE_PRESET_KEY);
+  applySettingsFromUI();
+  toast("Chart style reset");
+});
+
+$("stylePreset").addEventListener("change", () => {
+  const key = $("stylePreset").value;
+  if (key !== "custom") {
+    applyStylePresetToInputs(key);
+    applySettingsFromUI();
+    toast("Style updated");
+  } else {
+    applySettingsFromUI();
+  }
+});
+
+[
+  "styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleBgTop","styleBgBottom","styleCinematic","styleSpotlight"
+].forEach((id) => {
+  const el = $(id);
+  const evt = el.type === "checkbox" ? "change" : "input";
+  el.addEventListener(evt, () => {
+    if ($("stylePreset").value !== "custom") $("stylePreset").value = "custom";
+    applySettingsFromUI();
   });
+});
 
-  ["indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity","macroPreset","macroRates","macroInflation","macroGrowth","macroEarnings","macroRisk"].forEach(id => {
+$("styleCinematicWrap").addEventListener("click", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  $("styleCinematic").checked = !$("styleCinematic").checked;
+  if ($("stylePreset").value !== "custom") $("stylePreset").value = "custom";
+  applySettingsFromUI();
+});
+
+$("styleSpotlightWrap").addEventListener("click", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  $("styleSpotlight").checked = !$("styleSpotlight").checked;
+  if ($("stylePreset").value !== "custom") $("stylePreset").value = "custom";
+  applySettingsFromUI();
+});
+
+[
+  "indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity"
+].forEach((id) => {
     const el = $(id);
-    if (!el) return;
     el.addEventListener("change", () => {
-      if (id === "macroPreset" && $("macroPreset")) applyMacroPreset($("macroPreset").value, true);
       applySettingsFromUI();
       state.indCache.len = 0;
-      renderMacroPanel();
     });
   });
-  $("biasStrength").addEventListener("input", () => applySettingsFromUI());
 
-  document.querySelectorAll(".macroShock").forEach(btn => {
-    btn.addEventListener("click", () => triggerMacroShock(btn.dataset.shock));
-  });
+  $("biasStrength").addEventListener("input", () => applySettingsFromUI());
 
   function stopDrip(message = "Drip stopped") {
     state.drip.timer = null;
@@ -3530,6 +4780,7 @@
     updateDripUI();
     if (message) toast(message);
   }
+
   function startDrip() {
     stopDrip(null);
 
@@ -3538,19 +4789,17 @@
     const everySec = clamp(Number($("dripEvery").value || 2), 0.2, 999);
     const qtyEach = Math.max(1, Math.floor(Number($("dripQty").value || 1)));
     const touchTicks = Math.max(1, Math.floor(Number($("dripTouchTicks").value || 2)));
-    const zoneFrom = Number($("dripZoneFrom") ? $("dripZoneFrom").value : 0);
-    const zoneTo = Number($("dripZoneTo") ? $("dripZoneTo").value : 0);
+    const zoneFrom = Number($("dripZoneFrom").value || 0);
+    const zoneTo = Number($("dripZoneTo").value || 0);
 
     if (mode === "zone" && (!Number.isFinite(zoneFrom) || !Number.isFinite(zoneTo) || zoneFrom === zoneTo)) {
       toast("Enter a valid drip zone");
       return;
     }
-
     if (mode === "touch_vwap" && !Number.isFinite(getLiveIndicatorValue("vwap"))) {
       toast("VWAP not ready yet");
       return;
     }
-
     if (mode === "touch_ma" && !Number.isFinite(getLiveIndicatorValue("ma"))) {
       toast("20m SMA not ready yet");
       return;
@@ -3564,9 +4813,8 @@
     state.drip.touchTicks = touchTicks;
     state.drip.zoneFrom = zoneFrom;
     state.drip.zoneTo = zoneTo;
-    state.drip.entered = mode === "instant" ? true : false;
+    state.drip.entered = mode === "instant";
     state.drip.lastExecAt = state.simTime - everySec;
-
     updateDripUI();
 
     if (mode === "instant") toast(`Drip ${side.toUpperCase()} every ${everySec}s`);
@@ -3577,8 +4825,13 @@
     if (state.drip.on) stopDrip();
     else startDrip();
   });
+
   $("dripStop").addEventListener("click", stopDrip);
-  if ($("dripMode")) $("dripMode").addEventListener("change", updateDripUI);
+  $("lpToggle").addEventListener("click", () => {
+    if (state.lp.on) stopLiquidityProvider();
+    else startLiquidityProvider();
+  });
+  $("lpStop").addEventListener("click", () => stopLiquidityProvider());
 
   $("reset").addEventListener("click", () => {
     if (!state.started) {
@@ -3595,9 +4848,17 @@
     if (typing) return;
 
     const k = e.key.toLowerCase();
-
-    if (k === "?") { e.preventDefault(); $("helpOverlay").classList.toggle("open"); return; }
-    if (e.ctrlKey && k === "z") { e.preventDefault(); if (state.pending) state.pending=null; else state.drawings.pop(); return; }
+    if (k === "?") {
+      e.preventDefault();
+      $("helpOverlay").classList.toggle("open");
+      return;
+    }
+    if (e.ctrlKey && k === "z") {
+      e.preventDefault();
+      if (state.pending) state.pending = null;
+      else state.drawings.pop();
+      return;
+    }
 
     if (k === "b") { buyMarket(); return; }
     if (k === "s") { sellMarket(); return; }
@@ -3615,43 +4876,58 @@
     if (k === "x") { flatten(); return; }
     if (k === "+") { setQty(getQty() + 1); return; }
     if (k === "-") { setQty(getQty() - 1); return; }
-
-    if (k === "1") { $("tool").value="cursor"; $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "2") { $("tool").value="trend";  $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "3") { $("tool").value="rect";   $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "4") { $("tool").value="hline";  $("tool").dispatchEvent(new Event("change")); return; }
-    if (k === "5") { $("tool").value="erase";  $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "1") { $("tool").value = "cursor"; $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "2") { $("tool").value = "trend"; $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "3") { $("tool").value = "rect"; $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "4") { $("tool").value = "hline"; $("tool").dispatchEvent(new Event("change")); return; }
+    if (k === "5") { $("tool").value = "erase"; $("tool").dispatchEvent(new Event("change")); }
   });
 
   const helpOverlay = $("helpOverlay");
   $("openHelp").addEventListener("click", () => helpOverlay.classList.add("open"));
   $("closeHelp").addEventListener("click", () => helpOverlay.classList.remove("open"));
-  helpOverlay.addEventListener("click", (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove("open"); });
+  helpOverlay.addEventListener("click", (e) => {
+    if (e.target === helpOverlay) helpOverlay.classList.remove("open");
+  });
 
   function init() {
     $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("exitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
-    if ($("dripZoneFrom")) $("dripZoneFrom").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
-    if ($("dripZoneTo")) $("dripZoneTo").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
-    $("manualSweepLevel").value = "0";
+    $("manualSweepLevel").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    $("dripZoneFrom").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    $("dripZoneTo").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
+    $("lpQty").value = String(state.lp.qtyEach);
+    $("lpLevels").value = String(state.lp.levels);
+    $("lpRefreshSec").value = String(state.lp.refreshSec);
+    $("lpOffsetTicks").value = String(state.lp.offsetTicks);
+    $("lpStepTicks").value = String(state.lp.stepTicks);
 
     $("volPreset").value = state.volPresetKey;
-    if ($("orderFlowProfile")) $("orderFlowProfile").value = state.orderFlowProfileKey;
-    if ($("startOrderFlowProfile")) $("startOrderFlowProfile").value = state.orderFlowProfileKey;
-    setVolPreset(state.volPresetKey);
-    applyMacroPreset(state.news.preset, true);
+    $("orderFlowProfile").value = state.orderFlowProfileKey;
+    $("startOrderFlowProfile").value = state.orderFlowProfileKey;
+    $("startMotionProfile").value = state.motionProfileKey;
+    $("tool").value = state.tool;
 
-    applySettingsFromUI();
+    applyStylePresetToInputs(state.style.preset || DEFAULT_STYLE_PRESET_KEY);
+    setVolPreset(state.volPresetKey);
     updateDripUI();
-    renderMacroPanel();
+    updateLpUI();
+    applySettingsFromUI();
+    syncToolUi();
+    syncChartStyleUi();
     resizeCanvasToDisplaySize();
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        applyUiSnapshot(JSON.parse(saved), true);
+      } catch {}
+    }
 
     const startInput = $("startPriceInput");
     startInput.value = state.initialPrice.toFixed(decimalsFor(state.tickSize));
-    $("startMotionProfile").value = state.motionProfileKey;
-
-    document.querySelectorAll("[data-start-price]").forEach(btn => {
+    document.querySelectorAll("[data-start-price]").forEach((btn) => {
       btn.addEventListener("click", () => {
         startInput.value = btn.dataset.startPrice;
       });
@@ -3676,7 +4952,6 @@
   function loop(ts) {
     const dt = (ts - lastTs) / 1000;
     lastTs = ts;
-
     applySettingsFromUI();
 
     const ticksPerRealSec = Math.max(10, state.p.simHzBase * state.speedMul);
@@ -3696,11 +4971,9 @@
         stepSimulationOnce();
         acc -= stepReal;
       }
-    } else {
-      if (state.view.follow) {
-        const all = getAllBarsForRender();
-        state.view.end = Math.max(0, all.length - 1) + state.view.futureBars;
-      }
+    } else if (state.view.follow) {
+      const all = getAllBarsForRender();
+      state.view.end = Math.max(0, all.length - 1) + state.view.futureBars;
     }
 
     drawChart();
