@@ -625,6 +625,67 @@ input[type="color"]::-webkit-color-swatch{
       max-height:calc(100vh - 220px);
     }
 
+
+    .chartWrap:fullscreen{
+      width:100vw;
+      height:100vh;
+      max-height:none;
+      min-height:0;
+      resize:none;
+      padding:14px;
+      background:
+        radial-gradient(900px 460px at 18% 0%, rgba(42,123,255,.18), transparent 58%),
+        radial-gradient(900px 500px at 86% 100%, rgba(255,80,126,.10), transparent 62%),
+        #050911;
+    }
+
+    .chartWrap:-webkit-full-screen{
+      width:100vw;
+      height:100vh;
+      max-height:none;
+      min-height:0;
+      resize:none;
+      padding:14px;
+      background:
+        radial-gradient(900px 460px at 18% 0%, rgba(42,123,255,.18), transparent 58%),
+        radial-gradient(900px 500px at 86% 100%, rgba(255,80,126,.10), transparent 62%),
+        #050911;
+    }
+
+    .chartWrap:fullscreen canvas,
+    .chartWrap:-webkit-full-screen canvas{
+      border-radius:18px;
+    }
+
+    .fullscreenTradePanel{
+      position:absolute;
+      top:24px;
+      right:24px;
+      z-index:6;
+      display:none;
+      align-items:center;
+      gap:8px;
+      padding:10px;
+      border-radius:18px;
+      border:1px solid rgba(95,132,173,.28);
+      background:linear-gradient(180deg, rgba(11,18,28,.94), rgba(8,14,22,.88));
+      box-shadow:0 18px 34px rgba(0,0,0,.34);
+      backdrop-filter:blur(12px);
+    }
+
+    .chartWrap:fullscreen .fullscreenTradePanel,
+    .chartWrap:-webkit-full-screen .fullscreenTradePanel{
+      display:flex;
+    }
+
+    .fsHint{
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:11px;
+      padding:0 4px;
+      white-space:nowrap;
+    }
+
     canvas{
       width:100%;
       height:100%;
@@ -1260,13 +1321,14 @@ input[type="color"]::-webkit-color-swatch{
         </div>
         <div class="miniField">Bars<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></div>
         <button class="btn small" id="resetView">Reset View</button>
+        <button class="btn small neutral" id="toggleFullscreen" title="Fullscreen chart">Fullscreen</button>
         <button class="btn small" id="saveConfig">Save Layout</button>
         <button class="btn small" id="loadConfig">Load Layout</button>
         <button class="btn small neutral" id="openHelp" title="Hotkey: ?">Help</button>
       </div>
     </div>
 
-    <div class="chartWrap">
+    <div class="chartWrap" id="chartWrap" tabindex="0">
       <div class="toolRail" id="toolRail" aria-label="Drawing tools" style="display:none;">
         <button class="toolBtn active" data-tool="cursor" title="Cursor (1)">＋</button>
         <button class="toolBtn" data-tool="trend" title="Trendline (2)">／</button>
@@ -1275,6 +1337,13 @@ input[type="color"]::-webkit-color-swatch{
         <button class="toolBtn erase" data-tool="erase" title="Eraser (5)">⌫</button>
       </div>
       <div class="toolBadge" id="toolBadge" style="display:none;">Cursor</div>
+      <div class="fullscreenTradePanel" id="fullscreenTradePanel">
+        <button class="btn good small" id="fsBuy" title="Hotkey: B">B Buy</button>
+        <button class="btn bad small" id="fsSell" title="Hotkey: S">S Sell</button>
+        <button class="btn small" id="fsFlatten" title="Hotkey: X">X Flatten</button>
+        <button class="btn small" id="fsExit" title="Exit fullscreen">Exit</button>
+        <div class="fsHint">B/S trade · C cancel · Space pause</div>
+      </div>
       <canvas id="chart"></canvas>
     </div>
 
@@ -1311,7 +1380,8 @@ input[type="color"]::-webkit-color-swatch{
       <button class="btn small" id="closeHelp">Close</button>
     </div>
     <div class="helpGrid">
-      <div class="helpItem"><b>B</b> Buy market, <b>S</b> sell market.</div>
+      <div class="helpItem"><b>B</b> Buy market, <b>S</b> sell market. Works inside chart fullscreen too.</div>
+      <div class="helpItem"><b>G</b> toggles chart fullscreen. Use the Fullscreen button if the browser blocks the hotkey first.</div>
       <div class="helpItem"><b>Space</b> pause / resume. <b>Step</b> advances one simulated tick when paused.</div>
       <div class="helpItem"><b>F</b> toggles auto-follow.</div>
       <div class="helpItem"><b>C</b> cancels all working limits. <b>X</b> flattens at market.</div>
@@ -1629,6 +1699,7 @@ function syncChartStyleUi() {
 }
 
 const canvas = $("chart");
+  const chartWrap = $("chartWrap");
   const ctx = canvas.getContext("2d", { alpha:true });
   const TOOL_LABELS = {
     cursor: "Cursor",
@@ -2065,6 +2136,42 @@ const canvas = $("chart");
     }
   }
   window.addEventListener("resize", resizeCanvasToDisplaySize);
+
+  function getFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function isChartFullscreen() {
+    return getFullscreenElement() === chartWrap;
+  }
+
+  async function toggleChartFullscreen() {
+    try {
+      if (isChartFullscreen()) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        if (chartWrap.requestFullscreen) await chartWrap.requestFullscreen();
+        else if (chartWrap.webkitRequestFullscreen) chartWrap.webkitRequestFullscreen();
+        chartWrap.focus({ preventScroll:true });
+      }
+      setTimeout(resizeCanvasToDisplaySize, 60);
+    } catch (err) {
+      toast("Fullscreen blocked by browser. Click the Fullscreen button again.");
+    }
+  }
+
+  function syncFullscreenUi() {
+    const on = isChartFullscreen();
+    const btn = $("toggleFullscreen");
+    if (btn) btn.textContent = on ? "Exit Fullscreen" : "Fullscreen";
+    if (on) chartWrap.focus({ preventScroll:true });
+    setTimeout(resizeCanvasToDisplaySize, 60);
+  }
+
+  document.addEventListener("fullscreenchange", syncFullscreenUi);
+  document.addEventListener("webkitfullscreenchange", syncFullscreenUi);
+
 
   function setVolPreset(key) {
     const preset = VOL_PRESETS[key] || VOL_PRESETS.nykz;
@@ -4842,6 +4949,12 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
     toast("Reset complete");
   });
 
+  $("toggleFullscreen").addEventListener("click", toggleChartFullscreen);
+  $("fsBuy").addEventListener("click", () => buyMarket());
+  $("fsSell").addEventListener("click", () => sellMarket());
+  $("fsFlatten").addEventListener("click", () => flatten());
+  $("fsExit").addEventListener("click", toggleChartFullscreen);
+
   window.addEventListener("keydown", (e) => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
@@ -4860,8 +4973,9 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
       return;
     }
 
-    if (k === "b") { buyMarket(); return; }
-    if (k === "s") { sellMarket(); return; }
+    if (k === "b") { e.preventDefault(); buyMarket(); return; }
+    if (k === "s") { e.preventDefault(); sellMarket(); return; }
+    if (k === "g") { e.preventDefault(); toggleChartFullscreen(); return; }
     if (k === "f") {
       $("follow").checked = !$("follow").checked;
       state.view.follow = $("follow").checked;
