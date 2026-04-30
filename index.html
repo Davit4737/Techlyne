@@ -946,7 +946,7 @@ input[type="color"]::-webkit-color-swatch{
       <div class="pill">Equity: <b id="hdrEquity">∞</b></div>
       <div class="pill">Avail: <b id="hdrAvailable">∞</b></div>
       <div class="pill">1 margin: <b id="hdrContractCost">—</b></div>
-      <div class="pill">Motion: <b id="hdrMotion">Realistic NQ</b></div>
+      <div class="pill">Motion: <b id="hdrMotion">Realistic NQ -65%</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
       <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
       <div class="pill">Regime: <b id="hdrRegime">Balanced</b></div>
@@ -1125,10 +1125,10 @@ input[type="color"]::-webkit-color-swatch{
       <label>MA / drawings<input id="styleMa" type="color" value="#69b7ff" /></label>
     </div>
 
-    <div class="grid cols3">
-      <label>VP bars<input id="styleVpBar" type="color" value="#7cc8ff" /></label>
-      <label>VP POC<input id="styleVpPoc" type="color" value="#ffd166" /></label>
-      <label>VP value area<input id="styleVpVa" type="color" value="#7cc8ff" /></label>
+    <div style="display:none" aria-hidden="true">
+      <input id="styleVpBar" type="color" value="#7cc8ff" />
+      <input id="styleVpPoc" type="color" value="#ffd166" />
+      <input id="styleVpVa" type="color" value="#7cc8ff" />
     </div>
 
     <div class="grid cols2">
@@ -1159,7 +1159,6 @@ input[type="color"]::-webkit-color-swatch{
         <span class="styleSwatch" id="stylePreviewDown"></span>
         <span class="styleSwatch" id="stylePreviewAccent"></span>
         <span class="styleSwatch" id="stylePreviewVwap"></span>
-        <span class="styleSwatch" id="stylePreviewVp"></span>
         <span class="styleSwatch" id="stylePreviewBg"></span>
       </div>
     </div>
@@ -1201,7 +1200,7 @@ input[type="color"]::-webkit-color-swatch{
               <option value="asia">Asia</option>
             </select>
           </label>
-          <label>Volatility (1-16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="6.8" /></label>
+          <label>Volatility (1-16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="5.2" /></label>
         </div>
         <div class="grid cols2">
           <div class="toggle" id="autoVolWrap" title="Automatically rotates volatility presets as simulated time passes.">
@@ -1319,40 +1318,15 @@ input[type="color"]::-webkit-color-swatch{
           <span>Show my limits</span>
         </div>
 
-        <div class="toggle" id="indVpWrap" title="Right-side volume profile">
-          <input id="indVp" type="checkbox" checked />
-          <span>Volume Profile</span>
-        </div>
-
-        <div class="miniField">
-          VP
-          <select id="vpMode" title="Visible range uses only candles on screen. Session uses all generated bars that overlap the visible price scale.">
-            <option value="visible" selected>Visible range</option>
-            <option value="session">Session all</option>
-          </select>
-        </div>
-
-        <div class="miniField">
-          VP calc
-          <select id="vpDistribution" title="Controls how each candle distributes volume into price rows.">
-            <option value="range" selected>Range split</option>
-            <option value="body">Body weighted</option>
-            <option value="close">Close only</option>
-          </select>
-        </div>
-
-        <div class="miniField">VP rows<input id="vpRows" type="number" step="1" min="12" max="120" value="52" /></div>
-        <div class="miniField">VP width<input id="vpWidth" type="number" step="10" min="70" max="360" value="190" /></div>
-        <div class="miniField">VP opacity<input id="vpOpacity" type="number" step="0.05" min="0.05" max="0.95" value="0.48" /></div>
-
-        <div class="toggle" id="vpPocWrap" title="Show volume profile point of control">
-          <input id="vpPoc" type="checkbox" checked />
-          <span>VP POC</span>
-        </div>
-
-        <div class="toggle" id="vpVaWrap" title="Show approximate 70% value area around POC">
-          <input id="vpVa" type="checkbox" checked />
-          <span>VP VA</span>
+        <div style="display:none" aria-hidden="true">
+          <div id="indVpWrap"><input id="indVp" type="checkbox" /></div>
+          <select id="vpMode"><option value="visible" selected>Visible range</option><option value="session">Session all</option></select>
+          <select id="vpDistribution"><option value="range" selected>Range split</option><option value="body">Body weighted</option><option value="close">Close only</option></select>
+          <input id="vpRows" type="number" value="52" />
+          <input id="vpWidth" type="number" value="190" />
+          <input id="vpOpacity" type="number" value="0.48" />
+          <div id="vpPocWrap"><input id="vpPoc" type="checkbox" /></div>
+          <div id="vpVaWrap"><input id="vpVa" type="checkbox" /></div>
         </div>
       </div>
 
@@ -1403,7 +1377,6 @@ input[type="color"]::-webkit-color-swatch{
       <div class="legendPill"><span class="legendDot" id="legendDownDot" style="background:#ff697e"></span>Down candles</div>
       <div class="legendPill"><span class="legendDot" id="legendVwapDot" style="background:#ffcf5b"></span>VWAP / liquidity refs</div>
       <div class="legendPill"><span class="legendDot" id="legendMaDot" style="background:#6ab5ff"></span>20m SMA / drawing accents</div>
-      <div class="legendPill"><span class="legendDot" id="legendVpDot" style="background:#7cc8ff"></span>Fixed right Volume Profile / POC</div>
       <div class="legendPill mono">Ctrl+Click = limit, Alt+Click = cancel, Shift+Drag = Y pan</div>
     </div>
 
@@ -1519,6 +1492,7 @@ input[type="color"]::-webkit-color-swatch{
 </div>
 
 <script>
+
 (() => {
   const $ = (id) => document.getElementById(id);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -1543,11 +1517,35 @@ input[type="color"]::-webkit-color-swatch{
   }
 
   const VOL_PRESETS = {
-    nyopen:    { name:"NY Open Vol", vol:8.4 },
-    nykz:      { name:"NY Killzone", vol:6.8 },
-    london:    { name:"London", vol:4.8 },
-    premarket: { name:"Premarket", vol:3.5 },
-    asia:      { name:"Asia", vol:2.6 }
+    nyopen:    { name:"NY Open Vol", vol:7.0 },
+    nykz:      { name:"NY Killzone", vol:5.2 },
+    london:    { name:"London", vol:3.8 },
+    premarket: { name:"Premarket", vol:2.9 },
+    asia:      { name:"Asia", vol:1.9 }
+  };
+
+  const NQ_REALISM = {
+    syntheticDaySeconds: 6.5 * 60 * 60,
+    currentAtrPts: 455,
+    currentAdrPts: 415,
+    tickSize: 0.25,
+    // Global movement cut requested by user: calmer NQ build, about 65% less raw movement than the prior full-vol realistic version.
+    // Keeps the same NQ behavior/regimes, but reduces raw price displacement, jumps, and speed caps.
+    volatilityOutput: 0.35,
+    // Anti-magnet mode: do not keep dragging price back to the opening range.
+    // NQ can accept a 100-300pt displacement and build a new value area there.
+    adaptiveValue: true,
+    valueFollowSpeed: 0.030,
+    maxOpeningMagnet: 0.18,
+    manualFlowInfluence: 0.55
+  };
+
+  const NQ_SESSION_PROFILES = {
+    asia:      { minuteSigma:3.9,  drift:0.026, impulse:0.10, jumpPerSec:0.007, maxTicksPerStep:1.55, meanRevert:0.0070, oneMinRange:7 },
+    london:    { minuteSigma:6.8,  drift:0.048, impulse:0.17, jumpPerSec:0.013, maxTicksPerStep:2.10, meanRevert:0.0050, oneMinRange:12 },
+    premarket: { minuteSigma:5.6,  drift:0.039, impulse:0.14, jumpPerSec:0.011, maxTicksPerStep:1.90, meanRevert:0.0058, oneMinRange:10 },
+    nyopen:    { minuteSigma:13.2, drift:0.105, impulse:0.32, jumpPerSec:0.026, maxTicksPerStep:3.40, meanRevert:0.0028, oneMinRange:25 },
+    nykz:      { minuteSigma:9.4, drift:0.072, impulse:0.23, jumpPerSec:0.020, maxTicksPerStep:2.70, meanRevert:0.0036, oneMinRange:18 }
   };
 
   const AUTO_VOL_SEQUENCE = ["asia", "london", "premarket", "nyopen", "nykz", "premarket"];
@@ -1563,28 +1561,28 @@ input[type="color"]::-webkit-color-swatch{
 
   const MOTION_PROFILES = {
     tight: {
-      name: "Tight / smooth",
-      sigmaMul: 0.50,
-      jumpProbMul: 0.12,
-      jumpScaleMul: 0.18,
-      maxVelMul: 0.30,
-      flowMul: 0.62
+      name: "Tight / controlled",
+      sigmaMul: 0.72,
+      jumpProbMul: 0.48,
+      jumpScaleMul: 0.58,
+      maxVelMul: 0.70,
+      flowMul: 0.78
     },
     realistic: {
       name: "Realistic NQ",
-      sigmaMul: 0.62,
-      jumpProbMul: 0.18,
-      jumpScaleMul: 0.26,
-      maxVelMul: 0.38,
-      flowMul: 0.70
+      sigmaMul: 1.00,
+      jumpProbMul: 1.00,
+      jumpScaleMul: 1.00,
+      maxVelMul: 1.00,
+      flowMul: 1.00
     },
     volatile: {
       name: "Volatile session",
-      sigmaMul: 0.78,
-      jumpProbMul: 0.26,
-      jumpScaleMul: 0.38,
-      maxVelMul: 0.50,
-      flowMul: 0.82
+      sigmaMul: 1.28,
+      jumpProbMul: 1.48,
+      jumpScaleMul: 1.36,
+      maxVelMul: 1.25,
+      flowMul: 1.16
     }
   };
 
@@ -1821,8 +1819,8 @@ const canvas = $("chart");
     symbol: "NQ (sim)",
     tickSize: 0.25,
     spreadTicks: 1,
-    p: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
-    target: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
+    p: { vol:6.1, impact:8, simHzBase:75, fillProb:0.92 },
+    target: { vol:6.1, impact:8, simHzBase:75, fillProb:0.92 },
     volPresetKey: "nykz",
     autoVol: { enabled:true, intervalSec:18 * 60, nextSwitchAt:0 },
     speedMul: 1,
@@ -1873,7 +1871,24 @@ const canvas = $("chart");
       jumpScale: 8.5,
       flow: 0,
       flowDecay: 0.88,
-      vel: 0
+      vel: 0,
+      carry: 0
+    },
+    tape: {
+      dayType:"balanced",
+      dayStart:0,
+      trendDir:0,
+      anchor:17000,
+      rangeCenter:17000,
+      rangeHalf:160,
+      targetRange:415,
+      phase:"balance",
+      phaseDir:0,
+      phaseUntil:0,
+      impulseUntil:0,
+      impulseDir:0,
+      impulsePower:0,
+      lastImpulseAt:-999
     },
     simTime: 0,
     tickCount: 0,
@@ -1940,7 +1955,7 @@ const canvas = $("chart");
     tool: "cursor",
     drawings: [],
     pending: null,
-    indicators: { vol:true, vwap:true, ma:true, vp:true },
+    indicators: { vol:true, vwap:true, ma:true, vp:false },
     indCache: { tfSec:null, len:0, maN:0, vwap:[], ma:[] },
     toastUntil: 0
   };
@@ -2137,11 +2152,12 @@ const canvas = $("chart");
     state.sim.price = state.initialPrice;
     state.sim.drift = 0;
     state.sim.driftTarget = 0;
-    state.sim.sigma = 2.1;
-    state.sim.sigmaTarget = 2.1;
-    state.sim.nextRegimeT = 30;
+    state.sim.sigma = 1.55;
+    state.sim.sigmaTarget = 1.55;
+    state.sim.nextRegimeT = 18 + Math.random() * 24;
     state.sim.flow = 0;
     state.sim.vel = 0;
+    state.sim.carry = 0;
 
     state.pos = 0;
     state.avg = null;
@@ -2167,6 +2183,8 @@ const canvas = $("chart");
     state.sweep.event = null;
     state.sweep.cooldownUntil = 0;
     state.news.shock = null;
+    initNqTapeDay(true);
+
     state.orderFlow = {
       regime: "balanced",
       regimeUntil: 0,
@@ -2589,7 +2607,18 @@ const canvas = $("chart");
     }
 
     state.pos = newPos;
-    state.sim.flow += fillSign * qty;
+    state.sim.flow += fillSign * qty * (1 + NQ_REALISM.manualFlowInfluence);
+    state.sim.vel += fillSign * state.tickSize * clamp(0.20 + qty * 0.12, 0.20, 1.15);
+    state.orderFlow.pressure = clamp((state.orderFlow.pressure || 0) + fillSign * clamp(qty * 0.055, 0.03, 0.28), -1, 1);
+
+    // User aggression should create temporary auction pressure instead of the engine
+    // instantly dragging price back to the old opening range.
+    if (state.tape && oldSign !== fillSign) {
+      state.tape.phase = "trend";
+      state.tape.phaseDir = fillSign;
+      state.tape.phaseUntil = Math.max(state.tape.phaseUntil || 0, state.simTime + 38 + Math.min(70, qty * 10));
+      state.tape.rangeCenter += (state.sim.price - state.tape.rangeCenter) * 0.18;
+    }
 
     if (newPos === 0 || (oldSign !== 0 && newSign !== 0 && oldSign !== newSign)) {
       clearBrackets(true);
@@ -2948,7 +2977,7 @@ const canvas = $("chart");
     const leftPad = 88;
     const rightPadBase = 14;
     const vpCfg = state.volumeProfile || {};
-    const vpVisible = !!(state.indicators && state.indicators.vp);
+    const vpVisible = false;
     const vpWidth = vpVisible ? clamp(Number(vpCfg.width || 190), 70, 360) : 0;
     const topPad = 10;
     const bottomPad = 26;
@@ -3262,6 +3291,193 @@ const canvas = $("chart");
     return entries[entries.length - 1]?.[0] || "balanced";
   }
 
+  function getNqSessionProfile() {
+    return NQ_SESSION_PROFILES[state.volPresetKey] || NQ_SESSION_PROFILES.nykz;
+  }
+
+  function getNqVolScale(volKnob) {
+    return clamp(0.68 + (clamp(volKnob, 1, 16) - 1) * 0.052, 0.68, 1.46);
+  }
+
+  function getTapeDirFromType(type) {
+    if (type === "trendUp" || type === "openDriveUp") return 1;
+    if (type === "trendDown" || type === "openDriveDown") return -1;
+    return 0;
+  }
+
+  function initNqTapeDay(force = false) {
+    if (!state || !state.sim) return null;
+    const px = Number.isFinite(state.sim.price) ? state.sim.price : state.initialPrice;
+    const biasDir = state.bias.mode === "bullish" ? 1 : state.bias.mode === "bearish" ? -1 : 0;
+    const weights = {
+      rotation: 0.28,
+      balanced: 0.20,
+      trendUp: 0.15 + (biasDir > 0 ? 0.08 : 0),
+      trendDown: 0.15 + (biasDir < 0 ? 0.08 : 0),
+      openDriveUp: 0.11 + (biasDir > 0 ? 0.05 : 0),
+      openDriveDown: 0.11 + (biasDir < 0 ? 0.05 : 0)
+    };
+    const dayType = weightedPick(weights);
+    const trendDir = getTapeDirFromType(dayType);
+    const directional = trendDir !== 0;
+    const targetBase = directional
+      ? 430 + Math.random() * 260
+      : dayType === "rotation"
+        ? 260 + Math.random() * 170
+        : 320 + Math.random() * 160;
+    const centerOffset = randn() * (directional ? 55 : 35);
+    state.tape = {
+      dayType,
+      dayStart: state.simTime || 0,
+      trendDir,
+      anchor: px,
+      rangeCenter: px + centerOffset,
+      rangeHalf: Math.max(95, targetBase * (directional ? 0.38 : 0.47)),
+      targetRange: targetBase,
+      phase: directional && dayType.startsWith("openDrive") ? "impulse" : weightedPick({ balance:0.42, trend:0.24, pullback:0.18, chop:0.16 }),
+      phaseDir: trendDir || (Math.random() < 0.5 ? 1 : -1),
+      phaseUntil: (state.simTime || 0) + 20 + Math.random() * 70,
+      impulseUntil: 0,
+      impulseDir: 0,
+      impulsePower: 0,
+      lastImpulseAt: -999
+    };
+    return state.tape;
+  }
+
+  function maybeRotateNqTapeDay() {
+    if (!state.tape || !Number.isFinite(state.tape.dayStart)) {
+      initNqTapeDay(true);
+      return;
+    }
+    if (state.simTime - state.tape.dayStart >= NQ_REALISM.syntheticDaySeconds) initNqTapeDay(false);
+  }
+
+  function chooseNqPhase(tape, session, biasDir, macroBias, shock) {
+    const directional = tape.trendDir !== 0;
+    const trendBias = tape.trendDir || biasDir || Math.sign(macroBias || 0) || (Math.random() < 0.5 ? 1 : -1);
+    let weights;
+    if (directional) {
+      weights = { trend:0.38, impulse:0.22, pullback:0.22, balance:0.10, chop:0.08 };
+    } else if (tape.dayType === "rotation") {
+      weights = { balance:0.38, chop:0.24, pullback:0.18, trend:0.12, impulse:0.08 };
+    } else {
+      weights = { balance:0.30, trend:0.20, pullback:0.18, chop:0.18, impulse:0.14 };
+    }
+    if (Math.abs(shock.live || 0) > 0.25) weights.impulse += 0.20;
+    const phase = weightedPick(weights);
+    let dir = trendBias;
+    if (phase === "pullback") dir = directional ? -tape.trendDir : -Math.sign(state.orderFlow.pressure || trendBias || 1);
+    if (phase === "chop" || phase === "balance") dir = Math.random() < 0.5 ? 1 : -1;
+    if (shock.live > 0.20 && shock.dir) dir = shock.dir;
+    const dur = phase === "impulse"
+      ? 8 + Math.random() * 28
+      : phase === "trend"
+        ? 36 + Math.random() * 120
+        : phase === "pullback"
+          ? 16 + Math.random() * 56
+          : 24 + Math.random() * 92;
+    tape.phase = phase;
+    tape.phaseDir = dir || 1;
+    tape.phaseUntil = state.simTime + dur;
+    if (phase === "impulse") {
+      tape.impulseDir = tape.phaseDir;
+      tape.impulsePower = session.impulse * (0.85 + Math.random() * 0.75);
+      tape.impulseUntil = state.simTime + dur * (0.55 + Math.random() * 0.35);
+      tape.lastImpulseAt = state.simTime;
+    }
+  }
+
+  function updateNqTapeRegime(volKnob, biasDir, macro, shock, dt) {
+    maybeRotateNqTapeDay();
+    const tape = state.tape || initNqTapeDay(true);
+    const session = getNqSessionProfile();
+    const motion = getMotionProfile();
+    if (state.simTime >= tape.phaseUntil) chooseNqPhase(tape, session, biasDir, macro.bias, shock);
+
+    const age = Math.max(0, state.simTime - tape.dayStart);
+    const progress = clamp(age / NQ_REALISM.syntheticDaySeconds, 0, 1);
+    const volScale = getNqVolScale(volKnob);
+    const directional = tape.trendDir !== 0;
+    const expectedTrendPx = tape.anchor + tape.trendDir * tape.targetRange * (0.10 + 0.82 * progress);
+    const pxNow = state.sim.price;
+    const valueDisplacement = pxNow - tape.rangeCenter;
+    const valueEdge = Math.abs(valueDisplacement) / Math.max(1, tape.rangeHalf);
+    const pressureDir = Math.sign(state.orderFlow.pressure || 0);
+    const pressureAcceptsMove = pressureDir !== 0 && pressureDir === Math.sign(valueDisplacement);
+    const trendAcceptsMove = tape.phase === "trend" || tape.phase === "impulse";
+    const acceptedAwayFromOpen = valueEdge > 0.62 && (pressureAcceptsMove || trendAcceptsMove || Math.abs(state.sim.vel) > state.tickSize * 0.35);
+
+    if (directional) {
+      const centerTarget = lerp(tape.rangeCenter, expectedTrendPx, 0.0011 + 0.00055 * volScale);
+      tape.rangeCenter += (centerTarget - tape.rangeCenter) * clamp(dt * 5.0, 0, 0.045);
+    } else {
+      // Balanced/rotation days should build value around recent price, not the original open forever.
+      const slowCenter = pxNow + randn() * 0.08;
+      tape.rangeCenter += (slowCenter - tape.rangeCenter) * clamp(dt * 0.085, 0, 0.010);
+    }
+
+    if (NQ_REALISM.adaptiveValue && acceptedAwayFromOpen) {
+      const follow = clamp(dt * (directional ? 0.055 : 0.105) * (1 + Math.min(1.4, valueEdge)), 0, NQ_REALISM.valueFollowSpeed);
+      tape.rangeCenter += valueDisplacement * follow;
+      tape.anchor += (pxNow - tape.anchor) * clamp(dt * 0.010, 0, 0.0025);
+    }
+
+    let drift = 0;
+    if (directional) drift += tape.trendDir * session.drift * (0.70 + 0.55 * progress);
+    if (tape.phase === "trend") drift += tape.phaseDir * session.drift * (0.85 + 0.35 * volScale);
+    if (tape.phase === "impulse") drift += tape.phaseDir * session.drift * (1.45 + 0.65 * volScale);
+    if (tape.phase === "pullback") drift += tape.phaseDir * session.drift * (0.45 + 0.20 * volScale);
+    if (tape.phase === "balance" || tape.phase === "chop") drift += tape.phaseDir * session.drift * 0.18;
+
+    // Tiny path guidance only. Previous versions had a strong opening-range magnet.
+    // This version lets price accept new value after displacement.
+    let pathPull = directional ? (expectedTrendPx - state.sim.price) * (0.00018 + 0.00007 * volScale) : 0;
+    const rangeDist = state.sim.price - tape.rangeCenter;
+    const rangeEdge = Math.abs(rangeDist) / Math.max(1, tape.rangeHalf);
+    let meanRevert = session.meanRevert * 0.26;
+    const moveSign = Math.sign(rangeDist);
+    const pressureKeepsGoing = moveSign !== 0 && Math.sign(state.orderFlow.pressure || 0) === moveSign;
+
+    if (directional) meanRevert *= tape.phase === "pullback" ? 0.45 : 0.10;
+    if (tape.phase === "trend") meanRevert *= 0.26;
+    if (tape.phase === "impulse") meanRevert *= 0.06;
+    if (pressureKeepsGoing && rangeEdge > 0.45) meanRevert *= 0.18;
+    if (rangeEdge > 1.15) meanRevert *= 0.16;
+
+    // Only chop/balance gets a real fade. Trend/impulse only get a soft brake, not a snap-back.
+    const phaseAllowsFade = tape.phase === "balance" || tape.phase === "chop";
+    const rangePull = phaseAllowsFade
+      ? -rangeDist * meanRevert * clamp(0.22 + rangeEdge * 0.55, 0.22, 0.95)
+      : -rangeDist * meanRevert * clamp(0.06 + rangeEdge * 0.14, 0.04, 0.22);
+
+    let sigmaMinute = session.minuteSigma * volScale * motion.sigmaMul;
+    if (tape.phase === "impulse") sigmaMinute *= 1.34;
+    if (tape.phase === "chop") sigmaMinute *= 0.82;
+    if (tape.phase === "pullback") sigmaMinute *= 0.92;
+    const sigmaPtsSqrtSec = sigmaMinute / Math.sqrt(60);
+
+    const impulseLive = state.simTime < tape.impulseUntil;
+    const impulseWindow = Math.max(1, tape.impulseUntil - tape.lastImpulseAt);
+    const impulseProgress = clamp(1 - ((tape.impulseUntil - state.simTime) / impulseWindow), 0, 1);
+    const impulsePush = impulseLive
+      ? tape.impulseDir * tape.impulsePower * (0.65 + 0.35 * Math.sin(impulseProgress * Math.PI))
+      : 0;
+
+    const jumpPerSec = session.jumpPerSec * motion.jumpProbMul * (0.65 + volKnob * 0.035) * (tape.phase === "impulse" ? 1.8 : tape.phase === "trend" ? 1.18 : 0.86);
+    const maxTicksPerStep = session.maxTicksPerStep * motion.maxVelMul * (tape.phase === "impulse" ? 1.45 : 1);
+
+    return {
+      driftPtsSec: (drift + pathPull + rangePull + impulsePush),
+      sigmaPtsSqrtSec,
+      jumpPerSec,
+      maxTicksPerStep,
+      inertia: tape.phase === "trend" || tape.phase === "impulse" ? 0.78 : tape.phase === "pullback" ? 0.68 : 0.52,
+      session,
+      tape
+    };
+  }
+
   function clusterPriceLevels(levels, toleranceTicks = 2.5) {
     if (!levels.length) return [];
     const tol = toleranceTicks * state.tickSize;
@@ -3549,6 +3765,15 @@ const canvas = $("chart");
     if (mode === "soft") reverse += 0.06;
     if (mode === "hard") cont += 0.08;
     if (source === "auto") reverse += 0.04;
+
+    // Manual sweeps are trader-directed scenarios. They should not auto-snap back
+    // after every 100-200pt push unless there is actual opposite pressure.
+    if (source === "manual") {
+      reverse *= mode === "hard" ? 0.30 : mode === "normal" ? 0.38 : 0.50;
+      fake *= 0.72;
+      cont += 0.42 + same * 0.45 + (mode === "hard" ? 0.22 : mode === "normal" ? 0.12 : 0.04);
+    }
+
     return weightedPick({ reverse, continue:cont, fake });
   }
 
@@ -4197,6 +4422,7 @@ function computeVolumeProfile(vwin, pr) {
 }
 
 function drawVolumeProfile(vwin, pr, geo, style, glow) {
+  return;
   if (!state.indicators.vp) return;
   const profile = computeVolumeProfile(vwin, pr);
   if (!profile || profile.maxVol <= 0) return;
@@ -4793,7 +5019,7 @@ function drawChart() {
     $("hdrBias").textContent = getBiasLabel();
     $("hdrRegime").textContent = getRegimeLabel();
     $("hdrDelta").textContent = getDeltaLabel();
-    $("hdrMotion").textContent = getMotionProfile().name;
+    $("hdrMotion").textContent = `${getMotionProfile().name} -65%`;
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
@@ -4849,7 +5075,8 @@ function drawChart() {
     state.indicators.vol = $("indVol").checked;
     state.indicators.vwap = $("indVwap").checked;
     state.indicators.ma = $("indMa").checked;
-    state.indicators.vp = $("indVp").checked;
+    state.indicators.vp = false;
+    if ($("indVp")) $("indVp").checked = false;
     state.volumeProfile.mode = $("vpMode").value || "visible";
     state.volumeProfile.distribution = $("vpDistribution").value || "range";
     state.volumeProfile.rows = clamp(Math.floor(Number($("vpRows").value || 52)), 12, 120);
@@ -4910,7 +5137,6 @@ function drawChart() {
     const biasStrength = clamp(state.bias.strength, 0, 10);
     const motion = getMotionProfile();
 
-    state.sim.flow *= state.sim.flowDecay;
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
     maybeAutoSwitchVolPreset();
@@ -4918,66 +5144,83 @@ function drawChart() {
     const shock = getMacroShock();
     const flowCore = updateOrderFlowCore(volKnob);
     const depthInfluence = computeDepthInfluence(7);
+    const tapeCore = updateNqTapeRegime(volKnob, biasDir, macro, shock, dt);
+
+    state.sim.flow *= state.sim.flowDecay;
+    state.sim.flow += (macro.flowBias * 0.013 + shock.dir * shock.live * 0.026 + state.orderFlow.deltaEma * 0.006) * state.flowIntensity;
 
     if (state.simTime >= state.sim.nextRegimeT) {
-      const randomDrift = randn() * (0.07 + 0.022 * (volKnob / 10));
-      const biasDrift = biasDir * biasStrength * (0.016 + 0.0045 * volKnob);
-      const macroDrift = macro.bias * (0.018 + 0.003 * volKnob);
-      const shockDrift = shock.dir * shock.live * (0.016 + 0.002 * volKnob);
-      state.sim.driftTarget = randomDrift + biasDrift + macroDrift + shockDrift;
+      const randomDrift = randn() * (0.012 + 0.004 * volKnob);
+      const biasDrift = biasDir * biasStrength * (0.006 + 0.0016 * volKnob);
+      const macroDrift = macro.bias * (0.010 + 0.0018 * volKnob);
+      const shockDrift = shock.dir * shock.live * (0.045 + 0.004 * volKnob);
+      state.sim.driftTarget = tapeCore.driftPtsSec + randomDrift + biasDrift + macroDrift + shockDrift;
 
-      const baseSig = (0.75 + 0.24 * volKnob) * motion.sigmaMul;
       const sigmaMul = 1 + macro.volBoost + shock.sigma;
-      state.sim.sigmaTarget = baseSig * (0.92 + 0.18 * Math.abs(randn())) * sigmaMul;
-      state.sim.nextRegimeT = state.simTime + 28 + Math.random() * 95;
+      state.sim.sigmaTarget = tapeCore.sigmaPtsSqrtSec * (0.90 + 0.22 * Math.abs(randn())) * sigmaMul;
+      state.sim.nextRegimeT = state.simTime + (tapeCore.tape.phase === "impulse" ? 5 : 12) + Math.random() * (tapeCore.tape.phase === "trend" ? 54 : 38);
     }
 
-    state.sim.drift = lerp(state.sim.drift, state.sim.driftTarget, 0.02);
+    state.sim.drift = lerp(state.sim.drift, state.sim.driftTarget, 0.035);
 
     const k = state.sim.meanRev;
     const vv = state.sim.volOfVol;
     const sig = state.sim.sigma;
-    const dSig = k * (state.sim.sigmaTarget - sig) * dt + vv * Math.sqrt(dt) * randn();
-    state.sim.sigma = clamp(sig + dSig, 0.25, 10);
+    const dSig = k * (state.sim.sigmaTarget - sig) * dt + vv * 0.42 * Math.sqrt(dt) * randn();
+    state.sim.sigma = clamp(sig + dSig, 0.35, 5.8);
 
     const dW = Math.sqrt(dt) * randn();
     let dp = state.sim.drift * dt + state.sim.sigma * dW;
-    state.sim.flow += (macro.flowBias * 0.016 + shock.dir * shock.live * 0.030) * state.flowIntensity;
 
-    dp += state.sim.flow * (impact * state.tickSize * 0.011 * motion.flowMul);
-    dp += flowCore.impulse * 0.58;
-    dp += macro.bias * state.tickSize * 0.018 * motion.flowMul;
-    dp += shock.dir * shock.live * state.tickSize * (0.12 + 0.010 * volKnob);
-    dp += depthInfluence.imbalance * state.tickSize * (0.075 + 0.003 * impact);
+    dp += state.sim.flow * (impact * state.tickSize * 0.0065 * motion.flowMul);
+    dp += flowCore.impulse * 0.46;
+    dp += macro.bias * state.tickSize * 0.013 * motion.flowMul;
+    dp += shock.dir * shock.live * state.tickSize * (0.075 + 0.006 * volKnob);
+    dp += depthInfluence.imbalance * state.tickSize * (0.052 + 0.0025 * impact);
 
-    if (dp > 0) dp *= 1 - Math.min(0.58, depthInfluence.askBrake * 0.44);
-    else if (dp < 0) dp *= 1 - Math.min(0.58, depthInfluence.bidBrake * 0.44);
+    if (dp > 0) dp *= 1 - Math.min(0.46, depthInfluence.askBrake * 0.35);
+    else if (dp < 0) dp *= 1 - Math.min(0.46, depthInfluence.bidBrake * 0.35);
 
     maybeStartSweepEvent(volKnob);
     dp = applySweepEvent(dp);
     dp = applyPostLiquidityImpulse(dp);
 
-    state.sim.vel = state.sim.vel * 0.66 + dp * 0.80;
-    const jp = state.sim.jumpProb * motion.jumpProbMul * (0.34 + 0.028 * volKnob);
-    if (Math.random() < jp) {
-      const dir = Math.sign(randn()) || 1;
-      state.sim.vel += dir * (state.sim.jumpScale * motion.jumpScaleMul * (0.36 + Math.random() * 0.38)) * (0.34 + 0.024 * volKnob);
+    const nqVolCut = clamp(NQ_REALISM.volatilityOutput || 1, 0.15, 1.25);
+    dp *= nqVolCut;
+
+    state.sim.vel = state.sim.vel * tapeCore.inertia + dp * 0.92;
+    if (Math.random() < tapeCore.jumpPerSec * dt) {
+      const pressureDir = Math.sign(state.orderFlow.pressure || 0);
+      const dir = pressureDir && Math.random() < 0.62 ? pressureDir : (Math.sign(randn()) || 1);
+      const burstPts = (0.55 + Math.random() * 1.85) * state.tickSize * (1.0 + volKnob * 0.055) * motion.jumpScaleMul * nqVolCut;
+      state.sim.vel += dir * burstPts;
     }
 
-    const maxVel = (0.58 + 0.055 * volKnob) * (6.0 * state.tickSize) * motion.maxVelMul;
+    const maxVel = Math.max(state.tickSize, state.tickSize * tapeCore.maxTicksPerStep * nqVolCut);
     state.sim.vel = clamp(state.sim.vel, -maxVel, maxVel);
 
     const prevPrice = state.sim.price;
-    const nextPrice = roundTo(state.sim.price + state.sim.vel, state.tickSize);
+    const rawMove = state.sim.vel + (Number.isFinite(state.sim.carry) ? state.sim.carry : 0);
+    let roundedMove = roundTo(rawMove, state.tickSize);
+    state.sim.carry = clamp(rawMove - roundedMove, -state.tickSize * 1.5, state.tickSize * 1.5);
+
+    if (roundedMove === 0 && Math.abs(rawMove) > state.tickSize * 0.38 && Math.random() < 0.32 + volKnob * 0.018) {
+      roundedMove = Math.sign(rawMove) * state.tickSize;
+      state.sim.carry = 0;
+    }
+
+    const nextPrice = roundTo(state.sim.price + roundedMove, state.tickSize);
     state.sim.price = nextPrice;
 
     detectLiquidityTake(prevPrice, state.sim.price);
 
+    const movedTicks = Math.abs(state.sim.price - prevPrice) / Math.max(1e-6, state.tickSize);
     const tickVol =
       1 +
-      Math.floor(Math.abs(state.sim.vel) / Math.max(1e-6, state.tickSize * 0.24)) +
-      Math.floor(Math.random() * 2) +
-      Math.floor(Math.abs(state.sim.flow) * 0.16);
+      Math.floor(movedTicks * (1.4 + volKnob * 0.08)) +
+      Math.floor(Math.random() * 3) +
+      Math.floor(Math.abs(state.sim.flow) * 0.13) +
+      (tapeCore.tape.phase === "impulse" ? Math.floor(2 + Math.random() * 5) : 0);
 
     state.tickCount++;
     state.ticks.push({ t:state.simTime, p:state.sim.price, v:tickVol });
@@ -5340,7 +5583,8 @@ function drawChart() {
 
   $("indVpWrap").addEventListener("click", (e) => {
     if (e.target.tagName !== "INPUT") $("indVp").checked = !$("indVp").checked;
-    state.indicators.vp = $("indVp").checked;
+    state.indicators.vp = false;
+    if ($("indVp")) $("indVp").checked = false;
   });
 
   $("vpPocWrap").addEventListener("click", (e) => {
@@ -5672,8 +5916,10 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
     $("vpRows").value = String(state.volumeProfile.rows);
     $("vpWidth").value = String(state.volumeProfile.width);
     $("vpOpacity").value = String(state.volumeProfile.opacity);
-    $("vpPoc").checked = state.volumeProfile.showPoc;
-    $("vpVa").checked = state.volumeProfile.showVa;
+    $("indVp").checked = false;
+    state.indicators.vp = false;
+    $("vpPoc").checked = false;
+    $("vpVa").checked = false;
     $("autoVolEnabled").checked = state.autoVol.enabled;
     $("autoVolMinutes").value = String(Math.round(state.autoVol.intervalSec / 60));
 
@@ -5771,6 +6017,7 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
   init();
   requestAnimationFrame(loop);
 })();
+
 </script>
 </body>
 </html>
