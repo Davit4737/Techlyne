@@ -941,6 +941,11 @@ input[type="color"]::-webkit-color-swatch{
 
     <div class="toolbarPills">
       <div class="pill">Symbol: <b id="sym">NQ (sim)</b></div>
+      <div class="pill">Mode: <b id="hdrAccountMode">Sandbox</b></div>
+      <div class="pill">Lev: <b id="hdrLeverage">1x</b></div>
+      <div class="pill">Equity: <b id="hdrEquity">∞</b></div>
+      <div class="pill">Avail: <b id="hdrAvailable">∞</b></div>
+      <div class="pill">1 margin: <b id="hdrContractCost">—</b></div>
       <div class="pill">Motion: <b id="hdrMotion">Realistic NQ</b></div>
       <div class="pill">Vol preset: <b id="hdrVol">NY Killzone</b></div>
       <div class="pill">Bias: <b id="hdrBias">Neutral</b></div>
@@ -1057,19 +1062,15 @@ input[type="color"]::-webkit-color-swatch{
 
         <div class="sep"></div>
 
-        <div class="sectionLabel">Position management <small>market flattening</small></div>
-        <div class="grid cols2">
+        <div class="sectionLabel">Order management <small>opposite orders only</small></div>
+        <div class="grid">
           <button class="btn" id="cancelAll">Cancel All</button>
-          <button class="btn" id="flatten">Flatten 100%</button>
-        </div>
-        <div class="grid cols2">
-          <button class="btn" id="flatten50">Flatten 50%</button>
-          <button class="btn" id="flatten25">Flatten 25%</button>
+          <div class="tiny">To exit, place the opposite order: long closes with Sell, short closes with Buy.</div>
         </div>
 
         <div class="sep"></div>
 
-        <div class="sectionLabel">Exit targets <small>flatten at price</small></div>
+        <div class="sectionLabel">Exit targets <small>opposite order at price</small></div>
         <div class="grid cols3">
           <label>Exit price<input id="exitPrice" type="number" min="0.25" step="0.25" value="0" /></label>
           <label>Mode
@@ -1124,6 +1125,12 @@ input[type="color"]::-webkit-color-swatch{
       <label>MA / drawings<input id="styleMa" type="color" value="#69b7ff" /></label>
     </div>
 
+    <div class="grid cols3">
+      <label>VP bars<input id="styleVpBar" type="color" value="#7cc8ff" /></label>
+      <label>VP POC<input id="styleVpPoc" type="color" value="#ffd166" /></label>
+      <label>VP value area<input id="styleVpVa" type="color" value="#7cc8ff" /></label>
+    </div>
+
     <div class="grid cols2">
       <label>Background top<input id="styleBgTop" type="color" value="#07111d" /></label>
       <label>Background bottom<input id="styleBgBottom" type="color" value="#0d1826" /></label>
@@ -1152,6 +1159,7 @@ input[type="color"]::-webkit-color-swatch{
         <span class="styleSwatch" id="stylePreviewDown"></span>
         <span class="styleSwatch" id="stylePreviewAccent"></span>
         <span class="styleSwatch" id="stylePreviewVwap"></span>
+        <span class="styleSwatch" id="stylePreviewVp"></span>
         <span class="styleSwatch" id="stylePreviewBg"></span>
       </div>
     </div>
@@ -1184,7 +1192,7 @@ input[type="color"]::-webkit-color-swatch{
 
         <div class="sectionLabel">Market engine <small>session behavior and tape feel</small></div>
         <div class="grid cols2">
-          <label>Volatility preset
+          <label>Volatility preset <small>manual base</small>
             <select id="volPreset">
               <option value="nyopen">NY Open Vol</option>
               <option value="nykz" selected>NY Killzone</option>
@@ -1194,6 +1202,13 @@ input[type="color"]::-webkit-color-swatch{
             </select>
           </label>
           <label>Volatility (1-16)<input id="volValue" type="number" min="1" max="16" step="0.1" value="6.8" /></label>
+        </div>
+        <div class="grid cols2">
+          <div class="toggle" id="autoVolWrap" title="Automatically rotates volatility presets as simulated time passes.">
+            <input id="autoVolEnabled" type="checkbox" checked />
+            <span>Auto volume preset</span>
+          </div>
+          <label>Auto switch every (sim min)<input id="autoVolMinutes" type="number" min="1" max="240" step="1" value="18" /></label>
         </div>
         <div class="grid cols2">
           <label>Impact (0-20)<input id="impact" type="number" step="1" min="0" max="20" value="8" /></label>
@@ -1303,6 +1318,42 @@ input[type="color"]::-webkit-color-swatch{
           <input id="showOwnLimits" type="checkbox" checked />
           <span>Show my limits</span>
         </div>
+
+        <div class="toggle" id="indVpWrap" title="Right-side volume profile">
+          <input id="indVp" type="checkbox" checked />
+          <span>Volume Profile</span>
+        </div>
+
+        <div class="miniField">
+          VP
+          <select id="vpMode" title="Visible range uses only candles on screen. Session uses all generated bars that overlap the visible price scale.">
+            <option value="visible" selected>Visible range</option>
+            <option value="session">Session all</option>
+          </select>
+        </div>
+
+        <div class="miniField">
+          VP calc
+          <select id="vpDistribution" title="Controls how each candle distributes volume into price rows.">
+            <option value="range" selected>Range split</option>
+            <option value="body">Body weighted</option>
+            <option value="close">Close only</option>
+          </select>
+        </div>
+
+        <div class="miniField">VP rows<input id="vpRows" type="number" step="1" min="12" max="120" value="52" /></div>
+        <div class="miniField">VP width<input id="vpWidth" type="number" step="10" min="70" max="360" value="190" /></div>
+        <div class="miniField">VP opacity<input id="vpOpacity" type="number" step="0.05" min="0.05" max="0.95" value="0.48" /></div>
+
+        <div class="toggle" id="vpPocWrap" title="Show volume profile point of control">
+          <input id="vpPoc" type="checkbox" checked />
+          <span>VP POC</span>
+        </div>
+
+        <div class="toggle" id="vpVaWrap" title="Show approximate 70% value area around POC">
+          <input id="vpVa" type="checkbox" checked />
+          <span>VP VA</span>
+        </div>
       </div>
 
       <div class="right">
@@ -1310,9 +1361,9 @@ input[type="color"]::-webkit-color-swatch{
           TF
           <select id="timeframe">
             <option value="1">1s</option>
-            <option value="5" selected>5s</option>
+            <option value="5">5s</option>
             <option value="15">15s</option>
-            <option value="60">1m</option>
+            <option value="60" selected>1m</option>
             <option value="180">3m</option>
             <option value="300">5m</option>
             <option value="900">15m</option>
@@ -1320,6 +1371,7 @@ input[type="color"]::-webkit-color-swatch{
           </select>
         </div>
         <div class="miniField">Bars<input id="visibleBars" type="number" step="5" min="20" max="700" value="160" /></div>
+        <div class="miniField">Candle <b id="topCandleTimer" class="mono">—</b></div>
         <button class="btn small" id="resetView">Reset View</button>
         <button class="btn small neutral" id="toggleFullscreen" title="Fullscreen chart">Fullscreen</button>
         <button class="btn small" id="saveConfig">Save Layout</button>
@@ -1340,7 +1392,6 @@ input[type="color"]::-webkit-color-swatch{
       <div class="fullscreenTradePanel" id="fullscreenTradePanel">
         <button class="btn good small" id="fsBuy" title="Hotkey: B">B Buy</button>
         <button class="btn bad small" id="fsSell" title="Hotkey: S">S Sell</button>
-        <button class="btn small" id="fsFlatten" title="Hotkey: X">X Flatten</button>
         <button class="btn small" id="fsExit" title="Exit fullscreen">Exit</button>
         <div class="fsHint">B/S trade · C cancel · Space pause</div>
       </div>
@@ -1352,6 +1403,7 @@ input[type="color"]::-webkit-color-swatch{
       <div class="legendPill"><span class="legendDot" id="legendDownDot" style="background:#ff697e"></span>Down candles</div>
       <div class="legendPill"><span class="legendDot" id="legendVwapDot" style="background:#ffcf5b"></span>VWAP / liquidity refs</div>
       <div class="legendPill"><span class="legendDot" id="legendMaDot" style="background:#6ab5ff"></span>20m SMA / drawing accents</div>
+      <div class="legendPill"><span class="legendDot" id="legendVpDot" style="background:#7cc8ff"></span>Fixed right Volume Profile / POC</div>
       <div class="legendPill mono">Ctrl+Click = limit, Alt+Click = cancel, Shift+Drag = Y pan</div>
     </div>
 
@@ -1359,14 +1411,22 @@ input[type="color"]::-webkit-color-swatch{
       <div class="statGrid">
         <div class="stat"><div class="k">Last</div><div class="v" id="stLast">—</div></div>
         <div class="stat"><div class="k">Bid / Ask</div><div class="v" id="stBA">—</div></div>
-        <div class="stat"><div class="k">Net Pos</div><div class="v" id="stPos">0</div></div>
+        <div class="stat"><div class="k">Current Position</div><div class="v" id="stPos">FLAT</div></div>
+        <div class="stat"><div class="k">Pending Limits</div><div class="v" id="stPendingLimits">0</div></div>
         <div class="stat"><div class="k">Avg</div><div class="v" id="stAvg">—</div></div>
         <div class="stat"><div class="k">Regime</div><div class="v" id="stRegime">Balanced</div></div>
         <div class="stat"><div class="k">Delta</div><div class="v" id="stDelta">0.00</div></div>
         <div class="stat"><div class="k">Absorb</div><div class="v" id="stAbsorb">0.00</div></div>
         <div class="stat"><div class="k">uPnL</div><div class="v" id="stPnL">—</div></div>
+        <div class="stat"><div class="k">Realized</div><div class="v" id="stRealized">—</div></div>
+        <div class="stat"><div class="k">Mode</div><div class="v" id="stMode">Sandbox</div></div>
+        <div class="stat"><div class="k">Leverage</div><div class="v" id="stLeverage">1x</div></div>
+        <div class="stat"><div class="k">Equity</div><div class="v" id="stEquity">∞</div></div>
+        <div class="stat"><div class="k">Available</div><div class="v" id="stAvailable">∞</div></div>
+        <div class="stat"><div class="k">1 Contract Margin</div><div class="v" id="stContractCost">—</div></div>
         <div class="stat"><div class="k">Automation</div><div class="v" id="stDrip">Off</div></div>
         <div class="stat"><div class="k">Window</div><div class="v" id="stWin">—</div></div>
+        <div class="stat"><div class="k">Candle Close</div><div class="v" id="stCandleClose">—</div></div>
       </div>
 
     </div>
@@ -1384,7 +1444,7 @@ input[type="color"]::-webkit-color-swatch{
       <div class="helpItem"><b>G</b> toggles chart fullscreen. Use the Fullscreen button if the browser blocks the hotkey first.</div>
       <div class="helpItem"><b>Space</b> pause / resume. <b>Step</b> advances one simulated tick when paused.</div>
       <div class="helpItem"><b>F</b> toggles auto-follow.</div>
-      <div class="helpItem"><b>C</b> cancels all working limits. <b>X</b> flattens at market.</div>
+      <div class="helpItem"><b>C</b> cancels all working limits. To exit a position, send the opposite Buy/Sell order.</div>
       <div class="helpItem"><b>Ctrl+Z</b> undoes the latest drawing.</div>
       <div class="helpItem"><b>1-5</b> swap tools: cursor, trendline, rectangle, h-line, eraser.</div>
       <div class="helpItem"><b>Ctrl+Click</b> places a limit at the cursor. Left click buys, right click sells.</div>
@@ -1401,7 +1461,7 @@ input[type="color"]::-webkit-color-swatch{
   <div class="startCard">
     <div class="startTitle">Set the opening tape</div>
     <div class="startSub">
-      Pick the starting price, motion profile, and order-flow model. The engine is still a sandbox, but these controls make it feel closer to a deliberate intraday tape instead of random candles.
+      Pick the starting price, trading engine, motion profile, and order-flow model. Sandbox is unlimited. Dollar Account reveals cash and leverage controls. MNQ-style notional stays: 1 contract = current price × $2; leverage only reduces required margin.
     </div>
     <div class="grid">
       <label>Starting price
@@ -1412,6 +1472,25 @@ input[type="color"]::-webkit-color-swatch{
         <button class="chipBtn" data-start-price="18000">18000</button>
         <button class="chipBtn" data-start-price="19000">19000</button>
         <button class="chipBtn" data-start-price="20000">20000</button>
+      </div>
+      <div class="grid cols2">
+        <label>Trading regime
+          <select id="startAccountMode">
+            <option value="sandbox" selected>Sandbox / unlimited</option>
+            <option value="cash">Dollar Account / cash + leverage</option>
+          </select>
+        </label>
+        <div id="startAccountCashWrap" class="grid cols2">
+          <label>Account cash ($)
+            <input id="startAccountCash" type="number" step="100" min="0" value="50000" />
+          </label>
+          <label>Leverage (x)
+            <input id="startLeverage" type="number" step="0.5" min="1" max="100" value="1" />
+          </label>
+        </div>
+      </div>
+      <div class="subtlePanel tiny" id="startAccountPreview">
+        Sandbox mode: unlimited buying power. Dollar Account mode: max contracts are based on equity, MNQ notional, and selected leverage.
       </div>
       <label>Market movement
         <select id="startMotionProfile">
@@ -1429,7 +1508,7 @@ input[type="color"]::-webkit-color-swatch{
         </select>
       </label>
       <div class="subtlePanel tiny">
-        A live bar is no longer allowed to teleport endlessly. Strong flow can still stretch a candle, but the bar now respects a dynamic range cap based on volatility, pressure, and sweep state.
+        Dollar Account uses simple margin math: required margin per contract = (current price × $2) ÷ leverage. Real broker margin can be different, but this keeps quantity from becoming fake casino chips.
       </div>
       <div class="row wrap" style="margin-top:6px;">
         <button class="btn neutral" id="startMenuBegin">Start simulation</button>
@@ -1445,7 +1524,8 @@ input[type="color"]::-webkit-color-swatch{
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const lerp = (a, b, t) => a + (b - a) * t;
   const roundTo = (x, step) => Math.round(x / step) * step;
-  const STORAGE_KEY = "market-sandbox-layout-v2";
+  const STORAGE_KEY = "market-sandbox-layout-v10";
+  const CONTRACT_MULTIPLIER = 2;
 
   function decimalsFor(step){
     if (!Number.isFinite(step) || step <= 0) return 2;
@@ -1470,6 +1550,17 @@ input[type="color"]::-webkit-color-swatch{
     asia:      { name:"Asia", vol:2.6 }
   };
 
+  const AUTO_VOL_SEQUENCE = ["asia", "london", "premarket", "nyopen", "nykz", "premarket"];
+
+  function formatDuration(seconds) {
+    const total = Math.max(0, Math.ceil(Number(seconds) || 0));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+
   const MOTION_PROFILES = {
     tight: {
       name: "Tight / smooth",
@@ -1477,8 +1568,7 @@ input[type="color"]::-webkit-color-swatch{
       jumpProbMul: 0.12,
       jumpScaleMul: 0.18,
       maxVelMul: 0.30,
-      flowMul: 0.62,
-      barCap: { 1:5, 5:10, 15:18, 60:42, 180:66, 300:95, 900:160, 3600:320 }
+      flowMul: 0.62
     },
     realistic: {
       name: "Realistic NQ",
@@ -1486,8 +1576,7 @@ input[type="color"]::-webkit-color-swatch{
       jumpProbMul: 0.18,
       jumpScaleMul: 0.26,
       maxVelMul: 0.38,
-      flowMul: 0.70,
-      barCap: { 1:7, 5:13, 15:24, 60:56, 180:88, 300:120, 900:190, 3600:380 }
+      flowMul: 0.70
     },
     volatile: {
       name: "Volatile session",
@@ -1495,8 +1584,7 @@ input[type="color"]::-webkit-color-swatch{
       jumpProbMul: 0.26,
       jumpScaleMul: 0.38,
       maxVelMul: 0.50,
-      flowMul: 0.82,
-      barCap: { 1:10, 5:18, 15:34, 60:80, 180:125, 300:160, 900:250, 3600:520 }
+      flowMul: 0.82
     }
   };
 
@@ -1577,6 +1665,9 @@ const CHART_STYLE_PRESETS = {
     accent: "#7cc8ff",
     vwap: "#ffd166",
     ma: "#69b7ff",
+    vpBar: "#7cc8ff",
+    vpPoc: "#ffd166",
+    vpVa: "#7cc8ff",
     bgTop: "#07111d",
     bgBottom: "#0d1826",
     glow: 0.70,
@@ -1591,6 +1682,9 @@ const CHART_STYLE_PRESETS = {
     accent: "#64ffd5",
     vwap: "#ffe08a",
     ma: "#41d6ff",
+    vpBar: "#64ffd5",
+    vpPoc: "#ffe08a",
+    vpVa: "#64ffd5",
     bgTop: "#071714",
     bgBottom: "#0b1116",
     glow: 0.62,
@@ -1605,6 +1699,9 @@ const CHART_STYLE_PRESETS = {
     accent: "#ff7ca8",
     vwap: "#ffd17a",
     ma: "#ff9dbc",
+    vpBar: "#ff7ca8",
+    vpPoc: "#ffd17a",
+    vpVa: "#ff7ca8",
     bgTop: "#180910",
     bgBottom: "#0f0a12",
     glow: 0.78,
@@ -1619,6 +1716,9 @@ const CHART_STYLE_PRESETS = {
     accent: "#b7d9ff",
     vwap: "#fff0b2",
     ma: "#8ac7ff",
+    vpBar: "#b7d9ff",
+    vpPoc: "#fff0b2",
+    vpVa: "#b7d9ff",
     bgTop: "#0b1722",
     bgBottom: "#101722",
     glow: 0.48,
@@ -1633,6 +1733,9 @@ const CHART_STYLE_PRESETS = {
     accent: "#b7c2ce",
     vwap: "#f1f4f7",
     ma: "#c9d4df",
+    vpBar: "#b7c2ce",
+    vpPoc: "#f1f4f7",
+    vpVa: "#b7c2ce",
     bgTop: "#101316",
     bgBottom: "#0a0d10",
     glow: 0.24,
@@ -1672,6 +1775,9 @@ function applyStylePresetToInputs(key) {
   $("styleAccent").value = preset.accent;
   $("styleVwap").value = preset.vwap;
   $("styleMa").value = preset.ma;
+  $("styleVpBar").value = preset.vpBar || preset.accent;
+  $("styleVpPoc").value = preset.vpPoc || preset.vwap;
+  $("styleVpVa").value = preset.vpVa || preset.accent;
   $("styleBgTop").value = preset.bgTop;
   $("styleBgBottom").value = preset.bgBottom;
   $("styleGlow").value = String(preset.glow);
@@ -1691,11 +1797,13 @@ function syncChartStyleUi() {
   setBg("stylePreviewDown", style.down);
   setBg("stylePreviewAccent", style.accent);
   setBg("stylePreviewVwap", style.vwap);
+  setBg("stylePreviewVp", style.vpBar || style.accent);
   setBg("stylePreviewBg", `linear-gradient(180deg, ${style.bgTop}, ${style.bgBottom})`);
   setBg("legendUpDot", style.up);
   setBg("legendDownDot", style.down);
   setBg("legendVwapDot", style.vwap);
   setBg("legendMaDot", style.ma);
+  setBg("legendVpDot", style.vpBar || style.accent);
 }
 
 const canvas = $("chart");
@@ -1716,10 +1824,14 @@ const canvas = $("chart");
     p: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
     target: { vol:6.8, impact:8, simHzBase:75, fillProb:0.92 },
     volPresetKey: "nykz",
+    autoVol: { enabled:true, intervalSec:18 * 60, nextSwitchAt:0 },
     speedMul: 1,
     paused: false,
     started: false,
+    warmingUp: false,
     initialPrice: 17000,
+    contractMultiplier: CONTRACT_MULTIPLIER,
+    account: { mode:"sandbox", startingCash:50000, cash:50000, realized:0, leverage:1 },
     motionProfileKey: "realistic",
     orderFlowProfileKey: "realistic",
     flowIntensity: 0.9,
@@ -1768,7 +1880,7 @@ const canvas = $("chart");
     ticks: [],
     maxTicks: Infinity,
     maxBars: Infinity,
-    tfSec: 5,
+    tfSec: 60,
     bars: [],
     curBar: null,
     pos: 0,
@@ -1807,6 +1919,17 @@ const canvas = $("chart");
       end: 0,
       showOwnLimits: true
     },
+    volumeProfile: {
+      mode: "visible",
+      distribution: "range",
+      rows: 52,
+      width: 190,
+      opacity: 0.48,
+      showPoc: true,
+      showVa: true,
+      vaPercent: 0.70,
+      reserveGutter: true
+    },
     style: buildStylePreset(),
     y: { auto:true, scale:1.0, offset:0.0 },
     pointers: new Map(),
@@ -1817,7 +1940,7 @@ const canvas = $("chart");
     tool: "cursor",
     drawings: [],
     pending: null,
-    indicators: { vol:true, vwap:true, ma:true },
+    indicators: { vol:true, vwap:true, ma:true, vp:true },
     indCache: { tfSec:null, len:0, maN:0, vwap:[], ma:[] },
     toastUntil: 0
   };
@@ -1872,36 +1995,6 @@ const canvas = $("chart");
     return `${arrow} ${(d * 100).toFixed(1)}%`;
   }
 
-  function getBarRangeCap(tfSec = state.tfSec) {
-    const profile = getMotionProfile();
-    return profile.barCap[tfSec] ?? profile.barCap[5];
-  }
-
-  function getDynamicBarRangeCap(tfSec = state.tfSec, barKey = null) {
-    const base = getBarRangeCap(tfSec);
-    if (!Number.isFinite(base) || base <= 0) return base;
-
-    const flowBoost = Math.min(base * 0.90, Math.abs(state.sim.flow || 0) * state.tickSize * 2.4);
-    const velBoost = Math.min(base * 0.75, Math.abs(state.sim.vel || 0) * 5.5);
-    const pressureBoost = base * Math.min(0.55, Math.abs(state.orderFlow.pressure || 0) * 0.65);
-    const deltaBoost = base * Math.min(0.35, Math.abs(state.orderFlow.deltaEma || 0) * 0.55);
-    const sweepBoost = (state.sweep.event && state.curBar && state.curBar.key === (barKey ?? state.curBar.key))
-      ? Math.max(0, state.sweep.event.extraBarCap || 0)
-      : 0;
-
-    return base + flowBoost + velBoost + pressureBoost + deltaBoost + sweepBoost;
-  }
-
-  function clampCandidateToBarRange(candidatePrice, barKey) {
-    const activeBar = state.curBar && state.curBar.key === barKey ? state.curBar : null;
-    if (!activeBar) return candidatePrice;
-    const cap = getDynamicBarRangeCap(state.tfSec, barKey);
-    if (!Number.isFinite(cap) || cap <= 0) return candidatePrice;
-    const hi = activeBar.o + cap;
-    const lo = activeBar.o - cap;
-    return roundTo(clamp(candidatePrice, lo, hi), state.tickSize);
-  }
-
   function getMacroComposite() {
     return { bias:0, volBoost:0, flowBias:0, read:"Macro disabled." };
   }
@@ -1930,9 +2023,10 @@ const canvas = $("chart");
       "qty","slip","limitSide","limitPrice","ladderSide","ladderLevels","ladderStep","ladderStart","ladderQty",
       "dripSide","dripEvery","dripQty","dripMode","dripTouchTicks","dripZoneFrom","dripZoneTo",
       "lpQty","lpLevels","lpRefreshSec","lpOffsetTicks","lpStepTicks","exitPrice","exitMode","exitQty",
-      "manualSweepSide","manualSweepStrength","manualSweepLevel","volPreset","volValue","simHzBase","impact","tick","spread","futureBars",
-      "timeframe","visibleBars","biasMode","biasStrength","orderFlowProfile","flowIntensity","tool",
-      "stylePreset","styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleBgTop","styleBgBottom"
+      "manualSweepSide","manualSweepStrength","manualSweepLevel","volPreset","volValue","autoVolMinutes","simHzBase","impact","tick","spread","futureBars",
+      "startAccountMode","startAccountCash","startLeverage",
+      "timeframe","visibleBars","vpMode","vpDistribution","vpRows","vpWidth","vpOpacity","biasMode","biasStrength","orderFlowProfile","flowIntensity","tool",
+      "stylePreset","styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom"
     ];
     const values = {};
     ids.forEach((id) => {
@@ -1944,6 +2038,10 @@ const canvas = $("chart");
     values.indVol = $("indVol").checked;
     values.indVwap = $("indVwap").checked;
     values.indMa = $("indMa").checked;
+    values.indVp = $("indVp").checked;
+    values.autoVolEnabled = $("autoVolEnabled").checked;
+    values.vpPoc = $("vpPoc").checked;
+    values.vpVa = $("vpVa").checked;
     values.showOwnLimits = $("showOwnLimits").checked;
     values.styleCinematic = $("styleCinematic").checked;
     values.styleSpotlight = $("styleSpotlight").checked;
@@ -1968,6 +2066,10 @@ const canvas = $("chart");
     if (typeof values.indVol === "boolean") $("indVol").checked = values.indVol;
     if (typeof values.indVwap === "boolean") $("indVwap").checked = values.indVwap;
     if (typeof values.indMa === "boolean") $("indMa").checked = values.indMa;
+    if (typeof values.indVp === "boolean") $("indVp").checked = values.indVp;
+    if (typeof values.autoVolEnabled === "boolean") $("autoVolEnabled").checked = values.autoVolEnabled;
+    if (typeof values.vpPoc === "boolean") $("vpPoc").checked = values.vpPoc;
+    if (typeof values.vpVa === "boolean") $("vpVa").checked = values.vpVa;
     if (typeof values.showOwnLimits === "boolean") $("showOwnLimits").checked = values.showOwnLimits;
     if (typeof values.styleCinematic === "boolean") $("styleCinematic").checked = values.styleCinematic;
     if (typeof values.styleSpotlight === "boolean") $("styleSpotlight").checked = values.styleSpotlight;
@@ -1988,7 +2090,9 @@ const canvas = $("chart");
     }
 
     updateDripUI();
+    updateStartAccountPreview();
     applySettingsFromUI();
+    scheduleAutoVolSwitch(true);
     if (typeof values.lpOn === "boolean") {
       if (values.lpOn) startLiquidityProvider(true);
       else stopLiquidityProvider(null);
@@ -2041,6 +2145,8 @@ const canvas = $("chart");
 
     state.pos = 0;
     state.avg = null;
+    state.account.realized = 0;
+    state.account.cash = state.account.startingCash;
     state.limits = [];
     state.exitTargets = [];
     state.nextOrderId = 1;
@@ -2092,10 +2198,13 @@ const canvas = $("chart");
     const savedPaused = state.paused;
     const savedHz = state.p.simHzBase;
     state.paused = true;
+    state.warmingUp = true;
     state.p.simHzBase = warmHz;
     for (let i = 0; i < warmTicks; i++) stepSimulationOnce();
     state.p.simHzBase = savedHz;
+    state.warmingUp = false;
     state.paused = savedPaused;
+    scheduleAutoVolSwitch(true);
 
     rebuildBars(state.tfSec);
 
@@ -2114,14 +2223,27 @@ const canvas = $("chart");
   function startFromMenu(forceValue=null) {
     const raw = forceValue != null ? forceValue : $("startPriceInput").value;
     const price = setInitialPrice(raw);
+    const mode = ($("startAccountMode") && $("startAccountMode").value) || "sandbox";
+    const cashRaw = Number(($("startAccountCash") && $("startAccountCash").value) || state.account.startingCash || 50000);
+    const levRaw = Number(($("startLeverage") && $("startLeverage").value) || state.account.leverage || 1);
+    const cash = Math.max(0, Number.isFinite(cashRaw) ? cashRaw : 50000);
+    const leverage = clamp(Number.isFinite(levRaw) ? levRaw : 1, 1, 100);
+    state.account.mode = mode === "cash" ? "cash" : "sandbox";
+    state.account.startingCash = cash;
+    state.account.cash = cash;
+    state.account.realized = 0;
+    state.account.leverage = leverage;
     state.motionProfileKey = $("startMotionProfile").value || "realistic";
     state.orderFlowProfileKey = $("startOrderFlowProfile").value || "realistic";
     $("orderFlowProfile").value = state.orderFlowProfileKey;
     $("startPriceInput").value = price.toFixed(decimalsFor(state.tickSize));
+    if ($("startAccountCash")) $("startAccountCash").value = String(cash);
+    if ($("startLeverage")) $("startLeverage").value = String(leverage);
     bootstrapMarket();
     state.started = true;
     $("startOverlay").classList.remove("open");
-    toast(`Started at ${price.toFixed(decimalsFor(state.tickSize))} with ${getMotionProfile().name}`);
+    const modeText = isCashMode() ? `Dollar Account ${formatMoney(cash)} @ ${leverage.toFixed(1).replace(/\.0$/, "")}x` : "Sandbox";
+    toast(`Started ${modeText} at ${price.toFixed(decimalsFor(state.tickSize))}`);
   }
 
   function resizeCanvasToDisplaySize() {
@@ -2173,13 +2295,55 @@ const canvas = $("chart");
   document.addEventListener("webkitfullscreenchange", syncFullscreenUi);
 
 
-  function setVolPreset(key) {
+  function getVolPresetHeaderLabel() {
+    const preset = VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz;
+    if (state.autoVol && state.autoVol.enabled) return `Auto: ${preset.name}`;
+    return preset.name;
+  }
+
+  function setVolPreset(key, opts = {}) {
     const preset = VOL_PRESETS[key] || VOL_PRESETS.nykz;
-    state.volPresetKey = key;
-    $("hdrVol").textContent = preset.name;
+    const resolvedKey = VOL_PRESETS[key] ? key : "nykz";
+    state.volPresetKey = resolvedKey;
+    if ($("volPreset")) $("volPreset").value = resolvedKey;
+    if ($("hdrVol")) $("hdrVol").textContent = getVolPresetHeaderLabel();
     $("volValue").value = String(preset.vol);
     state.target.vol = preset.vol;
-    toast(`Vol preset: ${preset.name}`);
+    if (!opts.silent) toast(`${opts.auto ? "Auto vol" : "Vol preset"}: ${preset.name}`);
+  }
+
+  function getNextAutoVolKey() {
+    const current = state.volPresetKey || "nykz";
+    const idx = AUTO_VOL_SEQUENCE.indexOf(current);
+    if (idx >= 0) return AUTO_VOL_SEQUENCE[(idx + 1) % AUTO_VOL_SEQUENCE.length];
+    return AUTO_VOL_SEQUENCE[0];
+  }
+
+  function scheduleAutoVolSwitch(reset = false) {
+    if (!state.autoVol) return;
+    const base = clamp(Number(state.autoVol.intervalSec || 18 * 60), 60, 240 * 60);
+    const jitter = reset ? 1 : (0.82 + Math.random() * 0.36);
+    state.autoVol.nextSwitchAt = state.simTime + base * jitter;
+  }
+
+  function maybeAutoSwitchVolPreset() {
+    if (!state.autoVol || !state.autoVol.enabled || state.warmingUp || !state.started) return;
+    if (!Number.isFinite(state.autoVol.nextSwitchAt) || state.autoVol.nextSwitchAt <= 0) scheduleAutoVolSwitch(true);
+    if (state.simTime < state.autoVol.nextSwitchAt) return;
+    setVolPreset(getNextAutoVolKey(), { auto:true });
+    scheduleAutoVolSwitch();
+  }
+
+  function getCandleSecondsRemaining() {
+    const tf = Math.max(1, Number(state.tfSec || 60));
+    if (!state.started) return tf;
+    const elapsed = ((state.simTime % tf) + tf) % tf;
+    const remaining = tf - elapsed;
+    return remaining <= 0.001 ? tf : remaining;
+  }
+
+  function getCandleCountdownLabel() {
+    return formatDuration(getCandleSecondsRemaining());
   }
 
   function getBiasLabel() {
@@ -2194,9 +2358,115 @@ const canvas = $("chart");
     return { bid: mid - spread / 2, ask: mid + spread / 2 };
   }
 
+  function formatMoney(value, fallback = "—") {
+    if (value == null || !Number.isFinite(value)) return fallback;
+    const sign = value < 0 ? "-" : "";
+    const abs = Math.abs(value);
+    return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 })}`;
+  }
+
+  function isCashMode() {
+    return state.account.mode === "cash";
+  }
+
+  function getAccountLeverage() {
+    const lev = Number(state.account && state.account.leverage);
+    return clamp(Number.isFinite(lev) ? lev : 1, 1, 100);
+  }
+
+  function getLeverageLabel() {
+    const lev = getAccountLeverage();
+    return `${lev.toFixed(1).replace(/\.0$/, "")}x`;
+  }
+
+  function getContractNotional(price = state.sim.price) {
+    const p = Number.isFinite(price) ? price : state.sim.price;
+    return Math.max(0, p * state.contractMultiplier);
+  }
+
+  function getContractCost(price = state.sim.price) {
+    return getContractNotional(price) / getAccountLeverage();
+  }
+
   function computeUPnL() {
     if (!state.pos || state.avg == null) return null;
-    return (state.sim.price - state.avg) * state.pos;
+    return (state.sim.price - state.avg) * state.pos * state.contractMultiplier;
+  }
+
+  function computeEquity() {
+    return state.account.startingCash + state.account.realized + (computeUPnL() || 0);
+  }
+
+  function computeUsedNotional(price = state.sim.price) {
+    return Math.abs(state.pos) * getContractCost(price);
+  }
+
+  function computeCurrentAvailableBuyingPower() {
+    if (!isCashMode()) return Infinity;
+    return computeEquity() - computeUsedNotional(state.sim.price);
+  }
+
+  function computeReservedMargin(extraOrder = null) {
+    if (!isCashMode()) return 0;
+    let buyQty = 0;
+    let sellQty = 0;
+    let maxPrice = Math.max(state.tickSize, Number(state.sim.price) || state.initialPrice || 1);
+
+    const scanOrder = (o) => {
+      if (!o) return;
+      const qty = Math.max(0, Math.floor(Number(o.left ?? o.qty) || 0));
+      if (qty <= 0) return;
+      const price = Number(o.price);
+      if (Number.isFinite(price) && price > 0) maxPrice = Math.max(maxPrice, price);
+      if (o.side === "buy") buyQty += qty;
+      if (o.side === "sell") sellQty += qty;
+    };
+
+    for (const o of state.limits) scanOrder(o);
+    scanOrder(extraOrder);
+
+    const worstLongQty = Math.max(0, state.pos + buyQty);
+    const worstShortQty = Math.max(0, -state.pos + sellQty);
+    const worstQty = Math.max(worstLongQty, worstShortQty);
+    return worstQty * getContractCost(maxPrice);
+  }
+
+  function computeAvailableBuyingPower() {
+    if (!isCashMode()) return Infinity;
+    return computeEquity() - computeReservedMargin();
+  }
+
+  function canPlaceLimitOrder(side, qty, price) {
+    if (!isCashMode()) return true;
+    const q = Math.max(1, Math.floor(Number(qty) || 1));
+    const px = roundTo(Number(price) || state.sim.price, state.tickSize);
+    const reservedAfter = computeReservedMargin({ side, qty:q, left:q, price:px });
+    return reservedAfter <= computeEquity() + 1e-6;
+  }
+
+  function getAdditionalExposureCost(side, qty, price) {
+    const q = Math.max(0, Math.floor(Number(qty) || 0));
+    if (q <= 0) return 0;
+    const sign = side === "buy" ? 1 : -1;
+    const oldAbs = Math.abs(state.pos);
+    const newAbs = Math.abs(state.pos + sign * q);
+    const addedContracts = Math.max(0, newAbs - oldAbs);
+    return addedContracts * getContractCost(price);
+  }
+
+  function canAffordFill(side, qty, price) {
+    if (!isCashMode()) return true;
+    const addCost = getAdditionalExposureCost(side, qty, price);
+    if (addCost <= 0) return true;
+    const available = computeCurrentAvailableBuyingPower();
+    return available + 1e-6 >= addCost;
+  }
+
+  function getMaxOpenableContracts(price = state.sim.price) {
+    if (!isCashMode()) return Infinity;
+    const cost = getContractCost(price);
+    if (cost <= 0) return 0;
+    return Math.max(0, Math.floor(computeAvailableBuyingPower() / cost));
   }
 
   function clearBrackets(silent=false) {
@@ -2283,39 +2553,75 @@ const canvas = $("chart");
   }
 
   function applyFill(side, qty, fillPrice) {
+    qty = Math.max(1, Math.floor(Number(qty) || 1));
+    fillPrice = roundTo(Number(fillPrice) || state.sim.price, state.tickSize);
+
+    if (!canAffordFill(side, qty, fillPrice)) {
+      const cost = getContractCost(fillPrice);
+      toast(`Not enough margin. 1 contract margin ≈ ${formatMoney(cost)} at ${fillPrice.toFixed(decimalsFor(state.tickSize))}`);
+      return false;
+    }
+
     const oldPos = state.pos;
     const oldSign = Math.sign(oldPos);
-    const newPos = oldPos + (side === "buy" ? qty : -qty);
+    const fillSign = side === "buy" ? 1 : -1;
+    const oldAbs = Math.abs(oldPos);
+    const closingQty = oldSign !== 0 && oldSign !== fillSign ? Math.min(oldAbs, qty) : 0;
+
+    if (closingQty > 0 && state.avg != null) {
+      const realized = (fillPrice - state.avg) * closingQty * state.contractMultiplier * oldSign;
+      state.account.realized += realized;
+      state.account.cash = state.account.startingCash + state.account.realized;
+    }
+
+    const newPos = oldPos + fillSign * qty;
     const newSign = Math.sign(newPos);
 
-    if (oldPos === 0) state.avg = fillPrice;
-    else if (Math.sign(oldPos) === Math.sign(newPos) && newPos !== 0) {
-      const oldAbs = Math.abs(oldPos);
+    if (oldPos === 0) {
+      state.avg = fillPrice;
+    } else if (oldSign === fillSign) {
       const newAbs = Math.abs(newPos);
-      const addQty = newAbs - oldAbs;
-      if (addQty > 0) state.avg = (state.avg * oldAbs + fillPrice * addQty) / newAbs;
-    } else if (newPos === 0) state.avg = null;
-    else if (Math.sign(oldPos) !== Math.sign(newPos)) state.avg = fillPrice;
+      state.avg = (state.avg * oldAbs + fillPrice * qty) / Math.max(1, newAbs);
+    } else if (newPos === 0) {
+      state.avg = null;
+    } else if (newSign !== oldSign) {
+      state.avg = fillPrice;
+    }
 
     state.pos = newPos;
-    state.sim.flow += (side === "buy" ? qty : -qty);
+    state.sim.flow += fillSign * qty;
 
     if (newPos === 0 || (oldSign !== 0 && newSign !== 0 && oldSign !== newSign)) {
       clearBrackets(true);
       clearExitTargets(true);
     }
+
+    return true;
   }
 
   function marketOrder(side, qty, slipTicks) {
     const { bid, ask } = getBidAsk();
     const slip = slipTicks * state.tickSize;
     const fill = side === "buy" ? (ask + slip) : (bid - slip);
-    applyFill(side, qty, fill);
-    toast(`${side.toUpperCase()} MKT filled`);
+    const ok = applyFill(side, qty, fill);
+    if (ok) toast(`${side.toUpperCase()} MKT filled @ ${fill.toFixed(decimalsFor(state.tickSize))}`);
+    return ok;
   }
 
   function placeLimit(side, price, qty, meta = {}) {
     price = roundTo(price, state.tickSize);
+    qty = Math.max(1, Math.floor(Number(qty) || 1));
+    if (!Number.isFinite(price) || price <= 0) {
+      if (!meta.silent) toast("Enter a valid limit price");
+      return null;
+    }
+    if (!canPlaceLimitOrder(side, qty, price)) {
+      if (!meta.silent) {
+        const reservedAfter = computeReservedMargin({ side, qty, left:qty, price });
+        toast(`Limit rejected: not enough available. Required reserved margin ≈ ${formatMoney(reservedAfter)}`);
+      }
+      return null;
+    }
     const id = state.nextOrderId++;
     state.limits.push({
       id,
@@ -2328,6 +2634,7 @@ const canvas = $("chart");
       silent: !!meta.silent
     });
     if (!meta.silent) toast(`Limit placed (#${id})`);
+    return id;
   }
 
   function cancelOrder(id) {
@@ -2355,32 +2662,6 @@ const canvas = $("chart");
     const before = state.limits.length;
     state.limits = state.limits.filter((o) => o.source !== "lp");
     return before - state.limits.length;
-  }
-
-  function flatten() {
-    if (state.pos === 0) {
-      toast("Position already flat");
-      return;
-    }
-    const qty = Math.abs(state.pos);
-    const side = state.pos > 0 ? "sell" : "buy";
-    marketOrder(side, qty, getSlip());
-    clearBrackets(true);
-    clearExitTargets(true);
-    toast("Flatten done");
-  }
-
-  function partialFlatten(percent) {
-    if (state.pos === 0) {
-      toast("Position already flat");
-      return;
-    }
-    const abs = Math.abs(state.pos);
-    const pct = clamp(percent, 0, 1);
-    const qty = pct >= 1 ? abs : Math.max(1, Math.round(abs * pct));
-    const side = state.pos > 0 ? "sell" : "buy";
-    marketOrder(side, qty, getSlip());
-    toast(`Flatten ${Math.round(pct * 100)}% done`);
   }
 
   function placeLadder(side, start, levels, step, qtyPerLevel) {
@@ -2481,8 +2762,18 @@ const canvas = $("chart");
       const chunk = Math.max(1, Math.floor(Math.max(1, o.qty) * (0.35 + 0.55 * prob)));
       const fillQty = Math.min(o.left, chunk);
 
+      if (!canAffordFill(o.side, fillQty, o.price)) {
+        filledIds.push(o.id);
+        if (!o.silent) toast(`Limit skipped: cash too low for ${fillQty} contract(s)`);
+        continue;
+      }
+
       o.left -= fillQty;
-      applyFill(o.side, fillQty, o.price);
+      const ok = applyFill(o.side, fillQty, o.price);
+      if (!ok) {
+        filledIds.push(o.id);
+        continue;
+      }
       if (o.left <= 0) filledIds.push(o.id);
     }
 
@@ -2654,15 +2945,20 @@ const canvas = $("chart");
     const rect = canvas.getBoundingClientRect();
     const w = rect.width;
     const h = rect.height;
-    const leftPad = 74;
-    const rightPad = 14;
+    const leftPad = 88;
+    const rightPadBase = 14;
+    const vpCfg = state.volumeProfile || {};
+    const vpVisible = !!(state.indicators && state.indicators.vp);
+    const vpWidth = vpVisible ? clamp(Number(vpCfg.width || 190), 70, 360) : 0;
     const topPad = 10;
     const bottomPad = 26;
     const volPanelH = state.indicators.vol ? Math.max(78, Math.floor((h - topPad - bottomPad) * 0.22)) : 0;
     const volGap = volPanelH ? 8 : 0;
 
     const plotX0 = leftPad;
-    const plotX1 = w - rightPad;
+    const plotX1 = Math.max(plotX0 + 120, w - rightPadBase);
+    const vpX1 = vpVisible ? plotX1 : null;
+    const vpX0 = vpVisible ? Math.max(plotX0 + 32, vpX1 - vpWidth) : null;
     const priceY0 = topPad;
     const priceY1 = h - bottomPad - volPanelH - volGap;
 
@@ -2685,7 +2981,7 @@ const canvas = $("chart");
     const pricePerPx = (pr.max - pr.min) / Math.max(10, (priceY1 - priceY0));
 
     return {
-      w,h,leftPad,rightPad,topPad,bottomPad,plotX0,plotX1,priceY0,priceY1,volY0,volY1,volPanelH,
+      w,h,leftPad,rightPad:rightPadBase,topPad,bottomPad,plotX0,plotX1,vpX0,vpX1,priceY0,priceY1,volY0,volY1,volPanelH,
       stepPx,candleW,gap,yOf,posOfX,xOfPos,xCenterOfPos,pricePerPx
     };
   }
@@ -3518,14 +3814,12 @@ const canvas = $("chart");
     const distance = Math.abs(sideInfo.level - state.sim.price);
     const distanceTicks = Math.max(1, distance / state.tickSize);
     const distancePts = distance;
-    const baseCap = getBarRangeCap(state.tfSec);
-
     let sweepSec;
     let revertSec;
     let overshootPtsMin;
     let overshootPtsMax;
     let force;
-    let extraBarCap;
+    const extraBarCap = 0;
     let reachPolicy;
     let pulseMul = 0.15;
     let directMul = 0.04;
@@ -3536,7 +3830,6 @@ const canvas = $("chart");
       sweepSec = manualConfig.sweepBaseSec + distancePts * manualConfig.sweepPerPointSec;
       revertSec = manualConfig.revertBaseSec + distancePts * manualConfig.revertPerPointSec;
       force = (0.16 + pwr * 0.04 + Math.min(0.26, distancePts * 0.0024)) * state.tickSize * manualConfig.forceMul;
-      extraBarCap = Math.max(4 * state.tickSize, baseCap * (manualConfig.mode === "hard" ? 0.80 : 0.38));
       reachPolicy = manualConfig.reachPolicy;
       pulseMul = manualConfig.pulseMul;
       directMul = manualConfig.directMul;
@@ -3546,7 +3839,6 @@ const canvas = $("chart");
       sweepSec = 3.8 + Math.min(6.0, distancePts * 0.05);
       revertSec = 2.6 + Math.min(4.5, distancePts * 0.035);
       force = (0.10 + pwr * 0.014 + Math.min(0.08, distancePts * 0.0010)) * state.tickSize;
-      extraBarCap = Math.max(3 * state.tickSize, baseCap * 0.28);
       reachPolicy = "assist";
       pulseMul = 0.12;
       directMul = 0.03;
@@ -3756,6 +4048,262 @@ const canvas = $("chart");
 
     return dp;
   }
+
+
+
+function getVolumeProfileSourceBars(vwin) {
+  const cfg = state.volumeProfile || {};
+  const all = getAllBarsForRender();
+  if (cfg.mode === "session") return all.filter(Boolean);
+
+  const i0 = Math.max(0, Math.floor(vwin.start));
+  const i1 = Math.min(all.length - 1, Math.ceil(vwin.end));
+  const bars = [];
+  for (let i = i0; i <= i1; i++) {
+    if (all[i]) bars.push(all[i]);
+  }
+  return bars;
+}
+
+function computeVolumeProfile(vwin, pr) {
+  const cfg = state.volumeProfile || {};
+  const rows = clamp(Math.floor(cfg.rows || 52), 12, 120);
+  const min = Number(pr.min);
+  const max = Number(pr.max);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return null;
+
+  // Rebuilt VP: rows are fixed to the viewport itself. No tick-rounding expansion,
+  // no candle-range anchoring, and no reserved plot resizing. That removes the
+  // "floating" feel during pan/zoom because row Y positions are pure screen rows.
+  const step = (max - min) / rows;
+  const bins = Array.from({ length: rows }, (_, i) => ({
+    i,
+    low: min + i * step,
+    high: min + (i + 1) * step,
+    vol: 0,
+    up: 0,
+    down: 0
+  }));
+
+  const sourceBars = getVolumeProfileSourceBars(vwin).filter((b) => {
+    if (!b) return false;
+    const vol = Number(b.v || 0);
+    const lo = Math.min(Number(b.l), Number(b.h));
+    const hi = Math.max(Number(b.l), Number(b.h));
+    return Number.isFinite(vol) && vol > 0 && Number.isFinite(lo) && Number.isFinite(hi) && hi >= min && lo <= max;
+  });
+
+  if (!sourceBars.length) return null;
+
+  function binIndex(price) {
+    return clamp(Math.floor((price - min) / step), 0, bins.length - 1);
+  }
+
+  function addAtPrice(price, vol, isUp) {
+    if (!Number.isFinite(price) || !Number.isFinite(vol) || vol <= 0) return;
+    if (price < min || price > max) return;
+    const idx = binIndex(price);
+    bins[idx].vol += vol;
+    if (isUp) bins[idx].up += vol;
+    else bins[idx].down += vol;
+  }
+
+  function addToRange(low, high, vol, isUp) {
+    if (!Number.isFinite(vol) || vol <= 0) return;
+    const lo = Math.max(min, Math.min(low, high));
+    const hi = Math.min(max, Math.max(low, high));
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < min || lo > max) return;
+
+    if (hi <= lo || Math.abs(hi - lo) < Math.max(0.000001, step * 0.10)) {
+      addAtPrice((lo + hi) / 2, vol, isUp);
+      return;
+    }
+
+    const a = binIndex(lo);
+    const z = binIndex(hi);
+    let totalOverlap = 0;
+    const overlaps = [];
+    for (let j = a; j <= z; j++) {
+      const overlap = Math.max(0, Math.min(hi, bins[j].high) - Math.max(lo, bins[j].low));
+      if (overlap > 0) {
+        overlaps.push([j, overlap]);
+        totalOverlap += overlap;
+      }
+    }
+
+    if (totalOverlap <= 0) {
+      addAtPrice((lo + hi) / 2, vol, isUp);
+      return;
+    }
+
+    for (const [j, overlap] of overlaps) {
+      const share = vol * (overlap / totalOverlap);
+      bins[j].vol += share;
+      if (isUp) bins[j].up += share;
+      else bins[j].down += share;
+    }
+  }
+
+  for (const b of sourceBars) {
+    const rawVol = Number(b.v || 0);
+    if (!Number.isFinite(rawVol) || rawVol <= 0) continue;
+    const lo = Math.min(Number(b.l), Number(b.h));
+    const hi = Math.max(Number(b.l), Number(b.h));
+    const bodyLo = Math.min(Number(b.o), Number(b.c));
+    const bodyHi = Math.max(Number(b.o), Number(b.c));
+    const close = Number(b.c);
+    const isUp = Number(b.c) >= Number(b.o);
+    const mode = cfg.distribution || "range";
+
+    if (mode === "close") {
+      addAtPrice(close, rawVol, isUp);
+    } else if (mode === "body") {
+      addToRange(bodyLo, bodyHi, rawVol * 0.72, isUp);
+      addToRange(lo, hi, rawVol * 0.28, isUp);
+    } else {
+      addToRange(lo, hi, rawVol, isUp);
+    }
+  }
+
+  let maxVol = 0;
+  let totalVol = 0;
+  let pocIndex = -1;
+  for (const bin of bins) {
+    totalVol += bin.vol;
+    if (bin.vol > maxVol) {
+      maxVol = bin.vol;
+      pocIndex = bin.i;
+    }
+  }
+  if (maxVol <= 0 || pocIndex < 0) return null;
+
+  const targetVol = totalVol * clamp(Number(cfg.vaPercent || 0.70), 0.50, 0.95);
+  let vaLowIndex = pocIndex;
+  let vaHighIndex = pocIndex;
+  let accumulated = bins[pocIndex].vol;
+  while (accumulated < targetVol && (vaLowIndex > 0 || vaHighIndex < bins.length - 1)) {
+    const lowerVol = vaLowIndex > 0 ? bins[vaLowIndex - 1].vol : -1;
+    const upperVol = vaHighIndex < bins.length - 1 ? bins[vaHighIndex + 1].vol : -1;
+    if (upperVol >= lowerVol) {
+      vaHighIndex += 1;
+      accumulated += Math.max(0, upperVol);
+    } else {
+      vaLowIndex -= 1;
+      accumulated += Math.max(0, lowerVol);
+    }
+  }
+
+  return { bins, maxVol, totalVol, pocIndex, vaLowIndex, vaHighIndex, min, max, step, sourceCount: sourceBars.length };
+}
+
+function drawVolumeProfile(vwin, pr, geo, style, glow) {
+  if (!state.indicators.vp) return;
+  const profile = computeVolumeProfile(vwin, pr);
+  if (!profile || profile.maxVol <= 0) return;
+
+  const cfg = state.volumeProfile || {};
+  const opacity = clamp(Number(cfg.opacity || 0.48), 0.05, 0.95);
+  const vpWidth = clamp(Number(cfg.width || 190), 70, 360);
+
+  // Fixed screen-space panel. It does NOT resize the candle plot and does NOT use
+  // candle x-position math. This is the actual anti-floating rebuild.
+  const xRight = Math.max(geo.plotX0 + 90, geo.w - 16);
+  const xLeft = Math.max(geo.plotX0 + 8, xRight - vpWidth);
+  const actualWidth = Math.max(24, xRight - xLeft);
+  const yTopPanel = geo.priceY0;
+  const yBottomPanel = geo.priceY1;
+  const panelH = Math.max(10, yBottomPanel - yTopPanel);
+  const rowH = panelH / profile.bins.length;
+
+  const vpBarColor = style.vpBar || style.accent;
+  const vpPocColor = style.vpPoc || style.vwap;
+  const vpVaColor = style.vpVa || vpBarColor;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(xLeft - 8, yTopPanel, actualWidth + 12, panelH);
+  ctx.clip();
+
+  const panelGrad = ctx.createLinearGradient(xLeft, 0, xRight, 0);
+  panelGrad.addColorStop(0, rgba(style.bgBottom, opacity * 0.02));
+  panelGrad.addColorStop(0.48, rgba(style.bgBottom, opacity * 0.16));
+  panelGrad.addColorStop(1, rgba(style.bgBottom, opacity * 0.72));
+  ctx.fillStyle = panelGrad;
+  ctx.fillRect(xLeft - 8, yTopPanel, actualWidth + 12, panelH);
+
+  if (cfg.showVa && profile.vaLowIndex != null && profile.vaHighIndex != null) {
+    const vaTop = yBottomPanel - (profile.vaHighIndex + 1) * rowH;
+    const vaBottom = yBottomPanel - profile.vaLowIndex * rowH;
+    ctx.fillStyle = rgba(vpVaColor, opacity * 0.16);
+    ctx.fillRect(xLeft - 8, Math.min(vaTop, vaBottom), actualWidth + 12, Math.abs(vaBottom - vaTop));
+  }
+
+  ctx.strokeStyle = rgba(vpBarColor, opacity * 0.42);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(xLeft - 7.5, yTopPanel + 0.5, actualWidth + 11, panelH - 1);
+
+  for (const bin of profile.bins) {
+    if (bin.vol <= 0) continue;
+    const y = yBottomPanel - (bin.i + 1) * rowH + 0.5;
+    const h = Math.max(1.2, rowH - 1);
+    const normalized = Math.sqrt(bin.vol / profile.maxVol);
+    const barW = Math.max(1.5, normalized * actualWidth);
+    const startX = xRight - barW;
+    const downW = bin.vol > 0 ? barW * (bin.down / bin.vol) : 0;
+    const upW = Math.max(0, barW - downW);
+    const inVa = cfg.showVa && bin.i >= profile.vaLowIndex && bin.i <= profile.vaHighIndex;
+    const extra = inVa ? 0.12 : 0;
+
+    ctx.fillStyle = rgba(vpBarColor, Math.min(0.95, opacity * 0.68 + extra));
+    ctx.fillRect(startX, y, barW, h);
+
+    ctx.fillStyle = rgba(style.down, Math.min(0.50, opacity * 0.28));
+    ctx.fillRect(startX, y, downW, h);
+    ctx.fillStyle = rgba(style.up, Math.min(0.50, opacity * 0.28));
+    ctx.fillRect(startX + downW, y, upW, h);
+
+    if (bin.i === profile.pocIndex) {
+      ctx.fillStyle = rgba(vpPocColor, Math.min(0.98, opacity + 0.34));
+      ctx.fillRect(startX - 3, y, barW + 3, h);
+    }
+  }
+
+  if (cfg.showPoc && profile.pocIndex >= 0) {
+    const poc = profile.bins[profile.pocIndex];
+    const pocPrice = (poc.low + poc.high) / 2;
+    const y = yBottomPanel - (profile.pocIndex + 0.5) * rowH;
+
+    ctx.save();
+    ctx.strokeStyle = rgba(vpPocColor, 0.88 + glow * 0.06);
+    ctx.lineWidth = 1.7;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.moveTo(xLeft, y);
+    ctx.lineTo(xRight, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const label = `POC ${pocPrice.toFixed(decimalsFor(state.tickSize))}`;
+    ctx.font = `11px ${getComputedStyle(document.body).fontFamily}`;
+    const tw = ctx.measureText(label).width;
+    const labelX = clamp(xRight - tw - 8, xLeft + 4, xRight - tw - 6);
+    const labelY = clamp(y - 16, yTopPanel + 4, yBottomPanel - 16);
+    ctx.fillStyle = rgba(style.bgBottom, 0.76);
+    ctx.fillRect(labelX - 4, labelY - 1, tw + 8, 15);
+    ctx.fillStyle = rgba(vpPocColor, 0.96);
+    ctx.textBaseline = "top";
+    ctx.fillText(label, labelX, labelY);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = rgba(vpBarColor, 0.72);
+  ctx.font = `10px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.textBaseline = "top";
+  const modeLabel = cfg.mode === "session" ? "SESSION VP" : "VISIBLE VP";
+  const calcLabel = (cfg.distribution || "range").toUpperCase();
+  ctx.fillText(`${modeLabel} · ${calcLabel}`, xLeft + 4, yTopPanel + 5);
+  ctx.restore();
+}
 
 
 function drawChart() {
@@ -3993,6 +4541,8 @@ function drawChart() {
     ctx.stroke();
   }
 
+  drawVolumeProfile(vwin, pr, geo, style, glow);
+
   if (state.view.showOwnLimits) {
     for (const o of state.limits) {
       const y = geo.yOf(o.price);
@@ -4166,13 +4716,17 @@ function drawChart() {
   }
 
   const yLast = geo.yOf(state.sim.price);
+  const priceBadgeY = clamp(yLast, geo.priceY0 + 14, geo.priceY1 - 14);
   ctx.fillStyle = rgba(style.accent, 0.22 + glow * 0.04);
-  ctx.fillRect(0, yLast - 12, geo.leftPad, 24);
+  ctx.fillRect(0, priceBadgeY - 12, geo.leftPad, 24);
   ctx.strokeStyle = rgba(style.accent, 0.78);
   ctx.lineWidth = 1.2;
-  ctx.strokeRect(0.5, yLast - 11.5, geo.leftPad - 1, 23);
+  ctx.strokeRect(0.5, priceBadgeY - 11.5, geo.leftPad - 1, 23);
   ctx.fillStyle = axisText;
-  ctx.fillText(state.sim.price.toFixed(dec), 8, yLast);
+  ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.textBaseline = "middle";
+  ctx.fillText(state.sim.price.toFixed(dec), 8, priceBadgeY);
+  ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
 
   if (state.cross.on && state.cross.price != null) {
     const x = clamp(state.cross.x, geo.plotX0, geo.plotX1);
@@ -4201,16 +4755,41 @@ function drawChart() {
   $("stWin").textContent = `${state.view.follow ? "FOLLOW" : "FREE"} | ${vwin.start.toFixed(2)} -> ${vwin.end.toFixed(2)} | vis ${vwin.vis}`;
 }
 
+  function getPositionLabel() {
+    if (state.pos > 0) return `LONG ${state.pos}`;
+    if (state.pos < 0) return `SHORT ${Math.abs(state.pos)}`;
+    return "FLAT";
+  }
+
+  function getPendingOrdersLabel() {
+    if (!state.limits.length) return "0";
+    const buy = state.limits.filter((o) => o.side === "buy").reduce((a, o) => a + Math.max(0, o.left || 0), 0);
+    const sell = state.limits.filter((o) => o.side === "sell").reduce((a, o) => a + Math.max(0, o.left || 0), 0);
+    return `B ${buy} / S ${sell}`;
+  }
+
   function renderStats() {
     const { bid, ask } = getBidAsk();
     const upnl = computeUPnL();
     const dec = decimalsFor(state.tickSize);
 
+    const equity = computeEquity();
+    const available = computeAvailableBuyingPower();
+    const contractCost = getContractCost(state.sim.price);
+    const modeLabel = isCashMode() ? "Dollar" : "Sandbox";
+    const levLabel = isCashMode() ? getLeverageLabel() : "∞";
+
     $("hdrPrice").textContent = state.sim.price.toFixed(dec);
-    $("hdrPos").textContent = String(state.pos);
-    $("hdrPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
+    $("hdrPos").textContent = getPositionLabel();
+    $("hdrPnL").textContent = upnl == null ? "—" : formatMoney(upnl);
+    if ($("hdrAccountMode")) $("hdrAccountMode").textContent = modeLabel;
+    if ($("hdrLeverage")) $("hdrLeverage").textContent = levLabel;
+    if ($("hdrEquity")) $("hdrEquity").textContent = isCashMode() ? formatMoney(equity) : "∞";
+    if ($("hdrAvailable")) $("hdrAvailable").textContent = isCashMode() ? formatMoney(available) : "∞";
+    if ($("hdrContractCost")) $("hdrContractCost").textContent = isCashMode() ? formatMoney(contractCost) : "∞";
     $("hdrSpeed").textContent = state.speedMul.toFixed(1) + "x";
-    $("hdrVol").textContent = (VOL_PRESETS[state.volPresetKey] || VOL_PRESETS.nykz).name;
+    $("hdrVol").textContent = getVolPresetHeaderLabel();
+    if ($("topCandleTimer")) $("topCandleTimer").textContent = getCandleCountdownLabel();
     $("hdrBias").textContent = getBiasLabel();
     $("hdrRegime").textContent = getRegimeLabel();
     $("hdrDelta").textContent = getDeltaLabel();
@@ -4218,16 +4797,24 @@ function drawChart() {
 
     $("stLast").textContent = state.sim.price.toFixed(dec);
     $("stBA").textContent = `${bid.toFixed(dec)} / ${ask.toFixed(dec)}`;
-    $("stPos").textContent = String(state.pos);
+    $("stPos").textContent = getPositionLabel();
     $("stAvg").textContent = state.avg == null ? "—" : state.avg.toFixed(dec);
     $("stRegime").textContent = getRegimeLabel();
     $("stDelta").textContent = getDeltaLabel();
     $("stAbsorb").textContent = state.orderFlow.absorption.toFixed(2);
-    $("stPnL").textContent = upnl == null ? "—" : upnl.toFixed(2);
+    $("stPnL").textContent = upnl == null ? "—" : formatMoney(upnl);
+    if ($("stRealized")) $("stRealized").textContent = isCashMode() ? formatMoney(state.account.realized) : "—";
+    if ($("stMode")) $("stMode").textContent = modeLabel;
+    if ($("stLeverage")) $("stLeverage").textContent = levLabel;
+    if ($("stEquity")) $("stEquity").textContent = isCashMode() ? formatMoney(equity) : "∞";
+    if ($("stAvailable")) $("stAvailable").textContent = isCashMode() ? formatMoney(available) : "∞";
+    if ($("stPendingLimits")) $("stPendingLimits").textContent = getPendingOrdersLabel();
+    if ($("stContractCost")) $("stContractCost").textContent = isCashMode() ? formatMoney(contractCost) : "∞";
     const autoStates = [];
     if (state.drip.on) autoStates.push(`Drip ${state.drip.side.toUpperCase()} ${getDripModeLabel(state.drip.mode)}`);
     if (state.lp.on) autoStates.push(`LP ${state.lp.levels}x${state.lp.qtyEach}`);
     $("stDrip").textContent = autoStates.length ? autoStates.join(" | ") : "Off";
+    if ($("stCandleClose")) $("stCandleClose").textContent = getCandleCountdownLabel();
 
     if (performance.now() > state.toastUntil) $("toast").textContent = "Ready";
   }
@@ -4256,10 +4843,20 @@ function drawChart() {
     state.target.simHzBase = clamp(Number($("simHzBase").value || 75), 20, 200);
     state.target.impact = clamp(Number($("impact").value || 8), 0, 20);
     state.target.vol = clamp(Number($("volValue").value || state.target.vol), 1, 16);
+    state.autoVol.enabled = $("autoVolEnabled").checked;
+    state.autoVol.intervalSec = clamp(Number($("autoVolMinutes").value || 18), 1, 240) * 60;
 
     state.indicators.vol = $("indVol").checked;
     state.indicators.vwap = $("indVwap").checked;
     state.indicators.ma = $("indMa").checked;
+    state.indicators.vp = $("indVp").checked;
+    state.volumeProfile.mode = $("vpMode").value || "visible";
+    state.volumeProfile.distribution = $("vpDistribution").value || "range";
+    state.volumeProfile.rows = clamp(Math.floor(Number($("vpRows").value || 52)), 12, 120);
+    state.volumeProfile.width = clamp(Number($("vpWidth").value || 190), 70, 360);
+    state.volumeProfile.opacity = clamp(Number($("vpOpacity").value || 0.48), 0.05, 0.95);
+    state.volumeProfile.showPoc = $("vpPoc").checked;
+    state.volumeProfile.showVa = $("vpVa").checked;
 
     state.tool = $("tool").value;
     state.bias.mode = $("biasMode").value;
@@ -4279,6 +4876,9 @@ function drawChart() {
       accent: $("styleAccent").value || "#6ab5ff",
       vwap: $("styleVwap").value || "#ffcf5b",
       ma: $("styleMa").value || "#6ab5ff",
+      vpBar: $("styleVpBar").value || $("styleAccent").value || "#6ab5ff",
+      vpPoc: $("styleVpPoc").value || $("styleVwap").value || "#ffcf5b",
+      vpVa: $("styleVpVa").value || $("styleAccent").value || "#6ab5ff",
       bgTop: $("styleBgTop").value || "#07111d",
       bgBottom: $("styleBgBottom").value || "#0d1826",
       glow: clamp(Number($("styleGlow").value || 0.7), 0, 1.8),
@@ -4313,6 +4913,7 @@ function drawChart() {
     state.sim.flow *= state.sim.flowDecay;
     const dt = 1 / Math.max(20, state.p.simHzBase);
     state.simTime += dt;
+    maybeAutoSwitchVolPreset();
     decayMacroShock(dt);
     const shock = getMacroShock();
     const flowCore = updateOrderFlowCore(volKnob);
@@ -4366,10 +4967,8 @@ function drawChart() {
     const maxVel = (0.58 + 0.055 * volKnob) * (6.0 * state.tickSize) * motion.maxVelMul;
     state.sim.vel = clamp(state.sim.vel, -maxVel, maxVel);
 
-    const nextBarKey = barKeyForTime(state.simTime, state.tfSec);
     const prevPrice = state.sim.price;
-    let nextPrice = roundTo(state.sim.price + state.sim.vel, state.tickSize);
-    nextPrice = clampCandidateToBarRange(nextPrice, nextBarKey);
+    const nextPrice = roundTo(state.sim.price + state.sim.vel, state.tickSize);
     state.sim.price = nextPrice;
 
     detectLiquidityTake(prevPrice, state.sim.price);
@@ -4739,6 +5338,21 @@ function drawChart() {
     state.view.showOwnLimits = $("showOwnLimits").checked;
   });
 
+  $("indVpWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("indVp").checked = !$("indVp").checked;
+    state.indicators.vp = $("indVp").checked;
+  });
+
+  $("vpPocWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("vpPoc").checked = !$("vpPoc").checked;
+    state.volumeProfile.showPoc = $("vpPoc").checked;
+  });
+
+  $("vpVaWrap").addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") $("vpVa").checked = !$("vpVa").checked;
+    state.volumeProfile.showVa = $("vpVa").checked;
+  });
+
   $("tool").addEventListener("change", () => {
     setTool($("tool").value);
   });
@@ -4783,9 +5397,6 @@ function drawChart() {
   $("clearExitTargets").addEventListener("click", () => clearExitTargets());
   $("executeManualSweep").addEventListener("click", () => executeManualSweep($("manualSweepSide").value, $("manualSweepStrength").value));
   $("cancelAll").addEventListener("click", cancelAll);
-  $("flatten").addEventListener("click", flatten);
-  $("flatten50").addEventListener("click", () => partialFlatten(0.5));
-  $("flatten25").addEventListener("click", () => partialFlatten(0.25));
 
   $("pause").addEventListener("click", () => {
     state.paused = !state.paused;
@@ -4810,8 +5421,25 @@ function drawChart() {
     });
   });
 
-$("volPreset").addEventListener("change", () => setVolPreset($("volPreset").value));
-$("timeframe").addEventListener("change", () => rebuildBars(Math.max(1, Number($("timeframe").value || 5))));
+$("volPreset").addEventListener("change", () => {
+  setVolPreset($("volPreset").value);
+  scheduleAutoVolSwitch(true);
+});
+$("autoVolEnabled").addEventListener("change", () => {
+  applySettingsFromUI();
+  scheduleAutoVolSwitch(true);
+  toast($("autoVolEnabled").checked ? "Auto volume preset enabled" : "Auto volume preset disabled");
+});
+$("autoVolMinutes").addEventListener("input", () => {
+  applySettingsFromUI();
+  scheduleAutoVolSwitch(true);
+});
+$("autoVolWrap").addEventListener("click", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  $("autoVolEnabled").checked = !$("autoVolEnabled").checked;
+  $("autoVolEnabled").dispatchEvent(new Event("change"));
+});
+$("timeframe").addEventListener("change", () => rebuildBars(Math.max(1, Number($("timeframe").value || 60))));
 $("dripMode").addEventListener("change", updateDripUI);
 
 $("applyStylePreset").addEventListener("click", () => {
@@ -4843,7 +5471,7 @@ $("stylePreset").addEventListener("change", () => {
 });
 
 [
-  "styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleBgTop","styleBgBottom","styleCinematic","styleSpotlight"
+  "styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom","styleCinematic","styleSpotlight"
 ].forEach((id) => {
   const el = $(id);
   const evt = el.type === "checkbox" ? "change" : "input";
@@ -4868,7 +5496,7 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
 });
 
 [
-  "indVol","indVwap","indMa","biasMode","biasStrength","orderFlowProfile","flowIntensity"
+  "indVol","indVwap","indMa","indVp","vpMode","vpDistribution","vpRows","vpWidth","vpOpacity","vpPoc","vpVa","biasMode","biasStrength","orderFlowProfile","flowIntensity"
 ].forEach((id) => {
     const el = $(id);
     el.addEventListener("change", () => {
@@ -4952,7 +5580,6 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
   $("toggleFullscreen").addEventListener("click", toggleChartFullscreen);
   $("fsBuy").addEventListener("click", () => buyMarket());
   $("fsSell").addEventListener("click", () => sellMarket());
-  $("fsFlatten").addEventListener("click", () => flatten());
   $("fsExit").addEventListener("click", toggleChartFullscreen);
 
   window.addEventListener("keydown", (e) => {
@@ -4987,7 +5614,6 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
     }
     if (k === " ") { e.preventDefault(); $("pause").click(); return; }
     if (k === "c") { cancelAll(); return; }
-    if (k === "x") { flatten(); return; }
     if (k === "+") { setQty(getQty() + 1); return; }
     if (k === "-") { setQty(getQty() - 1); return; }
     if (k === "1") { $("tool").value = "cursor"; $("tool").dispatchEvent(new Event("change")); return; }
@@ -5004,6 +5630,31 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
     if (e.target === helpOverlay) helpOverlay.classList.remove("open");
   });
 
+  function updateStartAccountPreview() {
+    const preview = $("startAccountPreview");
+    if (!preview) return;
+    const rawPrice = Number($("startPriceInput").value || state.initialPrice || 17000);
+    const price = roundTo(Math.max(state.tickSize, Number.isFinite(rawPrice) ? rawPrice : state.initialPrice), state.tickSize);
+    const mode = ($("startAccountMode") && $("startAccountMode").value) || "sandbox";
+    const cashRaw = Number(($("startAccountCash") && $("startAccountCash").value) || state.account.startingCash || 50000);
+    const levRaw = Number(($("startLeverage") && $("startLeverage").value) || state.account.leverage || 1);
+    const cash = Math.max(0, Number.isFinite(cashRaw) ? cashRaw : 50000);
+    const leverage = clamp(Number.isFinite(levRaw) ? levRaw : 1, 1, 100);
+    const notional = getContractNotional(price);
+    const margin = notional / leverage;
+    const maxContracts = margin > 0 ? Math.floor(cash / margin) : 0;
+
+    if ($("startAccountCash")) $("startAccountCash").disabled = mode !== "cash";
+    if ($("startLeverage")) $("startLeverage").disabled = mode !== "cash";
+    if ($("startAccountCashWrap")) $("startAccountCashWrap").style.display = mode === "cash" ? "grid" : "none";
+
+    if (mode === "cash") {
+      preview.textContent = `Dollar Account: cash ${formatMoney(cash)} · leverage ${leverage.toFixed(1).replace(/\.0$/, "")}x · notional/contract ${formatMoney(notional)} · margin/contract ${formatMoney(margin)} · max fresh position ≈ ${maxContracts} contract(s).`;
+    } else {
+      preview.textContent = `Sandbox: unlimited buying power · MNQ reference: 1 contract notional ≈ ${formatMoney(notional)} at ${price.toFixed(decimalsFor(state.tickSize))}.`;
+    }
+  }
+
   function init() {
     $("limitPrice").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
     $("ladderStart").value = state.sim.price.toFixed(decimalsFor(state.tickSize));
@@ -5016,11 +5667,24 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
     $("lpRefreshSec").value = String(state.lp.refreshSec);
     $("lpOffsetTicks").value = String(state.lp.offsetTicks);
     $("lpStepTicks").value = String(state.lp.stepTicks);
+    $("vpMode").value = state.volumeProfile.mode;
+    $("vpDistribution").value = state.volumeProfile.distribution || "range";
+    $("vpRows").value = String(state.volumeProfile.rows);
+    $("vpWidth").value = String(state.volumeProfile.width);
+    $("vpOpacity").value = String(state.volumeProfile.opacity);
+    $("vpPoc").checked = state.volumeProfile.showPoc;
+    $("vpVa").checked = state.volumeProfile.showVa;
+    $("autoVolEnabled").checked = state.autoVol.enabled;
+    $("autoVolMinutes").value = String(Math.round(state.autoVol.intervalSec / 60));
 
     $("volPreset").value = state.volPresetKey;
     $("orderFlowProfile").value = state.orderFlowProfileKey;
     $("startOrderFlowProfile").value = state.orderFlowProfileKey;
     $("startMotionProfile").value = state.motionProfileKey;
+    if ($("startAccountMode")) $("startAccountMode").value = state.account.mode;
+    if ($("startAccountCash")) $("startAccountCash").value = String(state.account.startingCash);
+    if ($("startLeverage")) $("startLeverage").value = String(state.account.leverage);
+    $("timeframe").value = String(state.tfSec);
     $("tool").value = state.tool;
 
     applyStylePresetToInputs(state.style.preset || DEFAULT_STYLE_PRESET_KEY);
@@ -5041,10 +5705,19 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
 
     const startInput = $("startPriceInput");
     startInput.value = state.initialPrice.toFixed(decimalsFor(state.tickSize));
+    updateStartAccountPreview();
     document.querySelectorAll("[data-start-price]").forEach((btn) => {
       btn.addEventListener("click", () => {
         startInput.value = btn.dataset.startPrice;
+        updateStartAccountPreview();
       });
+    });
+
+    ["startPriceInput","startAccountMode","startAccountCash","startLeverage"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", updateStartAccountPreview);
+      el.addEventListener("change", updateStartAccountPreview);
     });
 
     $("startMenuBegin").addEventListener("click", () => startFromMenu());
@@ -5057,7 +5730,7 @@ $("styleSpotlightWrap").addEventListener("click", (e) => {
       if (e.target === $("startOverlay")) startInput.focus();
     });
 
-    toast("Choose starting price and movement");
+    toast("Choose engine and starting price");
   }
 
   let lastTs = performance.now();
