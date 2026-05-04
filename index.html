@@ -1524,6 +1524,17 @@ input[type="color"]::-webkit-color-swatch{
     asia:      { name:"Asia", vol:1.9 }
   };
 
+  // Realistic volume model. Separate from price volatility.
+  // v4: candle-target + carry model. It avoids all three bad states:
+  // 1) identical volume walls, 2) one stupid spike killing the scale, 3) empty/no-volume bars on low TF.
+  const VOLUME_SESSION_PROFILES = {
+    asia:      { baseMinVol:135,  noise:0.44, dryChance:0.28, hotChance:0.045, blockChance:0.010, blockMul:2.0, maxEvent:85,  chop:0.76 },
+    london:    { baseMinVol:470,  noise:0.42, dryChance:0.17, hotChance:0.075, blockChance:0.017, blockMul:2.45, maxEvent:170, chop:0.88 },
+    premarket: { baseMinVol:300,  noise:0.43, dryChance:0.22, hotChance:0.060, blockChance:0.014, blockMul:2.20, maxEvent:125, chop:0.82 },
+    nyopen:    { baseMinVol:1280, noise:0.46, dryChance:0.07, hotChance:0.135, blockChance:0.030, blockMul:3.15, maxEvent:360, chop:1.08 },
+    nykz:      { baseMinVol:820,  noise:0.44, dryChance:0.12, hotChance:0.105, blockChance:0.024, blockMul:2.85, maxEvent:260, chop:1.00 }
+  };
+
   const NQ_REALISM = {
     syntheticDaySeconds: 6.5 * 60 * 60,
     currentAtrPts: 455,
@@ -2323,6 +2334,7 @@ const canvas = $("chart");
     const preset = VOL_PRESETS[key] || VOL_PRESETS.nykz;
     const resolvedKey = VOL_PRESETS[key] ? key : "nykz";
     state.volPresetKey = resolvedKey;
+    state.volumeModel = null;
     if ($("volPreset")) $("volPreset").value = resolvedKey;
     if ($("hdrVol")) $("hdrVol").textContent = getVolPresetHeaderLabel();
     $("volValue").value = String(preset.vol);
@@ -2868,6 +2880,7 @@ const canvas = $("chart");
 
   function rebuildBars(tfSec) {
     state.tfSec = tfSec;
+    state.volumeModel = null;
     state.bars = [];
     state.curBar = null;
     state.indCache = { tfSec:null, len:0, maN:0, vwap:[], ma:[] };
@@ -4743,21 +4756,36 @@ function drawChart() {
     ctx.fillStyle = volGrad;
     ctx.fillRect(geo.plotX0, geo.volY0, plotW, geo.volY1 - geo.volY0);
 
-    let maxV = 1;
+    const visibleVols = [];
     for (let i = i0; i <= i1; i++) {
       if (i < 0 || i >= vwin.n) continue;
-      maxV = Math.max(maxV, vwin.all[i].v || 1);
+      const v = Number(vwin.all[i].v || 0);
+      if (Number.isFinite(v) && v > 0) visibleVols.push(v);
     }
+    visibleVols.sort((a, b) => a - b);
+    const pickQ = (q, fallback = 1) => visibleVols.length ? visibleVols[Math.floor((visibleVols.length - 1) * q)] : fallback;
+    const q50 = pickQ(0.50, 1);
+    const q80 = pickQ(0.80, q50);
+    const q92 = pickQ(0.92, q80);
+    const q97 = pickQ(0.97, q92);
+    const absMax = visibleVols.length ? visibleVols[visibleVols.length - 1] : 1;
+    // Display scale is percentile-based: clips stupid outliers, but does not flatten normal bars into a wall.
+    const robustMax = Math.max(1, q50 * 3.8, q80 * 2.35, q92 * 1.55, q97 * 1.18);
+    const maxV = Math.max(1, Math.min(Math.max(absMax, q50 * 1.2), robustMax));
+    const panelH = Math.max(8, geo.volY1 - geo.volY0 - 6);
 
     for (let i = i0; i <= i1; i++) {
       if (i < 0 || i >= vwin.n) continue;
       const b = vwin.all[i];
       const up = b.c >= b.o;
       const x = geo.xOfPos(i);
-      const vh = ((b.v || 1) / maxV) * (geo.volY1 - geo.volY0 - 6);
+      const rawRatio = clamp((b.v || 0) / maxV, 0, 1);
+      const ratio = Math.pow(rawRatio, 0.88);
+      const vh = rawRatio <= 0 ? 0 : Math.max(1, ratio * panelH);
       const y = geo.volY1 - vh;
-      ctx.fillStyle = up ? rgba(style.up, 0.20 + glow * 0.04) : rgba(style.down, 0.20 + glow * 0.04);
-      ctx.fillRect(x, y, geo.candleW, vh);
+      const alpha = 0.13 + ratio * 0.32 + glow * 0.035;
+      ctx.fillStyle = up ? rgba(style.up, alpha) : rgba(style.down, alpha);
+      if (vh > 0) ctx.fillRect(x, y, Math.max(1, geo.candleW), vh);
     }
 
     ctx.strokeStyle = axisSoft;
@@ -5127,6 +5155,133 @@ function drawChart() {
     state.p.simHzBase = lerp(state.p.simHzBase, state.target.simHzBase, t);
   }
 
+
+  function generateRealisticTickVolume(ctx = {}) {
+    const session = VOLUME_SESSION_PROFILES[state.volPresetKey] || VOLUME_SESSION_PROFILES.nykz;
+    const movedTicks = Math.max(0, Number(ctx.movedTicks || 0));
+    const volKnob = clamp(Number(ctx.volKnob || state.p.vol || 5.2), 1, 16);
+    const tape = ctx.tapeCore && ctx.tapeCore.tape ? ctx.tapeCore.tape : state.tape;
+    const shock = ctx.shock || { live:0 };
+    const flowCore = ctx.flowCore || { impulse:0 };
+
+    const simHz = Math.max(20, Number(state.p.simHzBase || 75));
+    const tfSec = Math.max(1, Number(state.tfSec || 60));
+    const ticksPerBar = Math.max(1, Math.round(simHz * tfSec));
+    const tfMin = tfSec / 60;
+
+    const vm = state.volumeModel || (state.volumeModel = {
+      barKey:null,
+      targetVol:0,
+      printedThisBar:0,
+      carry:0,
+      pulse:0,
+      wave:1,
+      ticksInBar:0,
+      lastPresetKey:state.volPresetKey
+    });
+
+    const key = barKeyForTime(state.simTime, state.tfSec);
+    const presetChanged = vm.lastPresetKey !== state.volPresetKey;
+
+    if (vm.barKey !== key || presetChanged) {
+      const phaseMul =
+        tape.phase === "impulse" ? 1.72 :
+        tape.phase === "trend" ? 1.30 :
+        tape.phase === "expansion" ? 1.42 :
+        tape.phase === "compression" ? 0.55 :
+        tape.phase === "balance" ? 0.78 : 1.00;
+
+      const prevWave = Number.isFinite(vm.wave) ? vm.wave : 1;
+      const waveKick = 0.78 + Math.random() * 0.48 + randn() * 0.10;
+      let wave = clamp(prevWave * 0.74 + waveKick * 0.26, 0.45, 1.85);
+      if (Math.random() < 0.045) wave = clamp(wave * (1.28 + Math.random() * 0.55), 0.45, 2.25);
+      if (Math.random() < 0.055) wave = clamp(wave * (0.46 + Math.random() * 0.28), 0.28, 2.25);
+
+      const dryCandle = Math.random() < Number(session.dryChance || 0.12);
+      const hotCandle = Math.random() < Number(session.hotChance || 0.08);
+      const logNoise = Math.exp(randn() * Number(session.noise || 0.44));
+      const shockMul = 1 + clamp(Number(shock.live || 0), 0, 1) * 0.92;
+      const pressureMul = 1 + Math.min(0.72, Math.abs(state.orderFlow.pressure || 0) * 0.18);
+      const knobMul = 0.58 + volKnob * 0.080;
+      const lowTfBoost = tfSec <= 5 ? 1.18 : tfSec <= 15 ? 1.08 : 1.00;
+
+      let target = Number(session.baseMinVol || 750) * Math.max(1 / 60, tfMin) * phaseMul * wave * logNoise * shockMul * pressureMul * knobMul * lowTfBoost;
+      if (dryCandle) target *= 0.38 + Math.random() * 0.22;
+      if (hotCandle) target *= 1.55 + Math.random() * 0.95;
+
+      const minTarget = Math.max(2, Number(session.baseMinVol || 750) * Math.max(1 / 60, tfMin) * 0.13);
+      const maxTarget = Math.max(minTarget + 1, Number(session.baseMinVol || 750) * Math.max(1 / 60, tfMin) * 5.8);
+      target = clamp(target, minTarget, maxTarget);
+
+      vm.barKey = key;
+      vm.lastPresetKey = state.volPresetKey;
+      vm.targetVol = target;
+      vm.printedThisBar = 0;
+      vm.carry = 0;
+      vm.pulse = hotCandle ? 0.50 + Math.random() * 0.70 : Math.max(0, (vm.pulse || 0) * 0.25);
+      vm.wave = wave;
+      vm.ticksInBar = 0;
+    }
+
+    const progress = clamp(((state.simTime % tfSec) / tfSec), 0, 1);
+    const remainingTicks = Math.max(1, ticksPerBar - (vm.ticksInBar || 0));
+    const remainingTarget = Math.max(0, (vm.targetVol || 0) - (vm.printedThisBar || 0));
+    const basePerTick = remainingTarget / remainingTicks;
+
+    const shockLive = clamp(Number(shock.live || 0), 0, 1);
+    const sweepLive = state.sweep && state.sweep.event ? 1 : 0;
+    const pressureAbs = Math.abs(state.orderFlow.pressure || 0);
+
+    const blockChance = Number(session.blockChance || 0.02) * (1 + shockLive * 1.2 + sweepLive * 2.0 + Math.min(1.2, Math.abs(flowCore.impulse || 0) * 0.22));
+    if (Math.random() < blockChance) vm.pulse = Math.max(vm.pulse || 0, 0.65 + Math.random() * 1.45);
+    vm.pulse = Math.max(0, (vm.pulse || 0) * 0.965 - 0.0035);
+
+    // Intrabar activity is intentionally uneven, but the carry makes sure volume never disappears.
+    const openClose = 0.86 + 0.24 * Math.cos((progress - 0.5) * Math.PI * 2);
+    const movementMul = movedTicks > 0 ? (1 + Math.min(1.05, movedTicks * 0.20)) : 0.78;
+    const impulseMul = 1 + Math.min(1.10, Math.abs(flowCore.impulse || 0) * 0.34);
+    const pulseMul = 1 + (vm.pulse || 0) * 0.72;
+    const pressureMul = 1 + Math.min(0.55, pressureAbs * 0.14);
+    const randomMul = Math.exp(randn() * 0.30) * (0.72 + Math.random() * 0.62);
+
+    let desired = basePerTick * openClose * movementMul * impulseMul * pulseMul * pressureMul * randomMul;
+
+    if (sweepLive) desired *= 1.35 + Math.random() * 0.55;
+    if (shockLive > 0.05) desired *= 1 + shockLive * (0.22 + Math.random() * 0.45);
+
+    if (Math.random() < blockChance * 0.55) {
+      desired += basePerTick * (2.4 + Math.random() * Number(session.blockMul || 2.7));
+    }
+
+    vm.carry = (vm.carry || 0) + Math.max(0, desired);
+
+    const activeGateBase = tfSec <= 5 ? 0.64 : tfSec <= 15 ? 0.46 : 0.30;
+    const gate = clamp(activeGateBase + movedTicks * 0.09 + (vm.pulse || 0) * 0.10 + pressureAbs * 0.035 + shockLive * 0.08 + sweepLive * 0.12, 0.18, 0.92);
+
+    let print = 0;
+    if (vm.carry >= 1 && (Math.random() < gate || progress > 0.92 || remainingTicks <= 3)) {
+      const chunkLimit = Math.max(1, basePerTick * (2.0 + (vm.pulse || 0) * 1.8) + Number(session.maxEvent || 250) * 0.045);
+      const wanted = 1 + Math.random() * Math.min(vm.carry, chunkLimit);
+      print = Math.floor(Math.min(vm.carry, wanted));
+      vm.carry -= print;
+    }
+
+    // End-of-bar catch-up prevents missing/empty volume after aggressive gating.
+    if ((progress > 0.965 || remainingTicks <= 2) && vm.carry > 0.5) {
+      const catchup = Math.floor(Math.min(vm.carry, Math.max(1, remainingTarget * 0.55)));
+      print += catchup;
+      vm.carry -= catchup;
+    }
+
+    const perTickCap = Math.max(4, Number(session.maxEvent || 250) * (tfSec <= 5 ? 0.42 : 1.00));
+    print = Math.floor(clamp(print, 0, perTickCap));
+
+    vm.printedThisBar = (vm.printedThisBar || 0) + print;
+    vm.ticksInBar = (vm.ticksInBar || 0) + 1;
+
+    return print;
+  }
+
   function stepSimulationOnce() {
     smoothParams();
 
@@ -5215,12 +5370,14 @@ function drawChart() {
     detectLiquidityTake(prevPrice, state.sim.price);
 
     const movedTicks = Math.abs(state.sim.price - prevPrice) / Math.max(1e-6, state.tickSize);
-    const tickVol =
-      1 +
-      Math.floor(movedTicks * (1.4 + volKnob * 0.08)) +
-      Math.floor(Math.random() * 3) +
-      Math.floor(Math.abs(state.sim.flow) * 0.13) +
-      (tapeCore.tape.phase === "impulse" ? Math.floor(2 + Math.random() * 5) : 0);
+    const tickVol = generateRealisticTickVolume({
+      movedTicks,
+      volKnob,
+      tapeCore,
+      flowCore,
+      shock,
+      motion
+    });
 
     state.tickCount++;
     state.ticks.push({ t:state.simTime, p:state.sim.price, v:tickVol });
