@@ -1114,6 +1114,11 @@ input[type="color"]::-webkit-color-swatch{
       <label>Vignette<input id="styleVignette" type="number" min="0" max="1" step="0.05" value="0.46" /></label>
     </div>
 
+    <div class="grid cols2">
+      <label>Candle body opacity<input id="styleBodyOpacity" type="number" min="0" max="1" step="0.05" value="0.30" /></label>
+      <label>Candle border opacity<input id="styleBorderOpacity" type="number" min="0" max="1" step="0.05" value="0.96" /></label>
+    </div>
+
     <div class="grid cols3">
       <label>Up candle<input id="styleUp" type="color" value="#4df0b2" /></label>
       <label>Down candle<input id="styleDown" type="color" value="#ff6b88" /></label>
@@ -1153,7 +1158,7 @@ input[type="color"]::-webkit-color-swatch{
     </div>
 
     <div class="stylePreview">
-      This one actually changes the canvas render: candle colors, line colors, chart background, grid strength, glow, and the cinematic overlay.
+      This changes the canvas render: candle colors, body/border opacity, line colors, chart background, grid strength, glow, and the cinematic overlay.
       <div class="styleSwatchRow">
         <span class="styleSwatch" id="stylePreviewUp"></span>
         <span class="styleSwatch" id="stylePreviewDown"></span>
@@ -1682,6 +1687,8 @@ const CHART_STYLE_PRESETS = {
     glow: 0.70,
     gridAlpha: 0.38,
     vignette: 0.46,
+    bodyOpacity: 0.30,
+    borderOpacity: 0.96,
     cinematic: true,
     spotlight: true
   },
@@ -1699,6 +1706,8 @@ const CHART_STYLE_PRESETS = {
     glow: 0.62,
     gridAlpha: 0.34,
     vignette: 0.52,
+    bodyOpacity: 0.30,
+    borderOpacity: 0.96,
     cinematic: true,
     spotlight: true
   },
@@ -1716,6 +1725,8 @@ const CHART_STYLE_PRESETS = {
     glow: 0.78,
     gridAlpha: 0.30,
     vignette: 0.58,
+    bodyOpacity: 0.30,
+    borderOpacity: 0.96,
     cinematic: true,
     spotlight: true
   },
@@ -1733,6 +1744,8 @@ const CHART_STYLE_PRESETS = {
     glow: 0.48,
     gridAlpha: 0.24,
     vignette: 0.34,
+    bodyOpacity: 0.30,
+    borderOpacity: 0.96,
     cinematic: false,
     spotlight: true
   },
@@ -1750,6 +1763,8 @@ const CHART_STYLE_PRESETS = {
     glow: 0.24,
     gridAlpha: 0.22,
     vignette: 0.42,
+    bodyOpacity: 0.30,
+    borderOpacity: 0.96,
     cinematic: false,
     spotlight: false
   }
@@ -1792,6 +1807,8 @@ function applyStylePresetToInputs(key) {
   $("styleGlow").value = String(preset.glow);
   $("styleGridAlpha").value = String(preset.gridAlpha);
   $("styleVignette").value = String(preset.vignette);
+  $("styleBodyOpacity").value = String(preset.bodyOpacity ?? 0.30);
+  $("styleBorderOpacity").value = String(preset.borderOpacity ?? 0.96);
   $("styleCinematic").checked = !!preset.cinematic;
   $("styleSpotlight").checked = !!preset.spotlight;
 }
@@ -2052,7 +2069,7 @@ const canvas = $("chart");
       "manualSweepSide","manualSweepStrength","manualSweepLevel","volPreset","volValue","autoVolMinutes","simHzBase","impact","tick","spread","futureBars",
       "startAccountMode","startAccountCash","startLeverage",
       "timeframe","visibleBars","vpMode","vpDistribution","vpRows","vpWidth","vpOpacity","biasMode","biasStrength","orderFlowProfile","flowIntensity","tool",
-      "stylePreset","styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom"
+      "stylePreset","styleGlow","styleGridAlpha","styleVignette","styleBodyOpacity","styleBorderOpacity","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom"
     ];
     const values = {};
     ids.forEach((id) => {
@@ -4571,10 +4588,12 @@ function drawChart() {
   const gridStrong = rgba(style.accent, 0.12 + gridAlpha * 0.34);
   const gridWeak = rgba(style.accent, 0.06 + gridAlpha * 0.16);
   const bandFill = rgba(style.accent, 0.06 + glow * 0.03);
-  const upStroke = rgba(style.up, 0.96);
-  const downStroke = rgba(style.down, 0.96);
-  const upFill = rgba(style.up, 0.24 + glow * 0.06);
-  const downFill = rgba(style.down, 0.24 + glow * 0.06);
+  const candleBodyOpacity = clamp(Number(style.bodyOpacity ?? 0.30), 0, 1);
+  const candleBorderOpacity = clamp(Number(style.borderOpacity ?? 0.96), 0, 1);
+  const upStroke = rgba(style.up, candleBorderOpacity);
+  const downStroke = rgba(style.down, candleBorderOpacity);
+  const upFill = rgba(style.up, candleBodyOpacity);
+  const downFill = rgba(style.down, candleBodyOpacity);
   const maStroke = rgba(style.ma, 0.92);
   const vwapStroke = rgba(style.vwap, 0.92);
 
@@ -4701,22 +4720,36 @@ function drawChart() {
     const yC = geo.yOf(b.c);
     const up = b.c >= b.o;
 
+    const bodyTop = Math.min(yO, yC);
+    const bodyH = Math.max(2, Math.abs(yC - yO));
+    const bodyBottom = bodyTop + bodyH;
+    const wickX = x + geo.candleW / 2;
+
     ctx.save();
-    ctx.strokeStyle = up ? upStroke : downStroke;
-    ctx.fillStyle = up ? upFill : downFill;
     ctx.lineWidth = 1.5;
     ctx.shadowBlur = 8 + glow * 10;
     ctx.shadowColor = up ? rgba(style.up, 0.30 + glow * 0.10) : rgba(style.down, 0.30 + glow * 0.10);
 
-    ctx.beginPath();
-    ctx.moveTo(x + geo.candleW / 2, yH);
-    ctx.lineTo(x + geo.candleW / 2, yL);
-    ctx.stroke();
+    // Wick is drawn ONLY outside the candle body, so no ugly vertical line inside transparent bodies.
+    if (candleBorderOpacity > 0.001) {
+      ctx.strokeStyle = up ? upStroke : downStroke;
+      ctx.beginPath();
+      ctx.moveTo(wickX, yH);
+      ctx.lineTo(wickX, bodyTop);
+      ctx.moveTo(wickX, bodyBottom);
+      ctx.lineTo(wickX, yL);
+      ctx.stroke();
+    }
 
-    const bodyTop = Math.min(yO, yC);
-    const bodyH = Math.max(2, Math.abs(yC - yO));
-    ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
-    ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
+    if (candleBodyOpacity > 0.001) {
+      ctx.fillStyle = up ? upFill : downFill;
+      ctx.fillRect(x, bodyTop, geo.candleW, bodyH);
+    }
+
+    if (candleBorderOpacity > 0.001) {
+      ctx.strokeStyle = up ? upStroke : downStroke;
+      ctx.strokeRect(x, bodyTop, geo.candleW, bodyH);
+    }
     ctx.restore();
   }
 
@@ -5139,6 +5172,8 @@ function drawChart() {
       glow: clamp(Number($("styleGlow").value || 0.7), 0, 1.8),
       gridAlpha: clamp(Number($("styleGridAlpha").value || 0.38), 0.05, 1.2),
       vignette: clamp(Number($("styleVignette").value || 0.46), 0, 1),
+      bodyOpacity: clamp(Number($("styleBodyOpacity").value ?? 0.30), 0, 1),
+      borderOpacity: clamp(Number($("styleBorderOpacity").value ?? 0.96), 0, 1),
       cinematic: $("styleCinematic").checked,
       spotlight: $("styleSpotlight").checked
     };
@@ -5872,7 +5907,7 @@ $("stylePreset").addEventListener("change", () => {
 });
 
 [
-  "styleGlow","styleGridAlpha","styleVignette","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom","styleCinematic","styleSpotlight"
+  "styleGlow","styleGridAlpha","styleVignette","styleBodyOpacity","styleBorderOpacity","styleUp","styleDown","styleAccent","styleVwap","styleMa","styleVpBar","styleVpPoc","styleVpVa","styleBgTop","styleBgBottom","styleCinematic","styleSpotlight"
 ].forEach((id) => {
   const el = $(id);
   const evt = el.type === "checkbox" ? "change" : "input";
