@@ -1,919 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>TOEFL / IELTS Mobile Practice Test</title>
-
-  <style>
-    :root{
-      --bg:#eef2f7;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#667085;
-      --border:#d0d5dd;
-      --blue:#2563eb;
-      --blue2:#1e40af;
-      --green:#16a34a;
-      --red:#dc2626;
-      --dark:#0f172a;
-      --soft:#f8fafc;
-      --shadow:0 12px 30px rgba(15,23,42,.08);
-    }
-
-    *{box-sizing:border-box}
-
-    html{scroll-behavior:smooth}
-
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      line-height:1.45;
-    }
-
-    .app{
-      max-width:1080px;
-      margin:0 auto;
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-    }
-
-    header{
-      position:sticky;
-      top:0;
-      z-index:99;
-      background:linear-gradient(135deg,#0f172a,#111827);
-      color:#fff;
-      padding:10px 14px 12px;
-      box-shadow:0 6px 18px rgba(0,0,0,.18);
-    }
-
-    .top{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-
-    .brand{
-      font-size:15px;
-      font-weight:850;
-      letter-spacing:.2px;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      border-radius:999px;
-      padding:7px 10px;
-      background:rgba(255,255,255,.12);
-      font-size:13px;
-      font-weight:800;
-      white-space:nowrap;
-    }
-
-    .timer{
-      background:#fff;
-      color:#0f172a;
-      min-width:78px;
-    }
-
-    .bar{
-      height:7px;
-      width:100%;
-      background:rgba(255,255,255,.18);
-      border-radius:999px;
-      overflow:hidden;
-      margin-top:10px;
-    }
-
-    .bar-fill{
-      height:100%;
-      width:0%;
-      background:#60a5fa;
-      transition:.2s;
-    }
-
-    main{
-      padding:14px;
-      flex:1;
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      margin-bottom:14px;
-    }
-
-    h1,h2,h3{line-height:1.15}
-
-    h1{
-      font-size:25px;
-      margin:0 0 10px;
-    }
-
-    h2{
-      font-size:20px;
-      margin:0 0 10px;
-    }
-
-    p{margin:0 0 12px}
-
-    .muted{color:var(--muted)}
-
-    .small{font-size:13px}
-
-    .grid{
-      display:grid;
-      gap:12px;
-    }
-
-    .stats{
-      display:grid;
-      gap:10px;
-      margin:14px 0;
-    }
-
-    .stat{
-      border:1px solid var(--border);
-      background:var(--soft);
-      border-radius:14px;
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .btn{
-      width:100%;
-      border:0;
-      border-radius:14px;
-      padding:14px 15px;
-      background:var(--blue);
-      color:#fff;
-      font-size:16px;
-      font-weight:850;
-      cursor:pointer;
-      transition:.15s;
-      user-select:none;
-    }
-
-    .btn:hover{background:var(--blue2)}
-
-    .btn.secondary{
-      background:#fff;
-      color:var(--blue);
-      border:1px solid var(--blue);
-    }
-
-    .btn.danger{background:var(--red)}
-
-    .btn-row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:12px;
-    }
-
-    .hidden{display:none!important}
-
-    .mode-card{
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px;
-      background:#fff;
-      cursor:pointer;
-      transition:.15s;
-    }
-
-    .mode-card:hover{
-      border-color:var(--blue);
-      transform:translateY(-1px);
-    }
-
-    .mode-card b{
-      display:block;
-      font-size:16px;
-      margin-bottom:5px;
-    }
-
-    .section-chip{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:6px 9px;
-      border-radius:999px;
-      background:#eef2ff;
-      color:#1e40af;
-      font-weight:850;
-      font-size:12px;
-      margin-bottom:10px;
-    }
-
-    .test-layout{
-      display:grid;
-      gap:14px;
-    }
-
-    .passage{
-      max-height:43vh;
-      overflow:auto;
-      padding-right:6px;
-      font-size:15.8px;
-      line-height:1.72;
-    }
-
-    .passage p{margin-bottom:14px}
-
-    .question-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-
-    .qnum{
-      color:var(--muted);
-      font-weight:850;
-      font-size:13px;
-    }
-
-    .qtype{
-      color:#475467;
-      background:#f2f4f7;
-      padding:5px 8px;
-      border-radius:999px;
-      font-weight:800;
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    .qtext{
-      font-size:18px;
-      font-weight:850;
-      line-height:1.35;
-      margin-bottom:12px;
-    }
-
-    .options{
-      display:grid;
-      gap:10px;
-    }
-
-    .option{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:13px;
-      background:#fff;
-      cursor:pointer;
-      user-select:none;
-    }
-
-    .option input{
-      transform:scale(1.12);
-      margin-top:3px;
-    }
-
-    .option.selected{
-      border-color:var(--blue);
-      background:#eff6ff;
-    }
-
-    .option.correctReview{
-      border-color:#86efac;
-      background:#f0fdf4;
-    }
-
-    .option.wrongReview{
-      border-color:#fca5a5;
-      background:#fef2f2;
-    }
-
-    .nav-grid{
-      display:grid;
-      grid-template-columns:repeat(8,1fr);
-      gap:6px;
-      margin-top:13px;
-    }
-
-    .nav-item{
-      border:1px solid var(--border);
-      background:#fff;
-      color:#111827;
-      border-radius:10px;
-      padding:8px 0;
-      font-weight:850;
-      cursor:pointer;
-    }
-
-    .nav-item.answered{
-      background:#dcfce7;
-      border-color:#86efac;
-    }
-
-    .nav-item.active{
-      background:var(--blue);
-      border-color:var(--blue);
-      color:#fff;
-    }
-
-    .audio-panel{
-      border:1px solid var(--border);
-      background:linear-gradient(180deg,#f8fafc,#fff);
-      border-radius:16px;
-      padding:14px;
-    }
-
-    .audio-title{
-      font-weight:900;
-      margin-bottom:4px;
-    }
-
-    .audio-controls{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-
-    .select{
-      width:100%;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:12px;
-      font-size:14px;
-      background:#fff;
-      color:#111827;
-    }
-
-    .notice{
-      background:#fffbeb;
-      border:1px solid #fde68a;
-      color:#92400e;
-      border-radius:14px;
-      padding:12px;
-      font-size:14px;
-      margin-top:10px;
-    }
-
-    .score{
-      font-size:52px;
-      font-weight:950;
-      text-align:center;
-      color:var(--blue);
-      margin:10px 0;
-      letter-spacing:-1px;
-    }
-
-    .score-grid{
-      display:grid;
-      gap:10px;
-      margin-top:14px;
-    }
-
-    .review-item{
-      border-top:1px solid var(--border);
-      padding:15px 0;
-    }
-
-    .good{color:var(--green);font-weight:850}
-    .bad{color:var(--red);font-weight:850}
-
-    .answer-note{
-      color:#475467;
-      background:#f8fafc;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:11px;
-      margin-top:10px;
-      font-size:14px;
-    }
-
-    details{
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px;
-      background:#fff;
-      margin-top:10px;
-    }
-
-    summary{
-      font-weight:850;
-      cursor:pointer;
-    }
-
-    .lock-text{
-      filter:blur(4px);
-      user-select:none;
-      pointer-events:none;
-      max-height:140px;
-      overflow:hidden;
-    }
-
-    @media(min-width:820px){
-      .test-layout{
-        grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
-        align-items:start;
-      }
-
-      .passage{max-height:72vh}
-
-      .grid.three{grid-template-columns:repeat(3,1fr)}
-      .score-grid{grid-template-columns:repeat(3,1fr)}
-      .stats{grid-template-columns:repeat(3,1fr)}
-    }
-
-    @media(max-width:480px){
-      main{padding:10px}
-      header{padding-left:10px;padding-right:10px}
-      .brand{font-size:13px}
-      .pill{font-size:12px;padding:6px 8px}
-      .card{padding:14px;border-radius:16px}
-      h1{font-size:22px}
-      h2{font-size:18px}
-      .qtext{font-size:17px}
-      .passage{font-size:15px;max-height:38vh}
-      .nav-grid{grid-template-columns:repeat(6,1fr)}
-      .btn-row,.audio-controls{grid-template-columns:1fr}
-      .score{font-size:44px}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEFL / IELTS Real Practice Test</title>
+
+<style>
+:root{
+  --bg:#eef2f7;--card:#fff;--text:#111827;--muted:#667085;
+  --border:#d0d5dd;--blue:#2563eb;--blue2:#1e40af;
+  --green:#16a34a;--red:#dc2626;--soft:#f8fafc;--dark:#0f172a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+.app{max-width:1100px;margin:0 auto;min-height:100vh}
+header{
+  position:sticky;top:0;z-index:99;background:#0f172a;color:white;
+  padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.2)
+}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{font-weight:900;font-size:15px}
+.timer{
+  background:white;color:#0f172a;border-radius:999px;
+  padding:7px 11px;font-weight:900;min-width:80px;text-align:center
+}
+.sub{font-size:12px;color:#cbd5e1;margin-top:3px}
+.progress{height:7px;background:rgba(255,255,255,.18);border-radius:999px;margin-top:10px;overflow:hidden}
+.progress div{height:100%;width:0;background:#60a5fa;transition:.2s}
+main{padding:14px}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:18px;margin-bottom:14px;box-shadow:0 10px 28px rgba(15,23,42,.08)
+}
+h1{font-size:25px;margin:0 0 10px}
+h2{font-size:20px;margin:0 0 10px}
+p{line-height:1.6;margin:0 0 13px}
+.muted{color:var(--muted)}
+.grid{display:grid;gap:12px}
+.stats{display:grid;gap:10px;margin:14px 0}
+.stat{
+  background:var(--soft);border:1px solid var(--border);border-radius:14px;
+  padding:12px;display:flex;justify-content:space-between;gap:10px
+}
+.mode{
+  border:1px solid var(--border);border-radius:16px;padding:14px;background:white;
+  cursor:pointer;transition:.15s
+}
+.mode:hover{border-color:var(--blue);transform:translateY(-1px)}
+.mode b{display:block;margin-bottom:5px}
+.btn{
+  width:100%;border:0;border-radius:14px;padding:14px 15px;
+  background:var(--blue);color:white;font-weight:900;font-size:16px;cursor:pointer
+}
+.btn:hover{background:var(--blue2)}
+.btn.secondary{background:white;color:var(--blue);border:1px solid var(--blue)}
+.btn.danger{background:var(--red)}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.hidden{display:none!important}
+.layout{display:grid;gap:14px}
+.chip{
+  display:inline-block;background:#eef2ff;color:#1e40af;font-weight:900;
+  border-radius:999px;padding:6px 10px;font-size:12px;margin-bottom:10px
+}
+.passage{
+  max-height:42vh;overflow:auto;padding-right:6px;
+  font-size:15.8px;line-height:1.75
+}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}
+.qnum{font-size:13px;color:var(--muted);font-weight:900}
+.qtype{font-size:12px;background:#f2f4f7;color:#475467;border-radius:999px;padding:5px 8px;font-weight:900}
+.qtext{font-size:18px;font-weight:900;line-height:1.35;margin-bottom:12px}
+.options{display:grid;gap:10px}
+.option{
+  border:1px solid var(--border);border-radius:14px;padding:13px;background:white;
+  display:flex;gap:10px;align-items:flex-start;cursor:pointer;line-height:1.45
+}
+.option input{margin-top:4px;transform:scale(1.1)}
+.option.selected{border-color:var(--blue);background:#eff6ff}
+.option.correct{border-color:#86efac;background:#f0fdf4}
+.option.wrong{border-color:#fca5a5;background:#fef2f2}
+.nav{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:13px}
+.nav button{
+  border:1px solid var(--border);background:white;border-radius:10px;
+  padding:8px 0;font-weight:900;cursor:pointer
+}
+.nav button.answered{background:#dcfce7;border-color:#86efac}
+.nav button.active{background:var(--blue);border-color:var(--blue);color:white}
+.audioBox{
+  border:1px solid var(--border);background:linear-gradient(180deg,#f8fafc,#fff);
+  border-radius:16px;padding:14px
+}
+.notice{
+  background:#fffbeb;border:1px solid #fde68a;color:#92400e;
+  border-radius:14px;padding:12px;font-size:14px;margin-top:10px
+}
+.fileInput{
+  width:100%;border:1px solid var(--border);border-radius:12px;
+  padding:11px;background:white;margin-top:10px
+}
+.locked{
+  filter:blur(4px);user-select:none;pointer-events:none;
+  max-height:130px;overflow:hidden
+}
+details{
+  border:1px solid var(--border);border-radius:14px;padding:12px;background:white;margin-top:10px
+}
+summary{font-weight:900;cursor:pointer}
+.score{
+  font-size:52px;text-align:center;font-weight:950;color:var(--blue);margin:10px 0
+}
+.reviewItem{border-top:1px solid var(--border);padding:15px 0}
+.good{color:var(--green);font-weight:900}
+.bad{color:var(--red);font-weight:900}
+.note{
+  background:#f8fafc;border:1px solid var(--border);border-radius:12px;
+  padding:11px;margin-top:10px;font-size:14px;color:#475467
+}
+@media(min-width:820px){
+  .layout{grid-template-columns:1.05fr .95fr;align-items:start}
+  .passage{max-height:72vh}
+  .three{grid-template-columns:repeat(3,1fr)}
+  .stats{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  main{padding:10px}
+  .card{padding:14px;border-radius:16px}
+  h1{font-size:22px}
+  h2{font-size:18px}
+  .qtext{font-size:17px}
+  .passage{font-size:15px;max-height:38vh}
+  .nav{grid-template-columns:repeat(6,1fr)}
+  .btn-row{grid-template-columns:1fr}
+  .score{font-size:44px}
+}
+</style>
 </head>
 
 <body>
 <div class="app">
-  <header>
-    <div class="top">
-      <div>
-        <div class="brand">TOEFL / IELTS Mobile Test</div>
-        <div class="small" id="sectionLabel">Ready</div>
-      </div>
-      <div class="pill timer" id="timer">--:--</div>
+
+<header>
+  <div class="top">
+    <div>
+      <div class="brand">TOEFL / IELTS Real Test</div>
+      <div class="sub" id="sectionLabel">Ready</div>
     </div>
-    <div class="bar">
-      <div class="bar-fill" id="progressFill"></div>
+    <div class="timer" id="timer">--:--</div>
+  </div>
+  <div class="progress"><div id="progressFill"></div></div>
+</header>
+
+<main>
+
+<section id="startScreen" class="card">
+  <h1>Reading + Listening Practice</h1>
+  <p class="muted">
+    Realistic TOEFL/IELTS style test. Reading has academic passages. Listening uses real MP3 files,
+    not browser robot voices.
+  </p>
+
+  <div class="stats">
+    <div class="stat"><span>Reading</span><b>4 texts / 24 questions</b></div>
+    <div class="stat"><span>Listening</span><b>3 audios / 17 questions</b></div>
+    <div class="stat"><span>Score</span><b>0–30</b></div>
+  </div>
+
+  <div class="grid three">
+    <div class="mode" onclick="startMode('full')">
+      <b>Full Test</b>
+      <span class="muted">Reading + Listening</span>
     </div>
-  </header>
+    <div class="mode" onclick="startMode('reading')">
+      <b>Reading Only</b>
+      <span class="muted">4 academic texts</span>
+    </div>
+    <div class="mode" onclick="startMode('listening')">
+      <b>Listening Only</b>
+      <span class="muted">3 real-audio tasks</span>
+    </div>
+  </div>
 
-  <main>
-    <section id="startScreen" class="card">
-      <h1>Realistic Reading + Listening Practice</h1>
-      <p class="muted">
-        Harder TOEFL/IELTS-style passages, academic vocabulary, inference questions,
-        detail questions, rhetorical-purpose questions, and a listening section with voice playback.
-      </p>
+  <div class="notice">
+    Put audio files here:
+    <br><b>audio/listening1.mp3</b>
+    <br><b>audio/listening2.mp3</b>
+    <br><b>audio/listening3.mp3</b>
+    <br><br>
+    Or upload MP3 manually inside the listening section.
+  </div>
+</section>
 
-      <div class="stats">
-        <div class="stat"><span>Reading</span><b>4 texts / 24 questions</b></div>
-        <div class="stat"><span>Listening</span><b>3 audios / 17 questions</b></div>
-        <div class="stat"><span>Final score</span><b>0–30</b></div>
-      </div>
+<section id="testScreen" class="hidden">
+  <div class="layout">
+    <div class="card">
+      <div class="chip" id="itemChip">Reading</div>
+      <h2 id="itemTitle"></h2>
 
-      <div class="grid three">
-        <div class="mode-card" onclick="startMode('full')">
-          <b>Full Test</b>
-          <span class="muted small">Reading + Listening. Best for real practice.</span>
+      <div id="readingPassage" class="passage"></div>
+
+      <div id="listeningPanel" class="audioBox hidden">
+        <h3 id="audioTitle"></h3>
+        <p class="muted" id="audioSubtitle"></p>
+
+        <audio id="audioPlayer" controls preload="metadata" style="width:100%;margin-top:10px"></audio>
+
+        <div class="btn-row">
+          <button class="btn" onclick="playAudio()">▶ Play Audio</button>
+          <button class="btn secondary" onclick="stopAudio()">Stop</button>
         </div>
 
-        <div class="mode-card" onclick="startMode('reading')">
-          <b>Reading Only</b>
-          <span class="muted small">4 serious academic texts.</span>
+        <input class="fileInput" type="file" accept="audio/*" onchange="uploadAudio(event)">
+
+        <div class="notice" id="audioNotice">
+          Use real MP3. Transcript is locked until review.
         </div>
 
-        <div class="mode-card" onclick="startMode('listening')">
-          <b>Listening Only</b>
-          <span class="muted small">Conversation + lectures.</span>
-        </div>
+        <details>
+          <summary>Transcript locked</summary>
+          <div id="lockedTranscript" class="locked"></div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="qhead">
+        <div class="qnum" id="questionNumber"></div>
+        <div class="qtype" id="questionType"></div>
       </div>
 
-      <div class="notice">
-        For better listening audio: on iPhone, choose a high-quality English voice in the voice selector.
-        For true human-like audio, use MP3 files from ElevenLabs or another TTS and connect them in code.
-      </div>
-    </section>
-
-    <section id="testScreen" class="hidden">
-      <div class="test-layout">
-        <div class="card" id="leftCard">
-          <div class="section-chip" id="itemChip">Reading</div>
-          <h2 id="itemTitle"></h2>
-
-          <div id="readingPassage" class="passage"></div>
-
-          <div id="listeningPanel" class="audio-panel hidden">
-            <div class="audio-title" id="audioTitle"></div>
-            <p class="muted small" id="audioSubtitle"></p>
-
-            <select class="select" id="voiceSelect"></select>
-
-            <div class="audio-controls">
-              <button class="btn" id="playBtn" onclick="playListening()">▶ Play</button>
-              <button class="btn secondary" onclick="stopListening()">Stop</button>
-            </div>
-
-            <div class="notice">
-              In a real test you answer from memory. The transcript is locked until review.
-            </div>
-
-            <details>
-              <summary>Transcript locked</summary>
-              <div id="lockedTranscript" class="lock-text"></div>
-            </details>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="question-head">
-            <div class="qnum" id="questionNumber"></div>
-            <div class="qtype" id="questionType"></div>
-          </div>
-
-          <div class="qtext" id="questionText"></div>
-          <div class="options" id="options"></div>
-
-          <div class="btn-row">
-            <button class="btn secondary" onclick="prevQuestion()">Previous</button>
-            <button class="btn" onclick="nextQuestion()">Next</button>
-          </div>
-
-          <button class="btn danger" style="margin-top:10px" onclick="finishTest(false)">
-            Finish Test
-          </button>
-
-          <div class="nav-grid" id="questionNav"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="resultScreen" class="card hidden">
-      <h1>Your Result</h1>
-      <p class="muted">Score is scaled into a TOEFL-style 0–30 result.</p>
-
-      <div class="score" id="finalScore">0 / 30</div>
-
-      <div class="score-grid">
-        <div class="stat"><span>Reading</span><b id="readingScore">--</b></div>
-        <div class="stat"><span>Listening</span><b id="listeningScore">--</b></div>
-        <div class="stat"><span>Accuracy</span><b id="accuracy">--</b></div>
-      </div>
-
-      <div class="stats">
-        <div class="stat"><span>Correct</span><b id="correctCount">0</b></div>
-        <div class="stat"><span>Total</span><b id="totalCount">0</b></div>
-        <div class="stat"><span>Level estimate</span><b id="levelText">--</b></div>
-      </div>
+      <div class="qtext" id="questionText"></div>
+      <div class="options" id="options"></div>
 
       <div class="btn-row">
-        <button class="btn" onclick="restart()">Restart</button>
-        <button class="btn secondary" onclick="toggleReview()">Show / Hide Review</button>
+        <button class="btn secondary" onclick="prevQuestion()">Previous</button>
+        <button class="btn" onclick="nextQuestion()">Next</button>
       </div>
 
-      <div id="reviewBox" class="hidden"></div>
-    </section>
-  </main>
+      <button class="btn danger" style="margin-top:10px" onclick="finishTest(false)">Finish Test</button>
+
+      <div class="nav" id="questionNav"></div>
+    </div>
+  </div>
+</section>
+
+<section id="resultScreen" class="card hidden">
+  <h1>Your Result</h1>
+  <p class="muted">Scaled into a TOEFL-style 0–30 score.</p>
+
+  <div class="score" id="finalScore">0 / 30</div>
+
+  <div class="stats">
+    <div class="stat"><span>Reading</span><b id="readingScore">--</b></div>
+    <div class="stat"><span>Listening</span><b id="listeningScore">--</b></div>
+    <div class="stat"><span>Accuracy</span><b id="accuracy">--</b></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span>Correct</span><b id="correctCount">0</b></div>
+    <div class="stat"><span>Total</span><b id="totalCount">0</b></div>
+    <div class="stat"><span>Level</span><b id="levelText">--</b></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="restart()">Restart</button>
+    <button class="btn secondary" onclick="toggleReview()">Show / Hide Review</button>
+  </div>
+
+  <div id="reviewBox" class="hidden"></div>
+</section>
+
+</main>
 </div>
 
 <script>
 const readingPassages = [
   {
-    section:"reading",
     title:"Passage 1: The Collapse of Urban Rivers",
     text:`
       <p>For much of the twentieth century, rivers passing through large cities were treated less as living systems than as convenient channels for waste removal and flood control. Concrete embankments, underground pipes, and industrial discharge transformed many urban waterways into narrow, polluted corridors. These interventions solved certain immediate problems, but they also removed wetlands, reduced biodiversity, and separated residents from natural spaces that had once shaped local economies and culture.</p>
-
       <p>In recent decades, however, a different philosophy has gained influence among urban planners. Instead of forcing rivers into rigid channels, many cities now attempt to restore floodplains, reintroduce native vegetation, and create public access along riverbanks. Such projects are often described as environmental improvements, yet their social consequences are more complicated. Cleaner rivers can raise property values and attract investment, but the same improvements may also push lower-income residents out of neighborhoods they helped sustain.</p>
-
       <p>The difficulty, then, is not simply technical. A successful river restoration project requires engineers, ecologists, local governments, and residents to negotiate competing priorities. If ecological renewal becomes only a tool for real-estate development, the project may improve the river while damaging the community around it. If, on the other hand, restoration includes affordable housing policies and community participation, the river can become both a healthier ecosystem and a shared civic space.</p>
     `,
     questions:[
-      {
-        type:"Main Idea",
-        q:"What is the main purpose of the passage?",
-        options:[
-          "To argue that urban river restoration should consider both environmental and social effects",
-          "To prove that concrete channels are always the safest form of flood control",
-          "To describe why industrial cities developed beside rivers",
-          "To compare rural rivers with rivers in modern cities"
-        ],
-        answer:0,
-        note:"The passage balances ecological restoration with social consequences."
-      },
-      {
-        type:"Vocabulary",
-        q:"The word “interventions” in paragraph 1 is closest in meaning to:",
-        options:["natural habitats","deliberate actions","historical records","public disagreements"],
-        answer:1,
-        note:"The word refers to human actions like embankments and pipes."
-      },
-      {
-        type:"Detail",
-        q:"According to paragraph 2, one possible negative result of river restoration is that:",
-        options:[
-          "native vegetation may disappear completely",
-          "industrial discharge usually increases",
-          "property values may rise and displace some residents",
-          "cities become unable to attract investment"
-        ],
-        answer:2,
-        note:"The passage mentions rising property values pushing lower-income residents out."
-      },
-      {
-        type:"Inference",
-        q:"What can be inferred about the author’s attitude toward river restoration?",
-        options:[
-          "The author supports it only when it is planned responsibly",
-          "The author believes it should be stopped in all cities",
-          "The author thinks it has no economic effects",
-          "The author considers it less important than highway construction"
-        ],
-        answer:0,
-        note:"The author is not anti-restoration, but warns it must include community planning."
-      },
-      {
-        type:"Rhetorical Purpose",
-        q:"Why does the author mention affordable housing policies?",
-        options:[
-          "To show that river projects may need social protections to be fair",
-          "To explain why rivers cause housing shortages",
-          "To argue that ecology and housing are unrelated",
-          "To criticize all forms of public housing"
-        ],
-        answer:0,
-        note:"Affordable housing is given as part of responsible restoration."
-      },
-      {
-        type:"Sentence Function",
-        q:"Which sentence best expresses the central warning of the final paragraph?",
-        options:[
-          "Ecological improvement can fail socially if it serves only development interests.",
-          "Rivers should always be kept underground.",
-          "Engineers should make all decisions without local input.",
-          "Public spaces are less important than private investment."
-        ],
-        answer:0,
-        note:"The key warning is that environmental success can come with social harm."
-      }
+      {type:"Main Idea",q:"What is the main purpose of the passage?",options:["To argue that urban river restoration should consider both environmental and social effects","To prove that concrete channels are always the safest form of flood control","To describe why industrial cities developed beside rivers","To compare rural rivers with rivers in modern cities"],answer:0,note:"The whole passage balances ecological restoration with social consequences."},
+      {type:"Vocabulary",q:"The word “interventions” in paragraph 1 is closest in meaning to:",options:["natural habitats","deliberate actions","historical records","public disagreements"],answer:1,note:"The word refers to human actions like embankments and pipes."},
+      {type:"Detail",q:"According to paragraph 2, one possible negative result of river restoration is that:",options:["native vegetation may disappear completely","industrial discharge usually increases","property values may rise and displace some residents","cities become unable to attract investment"],answer:2,note:"The passage mentions rising property values pushing lower-income residents out."},
+      {type:"Inference",q:"What can be inferred about the author’s attitude toward river restoration?",options:["The author supports it only when it is planned responsibly","The author believes it should be stopped in all cities","The author thinks it has no economic effects","The author considers it less important than highway construction"],answer:0,note:"The author supports restoration, but only with responsible planning."},
+      {type:"Purpose",q:"Why does the author mention affordable housing policies?",options:["To show that river projects may need social protections to be fair","To explain why rivers cause housing shortages","To argue that ecology and housing are unrelated","To criticize all forms of public housing"],answer:0,note:"Affordable housing is presented as part of fair restoration."},
+      {type:"Sentence Meaning",q:"Which sentence best expresses the central warning of the final paragraph?",options:["Ecological improvement can fail socially if it serves only development interests.","Rivers should always be kept underground.","Engineers should make all decisions without local input.","Public spaces are less important than private investment."],answer:0,note:"The warning is that environmental success can still create social harm."}
     ]
   },
 
   {
-    section:"reading",
     title:"Passage 2: Memory and the Reconstruction of Experience",
     text:`
       <p>Memory is often imagined as a mental archive in which experiences are stored and later retrieved unchanged. Cognitive research has shown, however, that remembering is an active process. Each time a person recalls an event, the memory may be slightly altered by current beliefs, emotions, or information learned after the event occurred. This does not mean that memory is useless; rather, it suggests that memory is adaptive rather than mechanically exact.</p>
-
       <p>One reason memory is flexible is that the brain must organize enormous amounts of information efficiently. Instead of preserving every detail, it tends to store patterns, meanings, and emotional significance. This allows people to learn from experience without becoming overwhelmed by irrelevant data. The cost of this efficiency is that details can be filled in later, sometimes inaccurately, when a person tries to reconstruct what happened.</p>
-
       <p>This reconstructive quality has important implications beyond psychology laboratories. In legal contexts, eyewitness testimony may be sincere but still unreliable. In education, students may remember the general idea of a lesson while forgetting the exact explanation. In personal relationships, people may disagree about a shared event not because one person is lying, but because each has reconstructed the event through a different emotional lens.</p>
     `,
     questions:[
-      {
-        type:"Main Idea",
-        q:"Which statement best summarizes the passage?",
-        options:[
-          "Memory is an active reconstruction shaped by meaning, emotion, and later information",
-          "Memory works like a perfect recording device",
-          "Eyewitnesses usually lie when they make mistakes",
-          "Education depends mostly on memorizing exact details"
-        ],
-        answer:0,
-        note:"The passage repeatedly emphasizes reconstruction rather than perfect storage."
-      },
-      {
-        type:"Vocabulary",
-        q:"The word “adaptive” in paragraph 1 is closest in meaning to:",
-        options:["able to adjust usefully","completely random","scientifically proven","emotionally painful"],
-        answer:0,
-        note:"Adaptive means useful because it adjusts to needs and context."
-      },
-      {
-        type:"Detail",
-        q:"According to paragraph 2, the brain often stores:",
-        options:[
-          "every visual detail with perfect accuracy",
-          "patterns, meanings, and emotional significance",
-          "only information learned in school",
-          "mainly sounds rather than images"
-        ],
-        answer:1,
-        note:"The paragraph directly states this."
-      },
-      {
-        type:"Inference",
-        q:"What does the passage imply about two people who remember the same event differently?",
-        options:[
-          "Both may be sincere even if their memories conflict",
-          "Only one of them can have any truth in their memory",
-          "Both must have poor intelligence",
-          "The event probably never happened"
-        ],
-        answer:0,
-        note:"The final paragraph gives this exact idea in relationships."
-      },
-      {
-        type:"Negative Detail",
-        q:"Which of the following is NOT presented as an implication of reconstructive memory?",
-        options:[
-          "Eyewitness testimony can be unreliable",
-          "Students may retain general ideas but lose exact wording",
-          "People may reconstruct shared events differently",
-          "The brain permanently deletes all emotional memories"
-        ],
-        answer:3,
-        note:"The passage says emotion shapes memory, not that emotional memories are deleted."
-      },
-      {
-        type:"Purpose",
-        q:"Why does the author discuss legal contexts?",
-        options:[
-          "To show that memory research has practical consequences",
-          "To argue that courts should never use witnesses",
-          "To explain how lawyers improve memory",
-          "To prove that psychology is less useful than law"
-        ],
-        answer:0,
-        note:"Legal testimony is an example of real-world importance."
-      }
+      {type:"Main Idea",q:"Which statement best summarizes the passage?",options:["Memory is an active reconstruction shaped by meaning, emotion, and later information","Memory works like a perfect recording device","Eyewitnesses usually lie when they make mistakes","Education depends mostly on memorizing exact details"],answer:0,note:"The passage emphasizes reconstruction rather than perfect storage."},
+      {type:"Vocabulary",q:"The word “adaptive” in paragraph 1 is closest in meaning to:",options:["able to adjust usefully","completely random","scientifically proven","emotionally painful"],answer:0,note:"Adaptive means useful because it adjusts to needs and context."},
+      {type:"Detail",q:"According to paragraph 2, the brain often stores:",options:["every visual detail with perfect accuracy","patterns, meanings, and emotional significance","only information learned in school","mainly sounds rather than images"],answer:1,note:"The paragraph directly states this."},
+      {type:"Inference",q:"What does the passage imply about two people who remember the same event differently?",options:["Both may be sincere even if their memories conflict","Only one of them can have any truth in their memory","Both must have poor intelligence","The event probably never happened"],answer:0,note:"The passage says people can reconstruct the same event differently."},
+      {type:"Negative Detail",q:"Which of the following is NOT presented as an implication of reconstructive memory?",options:["Eyewitness testimony can be unreliable","Students may retain general ideas but lose exact wording","People may reconstruct shared events differently","The brain permanently deletes all emotional memories"],answer:3,note:"The passage says emotion shapes memory, not deletes it."},
+      {type:"Purpose",q:"Why does the author discuss legal contexts?",options:["To show that memory research has practical consequences","To argue that courts should never use witnesses","To explain how lawyers improve memory","To prove that psychology is less useful than law"],answer:0,note:"Legal testimony is an example of real-world importance."}
     ]
   },
 
   {
-    section:"reading",
     title:"Passage 3: The Economics of Open-Source Software",
     text:`
       <p>Open-source software appears, at first glance, to challenge ordinary assumptions about markets. If a program’s code is freely available, why would anyone spend time creating or improving it? Yet open-source projects often survive not because their contributors reject economic incentives, but because the incentives are indirect. Programmers may gain reputation, improve their skills, solve problems that affect their own work, or attract employment opportunities through visible contributions.</p>
-
       <p>Companies also participate in open-source development for strategic reasons. A firm may release a tool for free in order to encourage adoption of a standard that benefits its larger business. Another company may contribute to a shared project because maintaining a private alternative would be more expensive. In this way, collaboration does not eliminate competition; it changes the level at which competition occurs.</p>
-
       <p>Still, open-source communities face problems that traditional firms can sometimes manage more easily. Essential maintenance tasks may be less attractive than building new features, and popular projects may depend heavily on a small number of unpaid maintainers. When such projects become critical infrastructure, the gap between public dependence and private compensation becomes difficult to ignore.</p>
     `,
     questions:[
-      {
-        type:"Main Idea",
-        q:"What is the passage mainly about?",
-        options:[
-          "The incentives and challenges behind open-source software development",
-          "The reason all software should be sold privately",
-          "The history of early personal computers",
-          "The decline of programming as a profession"
-        ],
-        answer:0,
-        note:"The passage explains why open-source exists and what problems it faces."
-      },
-      {
-        type:"Vocabulary",
-        q:"The word “visible” in paragraph 1 is closest in meaning to:",
-        options:["publicly noticeable","physically heavy","legally forbidden","quickly deleted"],
-        answer:0,
-        note:"Visible contributions can be seen by others, helping reputation."
-      },
-      {
-        type:"Inference",
-        q:"Why might a company release a tool for free?",
-        options:[
-          "To promote a standard that supports its broader business interests",
-          "Because it has no strategic goals",
-          "Because free software cannot influence markets",
-          "To make programming jobs disappear"
-        ],
-        answer:0,
-        note:"Paragraph 2 says companies may release tools to encourage adoption of beneficial standards."
-      },
-      {
-        type:"Detail",
-        q:"According to paragraph 3, one weakness of open-source communities is that:",
-        options:[
-          "maintenance work may receive too little attention",
-          "new features are impossible to build",
-          "companies are banned from participating",
-          "programmers cannot improve their skills"
-        ],
-        answer:0,
-        note:"Maintenance may be less attractive than new features."
-      },
-      {
-        type:"Sentence Meaning",
-        q:"What does the author mean by “collaboration does not eliminate competition; it changes the level at which competition occurs”?",
-        options:[
-          "Companies may cooperate on shared tools while competing elsewhere",
-          "All companies stop competing when they use open-source code",
-          "Competition becomes illegal inside software communities",
-          "Open-source projects are unrelated to business"
-        ],
-        answer:0,
-        note:"Firms can collaborate on infrastructure and still compete through products or services."
-      },
-      {
-        type:"Tone",
-        q:"The author’s tone toward open-source software is best described as:",
-        options:["analytical and balanced","angry and dismissive","purely celebratory","sarcastic and hostile"],
-        answer:0,
-        note:"The author gives both benefits and problems."
-      }
+      {type:"Main Idea",q:"What is the passage mainly about?",options:["The incentives and challenges behind open-source software development","The reason all software should be sold privately","The history of early personal computers","The decline of programming as a profession"],answer:0,note:"The passage explains why open-source exists and what problems it faces."},
+      {type:"Vocabulary",q:"The word “visible” in paragraph 1 is closest in meaning to:",options:["publicly noticeable","physically heavy","legally forbidden","quickly deleted"],answer:0,note:"Visible contributions can be seen by others."},
+      {type:"Inference",q:"Why might a company release a tool for free?",options:["To promote a standard that supports its broader business interests","Because it has no strategic goals","Because free software cannot influence markets","To make programming jobs disappear"],answer:0,note:"Paragraph 2 says companies may release tools to encourage adoption."},
+      {type:"Detail",q:"According to paragraph 3, one weakness of open-source communities is that:",options:["maintenance work may receive too little attention","new features are impossible to build","companies are banned from participating","programmers cannot improve their skills"],answer:0,note:"Maintenance may be less attractive than new features."},
+      {type:"Sentence Meaning",q:"What does the author mean by “collaboration does not eliminate competition; it changes the level at which competition occurs”?",options:["Companies may cooperate on shared tools while competing elsewhere","All companies stop competing when they use open-source code","Competition becomes illegal inside software communities","Open-source projects are unrelated to business"],answer:0,note:"Firms can collaborate on infrastructure and still compete through products."},
+      {type:"Tone",q:"The author’s tone toward open-source software is best described as:",options:["analytical and balanced","angry and dismissive","purely celebratory","sarcastic and hostile"],answer:0,note:"The author gives both benefits and problems."}
     ]
   },
 
   {
-    section:"reading",
     title:"Passage 4: Why Some Species Become Invasive",
     text:`
       <p>A species becomes invasive not merely by moving into a new environment, but by spreading in ways that disrupt existing ecological relationships. Many introduced species fail to survive outside their original habitats. Others survive but remain limited in number. A smaller group, however, expands rapidly because the new environment lacks the predators, diseases, or competitors that controlled the species in its native range.</p>
-
       <p>Human activity increases the chances of invasion. Ships can transport organisms across oceans, ornamental plants can escape gardens, and global trade can move insects inside wood, fruit, or packaging materials. Climate change may intensify the problem by making regions suitable for species that previously could not establish themselves there.</p>
-
       <p>Management is difficult because invasive species are often noticed only after they have already spread widely. Early detection is therefore far cheaper than later removal. Once an invader becomes established, attempts to remove it may harm native species as well. Effective policy requires prevention, monitoring, and public cooperation rather than a single dramatic solution.</p>
     `,
     questions:[
-      {
-        type:"Main Idea",
-        q:"What is the passage mainly concerned with?",
-        options:[
-          "The causes and management difficulties of invasive species",
-          "The beauty of ornamental plants in cities",
-          "The complete disappearance of native species everywhere",
-          "The advantages of moving animals between continents"
-        ],
-        answer:0,
-        note:"The passage explains why invasions happen and why they are hard to manage."
-      },
-      {
-        type:"Vocabulary",
-        q:"The word “disrupt” in paragraph 1 is closest in meaning to:",
-        options:["disturb","record","protect","imitate"],
-        answer:0,
-        note:"To disrupt relationships means to disturb or interfere with them."
-      },
-      {
-        type:"Detail",
-        q:"Why do some species expand rapidly in a new environment?",
-        options:[
-          "Natural controls such as predators or diseases may be absent",
-          "They always reproduce more slowly outside their native range",
-          "Humans deliberately protect all introduced species",
-          "Native species immediately disappear"
-        ],
-        answer:0,
-        note:"Paragraph 1 gives this reason."
-      },
-      {
-        type:"Inference",
-        q:"What can be inferred about climate change from paragraph 2?",
-        options:[
-          "It may allow some species to survive in regions that were previously unsuitable",
-          "It prevents all biological invasions",
-          "It only affects ocean species",
-          "It makes global trade unnecessary"
-        ],
-        answer:0,
-        note:"The passage says climate change can make new regions suitable."
-      },
-      {
-        type:"Negative Detail",
-        q:"Which of the following is NOT mentioned as a way humans move species?",
-        options:[
-          "Ships transporting organisms",
-          "Ornamental plants escaping gardens",
-          "Insects moving inside trade goods",
-          "Satellites carrying animals into forests"
-        ],
-        answer:3,
-        note:"Satellites are not mentioned."
-      },
-      {
-        type:"Purpose",
-        q:"Why does the author emphasize early detection?",
-        options:[
-          "Because it is usually cheaper than removing an established invader",
-          "Because established invaders are always harmless",
-          "Because public cooperation is unnecessary",
-          "Because monitoring causes invasions"
-        ],
-        answer:0,
-        note:"Early detection is described as far cheaper than later removal."
-      }
+      {type:"Main Idea",q:"What is the passage mainly concerned with?",options:["The causes and management difficulties of invasive species","The beauty of ornamental plants in cities","The complete disappearance of native species everywhere","The advantages of moving animals between continents"],answer:0,note:"The passage explains causes and management difficulties."},
+      {type:"Vocabulary",q:"The word “disrupt” in paragraph 1 is closest in meaning to:",options:["disturb","record","protect","imitate"],answer:0,note:"To disrupt means to disturb or interfere with."},
+      {type:"Detail",q:"Why do some species expand rapidly in a new environment?",options:["Natural controls such as predators or diseases may be absent","They always reproduce more slowly outside their native range","Humans deliberately protect all introduced species","Native species immediately disappear"],answer:0,note:"Paragraph 1 gives this reason."},
+      {type:"Inference",q:"What can be inferred about climate change from paragraph 2?",options:["It may allow some species to survive in regions that were previously unsuitable","It prevents all biological invasions","It only affects ocean species","It makes global trade unnecessary"],answer:0,note:"Climate change can make new regions suitable."},
+      {type:"Negative Detail",q:"Which of the following is NOT mentioned as a way humans move species?",options:["Ships transporting organisms","Ornamental plants escaping gardens","Insects moving inside trade goods","Satellites carrying animals into forests"],answer:3,note:"Satellites are not mentioned."},
+      {type:"Purpose",q:"Why does the author emphasize early detection?",options:["Because it is usually cheaper than removing an established invader","Because established invaders are always harmless","Because public cooperation is unnecessary","Because monitoring causes invasions"],answer:0,note:"Early detection is cheaper than later removal."}
     ]
   }
 ];
 
 const listeningItems = [
   {
-    section:"listening",
     title:"Listening 1: Campus Conversation",
     kind:"Conversation",
-    audioUrl:"",
+    audioUrl:"audio/listening1.mp3",
     script:`Student: Hi, Professor Morgan. Do you have a minute? I wanted to ask about the research presentation due next week.
 
 Professor: Sure. What part is giving you trouble?
@@ -934,74 +371,18 @@ Student: Okay. Should I change my thesis today?
 
 Professor: Yes. Write a narrower thesis and send it to me tonight. Keep the introduction short, spend more time analyzing two solutions, and include the disagreement as part of your evaluation.`,
     questions:[
-      {
-        type:"Gist",
-        q:"Why does the student visit the professor?",
-        options:[
-          "To get advice about narrowing a presentation topic",
-          "To ask for an extension on a late assignment",
-          "To complain about a grade on a previous paper",
-          "To request permission to change courses"
-        ],
-        answer:0,
-        note:"The student says the outline feels too broad."
-      },
-      {
-        type:"Detail",
-        q:"What problem does the professor identify in the student’s topic?",
-        options:[
-          "It lacks enough scientific sources",
-          "It is too broad and needs a clearer focus",
-          "It is unrelated to the course",
-          "It depends only on personal opinion"
-        ],
-        answer:1,
-        note:"The professor says the focus is the issue."
-      },
-      {
-        type:"Function",
-        q:"Why does the professor mention maintenance and water use?",
-        options:[
-          "To show that tree planting is more complex than it first appears",
-          "To prove tree planting should never be used",
-          "To suggest the student avoid environmental topics",
-          "To explain why cool roofs are illegal"
-        ],
-        answer:0,
-        note:"These examples complicate a simple-sounding solution."
-      },
-      {
-        type:"Inference",
-        q:"What does the professor imply about disagreement among sources?",
-        options:[
-          "It can strengthen the analysis if handled carefully",
-          "It means the student selected the wrong topic",
-          "It should be removed from the presentation",
-          "It proves that academic research is unreliable"
-        ],
-        answer:0,
-        note:"The professor says disagreement is useful and should be presented as a trade-off."
-      },
-      {
-        type:"Next Step",
-        q:"What will the student probably do next?",
-        options:[
-          "Write and send a narrower thesis",
-          "Cancel the presentation",
-          "Interview residents immediately",
-          "Discuss five unrelated policies equally"
-        ],
-        answer:0,
-        note:"The professor directly asks for a narrower thesis tonight."
-      }
+      {type:"Gist",q:"Why does the student visit the professor?",options:["To get advice about narrowing a presentation topic","To ask for an extension on a late assignment","To complain about a grade on a previous paper","To request permission to change courses"],answer:0,note:"The student says the outline feels too broad."},
+      {type:"Detail",q:"What problem does the professor identify in the student’s topic?",options:["It lacks enough scientific sources","It is too broad and needs a clearer focus","It is unrelated to the course","It depends only on personal opinion"],answer:1,note:"The professor says the focus is the issue."},
+      {type:"Function",q:"Why does the professor mention maintenance and water use?",options:["To show that tree planting is more complex than it first appears","To prove tree planting should never be used","To suggest the student avoid environmental topics","To explain why cool roofs are illegal"],answer:0,note:"These examples complicate tree planting."},
+      {type:"Inference",q:"What does the professor imply about disagreement among sources?",options:["It can strengthen the analysis if handled carefully","It means the student selected the wrong topic","It should be removed from the presentation","It proves that academic research is unreliable"],answer:0,note:"The professor says disagreement is useful."},
+      {type:"Next Step",q:"What will the student probably do next?",options:["Write and send a narrower thesis","Cancel the presentation","Interview residents immediately","Discuss five unrelated policies equally"],answer:0,note:"The professor asks for a narrower thesis tonight."}
     ]
   },
 
   {
-    section:"listening",
     title:"Listening 2: Biology Lecture",
     kind:"Lecture",
-    audioUrl:"",
+    audioUrl:"audio/listening2.mp3",
     script:`Professor: Today we are going to examine mimicry, but not the cartoon version where one animal simply copies another. In evolutionary biology, mimicry is about survival pressure and signal interpretation.
 
 One famous type is Batesian mimicry. In this case, a harmless species resembles a harmful or distasteful species. Predators that have learned to avoid the dangerous species may also avoid the harmless mimic. But this system depends on balance. If the harmless mimic becomes too common, predators may begin testing the signal again, and the advantage can weaken.
@@ -1012,86 +393,19 @@ Notice the difference. Batesian mimicry works partly by deception, while Mulleri
 
 This matters because early naturalists sometimes described mimicry as if animals intentionally designed disguises. Modern biology avoids that language. The resemblance develops across generations because individuals with certain traits survive and reproduce more successfully. There is no planning committee in nature, unfortunately, though it would make faculty meetings more interesting.`,
     questions:[
-      {
-        type:"Gist",
-        q:"What is the lecture mainly about?",
-        options:[
-          "Different evolutionary forms of mimicry and how they work",
-          "How animals consciously design disguises",
-          "Why predators avoid all insects automatically",
-          "The history of university biology departments"
-        ],
-        answer:0,
-        note:"The lecture contrasts Batesian and Mullerian mimicry."
-      },
-      {
-        type:"Detail",
-        q:"In Batesian mimicry, the mimic is usually:",
-        options:[
-          "harmless but resembles a harmful species",
-          "harmful and teaches predators a new signal",
-          "a predator copying its prey",
-          "a plant that changes color every day"
-        ],
-        answer:0,
-        note:"That is the definition given in the lecture."
-      },
-      {
-        type:"Inference",
-        q:"Why can Batesian mimicry become less effective if mimics become too common?",
-        options:[
-          "Predators may start testing whether the warning signal is reliable",
-          "The harmful species will disappear immediately",
-          "The mimic will stop resembling the model species",
-          "Predators will become unable to see colors"
-        ],
-        answer:0,
-        note:"If too many mimics are harmless, predators may test the signal again."
-      },
-      {
-        type:"Compare",
-        q:"How does Mullerian mimicry differ from Batesian mimicry?",
-        options:[
-          "In Mullerian mimicry, multiple harmful species share similar warning signals",
-          "In Mullerian mimicry, only harmless species are involved",
-          "Mullerian mimicry requires human training",
-          "Mullerian mimicry occurs only in mammals"
-        ],
-        answer:0,
-        note:"Mullerian mimicry involves genuinely harmful species."
-      },
-      {
-        type:"Function",
-        q:"Why does the professor joke about a “planning committee in nature”?",
-        options:[
-          "To emphasize that evolution is not intentional planning",
-          "To suggest animals hold meetings",
-          "To criticize university administration only",
-          "To introduce a new topic about committees"
-        ],
-        answer:0,
-        note:"The joke reinforces that traits evolve through selection, not conscious design."
-      },
-      {
-        type:"Attitude",
-        q:"What is the professor’s attitude toward older descriptions of mimicry as intentional disguise?",
-        options:[
-          "Skeptical",
-          "Completely approving",
-          "Angry without explanation",
-          "Uninterested"
-        ],
-        answer:0,
-        note:"The professor says modern biology avoids that language."
-      }
+      {type:"Gist",q:"What is the lecture mainly about?",options:["Different evolutionary forms of mimicry and how they work","How animals consciously design disguises","Why predators avoid all insects automatically","The history of university biology departments"],answer:0,note:"The lecture contrasts Batesian and Mullerian mimicry."},
+      {type:"Detail",q:"In Batesian mimicry, the mimic is usually:",options:["harmless but resembles a harmful species","harmful and teaches predators a new signal","a predator copying its prey","a plant that changes color every day"],answer:0,note:"That is the definition given in the lecture."},
+      {type:"Inference",q:"Why can Batesian mimicry become less effective if mimics become too common?",options:["Predators may start testing whether the warning signal is reliable","The harmful species will disappear immediately","The mimic will stop resembling the model species","Predators will become unable to see colors"],answer:0,note:"If many mimics are harmless, predators may test the signal."},
+      {type:"Compare",q:"How does Mullerian mimicry differ from Batesian mimicry?",options:["In Mullerian mimicry, multiple harmful species share similar warning signals","In Mullerian mimicry, only harmless species are involved","Mullerian mimicry requires human training","Mullerian mimicry occurs only in mammals"],answer:0,note:"Mullerian mimicry involves genuinely harmful species."},
+      {type:"Function",q:"Why does the professor joke about a “planning committee in nature”?",options:["To emphasize that evolution is not intentional planning","To suggest animals hold meetings","To criticize university administration only","To introduce a new topic about committees"],answer:0,note:"The joke reinforces that evolution is not conscious design."},
+      {type:"Attitude",q:"What is the professor’s attitude toward older descriptions of mimicry as intentional disguise?",options:["Skeptical","Completely approving","Angry without explanation","Uninterested"],answer:0,note:"Modern biology avoids that intentional language."}
     ]
   },
 
   {
-    section:"listening",
     title:"Listening 3: History Lecture",
     kind:"Lecture",
-    audioUrl:"",
+    audioUrl:"audio/listening3.mp3",
     script:`Professor: When we talk about the printing press, we often focus on the machine itself. But the more important point is not simply that books became faster to produce. The printing press changed the economics of knowledge.
 
 Before movable type spread widely in Europe, manuscripts were copied by hand, which made books expensive and slow to produce. Printed books lowered costs, increased the number of available texts, and allowed scholars in different cities to consult the same editions. That standardization mattered. If two scholars referred to the same page in the same edition, debate became more precise.
@@ -1100,132 +414,60 @@ But there is a common exaggeration we should avoid. Printing did not instantly m
 
 So the press should be understood as an accelerator. It did not create every intellectual movement by itself, but it made certain movements easier to organize and spread. Religious reform, scientific exchange, and political criticism all benefited from the ability to reproduce texts at scale. In other words, the technology mattered because it changed the speed, cost, and reliability of communication.`,
     questions:[
-      {
-        type:"Gist",
-        q:"What is the main idea of the lecture?",
-        options:[
-          "The printing press changed the economics and spread of knowledge",
-          "The printing press immediately made all Europeans literate",
-          "Printed books ended censorship completely",
-          "Manuscripts were always more accurate than printed texts"
-        ],
-        answer:0,
-        note:"The professor focuses on cost, speed, standardization, and communication."
-      },
-      {
-        type:"Detail",
-        q:"Why was standardization of editions important?",
-        options:[
-          "It allowed scholars to refer to the same text more precisely",
-          "It made books impossible to censor",
-          "It removed the need for universities",
-          "It prevented all printing mistakes"
-        ],
-        answer:0,
-        note:"The professor mentions scholars debating using the same edition and page."
-      },
-      {
-        type:"Inference",
-        q:"What does the professor mean by calling the press an “accelerator”?",
-        options:[
-          "It helped movements spread faster without causing every change by itself",
-          "It was mainly a transportation device",
-          "It made people read at higher physical speed",
-          "It had no influence on intellectual life"
-        ],
-        answer:0,
-        note:"An accelerator speeds up developments but is not the only cause."
-      },
-      {
-        type:"Negative Detail",
-        q:"Which claim does the professor warn against?",
-        options:[
-          "Printing instantly made Europe literate and democratic",
-          "Books became cheaper to produce",
-          "Scholars could consult the same editions",
-          "Printed misinformation also circulated"
-        ],
-        answer:0,
-        note:"The professor calls that a common exaggeration."
-      },
-      {
-        type:"Organization",
-        q:"How is the lecture organized?",
-        options:[
-          "By correcting a simple view and then explaining a more complex effect",
-          "By listing unrelated inventions in chronological order",
-          "By telling a personal story about a library",
-          "By comparing printing only with modern social media"
-        ],
-        answer:0,
-        note:"The professor first challenges the machine-focused view, then explains broader effects."
-      },
-      {
-        type:"Function",
-        q:"Why does the professor mention misinformation?",
-        options:[
-          "To show that printing had mixed consequences",
-          "To prove printed books were useless",
-          "To argue that manuscripts never contained errors",
-          "To shift the topic to modern politics"
-        ],
-        answer:0,
-        note:"The professor balances benefits with problems."
-      }
+      {type:"Gist",q:"What is the main idea of the lecture?",options:["The printing press changed the economics and spread of knowledge","The printing press immediately made all Europeans literate","Printed books ended censorship completely","Manuscripts were always more accurate than printed texts"],answer:0,note:"The lecture focuses on cost, speed, standardization, and communication."},
+      {type:"Detail",q:"Why was standardization of editions important?",options:["It allowed scholars to refer to the same text more precisely","It made books impossible to censor","It removed the need for universities","It prevented all printing mistakes"],answer:0,note:"Scholars could debate using the same edition and page."},
+      {type:"Inference",q:"What does the professor mean by calling the press an “accelerator”?",options:["It helped movements spread faster without causing every change by itself","It was mainly a transportation device","It made people read at higher physical speed","It had no influence on intellectual life"],answer:0,note:"An accelerator speeds up developments but is not the only cause."},
+      {type:"Negative Detail",q:"Which claim does the professor warn against?",options:["Printing instantly made Europe literate and democratic","Books became cheaper to produce","Scholars could consult the same editions","Printed misinformation also circulated"],answer:0,note:"The professor calls that a common exaggeration."},
+      {type:"Organization",q:"How is the lecture organized?",options:["By correcting a simple view and then explaining a more complex effect","By listing unrelated inventions in chronological order","By telling a personal story about a library","By comparing printing only with modern social media"],answer:0,note:"The professor challenges a simple view, then explains broader effects."},
+      {type:"Function",q:"Why does the professor mention misinformation?",options:["To show that printing had mixed consequences","To prove printed books were useless","To argue that manuscripts never contained errors","To shift the topic to modern politics"],answer:0,note:"The professor balances benefits with problems."}
     ]
   }
 ];
 
 let bank = [];
-let current = 0;
 let answers = [];
-let activeMode = "full";
+let current = 0;
+let mode = "full";
 let timeLeft = 0;
 let timer = null;
-let voices = [];
-let currentUtterance = null;
+const uploadedAudio = {};
 
 const $ = id => document.getElementById(id);
 
-function buildBank(mode){
-  activeMode = mode;
+function startMode(selectedMode){
+  mode = selectedMode;
   bank = [];
 
   if(mode === "reading" || mode === "full"){
-    readingPassages.forEach((passage, pIndex) => {
-      passage.questions.forEach((q) => {
+    readingPassages.forEach((p, pi) => {
+      p.questions.forEach(q => {
         bank.push({
           ...q,
           section:"reading",
-          itemIndex:pIndex,
-          itemTitle:passage.title,
-          itemText:passage.text
+          itemIndex:pi,
+          itemTitle:p.title,
+          itemText:p.text
         });
       });
     });
   }
 
   if(mode === "listening" || mode === "full"){
-    listeningItems.forEach((item, iIndex) => {
-      item.questions.forEach((q) => {
+    listeningItems.forEach((l, li) => {
+      l.questions.forEach(q => {
         bank.push({
           ...q,
           section:"listening",
-          itemIndex:iIndex,
-          itemTitle:item.title,
-          itemText:item.script,
-          itemKind:item.kind,
-          audioUrl:item.audioUrl
+          itemIndex:li,
+          itemTitle:l.title,
+          itemText:l.script,
+          itemKind:l.kind
         });
       });
     });
   }
 
   answers = Array(bank.length).fill(null);
-}
-
-function startMode(mode){
-  buildBank(mode);
   current = 0;
 
   if(mode === "reading") timeLeft = 54 * 60;
@@ -1236,7 +478,6 @@ function startMode(mode){
   $("resultScreen").classList.add("hidden");
   $("testScreen").classList.remove("hidden");
 
-  loadVoices();
   render();
   startTimer();
 }
@@ -1263,13 +504,13 @@ function updateTimer(){
 }
 
 function render(){
-  stopListening();
+  stopAudio();
 
   const item = bank[current];
 
   $("sectionLabel").textContent =
-    activeMode === "full" ? "Full Test" :
-    activeMode === "reading" ? "Reading Section" : "Listening Section";
+    mode === "full" ? "Full Test" :
+    mode === "reading" ? "Reading Section" : "Listening Section";
 
   $("itemChip").textContent =
     item.section === "reading" ? "Reading Passage" : "Listening " + item.itemKind;
@@ -1281,38 +522,36 @@ function render(){
     $("listeningPanel").classList.add("hidden");
     $("readingPassage").innerHTML = item.itemText;
   } else {
-    const li = listeningItems[item.itemIndex];
+    const audioData = listeningItems[item.itemIndex];
 
     $("readingPassage").classList.add("hidden");
     $("listeningPanel").classList.remove("hidden");
+    $("audioTitle").textContent = audioData.title;
+    $("audioSubtitle").textContent = `${audioData.kind}. Listen first, then answer.`;
+    $("lockedTranscript").textContent = audioData.script;
 
-    $("audioTitle").textContent = li.title;
-    $("audioSubtitle").textContent = `${li.kind}. Listen, take mental notes, then answer.`;
-    $("lockedTranscript").textContent = li.script;
+    setupAudio(item.itemIndex);
   }
 
   $("questionNumber").textContent = `Question ${current + 1} of ${bank.length}`;
-  $("questionType").textContent = item.type || "Question";
+  $("questionType").textContent = item.type;
   $("questionText").textContent = item.q;
 
   const box = $("options");
   box.innerHTML = "";
 
-  item.options.forEach((op, idx) => {
+  item.options.forEach((option, index) => {
     const label = document.createElement("label");
     label.className = "option";
-
-    if(answers[current] === idx){
-      label.classList.add("selected");
-    }
+    if(answers[current] === index) label.classList.add("selected");
 
     label.innerHTML = `
-      <input type="radio" name="q${current}" ${answers[current] === idx ? "checked" : ""}>
-      <span><b>${String.fromCharCode(65 + idx)}.</b> ${op}</span>
+      <input type="radio" name="q${current}" ${answers[current] === index ? "checked" : ""}>
+      <span><b>${String.fromCharCode(65 + index)}.</b> ${option}</span>
     `;
 
     label.onclick = () => {
-      answers[current] = idx;
+      answers[current] = index;
       render();
     };
 
@@ -1321,33 +560,96 @@ function render(){
 
   renderNav();
   updateProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 
-  window.scrollTo({top:0, behavior:"smooth"});
+function setupAudio(index){
+  const player = $("audioPlayer");
+  const item = listeningItems[index];
+
+  player.pause();
+  player.currentTime = 0;
+
+  if(uploadedAudio[index]){
+    player.src = uploadedAudio[index];
+    $("audioNotice").innerHTML = "Using uploaded MP3 file.";
+  } else {
+    player.src = item.audioUrl;
+    $("audioNotice").innerHTML = `
+      Loading <b>${item.audioUrl}</b>.<br>
+      If it does not play, upload MP3 manually here.
+    `;
+  }
+}
+
+function playAudio(){
+  const player = $("audioPlayer");
+
+  if(!player.src){
+    alert("No audio loaded. Put MP3 in /audio folder or upload it.");
+    return;
+  }
+
+  player.play().catch(() => {
+    alert("Audio could not play. Tap the audio player manually once.");
+  });
+}
+
+function stopAudio(){
+  const player = $("audioPlayer");
+  if(player){
+    player.pause();
+    player.currentTime = 0;
+  }
+}
+
+function uploadAudio(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const item = bank[current];
+
+  if(!item || item.section !== "listening"){
+    alert("Open a listening question first.");
+    return;
+  }
+
+  if(!file.type.startsWith("audio/")){
+    alert("Upload an audio file.");
+    return;
+  }
+
+  if(uploadedAudio[item.itemIndex]){
+    URL.revokeObjectURL(uploadedAudio[item.itemIndex]);
+  }
+
+  uploadedAudio[item.itemIndex] = URL.createObjectURL(file);
+  setupAudio(item.itemIndex);
+  $("audioNotice").innerHTML = `Loaded: <b>${file.name}</b>`;
 }
 
 function renderNav(){
   const nav = $("questionNav");
   nav.innerHTML = "";
 
-  bank.forEach((q, idx) => {
-    const b = document.createElement("button");
-    b.className = "nav-item";
-    b.textContent = idx + 1;
+  bank.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
 
-    if(answers[idx] !== null) b.classList.add("answered");
-    if(idx === current) b.classList.add("active");
+    if(answers[i] !== null) btn.classList.add("answered");
+    if(i === current) btn.classList.add("active");
 
-    b.onclick = () => {
-      current = idx;
+    btn.onclick = () => {
+      current = i;
       render();
     };
 
-    nav.appendChild(b);
+    nav.appendChild(btn);
   });
 }
 
 function updateProgress(){
-  const answered = answers.filter(x => x !== null).length;
+  const answered = answers.filter(a => a !== null).length;
   $("progressFill").style.width = ((answered / bank.length) * 100) + "%";
 }
 
@@ -1369,19 +671,17 @@ function prevQuestion(){
 
 function finishTest(auto){
   if(!auto){
-    const left = answers.filter(x => x === null).length;
+    const empty = answers.filter(a => a === null).length;
 
-    if(left > 0 && !confirm(`You still have ${left} unanswered questions. Finish anyway?`)){
+    if(empty > 0 && !confirm(`You have ${empty} unanswered questions. Finish anyway?`)){
       return;
     }
   }
 
-  stopListening();
   clearInterval(timer);
+  stopAudio();
 
   let correct = 0;
-  let total = bank.length;
-
   let rCorrect = 0;
   let rTotal = 0;
   let lCorrect = 0;
@@ -1418,14 +718,13 @@ function finishTest(auto){
   $("finalScore").textContent = `${finalScore} / 30`;
   $("readingScore").textContent = rScore === null ? "Not taken" : `${rScore} / 30`;
   $("listeningScore").textContent = lScore === null ? "Not taken" : `${lScore} / 30`;
-  $("accuracy").textContent = `${Math.round((correct / total) * 100)}%`;
+  $("accuracy").textContent = `${Math.round((correct / bank.length) * 100)}%`;
   $("correctCount").textContent = correct;
-  $("totalCount").textContent = total;
+  $("totalCount").textContent = bank.length;
   $("levelText").textContent = levelName(finalScore);
 
   buildReview();
-
-  window.scrollTo({top:0, behavior:"smooth"});
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function levelName(score){
@@ -1439,35 +738,33 @@ function levelName(score){
 
 function buildReview(){
   const box = $("reviewBox");
-  box.innerHTML = `<h2>Review</h2>`;
+  box.innerHTML = "<h2>Review</h2>";
 
   let lastListening = -1;
 
   bank.forEach((q, i) => {
     if(q.section === "listening" && q.itemIndex !== lastListening){
       lastListening = q.itemIndex;
-      const li = listeningItems[q.itemIndex];
+      const l = listeningItems[q.itemIndex];
 
-      const details = document.createElement("details");
-      details.innerHTML = `
-        <summary>Transcript: ${li.title}</summary>
-        <p class="small muted" style="white-space:pre-line;margin-top:10px">${li.script}</p>
+      const transcript = document.createElement("details");
+      transcript.innerHTML = `
+        <summary>Transcript: ${l.title}</summary>
+        <p style="white-space:pre-line;margin-top:10px" class="muted">${l.script}</p>
       `;
-
-      box.appendChild(details);
+      box.appendChild(transcript);
     }
-
-    const div = document.createElement("div");
-    div.className = "review-item";
 
     const user = answers[i];
     const ok = user === q.answer;
 
-    const opts = q.options.map((op, idx) => {
-      let cls = "";
+    const div = document.createElement("div");
+    div.className = "reviewItem";
 
-      if(idx === q.answer) cls = "correctReview";
-      if(idx === user && idx !== q.answer) cls = "wrongReview";
+    const optionsHtml = q.options.map((op, idx) => {
+      let cls = "";
+      if(idx === q.answer) cls = "correct";
+      if(idx === user && idx !== q.answer) cls = "wrong";
 
       return `
         <div class="option ${cls}">
@@ -1479,19 +776,16 @@ function buildReview(){
     div.innerHTML = `
       <div class="qnum">${q.section.toUpperCase()} · Question ${i + 1} · ${q.type}</div>
       <p><b>${q.q}</b></p>
-
-      <div class="options">${opts}</div>
-
-      <div class="answer-note">
+      <div class="options">${optionsHtml}</div>
+      <div class="note">
         Your answer:
         <span class="${ok ? "good" : "bad"}">
           ${user === null ? "No answer" : String.fromCharCode(65 + user)}
         </span>
         <br>
-        Correct answer:
-        <span class="good">${String.fromCharCode(65 + q.answer)}</span>
+        Correct answer: <span class="good">${String.fromCharCode(65 + q.answer)}</span>
         <br>
-        ${q.note || ""}
+        ${q.note}
       </div>
     `;
 
@@ -1504,8 +798,8 @@ function toggleReview(){
 }
 
 function restart(){
-  stopListening();
   clearInterval(timer);
+  stopAudio();
 
   $("timer").textContent = "--:--";
   $("progressFill").style.width = "0%";
@@ -1514,93 +808,7 @@ function restart(){
   $("testScreen").classList.add("hidden");
   $("startScreen").classList.remove("hidden");
 }
-
-/* Listening playback */
-
-function loadVoices(){
-  if(!("speechSynthesis" in window)){
-    $("voiceSelect").innerHTML = `<option>Speech synthesis not supported</option>`;
-    return;
-  }
-
-  voices = speechSynthesis.getVoices();
-
-  const select = $("voiceSelect");
-  select.innerHTML = "";
-
-  const englishVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("en"));
-  const list = englishVoices.length ? englishVoices : voices;
-
-  list.forEach((v) => {
-    const option = document.createElement("option");
-    option.value = voices.indexOf(v);
-    option.textContent = `${v.name} — ${v.lang}`;
-    select.appendChild(option);
-  });
-
-  const preferred = list.find(v =>
-    /samantha|alex|daniel|moira|karen|google us english|microsoft aria|natural/i.test(v.name)
-  );
-
-  if(preferred){
-    select.value = voices.indexOf(preferred);
-  }
-}
-
-if("speechSynthesis" in window){
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-function playListening(){
-  const item = bank[current];
-
-  if(!item || item.section !== "listening") return;
-
-  const li = listeningItems[item.itemIndex];
-
-  if(!("speechSynthesis" in window)){
-    alert("Your browser does not support speech synthesis.");
-    return;
-  }
-
-  stopListening();
-
-  const script = li.script.replace(/\s+/g, " ").trim();
-
-  currentUtterance = new SpeechSynthesisUtterance(script);
-
-  const voiceIndex = Number($("voiceSelect").value);
-
-  if(voices[voiceIndex]){
-    currentUtterance.voice = voices[voiceIndex];
-  }
-
-  currentUtterance.lang = "en-US";
-  currentUtterance.rate = 0.92;
-  currentUtterance.pitch = 1.0;
-  currentUtterance.volume = 1;
-
-  currentUtterance.onend = () => {
-    $("playBtn").textContent = "▶ Play";
-  };
-
-  $("playBtn").textContent = "Playing...";
-  speechSynthesis.speak(currentUtterance);
-}
-
-function stopListening(){
-  if("speechSynthesis" in window){
-    speechSynthesis.cancel();
-  }
-
-  const btn = $("playBtn");
-
-  if(btn){
-    btn.textContent = "▶ Play";
-  }
-}
-
-loadVoices();
 </script>
+
 </body>
 </html>
