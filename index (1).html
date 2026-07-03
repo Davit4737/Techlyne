@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BizAssist — The AI Front Desk That Never Sleeps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08080C; --surface: #101018; --border: #1C1C2A;
+      --accent: #6C6FFF; --accent-2: #9D6BFF;
+      --accent-soft: rgba(108, 111, 255, 0.12); --accent-glow: rgba(108, 111, 255, 0.22);
+      --text: #F2F2FF; --muted: #797996; --card: #0D0D15; --green: #4ADE80;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2rem; background: rgba(8, 8, 12, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    nav .links { display: flex; gap: 2rem; align-items: center; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: var(--text); }
+    .nav-cta { background: var(--accent); color: #fff !important; padding: 0.55rem 1.2rem; border-radius: 8px; font-weight: 600 !important; font-size: 0.85rem !important; transition: opacity 0.2s, transform 0.1s !important; }
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+    .hero { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 3rem; max-width: 1200px; margin: 0 auto; padding: 9rem 2rem 4rem; position: relative; }
+    .hero::before { content: ''; position: absolute; top: 5%; right: 5%; width: 500px; height: 500px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .hero-content { position: relative; z-index: 1; }
+    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent-soft); border: 1px solid rgba(108, 111, 255, 0.3); color: var(--accent); font-size: 0.75rem; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 999px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.8rem; }
+    .pulse-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+    h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.6rem, 5vw, 4.2rem); line-height: 1.05; letter-spacing: -2px; margin-bottom: 1.4rem; }
+    h1 em { font-style: normal; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-sub { font-size: 1.1rem; color: var(--muted); max-width: 480px; margin-bottom: 2.2rem; line-height: 1.7; }
+    .form-wrap { display: flex; gap: 0.6rem; max-width: 440px; margin-bottom: 0.9rem; }
+    .form-wrap input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-wrap input:focus { border-color: var(--accent); }
+    .form-wrap input::placeholder { color: var(--muted); }
+    .btn-primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; border: none; padding: 0.9rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; transition: opacity 0.2s, transform 0.1s; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .form-note { font-size: 0.8rem; color: var(--muted); }
+    .success-msg { display: none; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--green); padding: 0.75rem 1.2rem; border-radius: 10px; font-size: 0.9rem; font-weight: 500; margin-top: 0.3rem; max-width: 440px; }
+    .chat-demo { position: relative; z-index: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.2rem; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 111, 255, 0.06); }
+    .chat-header { display: flex; align-items: center; gap: 0.7rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .chat-avatar { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .chat-title { flex: 1; }
+    .chat-title h4 { font-size: 0.9rem; font-weight: 600; }
+    .chat-title p { font-size: 0.72rem; color: var(--green); display: flex; align-items: center; gap: 0.3rem; }
+    .chat-messages { display: flex; flex-direction: column; gap: 0.7rem; min-height: 300px; }
+    .msg { max-width: 82%; padding: 0.65rem 0.9rem; border-radius: 14px; font-size: 0.85rem; line-height: 1.5; opacity: 0; animation: msgIn 0.4s ease forwards; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .msg.client { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .msg.action { align-self: flex-start; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--green); font-size: 0.78rem; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
+    .typing { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); padding: 0.7rem 1rem; border-radius: 14px; border-bottom-left-radius: 4px; display: flex; gap: 0.25rem; }
+    .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.4s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+    .stats-bar { max-width: 1000px; margin: 0 auto; padding: 0 2rem 4rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .stat { text-align: center; padding: 1.5rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+    .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+    section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.8rem, 3.5vw, 2.8rem); letter-spacing: -1px; line-height: 1.1; margin-bottom: 1rem; }
+    .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 520px; line-height: 1.7; }
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 3rem; }
+    .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.7rem; }
+    .problem-stat { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: #FF6B6B; margin-bottom: 0.6rem; }
+    .problem-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .problem-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .how-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6rem 2rem; }
+    .how-inner { max-width: 1100px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 2rem; margin-top: 3.5rem; }
+    .step { display: flex; flex-direction: column; gap: 0.8rem; }
+    .step-num { width: 42px; height: 42px; background: var(--accent-soft); border: 1px solid rgba(108, 111, 255, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--accent); }
+    .step h3 { font-size: 1.05rem; font-weight: 600; }
+    .step p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; margin-top: 3rem; }
+    .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.8rem; transition: border-color 0.25s, transform 0.25s; }
+    .feature-card:hover { border-color: rgba(108, 111, 255, 0.4); transform: translateY(-4px); }
+    .feature-icon { width: 46px; height: 46px; background: var(--accent-soft); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .niches { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 2rem; }
+    .niche-tag { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.85rem; font-weight: 500; }
+    .niche-tag.active { background: var(--accent-soft); border-color: rgba(108, 111, 255, 0.4); color: var(--accent); }
+    .cta-section { text-align: center; padding: 6rem 2rem; }
+    .cta-box { background: linear-gradient(160deg, var(--surface), var(--card)); border: 1px solid var(--border); border-radius: 22px; padding: 4rem 2rem; max-width: 640px; margin: 0 auto; position: relative; overflow: hidden; }
+    .cta-box::before { content: ''; position: absolute; bottom: -50%; left: 50%; transform: translateX(-50%); width: 420px; height: 420px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; }
+    .cta-box h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -1px; margin-bottom: 1rem; position: relative; }
+    .cta-box p { color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; position: relative; }
+    .cta-box .form-wrap { margin: 0 auto 0.5rem; max-width: 400px; }
+    .cta-box .success-msg { margin: 0 auto; }
+    footer { border-top: 1px solid var(--border); padding: 2rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    footer p { font-size: 0.82rem; color: var(--muted); }
+    .foot-links { display: flex; gap: 1.5rem; }
+    .foot-links a { font-size: 0.82rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .foot-links a:hover { color: var(--text); }
+    @media (max-width: 860px) { .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 7rem; } .chat-demo { max-width: 420px; } .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { nav { padding: 1rem 1.2rem; } nav .links { gap: 1rem; } nav .links a:not(.nav-cta) { display: none; } .form-wrap { flex-direction: column; } .btn-primary { width: 100%; } section { padding: 4rem 1.2rem; } }
+    @media (prefers-reduced-motion: reduce) { *, .reveal, .msg { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Biz<span>Assist</span></div>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#early-access" class="nav-cta">Get Early Access</a>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-content">
+      <div class="badge"><span class="pulse-dot"></span> Live 24/7 · Never misses a client</div>
+      <h1>The AI front desk<br />that <em>never sleeps.</em></h1>
+      <p class="hero-sub">BizAssist answers your clients, books their appointments, and sends reminders — automatically, around the clock. When they need a real person, it hands them straight to you.</p>
+      <div class="form-wrap" id="early-access">
+        <input type="email" id="hero-email" placeholder="your@email.com" />
+        <button class="btn-primary" onclick="handleSignup('hero-email', 'hero-success')">Get Early Access</button>
+      </div>
+      <p class="form-note">Free during beta · No credit card · Setup in 10 minutes</p>
+      <div class="success-msg" id="hero-success">🎉 You're on the waitlist. We'll reach out soon.</div>
+    </div>
+    <div class="chat-demo">
+      <div class="chat-header">
+        <div class="chat-avatar">🦷</div>
+        <div class="chat-title">
+          <h4>Bright Smile Dental</h4>
+          <p><span class="pulse-dot"></span> BizAssist · Online</p>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+    </div>
+  </div>
+  <div class="stats-bar reveal">
+    <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Always answering</div></div>
+    <div class="stat"><div class="stat-num">&lt;5s</div><div class="stat-label">Response time</div></div>
+    <div class="stat"><div class="stat-num">-30%</div><div class="stat-label">Fewer no-shows</div></div>
+    <div class="stat"><div class="stat-num">10min</div><div class="stat-label">To set up</div></div>
+  </div>
+  <section class="reveal">
+    <p class="section-label">The cost of a missed message</p>
+    <h2 class="section-title">Every unanswered client<br />is money walking out the door.</h2>
+    <p class="section-sub">Your team can't be on the phone 24/7. But your clients expect answers now — or they book with someone who gives them.</p>
+    <div class="problem-grid">
+      <div class="problem-card"><div class="problem-stat">1 in 3</div><h3>Calls go unanswered</h3><p>During busy hours, calls slip through. Each missed call is a client who books somewhere else — and you never even knew.</p></div>
+      <div class="problem-card"><div class="problem-stat">50+</div><h3>Repeat questions daily</h3><p>Hours, pricing, availability, insurance. Your staff answers the same questions over and over instead of doing real work.</p></div>
+      <div class="problem-card"><div class="problem-stat">20-30%</div><h3>Appointments become no-shows</h3><p>Without automatic reminders, clients forget. Empty chairs cost you money you already counted on.</p></div>
+    </div>
+  </section>
+  <div class="how-section" id="how">
+    <div class="how-inner reveal">
+      <p class="section-label">How it works</p>
+      <h2 class="section-title">Set it up once.<br />It runs your front desk forever.</h2>
+      <div class="steps">
+        <div class="step"><div class="step-num">01</div><h3>Tell it about your business</h3><p>Your hours, services, prices, and common questions. Takes 10 minutes — no tech skills required.</p></div>
+        <div class="step"><div class="step-num">02</div><h3>It talks to your clients</h3><p>Answers questions and books appointments instantly, day or night, on your website or phone line.</p></div>
+        <div class="step"><div class="step-num">03</div><h3>It hands the tough ones to you</h3><p>When a client needs a real person, BizAssist connects them to you directly — call or live chat.</p></div>
+        <div class="step"><div class="step-num">04</div><h3>You get your time back</h3><p>Fewer calls, fewer no-shows, more bookings. You focus on the work that actually pays.</p></div>
+      </div>
+    </div>
+  </div>
+  <section id="features" class="reveal">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Everything a front desk does —<br />without the front desk.</h2>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI chat, trained on you</h3><p>Knows your services, prices, and policies. Answers like a well-trained receptionist who never has an off day.</p></div>
+      <div class="feature-card"><div class="feature-icon">📆</div><h3>Books appointments itself</h3><p>Clients pick a slot and confirm in the chat. No phone tag, no double bookings. Syncs to your calendar.</p></div>
+      <div class="feature-card"><div class="feature-icon">🔔</div><h3>Reminders that cut no-shows</h3><p>Automatic SMS and email reminders keep appointments full and clients coming back.</p></div>
+      <div class="feature-card"><div class="feature-icon">🤝</div><h3>Smooth handoff to you</h3><p>When it's beyond the AI, clients get passed to a real person instantly — no dead ends, no frustration.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>One clear dashboard</h3><p>Every conversation, booking, and client in one place. Always know what's happening in your business.</p></div>
+      <div class="feature-card"><div class="feature-icon">🌍</div><h3>Fits any service business</h3><p>Dentists today. Salons, clinics, paint shops, gyms tomorrow. If you serve clients, it works for you.</p></div>
+    </div>
+  </section>
+  <section class="reveal">
+    <p class="section-label">Who it's for</p>
+    <h2 class="section-title">Starting with dentists.<br />Built for everyone.</h2>
+    <p class="section-sub">We're launching with dental clinics — then rolling out to every service business that lives and dies by its bookings.</p>
+    <div class="niches">
+      <span class="niche-tag active">🦷 Dental Clinics</span>
+      <span class="niche-tag">🎨 Paint Shops</span>
+      <span class="niche-tag">💇 Hair Salons</span>
+      <span class="niche-tag">🏥 Medical Clinics</span>
+      <span class="niche-tag">💪 Gyms & Fitness</span>
+      <span class="niche-tag">🐾 Vet Clinics</span>
+      <span class="niche-tag">💆 Spas & Wellness</span>
+      <span class="niche-tag">🔧 Repair Shops</span>
+    </div>
+  </section>
+  <div class="cta-section">
+    <div class="cta-box reveal">
+      <h2>Stop losing clients to voicemail.</h2>
+      <p>Join the waitlist and get early access — free during beta.</p>
+      <div class="form-wrap">
+        <input type="email" id="cta-email" placeholder="your@email.com" />
+        <button class="btn-primary" onclick="handleSignup('cta-email', 'cta-success')">Join Waitlist</button>
+      </div>
+      <p class="form-note">No spam. No credit card. Just early access.</p>
+      <div class="success-msg" id="cta-success">🎉 You're on the waitlist. We'll reach out soon.</div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-inner">
+      <p>© 2026 BizAssist · The AI front desk that never sleeps.</p>
+      <div class="foot-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="mailto:hello@bizzassist.xyz">Contact</a>
+      </div>
+    </div>
+  </footer>
+  <script>
+    const conversation = [
+      { type: 'client', text: 'Hi, do you have any openings this week for a cleaning?' },
+      { type: 'typing' },
+      { type: 'bot', text: 'Hi! Yes 😊 We have Thursday at 2:00 PM or Friday at 10:30 AM open. Which works best for you?' },
+      { type: 'client', text: 'Thursday at 2 works great' },
+      { type: 'typing' },
+      { type: 'bot', text: 'Perfect! Can I get your name and phone number to confirm?' },
+      { type: 'client', text: 'Sarah M — 555 0142' },
+      { type: 'action', text: '✓ Appointment booked · Thursday 2:00 PM' },
+      { type: 'bot', text: "You're all set, Sarah! I'll text you a reminder the day before. See you Thursday! 🦷" },
+    ];
+    const container = document.getElementById('chatMessages');
+    let idx = 0;
+    function renderNext() {
+      if (idx >= conversation.length) { setTimeout(() => { container.innerHTML = ''; idx = 0; renderNext(); }, 4000); return; }
+      const item = conversation[idx];
+      if (item.type === 'typing') {
+        const t = document.createElement('div');
+        t.className = 'typing'; t.innerHTML = '<span></span><span></span><span></span>'; t.id = 'typingIndicator';
+        container.appendChild(t); container.scrollTop = container.scrollHeight; idx++;
+        setTimeout(() => { const ti = document.getElementById('typingIndicator'); if (ti) ti.remove(); renderNext(); }, 1100);
+      } else {
+        const m = document.createElement('div');
+        m.className = 'msg ' + item.type; m.textContent = item.text;
+        container.appendChild(m); container.scrollTop = container.scrollHeight; idx++;
+        const delay = item.type === 'client' ? 900 : 1400;
+        setTimeout(renderNext, delay);
+      }
+    }
+    setTimeout(renderNext, 800);
+    function handleSignup(inputId, successId) {
+      const input = document.getElementById(inputId);
+      const success = document.getElementById(successId);
+      const email = input.value.trim();
+      if (!email || !email.includes('@')) { input.style.borderColor = '#FF6B6B'; setTimeout(() => input.style.borderColor = '', 1500); return; }
+      const emails = JSON.parse(localStorage.getItem('bizassist_emails') || '[]');
+      emails.push({ email, date: new Date().toISOString() });
+      localStorage.setItem('bizassist_emails', JSON.stringify(emails));
+      input.parentElement.style.display = 'none';
+      success.style.display = 'block';
+    }
+    const observer = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }); }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('a[href^="#"]').forEach(a => { a.addEventListener('click', e => { e.preventDefault(); const target = document.querySelector(a.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth' }); }); });
+  </script>
+</body>
+</html>
