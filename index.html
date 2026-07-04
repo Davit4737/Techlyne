@@ -68,6 +68,13 @@
     .convo-dots { display: flex; gap: 0.3rem; margin-left: auto; }
     .convo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
     .convo-dot.active { background: var(--accent); }
+    .chat-input { display: flex; gap: 0.5rem; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+    .chat-input input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.7rem 0.9rem; border-radius: 10px; font-size: 0.85rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .chat-input input:focus { border-color: var(--accent); }
+    .chat-input input::placeholder { color: var(--muted); }
+    .chat-input button { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; border: none; width: 42px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s, transform 0.1s; flex-shrink: 0; }
+    .chat-input button:hover { opacity: 0.9; transform: translateY(-1px); }
+    .chat-input button:disabled { opacity: 0.5; cursor: default; transform: none; }
     /* STATS */
     .stats-bar { max-width: 1000px; margin: 0 auto; padding: 0 2rem 4rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     .stat { text-align: center; padding: 1.5rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
@@ -169,13 +176,17 @@
         </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
-      <div class="convo-label">
+      <div class="convo-label" id="convoLabel-row">
         <span id="convoLabel">Booking an appointment</span>
         <div class="convo-dots">
           <div class="convo-dot active" id="dot0"></div>
           <div class="convo-dot" id="dot1"></div>
         </div>
       </div>
+      <form class="chat-input" id="chatInput" autocomplete="off">
+        <input type="text" id="chatField" placeholder="Try it — ask about a cleaning…" maxlength="1000" />
+        <button type="submit" aria-label="Send">➤</button>
+      </form>
     </div>
   </div>
 
@@ -412,17 +423,115 @@
     switchConvo(0);
     timeoutId = setTimeout(renderNext, 800);
 
-    // ── Email signup ──
-    function handleSignup(inputId, successId) {
+    // ── LIVE INTERACTIVE CHAT (talks to /api/chat) ──
+    let liveMode = false;
+    let liveHistory = []; // { role: 'user'|'assistant', content }
+    const chatForm = document.getElementById('chatInput');
+    const chatField = document.getElementById('chatField');
+
+    function goLive() {
+      if (liveMode) return;
+      liveMode = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      container.innerHTML = '';
+      liveHistory = [];
+      chatName.textContent = 'BizAssist Demo';
+      chatAvatar.textContent = '🦷';
+      convoLabel.textContent = 'Live — you\'re chatting with the AI';
+      const intro = document.createElement('div');
+      intro.className = 'msg bot';
+      intro.textContent = "Hi! I'm the AI front desk for a dental clinic 🦷 Ask me about services, hours, or booking a visit.";
+      container.appendChild(intro);
+    }
+
+    function addMsg(type, text) {
+      const m = document.createElement('div');
+      m.className = 'msg ' + type;
+      m.textContent = text;
+      container.appendChild(m);
+      container.scrollTop = container.scrollHeight;
+      return m;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = chatField.value.trim();
+      if (!text) return;
+      goLive();
+      addMsg('client', text);
+      liveHistory.push({ role: 'user', content: text });
+      chatField.value = '';
+      chatField.disabled = true;
+      const btn = chatForm.querySelector('button');
+      btn.disabled = true;
+
+      const typing = document.createElement('div');
+      typing.className = 'typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      container.appendChild(typing);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: liveHistory }),
+        });
+        typing.remove();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          addMsg('bot', data.error || 'Sorry, something went wrong. Please try again.');
+        } else {
+          addMsg('bot', data.reply);
+          liveHistory.push({ role: 'assistant', content: data.reply });
+        }
+      } catch (err) {
+        typing.remove();
+        addMsg('bot', 'Connection issue — please try again in a moment.');
+      } finally {
+        chatField.disabled = false;
+        btn.disabled = false;
+        chatField.focus();
+      }
+    });
+
+    // ── Email signup (Formspree) ──
+    // 1. Create a free form at https://formspree.io  2. Paste its endpoint below.
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+
+    async function handleSignup(inputId, successId) {
       const input = document.getElementById(inputId);
       const success = document.getElementById(successId);
       const email = input.value.trim();
       if (!email || !email.includes('@')) { input.style.borderColor = '#FF6B6B'; setTimeout(() => input.style.borderColor = '', 1500); return; }
-      const emails = JSON.parse(localStorage.getItem('bizassist_emails') || '[]');
-      emails.push({ email, date: new Date().toISOString() });
-      localStorage.setItem('bizassist_emails', JSON.stringify(emails));
-      input.parentElement.style.display = 'none';
-      success.style.display = 'block';
+
+      const btn = input.parentElement.querySelector('button');
+      const originalText = btn.textContent;
+      btn.textContent = '...';
+      btn.disabled = true;
+
+      try {
+        if (FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
+          // Formspree not configured yet — fall back to localStorage so nothing breaks.
+          const emails = JSON.parse(localStorage.getItem('bizassist_emails') || '[]');
+          emails.push({ email, date: new Date().toISOString() });
+          localStorage.setItem('bizassist_emails', JSON.stringify(emails));
+        } else {
+          const res = await fetch(FORMSPREE_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, source: 'bizassist-landing' }),
+          });
+          if (!res.ok) throw new Error('signup failed');
+        }
+        input.parentElement.style.display = 'none';
+        success.style.display = 'block';
+      } catch (err) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        input.style.borderColor = '#FF6B6B';
+        setTimeout(() => input.style.borderColor = '', 1500);
+      }
     }
 
     // ── FAQ ──
