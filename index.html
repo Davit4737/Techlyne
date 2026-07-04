@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BizAssist — The AI Front Desk That Never Sleeps</title>
+  <meta name="description" content="BizAssist answers your clients, books appointments, and sends reminders 24/7. The AI front desk for dentists, salons, and service businesses." />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,7 +12,7 @@
       --bg: #08080C; --surface: #101018; --border: #1C1C2A;
       --accent: #6C6FFF; --accent-2: #9D6BFF;
       --accent-soft: rgba(108, 111, 255, 0.12); --accent-glow: rgba(108, 111, 255, 0.22);
-      --text: #F2F2FF; --muted: #797996; --card: #0D0D15; --green: #4ADE80;
+      --text: #F2F2FF; --muted: #797996; --card: #0D0D15; --green: #4ADE80; --red: #FF6B6B;
     }
     html { scroll-behavior: smooth; }
     body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; overflow-x: hidden; }
@@ -40,25 +41,34 @@
     .form-wrap input::placeholder { color: var(--muted); }
     .btn-primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; border: none; padding: 0.9rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; transition: opacity 0.2s, transform 0.1s; }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.9rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: border-color 0.2s; }
+    .btn-ghost:hover { border-color: var(--accent); }
     .form-note { font-size: 0.8rem; color: var(--muted); }
     .success-msg { display: none; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--green); padding: 0.75rem 1.2rem; border-radius: 10px; font-size: 0.9rem; font-weight: 500; margin-top: 0.3rem; max-width: 440px; }
-    .chat-demo { position: relative; z-index: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.2rem; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 111, 255, 0.06); }
+    /* CHAT */
+    .chat-demo { position: relative; z-index: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.2rem; box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(108,111,255,0.06); }
     .chat-header { display: flex; align-items: center; gap: 0.7rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
     .chat-avatar { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-    .chat-title { flex: 1; }
-    .chat-title h4 { font-size: 0.9rem; font-weight: 600; }
-    .chat-title p { font-size: 0.72rem; color: var(--green); display: flex; align-items: center; gap: 0.3rem; }
-    .chat-messages { display: flex; flex-direction: column; gap: 0.7rem; min-height: 300px; }
-    .msg { max-width: 82%; padding: 0.65rem 0.9rem; border-radius: 14px; font-size: 0.85rem; line-height: 1.5; opacity: 0; animation: msgIn 0.4s ease forwards; }
+    .chat-name-wrap { flex: 1; }
+    .chat-name-wrap h4 { font-size: 0.9rem; font-weight: 600; transition: opacity 0.4s; }
+    .chat-name-wrap p { font-size: 0.72rem; color: var(--green); display: flex; align-items: center; gap: 0.3rem; }
+    .chat-messages { display: flex; flex-direction: column; gap: 0.7rem; min-height: 310px; max-height: 340px; overflow-y: auto; scrollbar-width: none; }
+    .chat-messages::-webkit-scrollbar { display: none; }
+    .msg { max-width: 82%; padding: 0.65rem 0.9rem; border-radius: 14px; font-size: 0.85rem; line-height: 1.5; opacity: 0; animation: msgIn 0.35s ease forwards; }
     @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .msg.client { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
     .msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-    .msg.action { align-self: flex-start; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--green); font-size: 0.78rem; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
+    .msg.action { align-self: flex-start; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: var(--green); font-size: 0.78rem; font-weight: 500; }
     .typing { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); padding: 0.7rem 1rem; border-radius: 14px; border-bottom-left-radius: 4px; display: flex; gap: 0.25rem; }
     .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.4s infinite; }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+    @keyframes blink { 0%,60%,100% { opacity: 0.3; } 30% { opacity: 1; } }
+    .convo-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-top: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+    .convo-dots { display: flex; gap: 0.3rem; margin-left: auto; }
+    .convo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+    .convo-dot.active { background: var(--accent); }
+    /* STATS */
     .stats-bar { max-width: 1000px; margin: 0 auto; padding: 0 2rem 4rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     .stat { text-align: center; padding: 1.5rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
     .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
@@ -69,25 +79,44 @@
     .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 520px; line-height: 1.7; }
     .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 3rem; }
     .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.7rem; }
-    .problem-stat { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: #FF6B6B; margin-bottom: 0.6rem; }
+    .problem-stat { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--red); margin-bottom: 0.6rem; }
     .problem-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
     .problem-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .compare-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 3rem; }
+    .compare-card { border-radius: 16px; padding: 2rem; border: 1px solid var(--border); }
+    .compare-card.old { background: var(--card); }
+    .compare-card.new { background: linear-gradient(160deg, rgba(108,111,255,0.08), var(--card)); border-color: rgba(108,111,255,0.35); }
+    .compare-card h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .compare-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: 1.2rem; }
+    .compare-card.old .compare-price { color: var(--red); }
+    .compare-card.new .compare-price { background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .compare-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .compare-list li { font-size: 0.88rem; color: var(--muted); display: flex; gap: 0.6rem; align-items: flex-start; }
+    .compare-card.old .compare-list li::before { content: '✕'; color: var(--red); font-weight: 700; flex-shrink: 0; }
+    .compare-card.new .compare-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
     .how-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6rem 2rem; }
     .how-inner { max-width: 1100px; margin: 0 auto; }
     .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 2rem; margin-top: 3.5rem; }
     .step { display: flex; flex-direction: column; gap: 0.8rem; }
-    .step-num { width: 42px; height: 42px; background: var(--accent-soft); border: 1px solid rgba(108, 111, 255, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--accent); }
+    .step-num { width: 42px; height: 42px; background: var(--accent-soft); border: 1px solid rgba(108,111,255,0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--accent); }
     .step h3 { font-size: 1.05rem; font-weight: 600; }
     .step p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; margin-top: 3rem; }
     .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.8rem; transition: border-color 0.25s, transform 0.25s; }
-    .feature-card:hover { border-color: rgba(108, 111, 255, 0.4); transform: translateY(-4px); }
+    .feature-card:hover { border-color: rgba(108,111,255,0.4); transform: translateY(-4px); }
     .feature-icon { width: 46px; height: 46px; background: var(--accent-soft); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 1rem; }
     .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
     .feature-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
     .niches { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 2rem; }
     .niche-tag { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.85rem; font-weight: 500; }
-    .niche-tag.active { background: var(--accent-soft); border-color: rgba(108, 111, 255, 0.4); color: var(--accent); }
+    .niche-tag.active { background: var(--accent-soft); border-color: rgba(108,111,255,0.4); color: var(--accent); }
+    .faq-list { margin-top: 3rem; display: flex; flex-direction: column; gap: 0.8rem; max-width: 760px; }
+    .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .faq-q { width: 100%; background: none; border: none; color: var(--text); font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: left; padding: 1.2rem 1.4rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .faq-q::after { content: '+'; font-size: 1.3rem; color: var(--accent); transition: transform 0.25s; flex-shrink: 0; }
+    .faq-item.open .faq-q::after { transform: rotate(45deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .faq-a p { padding: 0 1.4rem 1.2rem; font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
     .cta-section { text-align: center; padding: 6rem 2rem; }
     .cta-box { background: linear-gradient(160deg, var(--surface), var(--card)); border: 1px solid var(--border); border-radius: 22px; padding: 4rem 2rem; max-width: 640px; margin: 0 auto; position: relative; overflow: hidden; }
     .cta-box::before { content: ''; position: absolute; bottom: -50%; left: 50%; transform: translateX(-50%); width: 420px; height: 420px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; }
@@ -101,7 +130,7 @@
     .foot-links { display: flex; gap: 1.5rem; }
     .foot-links a { font-size: 0.82rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
     .foot-links a:hover { color: var(--text); }
-    @media (max-width: 860px) { .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 7rem; } .chat-demo { max-width: 420px; } .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 860px) { .hero { grid-template-columns: 1fr; gap: 2.5rem; padding-top: 7rem; } .chat-demo { max-width: 440px; } .stats-bar { grid-template-columns: repeat(2, 1fr); } .compare-wrap { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { nav { padding: 1rem 1.2rem; } nav .links { gap: 1rem; } nav .links a:not(.nav-cta) { display: none; } .form-wrap { flex-direction: column; } .btn-primary { width: 100%; } section { padding: 4rem 1.2rem; } }
     @media (prefers-reduced-motion: reduce) { *, .reveal, .msg { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; } }
   </style>
@@ -115,6 +144,8 @@
       <a href="#early-access" class="nav-cta">Get Early Access</a>
     </div>
   </nav>
+
+  <!-- HERO -->
   <div class="hero">
     <div class="hero-content">
       <div class="badge"><span class="pulse-dot"></span> Live 24/7 · Never misses a client</div>
@@ -122,28 +153,41 @@
       <p class="hero-sub">BizAssist answers your clients, books their appointments, and sends reminders — automatically, around the clock. When they need a real person, it hands them straight to you.</p>
       <div class="form-wrap" id="early-access">
         <input type="email" id="hero-email" placeholder="your@email.com" />
-        <button class="btn-primary" onclick="handleSignup('hero-email', 'hero-success')">Get Early Access</button>
+        <button class="btn-primary" onclick="handleSignup('hero-email','hero-success')">Get Early Access</button>
       </div>
       <p class="form-note">Free during beta · No credit card · Setup in 10 minutes</p>
       <div class="success-msg" id="hero-success">🎉 You're on the waitlist. We'll reach out soon.</div>
     </div>
+
+    <!-- AUTO-PLAY CHAT DEMO -->
     <div class="chat-demo">
       <div class="chat-header">
-        <div class="chat-avatar">🦷</div>
-        <div class="chat-title">
-          <h4>Bright Smile Dental</h4>
+        <div class="chat-avatar" id="chatAvatar">🦷</div>
+        <div class="chat-name-wrap">
+          <h4 id="chatName">Bright Smile Dental</h4>
           <p><span class="pulse-dot"></span> BizAssist · Online</p>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
+      <div class="convo-label">
+        <span id="convoLabel">Booking an appointment</span>
+        <div class="convo-dots">
+          <div class="convo-dot active" id="dot0"></div>
+          <div class="convo-dot" id="dot1"></div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- STATS -->
   <div class="stats-bar reveal">
     <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Always answering</div></div>
     <div class="stat"><div class="stat-num">&lt;5s</div><div class="stat-label">Response time</div></div>
     <div class="stat"><div class="stat-num">-30%</div><div class="stat-label">Fewer no-shows</div></div>
     <div class="stat"><div class="stat-num">10min</div><div class="stat-label">To set up</div></div>
   </div>
+
+  <!-- PROBLEM -->
   <section class="reveal">
     <p class="section-label">The cost of a missed message</p>
     <h2 class="section-title">Every unanswered client<br />is money walking out the door.</h2>
@@ -154,6 +198,38 @@
       <div class="problem-card"><div class="problem-stat">20-30%</div><h3>Appointments become no-shows</h3><p>Without automatic reminders, clients forget. Empty chairs cost you money you already counted on.</p></div>
     </div>
   </section>
+
+  <!-- COMPARISON -->
+  <section class="reveal">
+    <p class="section-label">Do the math</p>
+    <h2 class="section-title">A front desk that costs less<br />than a coffee a day.</h2>
+    <div class="compare-wrap">
+      <div class="compare-card old">
+        <h3>Hiring a receptionist</h3>
+        <div class="compare-price">$2,500+/mo</div>
+        <ul class="compare-list">
+          <li>Works 8 hours a day, 5 days a week</li>
+          <li>Sick days, vacations, turnover</li>
+          <li>Can only handle one client at a time</li>
+          <li>Needs training, management, payroll</li>
+          <li>After-hours calls go to voicemail</li>
+        </ul>
+      </div>
+      <div class="compare-card new">
+        <h3>BizAssist</h3>
+        <div class="compare-price">Coming soon</div>
+        <ul class="compare-list">
+          <li>Works 24/7, weekends and holidays</li>
+          <li>Never sick, never quits, never late</li>
+          <li>Handles unlimited clients at once</li>
+          <li>Set up once in 10 minutes</li>
+          <li>Every after-hours message answered</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
   <div class="how-section" id="how">
     <div class="how-inner reveal">
       <p class="section-label">How it works</p>
@@ -166,6 +242,8 @@
       </div>
     </div>
   </div>
+
+  <!-- FEATURES -->
   <section id="features" class="reveal">
     <p class="section-label">Features</p>
     <h2 class="section-title">Everything a front desk does —<br />without the front desk.</h2>
@@ -178,6 +256,8 @@
       <div class="feature-card"><div class="feature-icon">🌍</div><h3>Fits any service business</h3><p>Dentists today. Salons, clinics, paint shops, gyms tomorrow. If you serve clients, it works for you.</p></div>
     </div>
   </section>
+
+  <!-- NICHES -->
   <section class="reveal">
     <p class="section-label">Who it's for</p>
     <h2 class="section-title">Starting with dentists.<br />Built for everyone.</h2>
@@ -193,18 +273,35 @@
       <span class="niche-tag">🔧 Repair Shops</span>
     </div>
   </section>
+
+  <!-- FAQ -->
+  <section class="reveal">
+    <p class="section-label">FAQ</p>
+    <h2 class="section-title">Questions? Answered.</h2>
+    <div class="faq-list">
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do I need any technical skills to set this up?</button><div class="faq-a"><p>None. You answer a few questions about your business — hours, services, prices, common questions — and BizAssist handles the rest. Setup takes about 10 minutes.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What happens when the AI can't answer something?</button><div class="faq-a"><p>It hands the conversation to you instantly. The client gets connected via phone or live chat, and you see the full conversation history so nothing gets repeated.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Will it work with my existing calendar or booking system?</button><div class="faq-a"><p>Calendar sync is included. For custom software integrations (practice management systems, CRMs), we handle it on request.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is my clients' data safe?</button><div class="faq-a"><p>Yes. Conversations are encrypted, stored securely, and never sold or shared. Your business data stays yours.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What does the beta include?</button><div class="faq-a"><p>Early access members use BizAssist free during beta, help shape the product, and lock in discounted founding pricing when we launch.</p></div></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
   <div class="cta-section">
     <div class="cta-box reveal">
       <h2>Stop losing clients to voicemail.</h2>
       <p>Join the waitlist and get early access — free during beta.</p>
       <div class="form-wrap">
         <input type="email" id="cta-email" placeholder="your@email.com" />
-        <button class="btn-primary" onclick="handleSignup('cta-email', 'cta-success')">Join Waitlist</button>
+        <button class="btn-primary" onclick="handleSignup('cta-email','cta-success')">Join Waitlist</button>
       </div>
       <p class="form-note">No spam. No credit card. Just early access.</p>
       <div class="success-msg" id="cta-success">🎉 You're on the waitlist. We'll reach out soon.</div>
     </div>
   </div>
+
+  <!-- FOOTER -->
   <footer>
     <div class="footer-inner">
       <p>© 2026 BizAssist · The AI front desk that never sleeps.</p>
@@ -215,37 +312,107 @@
       </div>
     </div>
   </footer>
+
   <script>
-    const conversation = [
-      { type: 'client', text: 'Hi, do you have any openings this week for a cleaning?' },
-      { type: 'typing' },
-      { type: 'bot', text: 'Hi! Yes 😊 We have Thursday at 2:00 PM or Friday at 10:30 AM open. Which works best for you?' },
-      { type: 'client', text: 'Thursday at 2 works great' },
-      { type: 'typing' },
-      { type: 'bot', text: 'Perfect! Can I get your name and phone number to confirm?' },
-      { type: 'client', text: 'Sarah M — 555 0142' },
-      { type: 'action', text: '✓ Appointment booked · Thursday 2:00 PM' },
-      { type: 'bot', text: "You're all set, Sarah! I'll text you a reminder the day before. See you Thursday! 🦷" },
+    // ── TWO AUTO-PLAY CONVERSATIONS ──
+    const conversations = [
+      {
+        name: "Bright Smile Dental",
+        avatar: "🦷",
+        label: "Booking an appointment",
+        messages: [
+          { type: 'client', text: 'Hi, do you have any openings this week for a cleaning?' },
+          { type: 'typing' },
+          { type: 'bot', text: 'Hi! Yes 😊 We have Thursday at 2:00 PM or Friday at 10:30 AM available. Which works better for you?' },
+          { type: 'client', text: 'Thursday at 2 sounds great' },
+          { type: 'typing' },
+          { type: 'bot', text: 'Perfect! Can I get your name and phone number to confirm?' },
+          { type: 'client', text: 'Sarah M — 555 0142' },
+          { type: 'action', text: '✓ Appointment booked · Thursday 2:00 PM' },
+          { type: 'bot', text: "You're all set, Sarah! I'll text you a reminder the night before. See you Thursday! 🦷" },
+        ]
+      },
+      {
+        name: "Luxe Hair Studio",
+        avatar: "💇",
+        label: "Handling after-hours questions",
+        messages: [
+          { type: 'client', text: 'Hey, are you guys open on Sundays?' },
+          { type: 'typing' },
+          { type: 'bot', text: 'Hi! We\'re open Sunday 10AM–4PM. Want me to check availability for a specific service?' },
+          { type: 'client', text: 'Yeah, how much is a balayage?' },
+          { type: 'typing' },
+          { type: 'bot', text: 'Balayage starts at $120 depending on hair length. Our stylist Maya has Sunday slots open — want me to book you in?' },
+          { type: 'client', text: 'Yes please, Sunday at 11' },
+          { type: 'action', text: '✓ Appointment booked · Sunday 11:00 AM · Maya' },
+          { type: 'bot', text: "Done! You'll get a confirmation text shortly. See you Sunday 💇" },
+        ]
+      }
     ];
+
     const container = document.getElementById('chatMessages');
-    let idx = 0;
+    const chatName = document.getElementById('chatName');
+    const chatAvatar = document.getElementById('chatAvatar');
+    const convoLabel = document.getElementById('convoLabel');
+    let currentConvo = 0;
+    let msgIdx = 0;
+    let timeoutId = null;
+
+    function switchConvo(idx) {
+      currentConvo = idx;
+      msgIdx = 0;
+      container.innerHTML = '';
+      const c = conversations[idx];
+      chatName.textContent = c.name;
+      chatAvatar.textContent = c.avatar;
+      convoLabel.textContent = c.label;
+      document.querySelectorAll('.convo-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+    }
+
     function renderNext() {
-      if (idx >= conversation.length) { setTimeout(() => { container.innerHTML = ''; idx = 0; renderNext(); }, 4000); return; }
-      const item = conversation[idx];
+      const c = conversations[currentConvo];
+      if (msgIdx >= c.messages.length) {
+        // Pause then switch to next conversation
+        timeoutId = setTimeout(() => {
+          const next = (currentConvo + 1) % conversations.length;
+          switchConvo(next);
+          timeoutId = setTimeout(renderNext, 800);
+        }, 3500);
+        return;
+      }
+      const item = c.messages[msgIdx];
       if (item.type === 'typing') {
         const t = document.createElement('div');
-        t.className = 'typing'; t.innerHTML = '<span></span><span></span><span></span>'; t.id = 'typingIndicator';
-        container.appendChild(t); container.scrollTop = container.scrollHeight; idx++;
-        setTimeout(() => { const ti = document.getElementById('typingIndicator'); if (ti) ti.remove(); renderNext(); }, 1100);
+        t.className = 'typing';
+        t.innerHTML = '<span></span><span></span><span></span>';
+        t.id = 'typingIndicator';
+        container.appendChild(t);
+        container.scrollTop = container.scrollHeight;
+        msgIdx++;
+        timeoutId = setTimeout(() => {
+          const ti = document.getElementById('typingIndicator');
+          if (ti) ti.remove();
+          renderNext();
+        }, 1100);
       } else {
         const m = document.createElement('div');
-        m.className = 'msg ' + item.type; m.textContent = item.text;
-        container.appendChild(m); container.scrollTop = container.scrollHeight; idx++;
-        const delay = item.type === 'client' ? 900 : 1400;
-        setTimeout(renderNext, delay);
+        m.className = 'msg ' + item.type;
+        m.textContent = item.text;
+        container.appendChild(m);
+        container.scrollTop = container.scrollHeight;
+        msgIdx++;
+        const delay = item.type === 'client' ? 950 : 1500;
+        timeoutId = setTimeout(renderNext, delay);
       }
     }
-    setTimeout(renderNext, 800);
+
+    // Kick off
+    switchConvo(0);
+    timeoutId = setTimeout(renderNext, 800);
+
+    // ── Email signup ──
     function handleSignup(inputId, successId) {
       const input = document.getElementById(inputId);
       const success = document.getElementById(successId);
@@ -257,9 +424,22 @@
       input.parentElement.style.display = 'none';
       success.style.display = 'block';
     }
+
+    // ── FAQ ──
+    function toggleFaq(btn) {
+      const item = btn.parentElement;
+      const answer = item.querySelector('.faq-a');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-a').style.maxHeight = null; });
+      if (!isOpen) { item.classList.add('open'); answer.style.maxHeight = answer.scrollHeight + 'px'; }
+    }
+
+    // ── Scroll reveal ──
     const observer = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }); }, { threshold: 0.15 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-    document.querySelectorAll('a[href^="#"]').forEach(a => { a.addEventListener('click', e => { e.preventDefault(); const target = document.querySelector(a.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth' }); }); });
+
+    // ── Smooth scroll ──
+    document.querySelectorAll('nav a[href^="#"]').forEach(a => { a.addEventListener('click', e => { e.preventDefault(); const t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); }); });
   </script>
 </body>
 </html>
