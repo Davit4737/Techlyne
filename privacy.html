@@ -6,30 +6,62 @@
   <title>Privacy Policy — BizAssist</title>
   <meta name="description" content="How BizAssist collects, uses, and protects your data." />
   <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg:#08080C; --surface:#101018; --border:#1C1C2A; --accent:#6C6FFF; --accent-2:#9D6BFF; --text:#F2F2FF; --muted:#797996; }
-    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; font-size:16px; }
-    .wrap { max-width:760px; margin:0 auto; padding:4rem 1.5rem 6rem; }
-    .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.5px; text-decoration:none; color:var(--text); display:inline-block; margin-bottom:2.5rem; }
-    .logo span { color:var(--accent); }
-    h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:2.2rem; letter-spacing:-1px; margin-bottom:0.5rem; }
-    .updated { color:var(--muted); font-size:0.85rem; margin-bottom:2.5rem; }
-    h2 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem; margin:2.2rem 0 0.7rem; }
-    p, li { color:#cfcfe0; font-size:0.95rem; margin-bottom:0.8rem; }
-    ul { padding-left:1.3rem; }
+    :root {
+      --bg:#F5F0E6; --surface:#FFFDF7; --border:#E3DAC6; --border-strong:#D8CFBB;
+      --accent:#2E6B4F; --accent-hover:#245641; --text:#211C13; --muted:#7C7361; --faint:#A79D8A;
+    }
+    html { scroll-behavior: smooth; }
+    body { background:var(--bg); color:var(--text); font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif; line-height:1.7; font-size:16px; -webkit-font-smoothing:antialiased; }
     a { color:var(--accent); text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    .note { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; font-size:0.88rem; color:var(--muted); margin:2rem 0; }
-    footer { border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem; color:var(--muted); font-size:0.82rem; }
-    footer a { color:var(--muted); margin-right:1.2rem; }
+    a:hover { color:var(--accent-hover); text-decoration:underline; }
+
+    /* NAV */
+    .nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:16px 32px; background:rgba(245,240,230,0.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+    .nav-logo { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:21px; letter-spacing:-0.5px; color:var(--text); text-decoration:none; }
+    .nav-logo span { color:var(--accent); }
+    .nav-logo:hover { color:var(--text); text-decoration:none; }
+    .nav-cta { background:var(--accent); color:#FFFDF7; padding:10px 20px; border-radius:999px; font-size:13.5px; font-weight:600; text-decoration:none; white-space:nowrap; transition:background 0.2s; }
+    .nav-cta:hover { background:var(--accent-hover); color:#FFFDF7; text-decoration:none; }
+
+    /* CONTENT */
+    .wrap { max-width:760px; margin:0 auto; padding:132px 24px 96px; }
+    .eyebrow { font-size:12px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+    h1 { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:clamp(34px,6vw,52px); letter-spacing:-1.5px; line-height:1.05; margin-bottom:10px; }
+    h1 span { font-family:'Instrument Serif',serif; font-style:italic; font-weight:400; letter-spacing:-1px; color:var(--accent); }
+    .updated { color:var(--faint); font-size:14px; margin-bottom:2.5rem; }
+    h2 { font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:20px; letter-spacing:-0.4px; margin:2.4rem 0 0.7rem; }
+    p, li { color:var(--muted); font-size:15.5px; margin-bottom:0.8rem; }
+    strong { color:var(--text); font-weight:600; }
+    ul { padding-left:1.3rem; }
+    li { margin-bottom:0.5rem; }
+    .note { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.3rem 1.5rem; font-size:14.5px; color:var(--muted); margin:2rem 0; }
+    footer { border-top:1px solid var(--border-strong); margin-top:3.5rem; padding-top:1.6rem; display:flex; flex-wrap:wrap; gap:1.4rem; align-items:center; }
+    footer a { color:var(--faint); font-size:13.5px; }
+    footer a:hover { color:var(--text); }
+    footer .copy { color:var(--faint); font-size:13.5px; margin:0; margin-right:auto; }
+
+    @media (max-width:600px) {
+      .nav { padding:13px 20px; }
+      .wrap { padding:104px 20px 72px; }
+      footer { flex-direction:column; align-items:flex-start; gap:0.9rem; }
+      footer .copy { margin-right:0; }
+    }
   </style>
 </head>
 <body>
+  <nav class="nav">
+    <a href="/" class="nav-logo">BizAssist<span>.</span></a>
+    <a href="/#early-access" class="nav-cta">Get early access</a>
+  </nav>
+
   <div class="wrap">
-    <a href="/" class="logo">Biz<span>Assist</span></a>
-    <h1>Privacy Policy</h1>
+    <p class="eyebrow">Legal</p>
+    <h1>Privacy <span>Policy.</span></h1>
     <p class="updated">Last updated: July 2026</p>
 
     <div class="note">BizAssist is currently in beta. This policy describes our practices today and may be updated as the product grows. We'll post material changes on this page.</div>
@@ -67,6 +99,7 @@
     <p>Questions about privacy? Email <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a>.</p>
 
     <footer>
+      <p class="copy">© 2026 BizAssist · The front desk that never sleeps.</p>
       <a href="/">Home</a>
       <a href="/terms.html">Terms</a>
       <a href="mailto:hello@bizzassist.xyz">Contact</a>
