@@ -1,9 +1,76 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "functions": {
-    "api/chat.js": {
-      "maxDuration": 30
-    }
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — BizAssist</title>
+  <meta name="description" content="How BizAssist collects, uses, and protects your data." />
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#08080C; --surface:#101018; --border:#1C1C2A; --accent:#6C6FFF; --accent-2:#9D6BFF; --text:#F2F2FF; --muted:#797996; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; font-size:16px; }
+    .wrap { max-width:760px; margin:0 auto; padding:4rem 1.5rem 6rem; }
+    .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.5px; text-decoration:none; color:var(--text); display:inline-block; margin-bottom:2.5rem; }
+    .logo span { color:var(--accent); }
+    h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:2.2rem; letter-spacing:-1px; margin-bottom:0.5rem; }
+    .updated { color:var(--muted); font-size:0.85rem; margin-bottom:2.5rem; }
+    h2 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem; margin:2.2rem 0 0.7rem; }
+    p, li { color:#cfcfe0; font-size:0.95rem; margin-bottom:0.8rem; }
+    ul { padding-left:1.3rem; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .note { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; font-size:0.88rem; color:var(--muted); margin:2rem 0; }
+    footer { border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem; color:var(--muted); font-size:0.82rem; }
+    footer a { color:var(--muted); margin-right:1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="logo">Biz<span>Assist</span></a>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: July 2026</p>
+
+    <div class="note">BizAssist is currently in beta. This policy describes our practices today and may be updated as the product grows. We'll post material changes on this page.</div>
+
+    <h2>1. Who we are</h2>
+    <p>BizAssist ("we", "us") provides an AI front-desk assistant for service businesses. You can reach us any time at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a>.</p>
+
+    <h2>2. What we collect</h2>
+    <ul>
+      <li><strong>Waitlist details:</strong> the email address you submit to request early access.</li>
+      <li><strong>Chat messages:</strong> messages you type into the demo assistant, which are sent to our AI provider to generate a reply.</li>
+      <li><strong>Basic technical data:</strong> standard information your browser sends (such as IP address), used to keep the service secure and prevent abuse.</li>
+    </ul>
+
+    <h2>3. How we use it</h2>
+    <ul>
+      <li>To contact you about early access and product updates.</li>
+      <li>To operate the AI assistant and improve its answers.</li>
+      <li>To protect the service against spam and abuse.</li>
+    </ul>
+
+    <h2>4. AI processing</h2>
+    <p>Messages sent to the assistant are processed by a third-party AI provider (Anthropic) solely to generate a response. We do not sell your data or use it to build advertising profiles.</p>
+
+    <h2>5. Sharing</h2>
+    <p>We share data only with the service providers that help us run BizAssist (for example, our hosting and email-capture tools) and only as needed to operate the service. We never sell your personal information.</p>
+
+    <h2>6. Data retention</h2>
+    <p>We keep waitlist emails until you ask us to remove them. You can request deletion of your data at any time by emailing <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a>.</p>
+
+    <h2>7. Your rights</h2>
+    <p>You can ask to access, correct, or delete your personal data. Just email us and we'll take care of it.</p>
+
+    <h2>8. Contact</h2>
+    <p>Questions about privacy? Email <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a>.</p>
+
+    <footer>
+      <a href="/">Home</a>
+      <a href="/terms.html">Terms</a>
+      <a href="mailto:hello@bizzassist.xyz">Contact</a>
+    </footer>
+  </div>
+</body>
+</html>
