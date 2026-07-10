@@ -2,7 +2,7 @@
 // Dependency-free: talks to the Anthropic API over plain fetch.
 // Requires env var: ANTHROPIC_API_KEY  (set in Vercel → Project → Settings → Environment Variables)
 
-const MODEL = "claude-sonnet-4-5"; // swap to "claude-sonnet-5" for the newest model
+const MODEL = "claude-sonnet-5"; // newest Sonnet model (intro pricing through 2026-08-31)
 const MAX_TOKENS = 400;
 const MAX_MSG_LEN = 1000; // per-message character cap
 const MAX_HISTORY = 20; // messages kept from the client
@@ -92,7 +92,24 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SYSTEM_PROMPT,
+        // Front-desk replies are short and factual — no reasoning needed.
+        // Disabling thinking keeps all 400 output tokens for the actual reply
+        // (adaptive thinking is ON by default on Sonnet 5 and would eat into it),
+        // and makes responses faster + cheaper.
+        thinking: { type: "disabled" },
+        // Low effort = terse, direct answers. Right for simple Q&A / booking.
+        output_config: { effort: "low" },
+        // Cache the (static) system prompt so it's billed at ~10% on repeat requests.
+        // NOTE: only kicks in once the cached prefix is ≥ ~2048 tokens. Today's prompt
+        // is shorter, so it's a harmless no-op until you expand SYSTEM_PROMPT with real
+        // clinic details (hours, address, prices) — then it starts saving money.
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages,
       }),
     });
