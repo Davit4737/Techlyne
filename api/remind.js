@@ -11,10 +11,16 @@ const CLINIC_NAME = process.env.CLINIC_NAME || "the clinic";
 const CLINIC_TIMEZONE = process.env.CLINIC_TIMEZONE || "America/New_York";
 
 export default async function handler(req, res) {
-  // Vercel Cron sends this header on its own invocations; block anyone else from
-  // triggering mass email sends by hitting the endpoint directly.
-  const secret = req.headers["authorization"];
-  if (process.env.CRON_SECRET && secret !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Vercel Cron authenticates via the Authorization header on its own invocations.
+  // A ?key= query param is also accepted so the endpoint can be triggered manually
+  // from a browser for testing. Either way, block anyone without the secret from
+  // triggering mass email sends.
+  const headerSecret = req.headers["authorization"];
+  const querySecret = (req.query && req.query.key) || "";
+  const authorized =
+    process.env.CRON_SECRET &&
+    (headerSecret === `Bearer ${process.env.CRON_SECRET}` || querySecret === process.env.CRON_SECRET);
+  if (!authorized) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
