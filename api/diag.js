@@ -15,6 +15,8 @@ export default async function handler(req, res) {
       ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
       CALCOM_API_KEY: Boolean(process.env.CALCOM_API_KEY),
       CALCOM_EVENT_TYPE_ID: process.env.CALCOM_EVENT_TYPE_ID || null,
+      CALCOM_USERNAME: process.env.CALCOM_USERNAME || null,
+      CALCOM_EVENT_SLUG: process.env.CALCOM_EVENT_SLUG || null,
       SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
       SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
       RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
@@ -31,7 +33,13 @@ export default async function handler(req, res) {
     const start = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const end = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     const url = new URL("https://api.cal.com/v2/slots");
-    url.searchParams.set("eventTypeId", process.env.CALCOM_EVENT_TYPE_ID || "");
+    // Match the live logic: prefer username + slug, fall back to numeric id.
+    if (process.env.CALCOM_USERNAME && process.env.CALCOM_EVENT_SLUG) {
+      url.searchParams.set("username", process.env.CALCOM_USERNAME);
+      url.searchParams.set("eventTypeSlug", process.env.CALCOM_EVENT_SLUG);
+    } else {
+      url.searchParams.set("eventTypeId", process.env.CALCOM_EVENT_TYPE_ID || "");
+    }
     url.searchParams.set("start", start);
     url.searchParams.set("end", end);
     url.searchParams.set("timeZone", process.env.CLINIC_TIMEZONE || "UTC");

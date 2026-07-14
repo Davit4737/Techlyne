@@ -19,7 +19,11 @@ per-country restrictions) — can revisit later if you want texts too.
    bookings show up there automatically — this is the "calendar sync."
 4. Create one Event Type for the bookable appointment (e.g. "Appointment — 30 min").
    Open it and copy the **Event Type ID** from the URL (`/event-types/12345`) — that's `CALCOM_EVENT_TYPE_ID`.
-5. Settings → Developer → API Keys → create a key — that's `CALCOM_API_KEY`.
+5. From your public booking link `cal.com/<username>/<slug>`, note the **username** and
+   **slug** — those are `CALCOM_USERNAME` and `CALCOM_EVENT_SLUG`. (The /slots API often
+   404s when queried by numeric ID, so availability is looked up by username + slug;
+   booking still uses the numeric ID.)
+6. Settings → Developer → API Keys → create a key — that's `CALCOM_API_KEY`.
 
 ### 2. Supabase (stores appointment records so reminders know who to email)
 1. Sign up at supabase.com, create a new project.
@@ -44,6 +48,8 @@ per-country restrictions) — can revisit later if you want texts too.
 | `ANTHROPIC_API_KEY` | already set — Claude chat |
 | `CALCOM_API_KEY` | Cal.com → Settings → Developer → API Keys |
 | `CALCOM_EVENT_TYPE_ID` | the numeric ID from your Cal.com event type URL |
+| `CALCOM_USERNAME` | from your booking link `cal.com/<username>/<slug>` |
+| `CALCOM_EVENT_SLUG` | from your booking link `cal.com/<username>/<slug>` |
 | `SUPABASE_URL` | Supabase → Project Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API (service_role, keep secret) |
 | `RESEND_API_KEY` | Resend → API Keys |
