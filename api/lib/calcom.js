@@ -5,10 +5,16 @@
 
 const API_BASE = "https://api.cal.com/v2";
 
-function headers() {
+// Cal.com pins each endpoint family to its own dated API version. Using the wrong
+// one makes the request silently fall back to an older, incompatible shape — so the
+// slots and bookings endpoints get their own version strings.
+const SLOTS_API_VERSION = "2024-09-04";
+const BOOKINGS_API_VERSION = "2024-08-13";
+
+function headers(apiVersion) {
   return {
     Authorization: `Bearer ${process.env.CALCOM_API_KEY}`,
-    "cal-api-version": "2024-08-13",
+    "cal-api-version": apiVersion,
     "content-type": "application/json",
   };
 }
@@ -26,7 +32,7 @@ export async function getAvailableSlots(startISO, endISO, timeZone = "UTC") {
   url.searchParams.set("end", endISO);
   url.searchParams.set("timeZone", timeZone);
 
-  const res = await fetch(url, { headers: headers() });
+  const res = await fetch(url, { headers: headers(SLOTS_API_VERSION) });
   if (!res.ok) {
     console.error("Cal.com slots error:", res.status, await res.text());
     return { ok: false, error: "Failed to fetch availability" };
@@ -45,7 +51,7 @@ export async function createBooking({ startISO, name, email, phone, timeZone = "
 
   const res = await fetch(`${API_BASE}/bookings`, {
     method: "POST",
-    headers: headers(),
+    headers: headers(BOOKINGS_API_VERSION),
     body: JSON.stringify({
       start: startISO,
       eventTypeId: Number(eventTypeId),
