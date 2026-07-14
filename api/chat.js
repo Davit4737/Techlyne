@@ -149,6 +149,9 @@ async function runTool(name, input) {
       startISO: input.start_time,
       name: input.name,
       phone: input.phone,
+      // Real email (when given) puts the patient on the calendar event properly and
+      // gets them Cal.com's own confirmation with working reschedule/cancel links.
+      email: input.email,
       timeZone: CLINIC_TIMEZONE,
       notes: input.service,
     });
