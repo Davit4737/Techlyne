@@ -1,7 +1,13 @@
 // Cal.com scheduling helper — dependency-free (plain fetch against the Cal.com v2 API).
-// Requires env vars: CALCOM_API_KEY, CALCOM_EVENT_TYPE_ID
+// Requires env vars: CALCOM_API_KEY, CALCOM_EVENT_TYPE_ID, CALCOM_USERNAME, CALCOM_EVENT_SLUG
 // Cal.com handles availability, timezone math, and the actual Google/Outlook calendar
 // sync once the clinic connects their calendar inside Cal.com — we just call the API.
+//
+// NOTE: the /slots endpoint frequently 404s ("Event Type not found") when queried by
+// numeric eventTypeId, even for events that exist and book fine. Querying by
+// username + eventTypeSlug is the reliable path, so availability uses those. Booking
+// still uses the numeric eventTypeId (that endpoint resolves it correctly).
+// username + slug come straight from the booking link: cal.com/<username>/<slug>
 
 const API_BASE = "https://api.cal.com/v2";
 
@@ -20,14 +26,22 @@ function headers(apiVersion) {
 }
 
 // Returns available slots between two ISO dates for the configured event type.
+// Prefers username + eventTypeSlug (reliable); falls back to numeric eventTypeId.
 export async function getAvailableSlots(startISO, endISO, timeZone = "UTC") {
+  const username = process.env.CALCOM_USERNAME;
+  const slug = process.env.CALCOM_EVENT_SLUG;
   const eventTypeId = process.env.CALCOM_EVENT_TYPE_ID;
-  if (!process.env.CALCOM_API_KEY || !eventTypeId) {
+  if (!process.env.CALCOM_API_KEY || (!eventTypeId && !(username && slug))) {
     return { ok: false, error: "Calendar not configured" };
   }
 
   const url = new URL(`${API_BASE}/slots`);
-  url.searchParams.set("eventTypeId", eventTypeId);
+  if (username && slug) {
+    url.searchParams.set("username", username);
+    url.searchParams.set("eventTypeSlug", slug);
+  } else {
+    url.searchParams.set("eventTypeId", eventTypeId);
+  }
   url.searchParams.set("start", startISO);
   url.searchParams.set("end", endISO);
   url.searchParams.set("timeZone", timeZone);
