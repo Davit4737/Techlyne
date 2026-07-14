@@ -49,6 +49,11 @@ WHAT YOU CAN DO:
 - Email is optional: ask once, casually, if they'd like an email reminder before the visit. If they don't have one handy or don't want to share it, don't push — book anyway with just name and phone.
 - After book_appointment succeeds, confirm the date/time back clearly. Mention a reminder email if they gave one; otherwise just confirm the booking and move on.
 
+TIMES & DATES:
+- Every slot from check_availability has a "local_time" label already converted to the clinic's timezone. Quote those labels to the patient EXACTLY as written. Never convert, recalculate, or guess times yourself.
+- To book, copy the slot's "start" value into book_appointment verbatim — character for character. Never construct or edit a timestamp yourself.
+- Interpret "today", "tomorrow", and weekday names using the current clinic date/time given in this prompt. If the patient's requested date seems to be in the past, double-check the year against the current date before assuming.
+
 RULES:
 - Never give clinical or medical diagnoses. For pain, symptoms, or emergencies, express empathy and advise booking a visit or, for severe emergencies, contacting emergency services.
 - Never invent specific open time slots as if they are real availability — always use check_availability.
@@ -82,7 +87,11 @@ const TOOLS = [
     input_schema: {
       type: "object",
       properties: {
-        start_time: { type: "string", description: "Exact ISO 8601 slot start time from check_availability" },
+        start_time: {
+          type: "string",
+          description:
+            "The exact `start` value of a slot returned by check_availability, copied verbatim (including timezone offset). Never construct this yourself.",
+        },
         name: { type: "string", description: "Patient's full name" },
         phone: { type: "string", description: "Patient's phone number, with country code if known" },
         email: { type: "string", description: "Patient's email, only if they offered one — never required" },
@@ -93,13 +102,46 @@ const TOOLS = [
   },
 ];
 
+function localLabel(iso) {
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: CLINIC_TIMEZONE,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 async function runTool(name, input) {
   if (name === "check_availability") {
     const start = new Date(input.start_date).toISOString();
     const end = new Date(input.end_date + "T23:59:59").toISOString();
     const result = await getAvailableSlots(start, end, CLINIC_TIMEZONE);
     if (!result.ok) return { error: result.error };
-    return { slots: result.slots };
+
+    // Pre-convert every slot to a clinic-local label so the model never does
+    // timezone math. `start` is the exact string to book with; `local_time` is
+    // what gets said to the patient. Capped so a wide search can't blow up tokens.
+    const days = {};
+    let total = 0;
+    for (const [date, daySlots] of Object.entries(result.slots || {})) {
+      if (!Array.isArray(daySlots)) continue;
+      days[date] = [];
+      for (const s of daySlots) {
+        if (total >= 60) break;
+        const iso = typeof s === "string" ? s : s?.start;
+        if (!iso) continue;
+        days[date].push({ start: iso, local_time: localLabel(iso) });
+        total += 1;
+      }
+    }
+    return {
+      timezone: CLINIC_TIMEZONE,
+      slots: days,
+      instructions:
+        "Quote local_time labels to the patient exactly as written. To book, pass the chosen slot's start value verbatim to book_appointment.",
+    };
   }
 
   if (name === "book_appointment") {
@@ -134,7 +176,8 @@ async function runTool(name, input) {
       );
     }
 
-    return { confirmed: true, start_time: input.start_time, email_sent: Boolean(input.email) };
+    // local_time is what the model should confirm back to the patient.
+    return { confirmed: true, start_time: input.start_time, local_time: when, email_sent: Boolean(input.email) };
   }
 
   return { error: "Unknown tool" };
@@ -191,11 +234,21 @@ export default async function handler(req, res) {
           // Low effort = terse, direct answers. Right for simple Q&A / booking.
           output_config: { effort: "low" },
           // Cache the (static) system prompt + tool defs so they're billed at ~10% on repeat requests.
+          // The current date/time lives in a separate uncached block so it stays fresh
+          // without busting the cache on the static part.
           system: [
             {
               type: "text",
               text: SYSTEM_PROMPT,
               cache_control: { type: "ephemeral" },
+            },
+            {
+              type: "text",
+              text: `Current date and time at the clinic: ${new Date().toLocaleString("en-US", {
+                timeZone: CLINIC_TIMEZONE,
+                dateStyle: "full",
+                timeStyle: "short",
+              })} (${CLINIC_TIMEZONE}). Interpret "today", "tomorrow", and weekday names relative to this.`,
             },
           ],
           tools: TOOLS,
