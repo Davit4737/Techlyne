@@ -4,6 +4,15 @@
   "functions": {
     "api/chat.js": {
       "maxDuration": 30
+    },
+    "api/remind.js": {
+      "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/remind",
+      "schedule": "0 14 * * *"
+    }
+  ]
 }
