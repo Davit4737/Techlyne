@@ -3,12 +3,12 @@
 // Requires env var: ANTHROPIC_API_KEY  (set in Vercel → Project → Settings → Environment Variables)
 //
 // Booking is wired through two tools the model can call mid-conversation:
-// check_availability (Cal.com) and book_appointment (Cal.com + Supabase + Twilio SMS).
+// check_availability (Cal.com) and book_appointment (Cal.com + Supabase + email via Resend).
 // See SETUP.md for the accounts/env vars each of those needs.
 
 import { getAvailableSlots, createBooking } from "./lib/calcom.js";
 import { insertAppointment } from "./lib/db.js";
-import { sendSms } from "./lib/twilio.js";
+import { sendEmail } from "./lib/email.js";
 
 const MODEL = "claude-sonnet-5"; // newest Sonnet model (intro pricing through 2026-08-31)
 const MAX_TOKENS = 600;
@@ -46,7 +46,8 @@ WHAT YOU CAN DO:
 - Help book appointments by collecting: service needed, preferred day/time, name, and phone number.
 - Use the check_availability tool to look up real open slots — never invent times.
 - Once the patient picks a real slot and you have their name and phone number, call book_appointment. Only call it with a start time that check_availability actually returned.
-- After book_appointment succeeds, confirm the date/time back clearly and tell the patient they'll get a text confirmation and a reminder before the visit.
+- Email is optional: ask once, casually, if they'd like an email reminder before the visit. If they don't have one handy or don't want to share it, don't push — book anyway with just name and phone.
+- After book_appointment succeeds, confirm the date/time back clearly. Mention a reminder email if they gave one; otherwise just confirm the booking and move on.
 
 RULES:
 - Never give clinical or medical diagnoses. For pain, symptoms, or emergencies, express empathy and advise booking a visit or, for severe emergencies, contacting emergency services.
@@ -76,7 +77,7 @@ const TOOLS = [
   {
     name: "book_appointment",
     description:
-      "Book a real appointment on the calendar and send the patient an SMS confirmation. " +
+      "Book a real appointment on the calendar. Sends an email confirmation if the patient gave an email. " +
       "Only call this with a start_time that came from check_availability's results.",
     input_schema: {
       type: "object",
@@ -84,6 +85,7 @@ const TOOLS = [
         start_time: { type: "string", description: "Exact ISO 8601 slot start time from check_availability" },
         name: { type: "string", description: "Patient's full name" },
         phone: { type: "string", description: "Patient's phone number, with country code if known" },
+        email: { type: "string", description: "Patient's email, only if they offered one — never required" },
         service: { type: "string", description: "Requested service, e.g. 'cleaning', 'checkup'" },
       },
       required: ["start_time", "name", "phone"],
@@ -113,6 +115,7 @@ async function runTool(name, input) {
     await insertAppointment({
       name: input.name,
       phone: input.phone,
+      email: input.email,
       service: input.service,
       startISO: input.start_time,
       calcomBookingUid: booking.booking?.uid,
@@ -123,12 +126,15 @@ async function runTool(name, input) {
       dateStyle: "medium",
       timeStyle: "short",
     });
-    await sendSms(
-      input.phone,
-      `You're booked at ${CLINIC_NAME} for ${when}${input.service ? ` (${input.service})` : ""}. Reply to this number if you need to change anything.`
-    );
+    if (input.email) {
+      await sendEmail(
+        input.email,
+        `Your appointment at ${CLINIC_NAME}`,
+        `You're booked at ${CLINIC_NAME} for ${when}${input.service ? ` (${input.service})` : ""}. If you need to change anything, contact the clinic directly.`
+      );
+    }
 
-    return { confirmed: true, start_time: input.start_time };
+    return { confirmed: true, start_time: input.start_time, email_sent: Boolean(input.email) };
   }
 
   return { error: "Unknown tool" };

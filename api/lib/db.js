@@ -14,7 +14,7 @@ function isConfigured() {
   return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-export async function insertAppointment({ name, phone, service, startISO, calcomBookingUid }) {
+export async function insertAppointment({ name, phone, email, service, startISO, calcomBookingUid }) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/appointments`, {
@@ -24,10 +24,13 @@ export async function insertAppointment({ name, phone, service, startISO, calcom
       {
         name,
         phone,
+        email: email || null,
         service,
         start_time: startISO,
         calcom_booking_uid: calcomBookingUid,
-        reminder_sent: false,
+        // No email on file means there's nothing for the reminder cron to send —
+        // mark it reminded up front so it doesn't sit in the queue forever.
+        reminder_sent: !email,
       },
     ]),
   });

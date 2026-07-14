@@ -3,6 +3,7 @@ create table if not exists appointments (
   id bigint generated always as identity primary key,
   name text not null,
   phone text not null,
+  email text,
   service text,
   start_time timestamptz not null,
   calcom_booking_uid text,
