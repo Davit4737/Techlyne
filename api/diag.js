@@ -3,7 +3,6 @@
 // Hit it in a browser at:  /api/diag?key=YOUR_CRON_SECRET
 // Safe to delete once everything's confirmed working. Never exposes secret values.
 
-import { getAvailableSlots } from "./lib/calcom.js";
 
 export default async function handler(req, res) {
   const key = (req.query && req.query.key) || "";
@@ -26,17 +25,35 @@ export default async function handler(req, res) {
     supabase: null,
   };
 
-  // Cal.com: try to fetch tomorrow's slots and report exactly what comes back.
+  // Cal.com: hit the slots endpoint directly and report the RAW status + body so we
+  // can tell a 401 (bad key) from a 429 (rate limit) from a 400 (bad params).
   try {
     const start = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const end = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-    const result = await getAvailableSlots(start, end, process.env.CLINIC_TIMEZONE || "UTC");
-    const dates = result.ok ? Object.keys(result.slots || {}) : [];
+    const url = new URL("https://api.cal.com/v2/slots");
+    url.searchParams.set("eventTypeId", process.env.CALCOM_EVENT_TYPE_ID || "");
+    url.searchParams.set("start", start);
+    url.searchParams.set("end", end);
+    url.searchParams.set("timeZone", process.env.CLINIC_TIMEZONE || "UTC");
+
+    const r = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.CALCOM_API_KEY}`,
+        "cal-api-version": "2024-09-04",
+        "content-type": "application/json",
+      },
+    });
+    const bodyText = await r.text();
+    let dates = [];
+    try {
+      const parsed = JSON.parse(bodyText);
+      dates = parsed?.data ? Object.keys(parsed.data) : [];
+    } catch {}
     out.calcom = {
-      ok: result.ok,
-      error: result.error || null,
+      ok: r.ok,
+      http_status: r.status,
+      raw_response: bodyText.slice(0, 500), // truncated so it stays readable
       dates_with_slots: dates,
-      sample_slot: dates.length ? result.slots[dates[0]]?.[0] : null,
     };
   } catch (err) {
     out.calcom = { ok: false, error: String(err) };
