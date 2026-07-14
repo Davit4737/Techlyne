@@ -27,42 +27,85 @@ export default async function handler(req, res) {
     supabase: null,
   };
 
-  // Cal.com: hit the slots endpoint directly and report the RAW status + body so we
-  // can tell a 401 (bad key) from a 429 (rate limit) from a 400 (bad params).
+  // Cal.com test matrix: both documented v2 lookups 404 for this account, so try
+  // every plausible request shape in one pass and report which (if any) returns slots.
+  // Once a winner is found, api/lib/calcom.js gets wired to use it and this shrinks back.
   try {
-    const start = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const end = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-    const url = new URL("https://api.cal.com/v2/slots");
-    // Match the live logic: prefer username + slug, fall back to numeric id.
-    if (process.env.CALCOM_USERNAME && process.env.CALCOM_EVENT_SLUG) {
-      url.searchParams.set("username", process.env.CALCOM_USERNAME);
-      url.searchParams.set("eventTypeSlug", process.env.CALCOM_EVENT_SLUG);
-    } else {
-      url.searchParams.set("eventTypeId", process.env.CALCOM_EVENT_TYPE_ID || "");
-    }
-    url.searchParams.set("start", start);
-    url.searchParams.set("end", end);
-    url.searchParams.set("timeZone", process.env.CLINIC_TIMEZONE || "UTC");
+    const apiKey = process.env.CALCOM_API_KEY;
+    const id = process.env.CALCOM_EVENT_TYPE_ID || "";
+    const username = process.env.CALCOM_USERNAME || "";
+    const slug = process.env.CALCOM_EVENT_SLUG || "";
+    const tz = process.env.CLINIC_TIMEZONE || "UTC";
+    const startISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const endISO = new Date(Date.now() + 96 * 60 * 60 * 1000).toISOString();
+    const startDate = startISO.slice(0, 10);
+    const endDate = endISO.slice(0, 10);
 
-    const r = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.CALCOM_API_KEY}`,
-        "cal-api-version": "2024-09-04",
-        "content-type": "application/json",
+    const v2Auth = { Authorization: `Bearer ${apiKey}`, "cal-api-version": "2024-09-04" };
+    const v2NoAuth = { "cal-api-version": "2024-09-04" };
+
+    function v2Url(params) {
+      const u = new URL("https://api.cal.com/v2/slots");
+      for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+      return u;
+    }
+
+    const variants = [
+      {
+        name: "v2 username+slug (auth)",
+        url: v2Url({ username, eventTypeSlug: slug, start: startISO, end: endISO, timeZone: tz }),
+        headers: v2Auth,
       },
-    });
-    const bodyText = await r.text();
-    let dates = [];
-    try {
-      const parsed = JSON.parse(bodyText);
-      dates = parsed?.data ? Object.keys(parsed.data) : [];
-    } catch {}
-    out.calcom = {
-      ok: r.ok,
-      http_status: r.status,
-      raw_response: bodyText.slice(0, 500), // truncated so it stays readable
-      dates_with_slots: dates,
-    };
+      {
+        name: "v2 username+slug (no auth)",
+        url: v2Url({ username, eventTypeSlug: slug, start: startDate, end: endDate, timeZone: tz }),
+        headers: v2NoAuth,
+      },
+      {
+        name: "v2 eventTypeId (auth)",
+        url: v2Url({ eventTypeId: id, start: startISO, end: endISO, timeZone: tz }),
+        headers: v2Auth,
+      },
+      {
+        name: "v2 eventTypeId (no auth)",
+        url: v2Url({ eventTypeId: id, start: startDate, end: endDate, timeZone: tz }),
+        headers: v2NoAuth,
+      },
+      {
+        name: "v1 slots (apiKey param)",
+        url: (() => {
+          const u = new URL("https://api.cal.com/v1/slots");
+          u.searchParams.set("apiKey", apiKey || "");
+          u.searchParams.set("eventTypeId", id);
+          u.searchParams.set("startTime", startISO);
+          u.searchParams.set("endTime", endISO);
+          return u;
+        })(),
+        headers: {},
+      },
+    ];
+
+    out.calcom = [];
+    for (const v of variants) {
+      try {
+        const r = await fetch(v.url, { headers: v.headers });
+        const bodyText = await r.text();
+        let dates = [];
+        try {
+          const parsed = JSON.parse(bodyText);
+          const slotsObj = parsed?.data?.slots || parsed?.data || parsed?.slots;
+          if (slotsObj && typeof slotsObj === "object") dates = Object.keys(slotsObj);
+        } catch {}
+        out.calcom.push({
+          variant: v.name,
+          http_status: r.status,
+          dates_found: dates.slice(0, 5),
+          body_preview: r.ok ? bodyText.slice(0, 200) : bodyText.slice(0, 160),
+        });
+      } catch (err) {
+        out.calcom.push({ variant: v.name, error: String(err) });
+      }
+    }
   } catch (err) {
     out.calcom = { ok: false, error: String(err) };
   }
