@@ -47,9 +47,12 @@ flowchart TD
 |---|---|---|
 | `POST /api/chat` | `api/chat.js` | The AI front desk. Runs a tool loop: `check_availability`, `book_appointment`, `cancel_appointment`, `reschedule_appointment`. |
 | `GET /api/remind` | `api/remind.js` | Daily Vercel Cron. Emails reminders for appointments 24–48h out. Gated by `CRON_SECRET`. |
-| `GET /api/appointments` | `api/appointments.js` | Powers the admin dashboard. Gated by `ADMIN_SECRET`. |
+| `GET /api/appointments` | `api/appointments.js` | Powers a dashboard. `?b=<slug>` scopes to one client (auth = master `ADMIN_SECRET` or that client's own secret); no `b` = the default tenant. |
+| `GET/POST/PATCH /api/businesses` | `api/businesses.js` | Operator CRUD for client businesses. Gated by master `ADMIN_SECRET`. |
 | `GET /api/diag` | `api/diag.js` | Internal health check for the integrations. Gated by `CRON_SECRET`. |
-| `/admin` | `admin.html` | Bookings dashboard for the business owner. |
+| `/admin` | `admin.html` | Bookings dashboard. `/admin?b=<slug>` for a specific client. |
+| `/onboard` | `onboard.html` | Operator form to add/edit client businesses (no redeploy). |
+| `/c/<slug>` | `chat.html` | A client's hosted chat page (rewrite in `vercel.json`). |
 
 ## Code layout
 
@@ -69,12 +72,27 @@ admin.html         bookings dashboard
 index.html         landing page + chat widget
 ```
 
+## Multi-tenant
+
+One deployment serves many clients. A `businesses` row per client holds their config
+(name, timezone, hours, address, services, industry, their own Cal.com keys, and their
+dashboard password). Requests carry a `slug` that selects the tenant; the chat loads that
+business and uses its config for the prompt, Cal.com calls, and emails. **No slug falls
+back to env vars** — the original single-client "default" tenant — so nothing breaks.
+
+Onboard a client at `/onboard` (behind the master `ADMIN_SECRET`): fill the form, get back
+their chat link (`/c/<slug>`) and dashboard link (`/admin?b=<slug>`). No redeploy. All
+tenants email from the one verified domain with their own display name.
+
 ## Data model
 
-One table, `appointments` (see `supabase/schema.sql`): `name`, `phone`, `email`,
-`service`, `start_time`, `calcom_booking_uid`, `reminder_sent`, `status`
-(`confirmed` | `cancelled`), `created_at`. RLS is on with no policies on purpose — only
-the server-side service-role key touches it.
+- **`businesses`** — one row per client tenant (see `supabase/schema.sql`).
+- **`appointments`** — `business_id` (null = default tenant), `name`, `phone`, `email`,
+  `service`, `start_time`, `calcom_booking_uid`, `reminder_sent`, `status`
+  (`confirmed` | `cancelled`), `created_at`.
+
+RLS is on with no policies on purpose — only the server-side service-role key touches
+these tables (per-client Cal.com keys live in `businesses`, so it stays locked down).
 
 ## Setup & deployment
 
