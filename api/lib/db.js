@@ -209,6 +209,14 @@ export async function findConfirmedBySlot({ businessId, startISO, phone }) {
   return { ok: true, appointment };
 }
 
+// Abuse guard: how many upcoming confirmed appointments a phone already holds with this
+// business. Used to cap bookings per contact so a prankster can't flood the calendar.
+export async function countUpcomingByContact({ businessId, phone }) {
+  const r = await findAppointmentsByContact({ businessId, phone });
+  if (!r.ok) return r;
+  return { ok: true, count: r.appointments.length };
+}
+
 export async function updateAppointment(id, fields) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
