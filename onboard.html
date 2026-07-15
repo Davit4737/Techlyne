@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>BizAssist — Onboard a client</title>
+  <style>
+    :root { --green:#2E6B4F; --ink:#211C13; --muted:#7C7361; --bg:#F5F1EA; --card:#fff; --line:#E7E0D5; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 28px 18px 80px; }
+    .brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:19px; margin-bottom:4px; }
+    .brand .dot { color: var(--green); }
+    h1 { font-size: 22px; margin: 4px 0 2px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+    .login { max-width: 380px; margin: 12vh auto 0; background: var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
+    label { display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 5px; text-transform:uppercase; letter-spacing:.3px; }
+    input, textarea, select { width:100%; padding:11px 13px; font-size:14.5px; border:1px solid var(--line); border-radius:9px; margin-bottom:14px; background:#fff; color:var(--ink); font-family:inherit; }
+    input:focus, textarea:focus, select:focus { outline:2px solid var(--green); outline-offset:1px; border-color:var(--green); }
+    textarea { min-height:60px; resize:vertical; }
+    button { background:var(--green); color:#fff; border:0; border-radius:9px; padding:11px 18px; font-size:14.5px; font-weight:600; cursor:pointer; }
+    button:hover { filter:brightness(1.05); }
+    button.ghost { background:transparent; color:var(--muted); padding:8px 12px; font-weight:500; }
+    button.wide { width:100%; }
+    .err { color:#B4402E; font-size:13px; min-height:16px; margin-bottom:8px; }
+    .ok { color:var(--green); font-size:13px; min-height:16px; margin-bottom:8px; }
+
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+    .full { grid-column:1 / -1; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 22px 8px; margin-bottom:20px; }
+    .card h2 { font-size:15px; margin:0 0 16px; }
+    .section-label { font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:6px 0 12px; grid-column:1/-1; }
+
+    .clients { display:flex; flex-direction:column; gap:10px; margin-bottom:26px; }
+    .client { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .client .nm { font-weight:600; }
+    .client .lnk { font-size:12.5px; color:var(--muted); word-break:break-all; }
+    .client .lnk a { color:var(--green); text-decoration:none; }
+    .pill { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:#E4F0E9; color:var(--green); text-transform:uppercase; }
+    .pill.off { background:#Eee; color:var(--muted); }
+    .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div id="login" class="login">
+    <div class="brand">BizAssist<span class="dot">.</span></div>
+    <h1>Operator sign-in</h1>
+    <div class="sub">Enter your master admin key to manage clients.</div>
+    <input id="key" type="password" placeholder="ADMIN_SECRET" autocomplete="current-password" />
+    <div id="loginErr" class="err"></div>
+    <button class="wide" id="signin">Continue</button>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="wrap" style="display:none">
+    <div class="brand">BizAssist<span class="dot">.</span></div>
+    <div class="bar">
+      <div><h1>Clients</h1><div class="sub">Add or edit a business — no redeploy needed.</div></div>
+      <div><button class="ghost" id="newBtn">+ New client</button> <button class="ghost" id="logout">Log out</button></div>
+    </div>
+
+    <div id="clients" class="clients"></div>
+
+    <!-- Editor -->
+    <div id="editor" class="card" style="display:none">
+      <h2 id="editorTitle">New client</h2>
+      <div id="formErr" class="err"></div>
+      <div id="formOk" class="ok"></div>
+      <input type="hidden" id="f_id" />
+      <div class="grid">
+        <div class="section-label">Basics</div>
+        <div><label>Business name *</label><input id="f_name" placeholder="Bright Smile Dental" /></div>
+        <div><label>Slug * (URL id)</label><input id="f_slug" placeholder="bright-smile" /></div>
+        <div><label>Industry</label><input id="f_industry" placeholder="dental clinic" /></div>
+        <div><label>Timezone (IANA)</label><input id="f_timezone" placeholder="Asia/Yerevan" /></div>
+
+        <div class="section-label">Business info (the bot can state these)</div>
+        <div class="full"><label>Hours</label><input id="f_hours" placeholder="Mon–Fri 9am–6pm, Sat 10am–2pm" /></div>
+        <div><label>Address</label><input id="f_address" placeholder="123 Main St" /></div>
+        <div><label>Phone</label><input id="f_phone" placeholder="+1 555 123 4567" /></div>
+        <div class="full"><label>Services</label><textarea id="f_services" placeholder="cleanings, checkups, whitening, emergency visits"></textarea></div>
+
+        <div class="section-label">Cal.com (from the client's booking link cal.com/USERNAME/SLUG)</div>
+        <div><label>Cal.com API key</label><input id="f_calcom_api_key" placeholder="cal_live_..." /></div>
+        <div><label>Event type ID</label><input id="f_calcom_event_type_id" placeholder="6311369" /></div>
+        <div><label>Cal.com username</label><input id="f_calcom_username" placeholder="davit-asatryan-u3alzw" /></div>
+        <div><label>Event slug</label><input id="f_calcom_event_slug" placeholder="appointment" /></div>
+
+        <div class="section-label">Access</div>
+        <div><label>Client dashboard password</label><input id="f_admin_secret" placeholder="their /admin key" /></div>
+        <div><label>Active</label><select id="f_active"><option value="true">Yes</option><option value="false">No</option></select></div>
+      </div>
+      <div style="margin-top:6px"><button id="save">Save client</button> <button class="ghost" id="cancelEdit">Cancel</button></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORE = "bizassist_operator_key";
+    let KEY = "";
+
+    async function api(method, body) {
+      const res = await fetch("/api/businesses?key=" + encodeURIComponent(KEY), {
+        method,
+        headers: { "content-type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (res.status === 401) throw new Error("Wrong key");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    }
+
+    function esc(s) { return String(s==null?"":s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+    const EDIT_FIELDS = ["name","slug","industry","timezone","hours","address","phone","services",
+      "calcom_api_key","calcom_event_type_id","calcom_username","calcom_event_slug","admin_secret"];
+
+    function fillForm(b) {
+      $("f_id").value = b?.id || "";
+      EDIT_FIELDS.forEach((f) => { $("f_" + f).value = (b && b[f] != null) ? b[f] : ""; });
+      $("f_active").value = b ? String(b.active !== false) : "true";
+      $("editorTitle").textContent = b ? ("Edit: " + b.name) : "New client";
+      $("formErr").textContent = ""; $("formOk").textContent = "";
+      $("editor").style.display = "block";
+      $("editor").scrollIntoView({ behavior: "smooth" });
+    }
+
+    async function refresh() {
+      const { businesses } = await api("GET");
+      $("clients").innerHTML = businesses.length ? businesses.map(clientRow).join("")
+        : '<div class="sub">No clients yet. Click "New client" to add your first one.</div>';
+      businesses.forEach((b) => {
+        const el = document.getElementById("edit-" + b.id);
+        if (el) el.addEventListener("click", () => fillForm(b));
+      });
+    }
+
+    function clientRow(b) {
+      const origin = location.origin;
+      return '<div class="client">' +
+        '<div><div class="nm">' + esc(b.name) + ' <span class="pill' + (b.active===false?' off':'') + '">' + (b.active===false?'off':'live') + '</span></div>' +
+        '<div class="lnk">Chat: <a href="/c/' + esc(b.slug) + '" target="_blank">' + origin + '/c/' + esc(b.slug) + '</a></div>' +
+        '<div class="lnk">Dashboard: <a href="/admin?b=' + esc(b.slug) + '" target="_blank">' + origin + '/admin?b=' + esc(b.slug) + '</a></div></div>' +
+        '<button class="ghost" id="edit-' + b.id + '">Edit</button></div>';
+    }
+
+    async function save() {
+      $("formErr").textContent = ""; $("formOk").textContent = "";
+      const payload = { active: $("f_active").value === "true" };
+      EDIT_FIELDS.forEach((f) => { payload[f] = $("f_" + f).value.trim(); });
+      const id = $("f_id").value;
+      try {
+        if (id) { payload.id = Number(id); await api("PATCH", payload); }
+        else { await api("POST", payload); }
+        $("formOk").textContent = "Saved ✓";
+        await refresh();
+        if (!id) $("editor").style.display = "none";
+      } catch (e) { $("formErr").textContent = e.message; }
+    }
+
+    async function attempt(key, fromStore) {
+      KEY = key;
+      try {
+        await refresh();
+        sessionStorage.setItem(STORE, key);
+        $("login").style.display = "none";
+        $("app").style.display = "block";
+      } catch (e) {
+        if (fromStore) { sessionStorage.removeItem(STORE); return; }
+        $("loginErr").textContent = e.message;
+      }
+    }
+
+    $("signin").addEventListener("click", () => {
+      const key = $("key").value.trim();
+      if (!key) { $("loginErr").textContent = "Enter your key."; return; }
+      attempt(key, false);
+    });
+    $("key").addEventListener("keydown", (e) => { if (e.key === "Enter") $("signin").click(); });
+    $("newBtn").addEventListener("click", () => fillForm(null));
+    $("cancelEdit").addEventListener("click", () => { $("editor").style.display = "none"; });
+    $("save").addEventListener("click", save);
+    $("logout").addEventListener("click", () => { sessionStorage.removeItem(STORE); location.reload(); });
+
+    const stored = sessionStorage.getItem(STORE);
+    if (stored) attempt(stored, true);
+  </script>
+</body>
+</html>
