@@ -17,6 +17,17 @@ function isConfigured() {
 
 const REST = () => `${process.env.SUPABASE_URL}/rest/v1`;
 
+// Phones arrive in whatever format the model relayed ("98818318", "+98 81-83-18"…).
+// Compare digits only so format drift can never break dedupe or cancel lookups.
+function phoneDigits(p) {
+  return String(p || "").replace(/\D/g, "");
+}
+function samePhone(a, b) {
+  const da = phoneDigits(a);
+  const db = phoneDigits(b);
+  return Boolean(da) && da === db;
+}
+
 // ─────────────────────────── Businesses (tenants) ───────────────────────────
 
 // Fetches one client's config by its slug. Returns { ok, business|null }.
@@ -149,15 +160,14 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
   if (!phone && !email) return { ok: false, error: "Need a phone or email to look up" };
 
+  // Pull the tenant's upcoming confirmed rows (a small set) and match the contact in JS:
+  // phones compare on digits only, emails case-insensitively — so the format the model
+  // relays can't break the lookup.
   const url = new URL(`${REST()}/appointments`);
   url.searchParams.set("status", "eq.confirmed");
   url.searchParams.set("start_time", `gte.${new Date().toISOString()}`);
   // Scope to this tenant: business_id equals the caller's, or is null for the default tenant.
   url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
-  const ors = [];
-  if (phone) ors.push(`phone.eq.${phone}`);
-  if (email) ors.push(`email.eq.${email}`);
-  url.searchParams.set("or", `(${ors.join(",")})`);
   url.searchParams.set("order", "start_time.asc");
   url.searchParams.set("select", "*");
 
@@ -166,7 +176,12 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
     console.error("Supabase lookup error:", res.status, await res.text());
     return { ok: false, error: "Failed to look up appointment" };
   }
-  return { ok: true, appointments: await res.json() };
+  const rows = await res.json();
+  const emailNorm = (email || "").trim().toLowerCase();
+  const appointments = rows.filter(
+    (r) => samePhone(r.phone, phone) || (emailNorm && (r.email || "").trim().toLowerCase() === emailNorm)
+  );
+  return { ok: true, appointments };
 }
 
 // Idempotency guard for booking: finds an existing confirmed appointment for the same
@@ -176,12 +191,12 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
 export async function findConfirmedBySlot({ businessId, startISO, phone }) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
+  // Query by tenant+slot+status only (a slot holds at most a handful of rows), then match
+  // the phone in JS on digits so a reformatted number still deduplicates.
   const url = new URL(`${REST()}/appointments`);
   url.searchParams.set("status", "eq.confirmed");
   url.searchParams.set("start_time", `eq.${startISO}`);
-  if (phone) url.searchParams.set("phone", `eq.${phone}`);
   url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
-  url.searchParams.set("limit", "1");
   url.searchParams.set("select", "*");
 
   const res = await fetch(url, { headers: headers() });
@@ -190,7 +205,8 @@ export async function findConfirmedBySlot({ businessId, startISO, phone }) {
     return { ok: false, error: "Failed to check existing booking" };
   }
   const rows = await res.json();
-  return { ok: true, appointment: rows[0] || null };
+  const appointment = rows.find((r) => samePhone(r.phone, phone)) || null;
+  return { ok: true, appointment };
 }
 
 export async function updateAppointment(id, fields) {
