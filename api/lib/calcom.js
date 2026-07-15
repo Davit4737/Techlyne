@@ -87,3 +87,47 @@ export async function createBooking({ startISO, name, email, phone, timeZone = "
   const data = await res.json();
   return { ok: true, booking: data.data };
 }
+
+// Cancels an existing booking by its Cal.com uid. This also removes the event from the
+// connected Google/Outlook calendar automatically.
+export async function cancelBooking(uid, reason = "Cancelled by patient via assistant") {
+  if (!process.env.CALCOM_API_KEY || !uid) {
+    return { ok: false, error: "Calendar not configured" };
+  }
+
+  const res = await fetch(`${API_BASE}/bookings/${uid}/cancel`, {
+    method: "POST",
+    headers: headers(BOOKINGS_API_VERSION),
+    body: JSON.stringify({ cancellationReason: reason }),
+  });
+
+  if (!res.ok) {
+    console.error("Cal.com cancel error:", res.status, await res.text());
+    return { ok: false, error: "Failed to cancel booking" };
+  }
+
+  return { ok: true };
+}
+
+// Reschedules an existing booking to a new start time. Cal.com cancels the old booking
+// and creates a NEW one with a NEW uid, which we return so the DB row can be updated.
+// `startISO` must be a real open slot (from getAvailableSlots), same as a fresh booking.
+export async function rescheduleBooking(uid, startISO, reason = "Rescheduled by patient via assistant") {
+  if (!process.env.CALCOM_API_KEY || !uid) {
+    return { ok: false, error: "Calendar not configured" };
+  }
+
+  const res = await fetch(`${API_BASE}/bookings/${uid}/reschedule`, {
+    method: "POST",
+    headers: headers(BOOKINGS_API_VERSION),
+    body: JSON.stringify({ start: startISO, reschedulingReason: reason }),
+  });
+
+  if (!res.ok) {
+    console.error("Cal.com reschedule error:", res.status, await res.text());
+    return { ok: false, error: "Failed to reschedule booking" };
+  }
+
+  const data = await res.json();
+  return { ok: true, booking: data.data, newUid: data.data?.uid };
+}

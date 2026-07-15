@@ -43,12 +43,14 @@ export async function insertAppointment({ name, phone, email, service, startISO,
   return { ok: true, appointment: data[0] };
 }
 
-// Appointments starting within [windowStartISO, windowEndISO) that haven't had a reminder sent yet.
+// Appointments starting within [windowStartISO, windowEndISO) that haven't had a reminder
+// sent yet. Cancelled appointments are excluded so we never remind about a dead booking.
 export async function getAppointmentsNeedingReminder(windowStartISO, windowEndISO) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/appointments`);
   url.searchParams.set("reminder_sent", "eq.false");
+  url.searchParams.set("status", "eq.confirmed");
   url.searchParams.set("start_time", `gte.${windowStartISO}`);
   url.searchParams.append("start_time", `lt.${windowEndISO}`);
   url.searchParams.set("select", "*");
@@ -60,6 +62,71 @@ export async function getAppointmentsNeedingReminder(windowStartISO, windowEndIS
   }
   const appointments = await res.json();
   return { ok: true, appointments };
+}
+
+// Finds a caller's upcoming, still-confirmed appointments by the phone or email they give.
+// Used to verify identity before a cancel/reschedule — a light front-desk-grade check.
+export async function findAppointmentsByContact({ phone, email }) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!phone && !email) return { ok: false, error: "Need a phone or email to look up" };
+
+  const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/appointments`);
+  url.searchParams.set("status", "eq.confirmed");
+  url.searchParams.set("start_time", `gte.${new Date().toISOString()}`);
+  // PostgREST OR filter: match either contact field the caller provided.
+  const ors = [];
+  if (phone) ors.push(`phone.eq.${phone}`);
+  if (email) ors.push(`email.eq.${email}`);
+  url.searchParams.set("or", `(${ors.join(",")})`);
+  url.searchParams.set("order", "start_time.asc");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase lookup error:", res.status, await res.text());
+    return { ok: false, error: "Failed to look up appointment" };
+  }
+  return { ok: true, appointments: await res.json() };
+}
+
+// Patches arbitrary columns on an appointment row (start_time, uid, status, reminder_sent…).
+export async function updateAppointment(id, fields) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+
+  const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/appointments?id=eq.${id}`, {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify(fields),
+  });
+
+  if (!res.ok) {
+    console.error("Supabase update error:", res.status, await res.text());
+    return { ok: false, error: "Failed to update appointment" };
+  }
+  return { ok: true };
+}
+
+// Marks an appointment cancelled (kept for history rather than deleted).
+export async function cancelAppointment(id) {
+  return updateAppointment(id, { status: "cancelled" });
+}
+
+// Lists appointments for the admin dashboard: everything from `sinceISO` onward,
+// newest upcoming first. Returns all statuses so the owner sees cancellations too.
+export async function listAppointments(sinceISO) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+
+  const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/appointments`);
+  if (sinceISO) url.searchParams.set("start_time", `gte.${sinceISO}`);
+  url.searchParams.set("order", "start_time.asc");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase list error:", res.status, await res.text());
+    return { ok: false, error: "Failed to list appointments" };
+  }
+  return { ok: true, appointments: await res.json() };
 }
 
 export async function markReminderSent(id) {
