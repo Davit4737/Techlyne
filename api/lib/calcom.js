@@ -1,52 +1,47 @@
 // Cal.com scheduling helper — dependency-free (plain fetch against the Cal.com v2 API).
-// Requires env vars: CALCOM_API_KEY, CALCOM_EVENT_TYPE_ID, CALCOM_USERNAME, CALCOM_EVENT_SLUG
-// Cal.com handles availability, timezone math, and the actual Google/Outlook calendar
-// sync once the clinic connects their calendar inside Cal.com — we just call the API.
+// Multi-tenant: every function takes a `cfg` object with that client's Cal.com credentials
+//   cfg = { apiKey, eventTypeId, username, eventSlug }
+// so one deployment can talk to many clients' Cal.com accounts. Callers build cfg from the
+// business row (or env vars for the default tenant) — see resolveBusiness() in chat.js.
 //
 // NOTE: the /slots endpoint frequently 404s ("Event Type not found") when queried by
 // numeric eventTypeId, even for events that exist and book fine. Querying by
 // username + eventTypeSlug is the reliable path, so availability uses those. Booking
 // still uses the numeric eventTypeId (that endpoint resolves it correctly).
-// username + slug come straight from the booking link: cal.com/<username>/<slug>
 
 const API_BASE = "https://api.cal.com/v2";
 
-// Cal.com pins each endpoint family to its own dated API version. Using the wrong
-// one makes the request silently fall back to an older, incompatible shape — so the
-// slots and bookings endpoints get their own version strings.
+// Cal.com pins each endpoint family to its own dated API version.
 const SLOTS_API_VERSION = "2024-09-04";
 const BOOKINGS_API_VERSION = "2024-08-13";
 
-function headers(apiVersion) {
+function headers(apiKey, apiVersion) {
   return {
-    Authorization: `Bearer ${process.env.CALCOM_API_KEY}`,
+    Authorization: `Bearer ${apiKey}`,
     "cal-api-version": apiVersion,
     "content-type": "application/json",
   };
 }
 
-// Returns available slots between two ISO dates for the configured event type.
+// Returns available slots between two ISO dates for the client's event type.
 // Prefers username + eventTypeSlug (reliable); falls back to numeric eventTypeId.
-export async function getAvailableSlots(startISO, endISO, timeZone = "UTC") {
-  const username = process.env.CALCOM_USERNAME;
-  const slug = process.env.CALCOM_EVENT_SLUG;
-  const eventTypeId = process.env.CALCOM_EVENT_TYPE_ID;
-  if (!process.env.CALCOM_API_KEY || (!eventTypeId && !(username && slug))) {
+export async function getAvailableSlots(cfg, startISO, endISO, timeZone = "UTC") {
+  if (!cfg?.apiKey || (!cfg.eventTypeId && !(cfg.username && cfg.eventSlug))) {
     return { ok: false, error: "Calendar not configured" };
   }
 
   const url = new URL(`${API_BASE}/slots`);
-  if (username && slug) {
-    url.searchParams.set("username", username);
-    url.searchParams.set("eventTypeSlug", slug);
+  if (cfg.username && cfg.eventSlug) {
+    url.searchParams.set("username", cfg.username);
+    url.searchParams.set("eventTypeSlug", cfg.eventSlug);
   } else {
-    url.searchParams.set("eventTypeId", eventTypeId);
+    url.searchParams.set("eventTypeId", cfg.eventTypeId);
   }
   url.searchParams.set("start", startISO);
   url.searchParams.set("end", endISO);
   url.searchParams.set("timeZone", timeZone);
 
-  const res = await fetch(url, { headers: headers(SLOTS_API_VERSION) });
+  const res = await fetch(url, { headers: headers(cfg.apiKey, SLOTS_API_VERSION) });
   if (!res.ok) {
     console.error("Cal.com slots error:", res.status, await res.text());
     return { ok: false, error: "Failed to fetch availability" };
@@ -55,20 +50,18 @@ export async function getAvailableSlots(startISO, endISO, timeZone = "UTC") {
   return { ok: true, slots: data.data || {} };
 }
 
-// Creates a booking for the configured event type. `startISO` must be one of the
-// slots returned by getAvailableSlots (Cal.com rejects times that aren't actually free).
-export async function createBooking({ startISO, name, email, phone, timeZone = "UTC", notes }) {
-  const eventTypeId = process.env.CALCOM_EVENT_TYPE_ID;
-  if (!process.env.CALCOM_API_KEY || !eventTypeId) {
+// Creates a booking for the client's event type. `startISO` must be a real open slot.
+export async function createBooking(cfg, { startISO, name, email, phone, timeZone = "UTC", notes }) {
+  if (!cfg?.apiKey || !cfg.eventTypeId) {
     return { ok: false, error: "Calendar not configured" };
   }
 
   const res = await fetch(`${API_BASE}/bookings`, {
     method: "POST",
-    headers: headers(BOOKINGS_API_VERSION),
+    headers: headers(cfg.apiKey, BOOKINGS_API_VERSION),
     body: JSON.stringify({
       start: startISO,
-      eventTypeId: Number(eventTypeId),
+      eventTypeId: Number(cfg.eventTypeId),
       attendee: {
         name,
         email: email || "no-reply@example.com",
@@ -88,16 +81,13 @@ export async function createBooking({ startISO, name, email, phone, timeZone = "
   return { ok: true, booking: data.data };
 }
 
-// Cancels an existing booking by its Cal.com uid. This also removes the event from the
-// connected Google/Outlook calendar automatically.
-export async function cancelBooking(uid, reason = "Cancelled by patient via assistant") {
-  if (!process.env.CALCOM_API_KEY || !uid) {
-    return { ok: false, error: "Calendar not configured" };
-  }
+// Cancels an existing booking by uid. Also removes the event from the connected calendar.
+export async function cancelBooking(cfg, uid, reason = "Cancelled by patient via assistant") {
+  if (!cfg?.apiKey || !uid) return { ok: false, error: "Calendar not configured" };
 
   const res = await fetch(`${API_BASE}/bookings/${uid}/cancel`, {
     method: "POST",
-    headers: headers(BOOKINGS_API_VERSION),
+    headers: headers(cfg.apiKey, BOOKINGS_API_VERSION),
     body: JSON.stringify({ cancellationReason: reason }),
   });
 
@@ -105,21 +95,17 @@ export async function cancelBooking(uid, reason = "Cancelled by patient via assi
     console.error("Cal.com cancel error:", res.status, await res.text());
     return { ok: false, error: "Failed to cancel booking" };
   }
-
   return { ok: true };
 }
 
-// Reschedules an existing booking to a new start time. Cal.com cancels the old booking
-// and creates a NEW one with a NEW uid, which we return so the DB row can be updated.
-// `startISO` must be a real open slot (from getAvailableSlots), same as a fresh booking.
-export async function rescheduleBooking(uid, startISO, reason = "Rescheduled by patient via assistant") {
-  if (!process.env.CALCOM_API_KEY || !uid) {
-    return { ok: false, error: "Calendar not configured" };
-  }
+// Reschedules a booking to a new start time. Cal.com creates a NEW booking with a NEW uid,
+// which we return so the DB row can be re-pointed. `startISO` must be a real open slot.
+export async function rescheduleBooking(cfg, uid, startISO, reason = "Rescheduled by patient via assistant") {
+  if (!cfg?.apiKey || !uid) return { ok: false, error: "Calendar not configured" };
 
   const res = await fetch(`${API_BASE}/bookings/${uid}/reschedule`, {
     method: "POST",
-    headers: headers(BOOKINGS_API_VERSION),
+    headers: headers(cfg.apiKey, BOOKINGS_API_VERSION),
     body: JSON.stringify({ start: startISO, reschedulingReason: reason }),
   });
 
