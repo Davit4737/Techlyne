@@ -5,9 +5,12 @@
 // Appointments booked without an email are never queued here (see api/lib/db.js).
 
 import { getAppointmentsNeedingReminder, markReminderSent } from "./lib/db.js";
-import { sendEmail, reminderEmail } from "./lib/email.js";
+import { sendEmail, senderFor, reminderEmail } from "./lib/email.js";
 
-const CLINIC_TIMEZONE = process.env.CLINIC_TIMEZONE || "America/New_York";
+// Fallbacks for appointments on the default (env-var) tenant, where business is null.
+const DEFAULT_NAME = process.env.CLINIC_NAME || "the clinic";
+const DEFAULT_TIMEZONE = process.env.CLINIC_TIMEZONE || "America/New_York";
+const DEFAULT_FROM = process.env.EMAIL_FROM || null;
 
 export default async function handler(req, res) {
   // Vercel Cron authenticates via the Authorization header on its own invocations.
@@ -36,13 +39,18 @@ export default async function handler(req, res) {
   for (const appt of result.appointments) {
     if (!appt.email) continue; // shouldn't happen — insertAppointment marks these reminded already
 
+    // Per-tenant name/timezone/sender from the embedded business; env fallback if none.
+    const name = appt.business?.name || DEFAULT_NAME;
+    const timeZone = appt.business?.timezone || DEFAULT_TIMEZONE;
+    const from = appt.business ? senderFor(name) : DEFAULT_FROM;
+
     const when = new Date(appt.start_time).toLocaleString("en-US", {
-      timeZone: CLINIC_TIMEZONE,
+      timeZone,
       dateStyle: "medium",
       timeStyle: "short",
     });
-    const em = reminderEmail({ when, service: appt.service });
-    const emailResult = await sendEmail(appt.email, em.subject, em.text, em.html);
+    const em = reminderEmail(name, { when, service: appt.service });
+    const emailResult = await sendEmail({ from, to: appt.email, subject: em.subject, text: em.text, html: em.html });
     if (emailResult.ok) {
       await markReminderSent(appt.id);
       sent += 1;
