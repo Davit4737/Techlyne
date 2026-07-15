@@ -91,11 +91,17 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const KEY_STORE = "bizassist_admin_key";
+    // Which client's dashboard this is: /admin?b=<slug>. Keys are stored per-tenant so
+    // switching businesses doesn't require re-entering the wrong one.
+    const SLUG = new URLSearchParams(location.search).get("b") || "";
+    const KEY_STORE = "bizassist_admin_key_" + (SLUG || "default");
 
     async function load(key) {
-      const res = await fetch("/api/appointments?key=" + encodeURIComponent(key));
+      let url = "/api/appointments?key=" + encodeURIComponent(key);
+      if (SLUG) url += "&b=" + encodeURIComponent(SLUG);
+      const res = await fetch(url);
       if (res.status === 401) throw new Error("Wrong key");
+      if (res.status === 404) throw new Error("Business not found");
       if (!res.ok) throw new Error("Something went wrong (" + res.status + ")");
       return res.json();
     }
