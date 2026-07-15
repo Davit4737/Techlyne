@@ -169,6 +169,30 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
   return { ok: true, appointments: await res.json() };
 }
 
+// Idempotency guard for booking: finds an existing confirmed appointment for the same
+// tenant + slot + phone. If book_appointment is called twice for the same person+slot
+// (e.g. once before the email is given, once after), the second call finds this row
+// instead of creating a duplicate Cal.com booking.
+export async function findConfirmedBySlot({ businessId, startISO, phone }) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+
+  const url = new URL(`${REST()}/appointments`);
+  url.searchParams.set("status", "eq.confirmed");
+  url.searchParams.set("start_time", `eq.${startISO}`);
+  if (phone) url.searchParams.set("phone", `eq.${phone}`);
+  url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase findConfirmedBySlot error:", res.status, await res.text());
+    return { ok: false, error: "Failed to check existing booking" };
+  }
+  const rows = await res.json();
+  return { ok: true, appointment: rows[0] || null };
+}
+
 export async function updateAppointment(id, fields) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
