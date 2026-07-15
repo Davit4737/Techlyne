@@ -13,7 +13,8 @@ import { getBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsBy
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./lib/email.js";
 
 const MODEL = "claude-sonnet-5";
-const MAX_TOKENS = 600;
+// Enough headroom for adaptive thinking + a tool-heavy turn without truncation.
+const MAX_TOKENS = 900;
 const MAX_MSG_LEN = 1000;
 const MAX_HISTORY = 20;
 
@@ -115,8 +116,11 @@ BOOKING PROTOCOL (follow exactly — this prevents errors):
 - Gather the service, name, and phone number. Ask ONCE if they'd like an email reminder. Only AFTER you have name + phone (and their email answer) do you call book_appointment — a SINGLE time, with everything you've collected.
 - Never call book_appointment more than once for the same appointment. Do not call it "to reserve" and then again "to confirm."
 - Once book_appointment returns confirmed (including already_booked: true), the booking is DONE and final. Confirm it warmly and mention the email if one was captured. Never call check_availability again for that appointment, and never suggest the slot might have been lost.
+- If the customer wants to ADD an email after booking, you MUST call book_appointment again with the SAME start_time (verbatim) plus the email — the system attaches it to the existing booking and sends the confirmation. Never claim an email was added or sent unless the tool result shows email_sent: true.
+- For ANY question about an existing booking — did it go through, what do I have booked, did you email me — call find_my_appointments. NEVER answer those from check_availability: it lists open slots only, and a customer's own booked time never appears there.
 - If book_appointment returns error "slot_taken", that specific time was genuinely just taken by someone else — apologize briefly, call check_availability for nearby times, and offer alternatives.
 - If a cancel/reschedule tool returns needs_selection, the customer has multiple upcoming appointments — read back the options and ask which one, then call the tool again with appointment_date.
+- Never state something happened (booked, cancelled, email sent) unless a tool result in this conversation confirms it.
 
 RULES:
 - For medical/clinical questions, complaints, or anything genuinely needing a human, offer to have staff follow up. You CAN handle bookings, cancellations, and reschedules yourself — only hand off if a lookup fails.
@@ -151,6 +155,18 @@ function buildTools(biz) {
           service: { type: "string", description: "Requested service" },
         },
         required: ["start_time", "name", "phone"],
+      },
+    },
+    {
+      name: "find_my_appointments",
+      description:
+        "Look up a customer's existing bookings by the phone or email they booked with. Use this for ANY question about an existing booking — did it go through, what's booked, is an email on file, did a confirmation get sent. NEVER use check_availability to verify an existing booking.",
+      input_schema: {
+        type: "object",
+        properties: {
+          phone: { type: "string", description: "Phone the appointment was booked with" },
+          email: { type: "string", description: "Email the appointment was booked with" },
+        },
       },
     },
     {
@@ -237,7 +253,26 @@ async function runTool(biz, name, input) {
     return {
       timezone: tz,
       slots: days,
-      instructions: "Quote local_time labels exactly. To book, pass the chosen slot's start value verbatim.",
+      instructions:
+        "Quote local_time labels exactly. To book, pass the chosen slot's start value verbatim. " +
+        "IMPORTANT: these are OPEN slots only — already-booked times (including this customer's own booking) never appear here. " +
+        "A missing time does NOT mean an existing booking was lost; use find_my_appointments to check a booking.",
+    };
+  }
+
+  if (name === "find_my_appointments") {
+    const lookup = await findAppointmentsByContact({ businessId: biz.id, phone: input.phone, email: input.email });
+    if (!lookup.ok) return { error: lookup.error };
+    return {
+      count: lookup.appointments.length,
+      appointments: lookup.appointments.map((a) => ({
+        local_time: localLabel(a.start_time, tz),
+        date: localDate(a.start_time, tz),
+        service: a.service,
+        status: a.status,
+        email_on_file: a.email || null,
+      })),
+      note: "email_on_file is where confirmations/reminders go. If null, no email was captured for that booking.",
     };
   }
 
@@ -258,7 +293,14 @@ async function runTool(biz, name, input) {
         await sendEmail({ from: biz.emailFrom, to: input.email, subject: em.subject, text: em.text, html: em.html });
         emailSent = true;
       }
-      return { confirmed: true, already_booked: true, start_time: input.start_time, local_time: when, email_sent: emailSent || Boolean(row.email) };
+      return {
+        confirmed: true,
+        already_booked: true,
+        start_time: input.start_time,
+        local_time: when,
+        email_sent: emailSent || Boolean(row.email),
+        email_on_file: input.email && !row.email ? input.email : row.email || null,
+      };
     }
 
     const booking = await createBooking(biz.calcom, {
@@ -401,7 +443,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          output_config: { effort: "low" },
+          // Medium effort: "low" was observed skipping tool calls and asserting outcomes
+          // ("email added ✅" without actually calling the tool). Booking correctness is
+          // worth the small cost bump.
+          output_config: { effort: "medium" },
           system: [
             { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
             {
