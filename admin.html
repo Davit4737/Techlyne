@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>BizAssist — Bookings</title>
+  <style>
+    :root {
+      --green: #2E6B4F; --ink: #211C13; --muted: #7C7361;
+      --bg: #F5F1EA; --card: #ffffff; --line: #E7E0D5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 28px 18px 60px; }
+
+    /* ── Login ── */
+    .login { max-width: 380px; margin: 12vh auto 0; background: var(--card);
+      border: 1px solid var(--line); border-radius: 16px; padding: 32px 28px; }
+    .login h1 { font-size: 20px; margin: 0 0 6px; }
+    .login p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+    .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; font-weight: 700; font-size: 19px; }
+    .brand .dot { color: var(--green); }
+    input[type=password] {
+      width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid var(--line);
+      border-radius: 10px; margin-bottom: 14px; background: #fff; color: var(--ink);
+    }
+    input[type=password]:focus { outline: 2px solid var(--green); outline-offset: 1px; border-color: var(--green); }
+    button {
+      background: var(--green); color: #fff; border: 0; border-radius: 10px;
+      padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    button:hover { filter: brightness(1.05); }
+    button.ghost { background: transparent; color: var(--muted); width: auto; padding: 8px 12px; font-weight: 500; }
+    .err { color: #B4402E; font-size: 13px; margin: 4px 0 12px; min-height: 16px; }
+
+    /* ── Dashboard ── */
+    header.bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+    header.bar h1 { font-size: 21px; margin: 0; }
+    header.bar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .actions { display: flex; gap: 6px; }
+    .stats { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 120px; }
+    .stat .n { font-size: 24px; font-weight: 700; }
+    .stat .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .row { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+      display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; }
+    .row.cancelled { opacity: 0.6; }
+    .when { font-weight: 600; font-size: 15px; }
+    .who { color: var(--muted); font-size: 13.5px; }
+    .who strong { color: var(--ink); font-weight: 600; }
+    .contact { font-size: 12.5px; color: var(--muted); grid-column: 1 / -1; }
+    .chip { justify-self: end; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .chip.confirmed { background: #E4F0E9; color: var(--green); }
+    .chip.cancelled { background: #F4E4E0; color: #B4402E; }
+    .empty { text-align: center; color: var(--muted); padding: 50px 20px; }
+    .divider { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 18px 2px 4px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <!-- Login gate -->
+  <div id="login" class="login">
+    <div class="brand">BizAssist<span class="dot">.</span></div>
+    <h1>Bookings dashboard</h1>
+    <p>Enter your admin key to view appointments.</p>
+    <input id="key" type="password" placeholder="Admin key" autocomplete="current-password" />
+    <div id="loginErr" class="err"></div>
+    <button id="signin">View bookings</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dash" class="wrap" style="display:none">
+    <header class="bar">
+      <div>
+        <h1 id="title">Bookings</h1>
+        <div class="sub" id="sub"></div>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="refresh">↻ Refresh</button>
+        <button class="ghost" id="logout">Log out</button>
+      </div>
+    </header>
+    <div class="stats" id="stats"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const KEY_STORE = "bizassist_admin_key";
+
+    async function load(key) {
+      const res = await fetch("/api/appointments?key=" + encodeURIComponent(key));
+      if (res.status === 401) throw new Error("Wrong key");
+      if (!res.ok) throw new Error("Something went wrong (" + res.status + ")");
+      return res.json();
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    function render(data) {
+      $("login").style.display = "none";
+      $("dash").style.display = "block";
+      $("title").textContent = data.clinic_name + " — Bookings";
+      $("sub").textContent = "Times shown in " + data.timezone;
+
+      const now = Date.now();
+      const appts = data.appointments || [];
+      const upcoming = appts.filter((a) => a.status !== "cancelled" && new Date(a.start_time).getTime() >= now);
+      const cancelled = appts.filter((a) => a.status === "cancelled");
+
+      $("stats").innerHTML =
+        stat(upcoming.length, "Upcoming") +
+        stat(appts.filter((a) => a.status !== "cancelled").length, "Total active") +
+        stat(cancelled.length, "Cancelled");
+
+      const past = appts.filter((a) => a.status !== "cancelled" && new Date(a.start_time).getTime() < now);
+
+      let html = "";
+      if (appts.length === 0) {
+        html = '<div class="empty">No bookings yet. When customers book through the chat, they\'ll show up here.</div>';
+      } else {
+        if (upcoming.length) html += '<div class="divider">Upcoming</div>' + upcoming.map(rowHtml).join("");
+        if (past.length) html += '<div class="divider">Past</div>' + past.map(rowHtml).join("");
+        if (cancelled.length) html += '<div class="divider">Cancelled</div>' + cancelled.map(rowHtml).join("");
+      }
+      $("list").innerHTML = html;
+    }
+
+    function stat(n, label) {
+      return '<div class="stat"><div class="n">' + n + '</div><div class="l">' + label + '</div></div>';
+    }
+
+    function rowHtml(a) {
+      const svc = a.service ? " · " + esc(a.service) : "";
+      const contactBits = [a.phone ? "📞 " + esc(a.phone) : "", a.email ? "✉️ " + esc(a.email) : ""].filter(Boolean).join("　");
+      return (
+        '<div class="row ' + (a.status === "cancelled" ? "cancelled" : "") + '">' +
+          '<div><div class="when">' + esc(a.local_time) + '</div>' +
+          '<div class="who"><strong>' + esc(a.name) + "</strong>" + svc + "</div></div>" +
+          '<span class="chip ' + esc(a.status) + '">' + esc(a.status) + "</span>" +
+          (contactBits ? '<div class="contact">' + contactBits + "</div>" : "") +
+        "</div>"
+      );
+    }
+
+    async function attempt(key, fromStore) {
+      try {
+        const data = await load(key);
+        sessionStorage.setItem(KEY_STORE, key);
+        render(data);
+      } catch (e) {
+        if (fromStore) { sessionStorage.removeItem(KEY_STORE); return; }
+        $("loginErr").textContent = e.message;
+      }
+    }
+
+    $("signin").addEventListener("click", () => {
+      const key = $("key").value.trim();
+      if (!key) { $("loginErr").textContent = "Enter your key."; return; }
+      $("loginErr").textContent = "";
+      attempt(key, false);
+    });
+    $("key").addEventListener("keydown", (e) => { if (e.key === "Enter") $("signin").click(); });
+    $("refresh").addEventListener("click", () => attempt(sessionStorage.getItem(KEY_STORE), false));
+    $("logout").addEventListener("click", () => {
+      sessionStorage.removeItem(KEY_STORE);
+      $("dash").style.display = "none";
+      $("login").style.display = "block";
+      $("key").value = "";
+    });
+
+    // Auto-login if a key is already stored this session.
+    const stored = sessionStorage.getItem(KEY_STORE);
+    if (stored) attempt(stored, true);
+  </script>
+</body>
+</html>
