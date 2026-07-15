@@ -55,8 +55,21 @@ per-country restrictions) — can revisit later if you want texts too.
 | `RESEND_API_KEY` | Resend → API Keys |
 | `EMAIL_FROM` | `onboarding@resend.dev` for testing, or your verified domain address once set up |
 | `CRON_SECRET` | any random string you make up — locks down `/api/remind` so only Vercel Cron can trigger it |
-| `CLINIC_NAME` | e.g. `Bright Smile Dental` — used in the email text and tool description |
+| `CLINIC_NAME` | e.g. `Bright Smile Dental` — used in emails, the dashboard, and tool descriptions |
 | `CLINIC_TIMEZONE` | e.g. `America/New_York` — IANA timezone the clinic operates in |
+| `ADMIN_SECRET` | any random string you make up — the password for the `/admin` bookings dashboard |
+
+### Optional (make the bot smarter about your business)
+
+Set any of these and the bot will answer those questions confidently instead of deferring.
+Leave them unset and it falls back to "the clinic will confirm."
+
+| Variable | Example |
+|---|---|
+| `CLINIC_HOURS` | `Mon–Fri 9am–6pm, Sat 10am–2pm, closed Sunday` |
+| `CLINIC_ADDRESS` | `123 Main St, Springfield` |
+| `CLINIC_PHONE` | `+1 555 123 4567` |
+| `CLINIC_SERVICES` | `cleanings, checkups, fillings, whitening, emergency visits` |
 
 After adding the env vars, redeploy so the functions pick them up.
 
@@ -74,6 +87,12 @@ After adding the env vars, redeploy so the functions pick them up.
    email on file starting in the next 24-48h that haven't been reminded yet, emails
    them, and marks them reminded. Appointments booked without an email are skipped —
    there's nothing to send.
+5. To **cancel or reschedule**, the customer just tells the chat. The bot asks for the
+   phone/email they booked with, finds the appointment, and does it — cancelling removes
+   the calendar event and emails them; rescheduling moves it to a new open slot. No staff
+   needed.
+6. The owner can see everything at **`/admin`** (enter `ADMIN_SECRET`): upcoming, past, and
+   cancelled bookings with names, contact info, and times.
 
 ## Notes / limits
 

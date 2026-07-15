@@ -1,0 +1,13 @@
+{
+  "name": "bizassist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI front-desk assistant that answers customers, books appointments, and sends confirmations & reminders.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check api/chat.js && node --check api/remind.js && node --check api/appointments.js && node --check api/diag.js"
+  }
+}
