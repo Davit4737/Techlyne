@@ -5,9 +5,8 @@
 // Appointments booked without an email are never queued here (see api/lib/db.js).
 
 import { getAppointmentsNeedingReminder, markReminderSent } from "./lib/db.js";
-import { sendEmail } from "./lib/email.js";
+import { sendEmail, reminderEmail } from "./lib/email.js";
 
-const CLINIC_NAME = process.env.CLINIC_NAME || "the clinic";
 const CLINIC_TIMEZONE = process.env.CLINIC_TIMEZONE || "America/New_York";
 
 export default async function handler(req, res) {
@@ -42,11 +41,8 @@ export default async function handler(req, res) {
       dateStyle: "medium",
       timeStyle: "short",
     });
-    const emailResult = await sendEmail(
-      appt.email,
-      `Reminder: your appointment at ${CLINIC_NAME}`,
-      `Reminder: you have an appointment at ${CLINIC_NAME} tomorrow, ${when}${appt.service ? ` (${appt.service})` : ""}. Contact the clinic directly if you need to reschedule.`
-    );
+    const em = reminderEmail({ when, service: appt.service });
+    const emailResult = await sendEmail(appt.email, em.subject, em.text, em.html);
     if (emailResult.ok) {
       await markReminderSent(appt.id);
       sent += 1;
