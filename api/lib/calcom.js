@@ -73,8 +73,14 @@ export async function createBooking(cfg, { startISO, name, email, phone, timeZon
   });
 
   if (!res.ok) {
-    console.error("Cal.com booking error:", res.status, await res.text());
-    return { ok: false, error: "Failed to create booking" };
+    const bodyText = await res.text();
+    console.error("Cal.com booking error:", res.status, bodyText);
+    // A genuine slot conflict (someone else took it) vs. a config/other failure. Cal.com
+    // signals conflicts with 409, or 4xx bodies mentioning availability/booked.
+    const conflict =
+      res.status === 409 ||
+      /no longer available|already booked|not available|no_available|slot.*taken|booking.*conflict/i.test(bodyText);
+    return { ok: false, error: conflict ? "slot_taken" : "Failed to create booking", conflict };
   }
 
   const data = await res.json();

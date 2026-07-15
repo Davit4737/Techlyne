@@ -9,7 +9,7 @@
 // keeps working. See SETUP.md / the onboarding form for per-client config.
 
 import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./lib/calcom.js";
-import { getBusiness, insertAppointment, findAppointmentsByContact, updateAppointment, cancelAppointment } from "./lib/db.js";
+import { getBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, updateAppointment, cancelAppointment } from "./lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./lib/email.js";
 
 const MODEL = "claude-sonnet-5";
@@ -111,6 +111,13 @@ TIMES & DATES:
 - To book/reschedule, copy the slot's "start" value verbatim. Never construct a timestamp yourself.
 - Interpret "today"/"tomorrow"/weekdays using the current date/time given in this prompt.
 
+BOOKING PROTOCOL (follow exactly — this prevents errors):
+- Gather the service, name, and phone number. Ask ONCE if they'd like an email reminder. Only AFTER you have name + phone (and their email answer) do you call book_appointment — a SINGLE time, with everything you've collected.
+- Never call book_appointment more than once for the same appointment. Do not call it "to reserve" and then again "to confirm."
+- Once book_appointment returns confirmed (including already_booked: true), the booking is DONE and final. Confirm it warmly and mention the email if one was captured. Never call check_availability again for that appointment, and never suggest the slot might have been lost.
+- If book_appointment returns error "slot_taken", that specific time was genuinely just taken by someone else — apologize briefly, call check_availability for nearby times, and offer alternatives.
+- If a cancel/reschedule tool returns needs_selection, the customer has multiple upcoming appointments — read back the options and ask which one, then call the tool again with appointment_date.
+
 RULES:
 - For medical/clinical questions, complaints, or anything genuinely needing a human, offer to have staff follow up. You CAN handle bookings, cancellations, and reschedules yourself — only hand off if a lookup fails.
 - Don't invent prices or specific details you don't know — say the business will confirm.
@@ -148,24 +155,26 @@ function buildTools(biz) {
     },
     {
       name: "cancel_appointment",
-      description: "Cancel a customer's upcoming appointment. Provide the phone or email they booked with.",
+      description: "Cancel a customer's upcoming appointment. Provide the phone or email they booked with. If the customer has more than one upcoming appointment, the tool returns the options; pass appointment_date to pick one.",
       input_schema: {
         type: "object",
         properties: {
           phone: { type: "string", description: "Phone the appointment was booked with" },
           email: { type: "string", description: "Email the appointment was booked with" },
+          appointment_date: { type: "string", description: "YYYY-MM-DD of the appointment to cancel, only when disambiguating between several" },
         },
       },
     },
     {
       name: "reschedule_appointment",
-      description: "Move a customer's upcoming appointment. Provide the phone/email they booked with plus a check_availability slot's exact start value.",
+      description: "Move a customer's upcoming appointment. Provide the phone/email they booked with plus a check_availability slot's exact start value. If they have several upcoming appointments, pass appointment_date to pick which one.",
       input_schema: {
         type: "object",
         properties: {
           phone: { type: "string", description: "Phone the appointment was booked with" },
           email: { type: "string", description: "Email the appointment was booked with" },
           new_start_time: { type: "string", description: "Exact `start` of a check_availability slot, verbatim. Never construct it." },
+          appointment_date: { type: "string", description: "YYYY-MM-DD of the existing appointment to move, only when disambiguating between several" },
         },
         required: ["new_start_time"],
       },
@@ -182,6 +191,25 @@ function localLabel(iso, timeZone) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+// YYYY-MM-DD of an ISO time in the business timezone (for matching a date the customer gives).
+function localDate(iso, timeZone) {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone }); // en-CA => YYYY-MM-DD
+}
+
+// Picks the one appointment a cancel/reschedule targets. One match → it. Several + a date
+// hint → the one on that date. Several + no hint → ask the model to disambiguate.
+function pickAppointment(appointments, appointmentDate, tz) {
+  if (appointments.length === 1) return { appt: appointments[0] };
+  if (appointmentDate) {
+    const matches = appointments.filter((a) => localDate(a.start_time, tz) === appointmentDate);
+    if (matches.length === 1) return { appt: matches[0] };
+  }
+  return {
+    needs_selection: true,
+    options: appointments.map((a) => ({ local_time: localLabel(a.start_time, tz), service: a.service, date: localDate(a.start_time, tz) })),
+  };
 }
 
 async function runTool(biz, name, input) {
@@ -214,6 +242,25 @@ async function runTool(biz, name, input) {
   }
 
   if (name === "book_appointment") {
+    const when = localLabel(input.start_time, tz);
+
+    // Idempotency: if this person already has a confirmed booking for this exact slot, this
+    // is a re-call of the same booking (e.g. the model booked before the email, then called
+    // again once the email arrived) — NOT a conflict. Don't create a second Cal.com booking.
+    const existing = await findConfirmedBySlot({ businessId: biz.id, startISO: input.start_time, phone: input.phone });
+    if (existing.ok && existing.appointment) {
+      const row = existing.appointment;
+      let emailSent = false;
+      // A late-arriving email: attach it to the existing booking and send the confirmation.
+      if (input.email && !row.email) {
+        await updateAppointment(row.id, { email: input.email, reminder_sent: false });
+        const em = confirmationEmail(biz.name, { when, service: row.service || input.service });
+        await sendEmail({ from: biz.emailFrom, to: input.email, subject: em.subject, text: em.text, html: em.html });
+        emailSent = true;
+      }
+      return { confirmed: true, already_booked: true, start_time: input.start_time, local_time: when, email_sent: emailSent || Boolean(row.email) };
+    }
+
     const booking = await createBooking(biz.calcom, {
       startISO: input.start_time,
       name: input.name,
@@ -222,7 +269,13 @@ async function runTool(biz, name, input) {
       timeZone: tz,
       notes: input.service,
     });
-    if (!booking.ok) return { error: booking.error };
+    if (!booking.ok) {
+      // Only a genuine conflict (a different customer took the slot) reaches here now.
+      if (booking.error === "slot_taken") {
+        return { error: "slot_taken", message: "That time was just taken — offer to pull up other openings and check_availability again." };
+      }
+      return { error: booking.error };
+    }
 
     await insertAppointment({
       businessId: biz.id,
@@ -234,7 +287,6 @@ async function runTool(biz, name, input) {
       calcomBookingUid: booking.booking?.uid,
     });
 
-    const when = localLabel(input.start_time, tz);
     if (input.email) {
       const em = confirmationEmail(biz.name, { when, service: input.service });
       await sendEmail({ from: biz.emailFrom, to: input.email, subject: em.subject, text: em.text, html: em.html });
@@ -248,7 +300,9 @@ async function runTool(biz, name, input) {
     if (lookup.appointments.length === 0) {
       return { found: false, message: "No upcoming appointment found for that phone or email." };
     }
-    const appt = lookup.appointments[0];
+    const picked = pickAppointment(lookup.appointments, input.appointment_date, tz);
+    if (picked.needs_selection) return { needs_selection: true, options: picked.options };
+    const appt = picked.appt;
 
     if (appt.calcom_booking_uid) {
       const cancelled = await cancelBooking(biz.calcom, appt.calcom_booking_uid);
@@ -270,7 +324,9 @@ async function runTool(biz, name, input) {
     if (lookup.appointments.length === 0) {
       return { found: false, message: "No upcoming appointment found for that phone or email." };
     }
-    const appt = lookup.appointments[0];
+    const picked = pickAppointment(lookup.appointments, input.appointment_date, tz);
+    if (picked.needs_selection) return { needs_selection: true, options: picked.options };
+    const appt = picked.appt;
     if (!appt.calcom_booking_uid) {
       return { error: "That booking can't be rescheduled automatically — offer staff follow-up." };
     }
