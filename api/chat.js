@@ -8,8 +8,8 @@
 // falls back to env vars — the "default" tenant — so the original single-client setup
 // keeps working. See SETUP.md / the onboarding form for per-client config.
 
-import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./lib/calcom.js";
-import { getBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment } from "./lib/db.js";
+import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./lib/scheduler.js";
+import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment } from "./lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./lib/email.js";
 
 const MODEL = "claude-sonnet-5";
@@ -83,10 +83,24 @@ function businessFromRow(row) {
     services: row.services,
     industry: row.industry || "local business",
     calcom: {
-      apiKey: row.calcom_api_key,
+      apiKey: row.calcom_api_key,               // legacy/default tenants only
       eventTypeId: row.calcom_event_type_id,
       username: row.calcom_username,
       eventSlug: row.calcom_event_slug,
+      // Managed-user (auto-provisioned) auth: a short-lived access token plus the user id
+      // needed to force-refresh it. onTokenRefresh persists the refreshed pair back to the
+      // row so the next request starts from a valid token.
+      accessToken: row.calcom_access_token || undefined,
+      calcomUserId: row.calcom_user_id || undefined,
+      onTokenRefresh: row.calcom_user_id
+        ? ({ accessToken, refreshToken }) =>
+            updateBusiness(row.id, { calcom_access_token: accessToken, calcom_refresh_token: refreshToken })
+        : undefined,
+      // Native-scheduler context — used when this tenant has no Cal.com creds (see scheduler.js).
+      businessId: row.id,
+      availability: row.availability,
+      slotMinutes: row.slot_minutes || 30,
+      timeZone: row.timezone || "UTC",
     },
     emailFrom: senderFor(row.name),
   };

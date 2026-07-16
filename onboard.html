@@ -41,6 +41,10 @@
     .pill { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:#E4F0E9; color:var(--green); text-transform:uppercase; }
     .pill.off { background:#Eee; color:var(--muted); }
     .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+    .days { display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:14px; }
+    .day { display:flex; align-items:center; gap:5px; font-size:13px; font-weight:500; color:var(--ink); text-transform:none; letter-spacing:0; margin:0; }
+    .day input { width:auto; margin:0; }
+    .warn { color:#8A6D1A; font-size:13px; margin-bottom:8px; }
   </style>
 </head>
 <body>
@@ -69,6 +73,7 @@
       <h2 id="editorTitle">New client</h2>
       <div id="formErr" class="err"></div>
       <div id="formOk" class="ok"></div>
+      <div id="formWarn" class="warn"></div>
       <input type="hidden" id="f_id" />
       <div class="grid">
         <div class="section-label">Basics</div>
@@ -83,11 +88,27 @@
         <div><label>Phone</label><input id="f_phone" placeholder="+1 555 123 4567" /></div>
         <div class="full"><label>Services</label><textarea id="f_services" placeholder="cleanings, checkups, whitening, emergency visits"></textarea></div>
 
-        <div class="section-label">Cal.com (from the client's booking link cal.com/USERNAME/SLUG)</div>
-        <div><label>Cal.com API key</label><input id="f_calcom_api_key" placeholder="cal_live_..." /></div>
-        <div><label>Event type ID</label><input id="f_calcom_event_type_id" placeholder="6311369" /></div>
-        <div><label>Cal.com username</label><input id="f_calcom_username" placeholder="davit-asatryan-u3alzw" /></div>
-        <div><label>Event slug</label><input id="f_calcom_event_slug" placeholder="appointment" /></div>
+        <div class="section-label">Availability — powers their booking calendar (built-in scheduler; used by Cal.com auto-setup too)</div>
+        <div class="full"><label>Working days</label>
+          <div id="f_days" class="days">
+            <label class="day"><input type="checkbox" value="Monday" checked /> Mon</label>
+            <label class="day"><input type="checkbox" value="Tuesday" checked /> Tue</label>
+            <label class="day"><input type="checkbox" value="Wednesday" checked /> Wed</label>
+            <label class="day"><input type="checkbox" value="Thursday" checked /> Thu</label>
+            <label class="day"><input type="checkbox" value="Friday" checked /> Fri</label>
+            <label class="day"><input type="checkbox" value="Saturday" /> Sat</label>
+            <label class="day"><input type="checkbox" value="Sunday" /> Sun</label>
+          </div>
+        </div>
+        <div><label>Opens</label><input id="f_open_time" type="time" value="09:00" /></div>
+        <div><label>Closes</label><input id="f_close_time" type="time" value="17:00" /></div>
+        <div><label>Appointment length (min)</label><input id="f_duration_minutes" type="number" min="5" step="5" placeholder="30" /></div>
+
+        <div class="section-label">Cal.com — set up automatically. Manual override only (leave blank to auto-provision)</div>
+        <div><label>Cal.com API key</label><input id="f_calcom_api_key" placeholder="auto" /></div>
+        <div><label>Event type ID</label><input id="f_calcom_event_type_id" placeholder="auto" /></div>
+        <div><label>Cal.com username</label><input id="f_calcom_username" placeholder="auto" /></div>
+        <div><label>Event slug</label><input id="f_calcom_event_slug" placeholder="auto" /></div>
 
         <div class="section-label">Access</div>
         <div><label>Client dashboard password</label><input id="f_admin_secret" placeholder="their /admin key" /></div>
@@ -149,16 +170,27 @@
     }
 
     async function save() {
-      $("formErr").textContent = ""; $("formOk").textContent = "";
+      $("formErr").textContent = ""; $("formOk").textContent = ""; $("formWarn").textContent = "";
       const payload = { active: $("f_active").value === "true" };
       EDIT_FIELDS.forEach((f) => { payload[f] = $("f_" + f).value.trim(); });
       const id = $("f_id").value;
+      // Availability drives Cal.com auto-provisioning; only meaningful when creating a new client.
+      if (!id) {
+        const days = Array.from($("f_days").querySelectorAll("input:checked")).map((c) => c.value);
+        if (days.length) payload.working_days = days;
+        payload.open_time = $("f_open_time").value;
+        payload.close_time = $("f_close_time").value;
+        const dur = $("f_duration_minutes").value.trim();
+        if (dur) payload.duration_minutes = Number(dur);
+      }
       try {
-        if (id) { payload.id = Number(id); await api("PATCH", payload); }
-        else { await api("POST", payload); }
-        $("formOk").textContent = "Saved ✓";
+        let res;
+        if (id) { payload.id = Number(id); res = await api("PATCH", payload); }
+        else { res = await api("POST", payload); }
+        $("formOk").textContent = res && res.warning ? "Saved ✓ (with a note)" : "Saved ✓";
+        if (res && res.warning) $("formWarn").textContent = "⚠ " + res.warning;
         await refresh();
-        if (!id) $("editor").style.display = "none";
+        if (!id && !(res && res.warning)) $("editor").style.display = "none";
       } catch (e) { $("formErr").textContent = e.message; }
     }
 
