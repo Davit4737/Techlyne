@@ -59,7 +59,20 @@ per-country restrictions) — can revisit later if you want texts too.
 | `CLINIC_TIMEZONE` | e.g. `America/New_York` — IANA timezone the clinic operates in |
 | `ADMIN_SECRET` | any random string you make up — the password for the `/admin` bookings dashboard |
 
-### Cal.com auto-provisioning (optional — turns `/onboard` fully self-serve)
+### Scheduling: built-in by default, Cal.com optional
+
+Clients created in `/onboard` **need no Cal.com account at all**: leave the Cal.com fields
+blank and the built-in scheduler computes their open slots from the working hours on the
+form, minus what's already booked in Supabase (isolated per business — tenants never block
+each other). Booking, cancel, and reschedule all work the same; bookings show up in that
+client's `/admin` dashboard. Zero external accounts, zero extra cost.
+
+A business gets Cal.com behavior only when its row carries Cal.com credentials — pasted
+manually, or created by auto-provisioning below. The env-var "default" tenant works the
+same way: with `CALCOM_API_KEY` set it books through Cal.com, without it the built-in
+scheduler takes over.
+
+### Cal.com auto-provisioning (optional — Cal.com accounts without manual setup)
 
 Set these two and creating a client in `/onboard` automatically spins up an **isolated**
 Cal.com account (managed user) for that client — own calendar, own availability, own event
