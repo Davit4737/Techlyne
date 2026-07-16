@@ -130,7 +130,7 @@ WHAT YOU CAN DO:
 - Use check_availability to look up real open slots — never invent times.
 - Once the customer picks a real slot and you have their name and phone number, call book_appointment with a start time check_availability actually returned.
 - Email is optional: ask once, casually, if they'd like an email reminder. If they don't want to share one, book anyway with just name and phone.
-- Cancel an appointment: ask for their NAME and the phone/email used to book, then call cancel_appointment. Both are required — the name verifies it's really their booking.
+- Cancel an appointment: ask for their NAME and the phone/email used to book, then call cancel_appointment. Both are required — the name verifies it's really their booking. If they want to cancel ALL their appointments, call it once with cancel_all: true — never cancel them one at a time.
 - Reschedule: get their name and the phone/email used to book, use check_availability to find a new slot they like, then call reschedule_appointment with their name, contact, and the new slot's exact start value.
 - Checking an existing booking (find_my_appointments) also requires their name plus phone or email.
 
@@ -146,7 +146,9 @@ BOOKING PROTOCOL (follow exactly — this prevents errors):
 - If the customer wants to ADD an email after booking, you MUST call book_appointment again with the SAME start_time (verbatim) plus the email — the system attaches it to the existing booking and sends the confirmation. Never claim an email was added or sent unless the tool result shows email_sent: true.
 - For ANY question about an existing booking — did it go through, what do I have booked, did you email me — call find_my_appointments. NEVER answer those from check_availability: it lists open slots only, and a customer's own booked time never appears there.
 - If book_appointment returns error "slot_taken", that specific time was genuinely just taken by someone else — apologize briefly, call check_availability for nearby times, and offer alternatives.
-- If a cancel/reschedule tool returns needs_selection, the customer has multiple upcoming appointments — read back ONLY the dates/times/services of the options and ask which one, then call the tool again with appointment_date.
+- If a cancel/reschedule tool returns needs_selection, the customer has multiple upcoming appointments — read back ONLY the dates/times/services of the options and ask which one. Then call the tool again passing that option's exact start_time (verbatim). This is the ONLY way to tell apart two appointments on the same date — never keep re-asking the same question, and never rely on appointment_date when two share a date.
+- If the customer says to cancel all/everything/both, use cancel_all: true instead of asking them to pick.
+- After cancelled_all, confirm how many were cancelled and stop.
 - If book_appointment returns error "booking_limit", explain kindly that this number already has several upcoming visits and they should contact the business directly to arrange more.
 - Never state something happened (booked, cancelled, email sent) unless a tool result in this conversation confirms it.
 
@@ -201,14 +203,16 @@ function buildTools(biz) {
     },
     {
       name: "cancel_appointment",
-      description: "Cancel a customer's upcoming appointment. Provide their name plus the phone or email they booked with. If the customer has more than one upcoming appointment, the tool returns the options; pass appointment_date to pick one.",
+      description: "Cancel a customer's upcoming appointment(s). Provide their name plus the phone or email they booked with. Set cancel_all: true to cancel every upcoming appointment. Otherwise, if they have several, the tool returns options — pass the chosen option's exact start_time (verbatim) to cancel that specific one.",
       input_schema: {
         type: "object",
         properties: {
           name: { type: "string", description: "The customer's name as they give it" },
           phone: { type: "string", description: "Phone the appointment was booked with" },
           email: { type: "string", description: "Email the appointment was booked with" },
-          appointment_date: { type: "string", description: "YYYY-MM-DD of the appointment to cancel, only when disambiguating between several" },
+          cancel_all: { type: "boolean", description: "Set true to cancel ALL of the customer's upcoming appointments at once" },
+          start_time: { type: "string", description: "The exact start_time (verbatim) of a specific appointment to cancel, from the options list — use this to pick one when several share a date" },
+          appointment_date: { type: "string", description: "YYYY-MM-DD of the appointment to cancel, only when it uniquely identifies one" },
         },
         required: ["name"],
       },
@@ -222,8 +226,9 @@ function buildTools(biz) {
           name: { type: "string", description: "The customer's name as they give it" },
           phone: { type: "string", description: "Phone the appointment was booked with" },
           email: { type: "string", description: "Email the appointment was booked with" },
-          new_start_time: { type: "string", description: "Exact `start` of a check_availability slot, verbatim. Never construct it." },
-          appointment_date: { type: "string", description: "YYYY-MM-DD of the existing appointment to move, only when disambiguating between several" },
+          new_start_time: { type: "string", description: "Exact `start` of a check_availability slot for the NEW time, verbatim. Never construct it." },
+          start_time: { type: "string", description: "The exact start_time (verbatim) of the EXISTING appointment to move, from the options list — use to pick one when several share a date" },
+          appointment_date: { type: "string", description: "YYYY-MM-DD of the existing appointment to move, only when it uniquely identifies one" },
         },
         required: ["new_start_time", "name"],
       },
@@ -247,9 +252,15 @@ function localDate(iso, timeZone) {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone }); // en-CA => YYYY-MM-DD
 }
 
-// Picks the one appointment a cancel/reschedule targets. One match → it. Several + a date
-// hint → the one on that date. Several + no hint → ask the model to disambiguate.
-function pickAppointment(appointments, appointmentDate, tz) {
+// Picks the one appointment a cancel/reschedule targets. Exact start_time wins (unique per
+// slot — the only way to separate two appointments on the same date). Else a date hint that
+// narrows to one. Else ask the model to pick, giving it each option's exact start_time to
+// echo back verbatim.
+function pickAppointment(appointments, { appointmentDate, startTime } = {}, tz) {
+  if (startTime) {
+    const exact = appointments.find((a) => a.start_time === startTime);
+    if (exact) return { appt: exact };
+  }
   if (appointments.length === 1) return { appt: appointments[0] };
   if (appointmentDate) {
     const matches = appointments.filter((a) => localDate(a.start_time, tz) === appointmentDate);
@@ -257,8 +268,28 @@ function pickAppointment(appointments, appointmentDate, tz) {
   }
   return {
     needs_selection: true,
-    options: appointments.map((a) => ({ local_time: localLabel(a.start_time, tz), service: a.service, date: localDate(a.start_time, tz) })),
+    options: appointments.map((a) => ({
+      start_time: a.start_time, // exact token the model passes back to target this one
+      local_time: localLabel(a.start_time, tz),
+      service: a.service,
+      date: localDate(a.start_time, tz),
+    })),
   };
+}
+
+// Cancels one appointment: removes the calendar event, marks the row cancelled, and emails
+// the customer if an address is on file. Returns a small summary for the tool result.
+async function doCancel(biz, appt, tz) {
+  if (appt.calcom_booking_uid) {
+    await cancelBooking(biz.calcom, appt.calcom_booking_uid);
+  }
+  await cancelAppointment(appt.id);
+  const when = localLabel(appt.start_time, tz);
+  if (appt.email) {
+    const em = cancellationEmail(biz.name, { when });
+    await sendEmail({ from: biz.emailFrom, to: appt.email, subject: em.subject, text: em.text, html: em.html });
+  }
+  return { local_time: when, service: appt.service };
 }
 
 // Looks up the caller's upcoming appointments and keeps only rows whose stored name
@@ -393,22 +424,19 @@ async function runTool(biz, name, input) {
     if (lookup.appointments.length === 0) {
       return { found: false, message: "No upcoming appointment found matching that name and phone/email." };
     }
-    const picked = pickAppointment(lookup.appointments, input.appointment_date, tz);
+
+    // "Cancel everything" — cancel all of the caller's upcoming appointments in one go.
+    if (input.cancel_all) {
+      const items = [];
+      for (const appt of lookup.appointments) items.push(await doCancel(biz, appt, tz));
+      return { cancelled_all: true, count: items.length, items };
+    }
+
+    const picked = pickAppointment(lookup.appointments, { appointmentDate: input.appointment_date, startTime: input.start_time }, tz);
     if (picked.needs_selection) return { needs_selection: true, options: picked.options };
-    const appt = picked.appt;
 
-    if (appt.calcom_booking_uid) {
-      const cancelled = await cancelBooking(biz.calcom, appt.calcom_booking_uid);
-      if (!cancelled.ok) return { error: cancelled.error };
-    }
-    await cancelAppointment(appt.id);
-
-    const when = localLabel(appt.start_time, tz);
-    if (appt.email) {
-      const em = cancellationEmail(biz.name, { when });
-      await sendEmail({ from: biz.emailFrom, to: appt.email, subject: em.subject, text: em.text, html: em.html });
-    }
-    return { cancelled: true, local_time: when, service: appt.service };
+    const summary = await doCancel(biz, picked.appt, tz);
+    return { cancelled: true, ...summary };
   }
 
   if (name === "reschedule_appointment") {
@@ -417,7 +445,7 @@ async function runTool(biz, name, input) {
     if (lookup.appointments.length === 0) {
       return { found: false, message: "No upcoming appointment found matching that name and phone/email." };
     }
-    const picked = pickAppointment(lookup.appointments, input.appointment_date, tz);
+    const picked = pickAppointment(lookup.appointments, { appointmentDate: input.appointment_date, startTime: input.start_time }, tz);
     if (picked.needs_selection) return { needs_selection: true, options: picked.options };
     const appt = picked.appt;
     if (!appt.calcom_booking_uid) {
