@@ -9,9 +9,11 @@ Live: [bizzassist.xyz](https://www.bizzassist.xyz)
 ## What it does
 
 - **Chat widget** on the landing page answers questions and books appointments.
-- **Real availability** is pulled from Cal.com — the bot never invents times.
-- **Bookings** land on the business's connected Google/Outlook calendar (via Cal.com),
-  and are recorded in a Postgres database (Supabase).
+- **Real availability** — the bot never invents times. By default a built-in scheduler
+  computes each business's open slots from its working hours minus what's already booked
+  (free, isolated per tenant); businesses with Cal.com credentials use Cal.com instead.
+- **Bookings** are recorded in a Postgres database (Supabase); Cal.com-connected
+  businesses also get them on their Google/Outlook calendar.
 - **Cancel & reschedule** are handled by the bot itself (no human needed) once the
   customer confirms the phone/email they booked with.
 - **Emails** — branded HTML confirmation on booking, a reminder ~a day before, plus
