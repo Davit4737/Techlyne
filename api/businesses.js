@@ -7,6 +7,7 @@ import { provisionCalcom, isProvisioningConfigured } from "./lib/calcom-provisio
 
 const FIELDS = [
   "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",
+  "availability", "slot_minutes",
   "calcom_api_key", "calcom_event_type_id", "calcom_username", "calcom_event_slug",
   "calcom_user_id", "calcom_access_token", "calcom_refresh_token", "provisioned",
   "admin_secret", "active",
@@ -53,6 +54,12 @@ export default async function handler(req, res) {
     if (!fields.slug || !fields.name) return res.status(400).json({ error: "Slug and name are required" });
     // Normalize the slug into a clean URL-safe tenant id.
     fields.slug = String(fields.slug).toLowerCase().trim().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+
+    // Persist structured working hours + slot length for the native scheduler. Stored for
+    // every tenant (the native scheduler uses them directly; provisioning also reads them).
+    const avail = buildAvailability(body);
+    if (avail) fields.availability = avail;
+    if (body.duration_minutes) fields.slot_minutes = Number(body.duration_minutes);
 
     // Auto-provision an isolated Cal.com managed user (own calendar + availability + event
     // type) so the client never touches Cal.com. Skipped when the operator already pasted

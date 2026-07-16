@@ -184,6 +184,27 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
   return { ok: true, appointments };
 }
 
+// Confirmed appointments for a tenant within [fromISO, toISO). Powers the native scheduler:
+// availability = the business's working hours minus these already-taken slots, and the
+// booking race-check. Scoped by business_id so tenants never see or block each other.
+export async function getConfirmedAppointments({ businessId, fromISO, toISO }) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+
+  const url = new URL(`${REST()}/appointments`);
+  url.searchParams.set("status", "eq.confirmed");
+  if (fromISO) url.searchParams.set("start_time", `gte.${fromISO}`);
+  if (toISO) url.searchParams.append("start_time", `lt.${toISO}`);
+  url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
+  url.searchParams.set("select", "id,start_time,phone");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getConfirmedAppointments error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load appointments" };
+  }
+  return { ok: true, appointments: await res.json() };
+}
+
 // Idempotency guard for booking: finds an existing confirmed appointment for the same
 // tenant + slot + phone. If book_appointment is called twice for the same person+slot
 // (e.g. once before the email is given, once after), the second call finds this row
