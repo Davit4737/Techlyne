@@ -136,7 +136,9 @@ WHAT YOU CAN DO:
 
 TIMES & DATES:
 - Every slot from check_availability has a "local_time" label already in the business's timezone. Quote those labels to the customer EXACTLY as written. Never convert or recalculate times.
+- Only quote times from the MOST RECENT check_availability result — never from memory or an earlier list; open slots change between checks.
 - To book/reschedule, copy the slot's "start" value verbatim. Never construct a timestamp yourself.
+- When you book, the "start" you pass MUST belong to the slot whose local_time equals the time you told the customer. Pass that same time as intended_time. If book_appointment returns time_mismatch, you grabbed the wrong slot — find the slot in the latest check_availability whose local_time matches what you promised and use ITS start.
 - Interpret "today"/"tomorrow"/weekdays using the current date/time given in this prompt.
 
 BOOKING PROTOCOL (follow exactly — this prevents errors):
@@ -150,6 +152,7 @@ BOOKING PROTOCOL (follow exactly — this prevents errors):
 - If the customer says to cancel all/everything/both, use cancel_all: true instead of asking them to pick.
 - After cancelled_all, confirm how many were cancelled and stop.
 - If book_appointment returns error "booking_limit", explain kindly that this number already has several upcoming visits and they should contact the business directly to arrange more.
+- State the booked time using book_appointment's returned local_time. If it differs from what you discussed with the customer, correct them immediately — never let a wrong time stand.
 - Never state something happened (booked, cancelled, email sent) unless a tool result in this conversation confirms it.
 
 RULES:
@@ -179,12 +182,13 @@ function buildTools(biz) {
         type: "object",
         properties: {
           start_time: { type: "string", description: "The exact `start` value of a check_availability slot, verbatim. Never construct it." },
+          intended_time: { type: "string", description: "The exact time you told the customer you're booking (e.g. '9:30 AM'). Must match the local_time of the slot whose start you pass." },
           name: { type: "string", description: "Customer's full name" },
           phone: { type: "string", description: "Customer's phone number" },
           email: { type: "string", description: "Customer's email, only if offered — never required" },
           service: { type: "string", description: "Requested service" },
         },
-        required: ["start_time", "name", "phone"],
+        required: ["start_time", "intended_time", "name", "phone"],
       },
     },
     {
@@ -250,6 +254,17 @@ function localLabel(iso, timeZone) {
 // YYYY-MM-DD of an ISO time in the business timezone (for matching a date the customer gives).
 function localDate(iso, timeZone) {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone }); // en-CA => YYYY-MM-DD
+}
+
+// Extracts a clock time ("9:30 AM", "4 pm", "Mon, Jul 20, 1:30 PM") to minutes-since-midnight.
+// Returns null if there's no parseable time — callers fail open so a legit booking is never blocked.
+function timeOfDay(str) {
+  const m = String(str || "").match(/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10) % 12;
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  if (/p/i.test(m[3])) h += 12;
+  return h * 60 + min;
 }
 
 // Picks the one appointment a cancel/reschedule targets. Exact start_time wins (unique per
@@ -351,6 +366,21 @@ async function runTool(biz, name, input) {
 
   if (name === "book_appointment") {
     const when = localLabel(input.start_time, tz);
+
+    // Consistency guard: the start_time the model passed must actually be the time it told
+    // the customer. Catches "said 9:30, booked 1:30". Fail open if either side is unparseable.
+    const intended = timeOfDay(input.intended_time);
+    const actual = timeOfDay(when);
+    if (intended !== null && actual !== null && intended !== actual) {
+      return {
+        error: "time_mismatch",
+        intended: input.intended_time,
+        actual: when,
+        message:
+          "The start_time you passed is for " + when + ", not " + input.intended_time +
+          ". Do NOT confirm this. Re-pick the slot from the latest check_availability whose local_time equals the time you told the customer, and use ITS start value.",
+      };
+    }
 
     // Idempotency: if this person already has a confirmed booking for this exact slot, this
     // is a re-call of the same booking (e.g. the model booked before the email, then called
