@@ -59,6 +59,24 @@ per-country restrictions) — can revisit later if you want texts too.
 | `CLINIC_TIMEZONE` | e.g. `America/New_York` — IANA timezone the clinic operates in |
 | `ADMIN_SECRET` | any random string you make up — the password for the `/admin` bookings dashboard |
 
+### Cal.com auto-provisioning (optional — turns `/onboard` fully self-serve)
+
+Set these two and creating a client in `/onboard` automatically spins up an **isolated**
+Cal.com account (managed user) for that client — own calendar, own availability, own event
+type — with no manual Cal.com setup and no key-pasting. Requires a **Cal.com Platform** plan.
+Leave them unset and onboarding still works; the operator just pastes Cal.com keys manually
+(the four `calcom_*` fields), exactly as before.
+
+| Variable | Where it comes from |
+|---|---|
+| `CAL_OAUTH_CLIENT_ID` | Cal.com Platform → your OAuth client → Client ID |
+| `CAL_OAUTH_CLIENT_SECRET` | Cal.com Platform → your OAuth client → Client Secret (server-only, keep secret) |
+
+> Not yet smoke-tested end-to-end — needs a live Platform OAuth client to verify the
+> managed-user, schedule, and event-type calls against the current API. The schedule and
+> event-type request shapes match the verified Cal.com v2 contract; the managed-user create
+> and force-refresh endpoints follow the Platform docs and should be confirmed on first run.
+
 ### Optional (make the bot smarter about your business)
 
 Set any of these and the bot will answer those questions confidently instead of deferring.
