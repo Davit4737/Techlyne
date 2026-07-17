@@ -17,6 +17,31 @@ export function bearerFromReq(req) {
   return token || null;
 }
 
+// Permanently deletes a Supabase Auth user (admin API, service-role only). Used when an owner
+// deletes their own account — call only after verifying the caller IS that user.
+export async function deleteAuthUser(userId) {
+  if (!userId || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { ok: false, error: "Not configured" };
+  }
+  try {
+    const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    });
+    if (!res.ok) {
+      console.error("deleteAuthUser error:", res.status, await res.text());
+      return { ok: false, error: "Failed to delete account" };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.error("deleteAuthUser error:", e);
+    return { ok: false, error: "Failed to delete account" };
+  }
+}
+
 // Resolves a token to its Supabase user ({ id, email, ... }) or null if invalid/expired.
 export async function getUserFromToken(token) {
   if (!token || !process.env.SUPABASE_URL) return null;

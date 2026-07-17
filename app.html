@@ -3,114 +3,247 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BizAssist — Your dashboard</title>
+  <title>BizAssist — Dashboard</title>
   <style>
-    :root { --green:#2E6B4F; --ink:#211C13; --muted:#7C7361; --bg:#F5F1EA; --card:#fff; --line:#E7E0D5; }
+    :root { --green:#2E6B4F; --green-d:#245641; --ink:#211C13; --muted:#7C7361; --bg:#F5F1EA; --card:#fff; --line:#E7E0D5; --danger:#B4402E; }
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
-    .wrap { max-width: 820px; margin: 0 auto; padding: 28px 18px 80px; }
-    .brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:19px; margin-bottom:4px; }
-    .brand .dot { color: var(--green); }
-    h1 { font-size: 22px; margin: 4px 0 2px; }
-    .sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
-
-    .login { max-width: 380px; margin: 10vh auto 0; background: var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
+    a { color:var(--green); }
     label { display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 5px; text-transform:uppercase; letter-spacing:.3px; }
     input, textarea, select { width:100%; padding:11px 13px; font-size:14.5px; border:1px solid var(--line); border-radius:9px; margin-bottom:14px; background:#fff; color:var(--ink); font-family:inherit; }
     input:focus, textarea:focus, select:focus { outline:2px solid var(--green); outline-offset:1px; border-color:var(--green); }
     textarea { min-height:60px; resize:vertical; }
     button { background:var(--green); color:#fff; border:0; border-radius:9px; padding:11px 18px; font-size:14.5px; font-weight:600; cursor:pointer; }
     button:hover { filter:brightness(1.05); }
-    button.ghost { background:transparent; color:var(--muted); padding:8px 12px; font-weight:500; }
+    button.ghost { background:transparent; color:var(--muted); padding:8px 12px; font-weight:500; border:1px solid var(--line); }
+    button.danger { background:var(--danger); }
     button.wide { width:100%; }
-    button.google { background:#fff; color:var(--ink); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; gap:9px; }
+    .brand { display:flex; align-items:center; gap:8px; font-weight:800; font-size:20px; }
+    .brand .dot { color: var(--green); }
+    .err { color:var(--danger); font-size:13px; min-height:16px; margin-bottom:8px; }
+    .ok { color:var(--green); font-size:13px; min-height:16px; margin-bottom:8px; }
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* Login + onboarding cards */
+    .center { max-width: 420px; margin: 8vh auto 0; padding: 0 18px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px 26px; margin-bottom:20px; }
+    .card h2 { font-size:16px; margin:0 0 16px; }
     .divider { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:12px; margin:14px 0; }
     .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
-    .err { color:#B4402E; font-size:13px; min-height:16px; margin-bottom:8px; }
-    .ok { color:var(--green); font-size:13px; min-height:16px; margin-bottom:8px; }
-
+    .google { background:#fff; color:var(--ink); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; gap:9px; }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
     .full { grid-column:1 / -1; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 22px 8px; margin-bottom:20px; }
-    .card h2 { font-size:15px; margin:0 0 16px; }
     .section-label { font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:6px 0 12px; grid-column:1/-1; }
-    .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
     .days { display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:14px; }
     .day { display:flex; align-items:center; gap:5px; font-size:13px; font-weight:500; color:var(--ink); text-transform:none; letter-spacing:0; margin:0; }
     .day input { width:auto; margin:0; }
-    .banner { border-radius:12px; padding:12px 15px; font-size:13.5px; margin-bottom:18px; }
+
+    /* Dashboard shell */
+    .shell { display:flex; min-height:100vh; }
+    .side { width:230px; background:var(--card); border-right:1px solid var(--line); padding:22px 14px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0; height:100vh; }
+    .side .brand { padding:0 10px 18px; }
+    .nav { display:flex; flex-direction:column; gap:2px; flex:1; }
+    .nav button { background:transparent; color:var(--ink); text-align:left; font-weight:500; padding:10px 12px; border-radius:9px; display:flex; align-items:center; gap:10px; }
+    .nav button:hover { background:var(--bg); filter:none; }
+    .nav button.active { background:#E4F0E9; color:var(--green); font-weight:600; }
+    .side .foot { border-top:1px solid var(--line); padding-top:12px; }
+    .main { flex:1; padding:32px 34px 80px; max-width:900px; }
+    .main h1 { font-size:22px; margin:0 0 4px; }
+    .main .sub { color:var(--muted); font-size:13.5px; margin-bottom:22px; }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; margin-bottom:18px; }
+
+    .banner { border-radius:12px; padding:13px 16px; font-size:13.5px; margin-bottom:20px; }
     .banner.pending { background:#FBF3DC; color:#8A6D1A; border:1px solid #EDD9A3; }
     .banner.live { background:#E4F0E9; color:var(--green); border:1px solid #BFE0CE; }
-    .links { font-size:13px; color:var(--muted); margin-bottom:8px; }
-    .links a { color:var(--green); text-decoration:none; word-break:break-all; }
+    .linkrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .linkrow code { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; flex:1; min-width:200px; overflow:auto; white-space:nowrap; }
+    .stats { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+    .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; min-width:130px; }
+    .stat .n { font-size:26px; font-weight:800; }
+    .stat .l { font-size:12px; color:var(--muted); }
+    table { width:100%; border-collapse:collapse; font-size:13.5px; }
+    th { text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; padding:8px 10px; border-bottom:1px solid var(--line); }
+    td { padding:10px; border-bottom:1px solid var(--line); }
+    .pill { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:#E4F0E9; color:var(--green); text-transform:uppercase; }
+    .pill.cancelled { background:#F3E2DE; color:var(--danger); }
+    .staff-row { display:flex; gap:8px; margin-bottom:10px; }
+    .staff-row input { margin-bottom:0; }
+    .danger-zone { border:1px solid #E9C9C1; background:#FCF3F1; border-radius:12px; padding:18px; }
+    @media (max-width: 720px) {
+      .shell { flex-direction:column; }
+      .side { width:auto; height:auto; position:static; flex-direction:row; overflow-x:auto; gap:6px; }
+      .side .brand, .side .foot { display:none; }
+      .nav { flex-direction:row; }
+      .nav button { white-space:nowrap; }
+      .main { padding:22px 16px 60px; }
+      .grid { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
-  <!-- Login -->
-  <div id="login" class="login" style="display:none">
-    <div class="brand">BizAssist<span class="dot">.</span></div>
-    <h1 id="loginTitle">Sign in</h1>
-    <div class="sub" id="loginSub">Log in to manage your AI front desk.</div>
-    <button class="wide google" id="googleBtn">Continue with Google</button>
-    <div class="divider">or</div>
-    <input id="email" type="email" placeholder="you@business.com" autocomplete="email" />
-    <input id="password" type="password" placeholder="Password (min 6 chars)" autocomplete="current-password" />
-    <div id="loginErr" class="err"></div>
-    <button class="wide" id="emailBtn">Sign in</button>
-    <div class="sub" style="margin-top:14px;text-align:center">
-      <span id="toggleText">New here?</span>
-      <a href="#" id="toggleMode" style="color:var(--green)">Create an account</a>
+  <!-- LOGIN -->
+  <div id="login" class="center" style="display:none">
+    <div class="card">
+      <div class="brand" style="margin-bottom:6px">BizAssist<span class="dot">.</span></div>
+      <div class="muted" id="loginSub" style="margin-bottom:18px">Log in to manage your AI front desk.</div>
+      <button class="wide google" id="googleBtn">Continue with Google</button>
+      <div class="divider">or</div>
+      <input id="email" type="email" placeholder="you@business.com" autocomplete="email" />
+      <input id="password" type="password" placeholder="Password (min 6 chars)" autocomplete="current-password" />
+      <div id="loginErr" class="err"></div>
+      <button class="wide" id="emailBtn">Sign in</button>
+      <div class="muted" style="margin-top:14px;text-align:center">
+        <span id="toggleText">New here?</span> <a href="#" id="toggleMode">Create an account</a>
+      </div>
     </div>
   </div>
 
-  <!-- App -->
-  <div id="app" class="wrap" style="display:none">
-    <div class="bar">
-      <div class="brand">BizAssist<span class="dot">.</span></div>
-      <button class="ghost" id="logout">Sign out</button>
-    </div>
-
-    <div id="banner"></div>
-    <h1 id="appTitle">Set up your business</h1>
-    <div class="sub" id="appSub">Fill this in and your AI receptionist starts booking for you.</div>
-
-    <div id="liveLinks" class="card" style="display:none">
-      <h2>Your links</h2>
-      <div class="links">Booking page (share with customers): <a id="chatLink" href="#" target="_blank"></a></div>
-      <div class="links">Bookings dashboard: <a id="adminLink" href="#" target="_blank"></a></div>
-    </div>
-
+  <!-- ONBOARDING (first run) -->
+  <div id="onboard" class="center" style="display:none">
     <div class="card">
-      <div id="formErr" class="err"></div>
-      <div id="formOk" class="ok"></div>
-      <div class="grid">
-        <div class="section-label">Basics</div>
-        <div><label>Business name *</label><input id="f_name" placeholder="Bright Smile Dental" /></div>
-        <div><label>Industry</label><input id="f_industry" placeholder="dental clinic" /></div>
-        <div><label>Timezone (IANA)</label><input id="f_timezone" placeholder="Asia/Yerevan" /></div>
-        <div><label>Phone</label><input id="f_phone" placeholder="+1 555 123 4567" /></div>
-        <div class="full"><label>Address</label><input id="f_address" placeholder="123 Main St" /></div>
-        <div class="full"><label>Services</label><textarea id="f_services" placeholder="cleanings, checkups, whitening"></textarea></div>
-        <div class="full"><label>Hours (shown to customers)</label><input id="f_hours" placeholder="Mon–Fri 9am–6pm" /></div>
-
-        <div class="section-label">Availability — this is what your AI books against</div>
-        <div class="full"><label>Working days</label>
-          <div id="f_days" class="days">
-            <label class="day"><input type="checkbox" value="Monday" checked /> Mon</label>
-            <label class="day"><input type="checkbox" value="Tuesday" checked /> Tue</label>
-            <label class="day"><input type="checkbox" value="Wednesday" checked /> Wed</label>
-            <label class="day"><input type="checkbox" value="Thursday" checked /> Thu</label>
-            <label class="day"><input type="checkbox" value="Friday" checked /> Fri</label>
-            <label class="day"><input type="checkbox" value="Saturday" /> Sat</label>
-            <label class="day"><input type="checkbox" value="Sunday" /> Sun</label>
-          </div>
-        </div>
-        <div><label>Opens</label><input id="f_open" type="time" value="09:00" /></div>
-        <div><label>Closes</label><input id="f_close" type="time" value="17:00" /></div>
-        <div><label>Appointment length (min)</label><input id="f_duration" type="number" min="5" step="5" value="30" /></div>
+      <div class="brand" style="margin-bottom:6px">BizAssist<span class="dot">.</span></div>
+      <h2 style="margin:2px 0 4px">Welcome! Let's set up your business 👋</h2>
+      <div class="muted" style="margin-bottom:18px">Fill this in and your AI receptionist starts booking for you. You can change everything later.</div>
+      <div id="oErr" class="err"></div>
+      <label>Business name *</label><input id="o_name" placeholder="Bright Smile Dental" />
+      <label>Industry</label><input id="o_industry" placeholder="dental clinic" />
+      <label>Timezone (IANA)</label><input id="o_timezone" placeholder="Asia/Yerevan" />
+      <label>Services</label><textarea id="o_services" placeholder="cleanings, checkups, whitening"></textarea>
+      <label>Working days</label>
+      <div id="o_days" class="days">
+        <label class="day"><input type="checkbox" value="Monday" checked/> Mon</label>
+        <label class="day"><input type="checkbox" value="Tuesday" checked/> Tue</label>
+        <label class="day"><input type="checkbox" value="Wednesday" checked/> Wed</label>
+        <label class="day"><input type="checkbox" value="Thursday" checked/> Thu</label>
+        <label class="day"><input type="checkbox" value="Friday" checked/> Fri</label>
+        <label class="day"><input type="checkbox" value="Saturday"/> Sat</label>
+        <label class="day"><input type="checkbox" value="Sunday"/> Sun</label>
       </div>
-      <div style="margin-top:6px"><button id="save">Save</button></div>
+      <div class="grid">
+        <div><label>Opens</label><input id="o_open" type="time" value="09:00"/></div>
+        <div><label>Closes</label><input id="o_close" type="time" value="17:00"/></div>
+      </div>
+      <label>Appointment length (min)</label><input id="o_duration" type="number" min="5" step="5" value="30"/>
+      <button class="wide" id="o_save" style="margin-top:6px">Create my dashboard →</button>
     </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" class="shell" style="display:none">
+    <aside class="side">
+      <div class="brand">BizAssist<span class="dot">.</span></div>
+      <nav class="nav" id="nav">
+        <button data-sec="overview" class="active">🏠 Overview</button>
+        <button data-sec="bookings">📅 Bookings</button>
+        <button data-sec="business">🏢 Business</button>
+        <button data-sec="staff">👥 Staff</button>
+        <button data-sec="subscription">💳 Subscription</button>
+        <button data-sec="account">⚙️ Account</button>
+      </nav>
+      <div class="foot"><button class="ghost wide" id="logout">Sign out</button></div>
+    </aside>
+
+    <main class="main">
+      <!-- OVERVIEW -->
+      <section data-sec="overview">
+        <h1 id="ovTitle">Overview</h1>
+        <div class="sub">Your AI front desk at a glance.</div>
+        <div id="ovBanner"></div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="stUpcoming">–</div><div class="l">Upcoming bookings</div></div>
+          <div class="stat"><div class="n" id="stStatus">–</div><div class="l">Status</div></div>
+        </div>
+        <div class="panel">
+          <label>Your booking page — share this with customers</label>
+          <div class="linkrow"><code id="ovChatLink">—</code><button class="ghost" id="ovCopy">Copy</button><a id="ovOpen" href="#" target="_blank"><button class="ghost">Open</button></a></div>
+        </div>
+      </section>
+
+      <!-- BOOKINGS -->
+      <section data-sec="bookings" style="display:none">
+        <h1>Bookings</h1>
+        <div class="sub">Appointments your AI has booked. <button class="ghost" id="bkRefresh" style="padding:5px 10px">Refresh</button></div>
+        <div class="panel" id="bkWrap"><div class="muted" id="bkEmpty">Loading…</div>
+          <div style="overflow-x:auto"><table id="bkTable" style="display:none"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Contact</th><th>Status</th></tr></thead><tbody id="bkBody"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- BUSINESS -->
+      <section data-sec="business" style="display:none">
+        <h1>Business</h1>
+        <div class="sub">This is what your AI knows and books against.</div>
+        <div class="panel">
+          <div id="bizErr" class="err"></div><div id="bizOk" class="ok"></div>
+          <div class="grid">
+            <div class="section-label">Basics</div>
+            <div><label>Business name *</label><input id="f_name"/></div>
+            <div><label>Industry</label><input id="f_industry"/></div>
+            <div><label>Timezone (IANA)</label><input id="f_timezone"/></div>
+            <div><label>Phone</label><input id="f_phone"/></div>
+            <div class="full"><label>Address</label><input id="f_address"/></div>
+            <div class="full"><label>Services</label><textarea id="f_services"></textarea></div>
+            <div class="full"><label>Hours (shown to customers)</label><input id="f_hours"/></div>
+            <div class="section-label">Availability — what your AI books against</div>
+            <div class="full"><label>Working days</label>
+              <div id="f_days" class="days">
+                <label class="day"><input type="checkbox" value="Monday"/> Mon</label>
+                <label class="day"><input type="checkbox" value="Tuesday"/> Tue</label>
+                <label class="day"><input type="checkbox" value="Wednesday"/> Wed</label>
+                <label class="day"><input type="checkbox" value="Thursday"/> Thu</label>
+                <label class="day"><input type="checkbox" value="Friday"/> Fri</label>
+                <label class="day"><input type="checkbox" value="Saturday"/> Sat</label>
+                <label class="day"><input type="checkbox" value="Sunday"/> Sun</label>
+              </div>
+            </div>
+            <div><label>Opens</label><input id="f_open" type="time"/></div>
+            <div><label>Closes</label><input id="f_close" type="time"/></div>
+            <div><label>Appointment length (min)</label><input id="f_duration" type="number" min="5" step="5"/></div>
+          </div>
+          <button id="bizSave">Save changes</button>
+        </div>
+      </section>
+
+      <!-- STAFF -->
+      <section data-sec="staff" style="display:none">
+        <h1>Staff</h1>
+        <div class="sub">People at your business. Your AI can mention them to customers.</div>
+        <div class="panel">
+          <div id="stfOk" class="ok"></div>
+          <div id="staffList"></div>
+          <button class="ghost" id="staffAdd" style="margin:4px 0 16px">+ Add staff member</button>
+          <div><button id="staffSave">Save staff</button></div>
+        </div>
+      </section>
+
+      <!-- SUBSCRIPTION -->
+      <section data-sec="subscription" style="display:none">
+        <h1>Subscription</h1>
+        <div class="sub">Your plan and billing.</div>
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div><div style="font-weight:700;font-size:16px" id="subPlan">Free</div><div class="muted" id="subStatus">—</div></div>
+            <span class="pill" id="subPill">—</span>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:16px 0"/>
+          <div class="muted">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
+        </div>
+      </section>
+
+      <!-- ACCOUNT -->
+      <section data-sec="account" style="display:none">
+        <h1>Account</h1>
+        <div class="sub">Your login and account controls.</div>
+        <div class="panel">
+          <label>Signed in as</label><div style="font-weight:600" id="acEmail">—</div>
+        </div>
+        <div class="danger-zone">
+          <div style="font-weight:700;margin-bottom:4px">Delete account</div>
+          <div class="muted" style="margin-bottom:14px">Permanently deletes your business, all bookings, and your login. This cannot be undone.</div>
+          <div id="acErr" class="err"></div>
+          <button class="danger" id="acDelete">Delete my account</button>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -119,149 +252,211 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YWhuZ3hrcGN1eGxibG10ZHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjgzMTUsImV4cCI6MjA5OTYwNDMxNX0.jkVdky9bR1syFiAwcDZi4s695Hhg68bsA-bdnALIk-E";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = (id) => document.getElementById(id);
-    let signupMode = false;
-    let token = null;
+    let token = null, biz = null, bookingsLoaded = false, signupMode = false;
 
-    async function api(method, body) {
-      const res = await fetch("/api/my-business", {
+    async function api(method, body, path) {
+      const res = await fetch(path || "/api/my-business", {
         method,
         headers: { "content-type": "application/json", Authorization: "Bearer " + token },
         body: body ? JSON.stringify(body) : undefined,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       return data;
     }
 
-    // ── availability form <-> array ──
-    function readAvailability() {
-      const days = Array.from($("f_days").querySelectorAll("input:checked")).map((c) => c.value);
-      return { availability: days.length ? [{ days, startTime: $("f_open").value, endTime: $("f_close").value }] : [], slot_minutes: Number($("f_duration").value) || 30 };
+    // ── views ──
+    function show(view) {
+      ["login", "onboard", "dash"].forEach((v) => { $(v).style.display = v === view ? (v === "dash" ? "flex" : "block") : "none"; });
     }
-    function fillAvailability(b) {
-      const rule = Array.isArray(b?.availability) && b.availability[0] ? b.availability[0] : null;
-      const set = new Set(rule?.days || ["Monday","Tuesday","Wednesday","Thursday","Friday"]);
+    function showSection(name) {
+      document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.sec === name));
+      document.querySelectorAll('.main section').forEach((s) => { s.style.display = s.dataset.sec === name ? 'block' : 'none'; });
+      if (name === 'bookings' && !bookingsLoaded) loadBookings();
+    }
+
+    // ── availability helpers ──
+    function readAvail(prefix) {
+      const days = Array.from($(prefix + "days").querySelectorAll("input:checked")).map((c) => c.value);
+      return { availability: days.length ? [{ days, startTime: $(prefix + "open").value, endTime: $(prefix + "close").value }] : [], slot_minutes: Number($(prefix + "duration").value) || 30 };
+    }
+    function fillAvail(b) {
+      const rule = Array.isArray(b && b.availability) && b.availability[0] ? b.availability[0] : null;
+      const set = new Set(rule ? rule.days : ["Monday","Tuesday","Wednesday","Thursday","Friday"]);
       $("f_days").querySelectorAll("input").forEach((c) => { c.checked = set.has(c.value); });
-      if (rule?.startTime) $("f_open").value = rule.startTime;
-      if (rule?.endTime) $("f_close").value = rule.endTime;
-      if (b?.slot_minutes) $("f_duration").value = b.slot_minutes;
+      $("f_open").value = (rule && rule.startTime) || "09:00";
+      $("f_close").value = (rule && rule.endTime) || "17:00";
+      $("f_duration").value = (b && b.slot_minutes) || 30;
     }
 
-    function fillForm(b) {
-      ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (b && b[f] != null) ? b[f] : ""; });
-      fillAvailability(b || {});
+    // ── render dashboard from `biz` ──
+    function renderBiz() {
+      const live = Boolean(biz && biz.active);
+      const origin = location.origin;
+      // Overview
+      $("ovTitle").textContent = biz ? biz.name : "Overview";
+      $("ovBanner").className = "banner " + (live ? "live" : "pending");
+      $("ovBanner").textContent = live
+        ? "🟢 Your AI receptionist is live and taking bookings."
+        : "🟡 Set up! Your AI goes live once your subscription is activated — see the Subscription tab.";
+      $("stStatus").textContent = live ? "Live" : "Pending";
+      $("ovChatLink").textContent = origin + "/c/" + (biz ? biz.slug : "");
+      $("ovOpen").href = "/c/" + (biz ? biz.slug : "");
+      // Business form
+      ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (biz && biz[f] != null) ? biz[f] : ""; });
+      fillAvail(biz || {});
+      // Staff
+      renderStaff((biz && biz.staff) || []);
+      // Subscription
+      const st = (biz && biz.subscription_status) || "inactive";
+      $("subPlan").textContent = live ? "Active plan" : "Not active yet";
+      $("subStatus").textContent = "Status: " + st;
+      $("subPill").textContent = live ? "active" : "pending";
+      $("subPill").className = "pill" + (live ? "" : " cancelled");
     }
 
-    function renderBusiness(b) {
-      if (b) {
-        $("appTitle").textContent = b.name;
-        $("appSub").textContent = "Edit your details anytime — changes take effect immediately.";
-        const live = Boolean(b.active); // active = the chat actually serves this tenant
-        $("banner").className = "banner " + (live ? "live" : "pending");
-        $("banner").textContent = live
-          ? "Your AI receptionist is live ✓"
-          : "Account set up! It goes live once your subscription is activated — we'll reach out to finish that.";
-        $("liveLinks").style.display = "block";
-        $("chatLink").textContent = location.origin + "/c/" + b.slug;
-        $("chatLink").href = "/c/" + b.slug;
-        $("adminLink").textContent = location.origin + "/admin?b=" + b.slug;
-        $("adminLink").href = "/admin?b=" + b.slug;
-        fillForm(b);
-      } else {
-        $("banner").className = ""; $("banner").textContent = "";
-        $("liveLinks").style.display = "none";
-        fillForm(null);
-      }
+    // ── staff editor ──
+    function staffRow(m) {
+      const row = document.createElement("div");
+      row.className = "staff-row";
+      row.innerHTML = '<input placeholder="Name" class="s-name"><input placeholder="Role (e.g. Dentist)" class="s-role"><button class="ghost s-del" style="padding:8px 12px">✕</button>';
+      row.querySelector(".s-name").value = (m && m.name) || "";
+      row.querySelector(".s-role").value = (m && m.role) || "";
+      row.querySelector(".s-del").onclick = () => row.remove();
+      return row;
+    }
+    function renderStaff(list) {
+      const wrap = $("staffList"); wrap.innerHTML = "";
+      (list.length ? list : []).forEach((m) => wrap.appendChild(staffRow(m)));
+    }
+    function collectStaff() {
+      return Array.from($("staffList").querySelectorAll(".staff-row")).map((r) => ({
+        name: r.querySelector(".s-name").value.trim(), role: r.querySelector(".s-role").value.trim(),
+      })).filter((m) => m.name);
     }
 
+    // ── bookings ──
+    async function loadBookings() {
+      $("bkEmpty").style.display = "block"; $("bkEmpty").textContent = "Loading…"; $("bkTable").style.display = "none";
+      try {
+        const { bookings } = await api("GET", null, "/api/my-bookings");
+        bookingsLoaded = true;
+        const upcoming = bookings.filter((b) => b.status === "confirmed").length;
+        $("stUpcoming").textContent = upcoming;
+        if (!bookings.length) { $("bkEmpty").textContent = "No bookings yet. Share your booking link to get started!"; return; }
+        $("bkBody").innerHTML = bookings.map((b) =>
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td><span class="pill ${b.status === "cancelled" ? "cancelled" : ""}">${esc(b.status)}</span></td></tr>`
+        ).join("");
+        $("bkEmpty").style.display = "none"; $("bkTable").style.display = "table";
+      } catch (e) { $("bkEmpty").textContent = e.message; }
+    }
+    function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+    // ── entering the app ──
     async function loadApp() {
-      $("login").style.display = "none";
-      $("app").style.display = "block";
       try {
         const { business } = await api("GET");
-        renderBusiness(business);
-      } catch (e) { $("formErr").textContent = e.message; }
+        biz = business;
+        if (!biz) { show("onboard"); return; }
+        show("dash"); renderBiz(); showSection("overview"); loadBookings();
+      } catch (e) { show("onboard"); }
     }
 
-    let saving = false;
-    async function save() {
-      if (saving) return;                     // guard against double-submit (was creating dupes)
-      $("formErr").textContent = ""; $("formOk").textContent = "";
+    // ── onboarding submit ──
+    let creating = false;
+    $("o_save").addEventListener("click", async () => {
+      if (creating) return;
+      $("oErr").textContent = "";
+      const name = $("o_name").value.trim();
+      if (!name) { $("oErr").textContent = "Business name is required."; return; }
+      const days = Array.from($("o_days").querySelectorAll("input:checked")).map((c) => c.value);
       const payload = {
-        name: $("f_name").value.trim(),
-        industry: $("f_industry").value.trim(),
-        timezone: $("f_timezone").value.trim(),
-        phone: $("f_phone").value.trim(),
-        address: $("f_address").value.trim(),
-        services: $("f_services").value.trim(),
-        hours: $("f_hours").value.trim(),
-        ...readAvailability(),
+        name, industry: $("o_industry").value.trim(), timezone: $("o_timezone").value.trim(),
+        services: $("o_services").value.trim(),
+        availability: days.length ? [{ days, startTime: $("o_open").value, endTime: $("o_close").value }] : [],
+        slot_minutes: Number($("o_duration").value) || 30,
       };
-      if (!payload.name) { $("formErr").textContent = "Business name is required."; $("f_name").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
-
-      saving = true;
-      const btn = $("save");
-      const label = btn.textContent;
-      btn.disabled = true; btn.textContent = "Saving…"; btn.style.opacity = "0.6";
+      creating = true; const b = $("o_save"); b.disabled = true; b.textContent = "Creating…";
       try {
-        const { business } = await api("POST", payload); // POST upserts (create or update)
-        renderBusiness(business);
-        $("formOk").textContent = "Saved ✓";
-        btn.textContent = "Saved ✓";
-        // feedback lives at the top of the card — bring it into view so the save is obvious
-        $("banner").scrollIntoView({ behavior: "smooth", block: "start" });
-        setTimeout(() => { btn.textContent = label; }, 1800);
-      } catch (e) {
-        $("formErr").textContent = e.message;
-        $("formErr").scrollIntoView({ behavior: "smooth", block: "center" });
-        btn.textContent = label;
-      } finally {
-        saving = false; btn.disabled = false; btn.style.opacity = "1";
-      }
-    }
+        const { business } = await api("POST", payload);
+        biz = business; show("dash"); renderBiz(); showSection("overview"); loadBookings();
+      } catch (e) { $("oErr").textContent = e.message; b.disabled = false; b.textContent = "Create my dashboard →"; }
+      finally { creating = false; }
+    });
+
+    // ── save business ──
+    let savingBiz = false;
+    $("bizSave").addEventListener("click", async () => {
+      if (savingBiz) return;
+      $("bizErr").textContent = ""; $("bizOk").textContent = "";
+      const payload = {
+        name: $("f_name").value.trim(), industry: $("f_industry").value.trim(), timezone: $("f_timezone").value.trim(),
+        phone: $("f_phone").value.trim(), address: $("f_address").value.trim(), services: $("f_services").value.trim(),
+        hours: $("f_hours").value.trim(), ...readAvail("f_"),
+      };
+      if (!payload.name) { $("bizErr").textContent = "Business name is required."; return; }
+      savingBiz = true; const b = $("bizSave"); b.disabled = true; b.textContent = "Saving…";
+      try { const { business } = await api("POST", payload); biz = business; renderBiz(); $("bizOk").textContent = "Saved ✓"; b.textContent = "Saved ✓"; setTimeout(() => (b.textContent = "Save changes"), 1600); }
+      catch (e) { $("bizErr").textContent = e.message; b.textContent = "Save changes"; }
+      finally { savingBiz = false; b.disabled = false; }
+    });
+
+    // ── save staff ──
+    $("staffAdd").addEventListener("click", () => $("staffList").appendChild(staffRow()));
+    $("staffSave").addEventListener("click", async () => {
+      $("stfOk").textContent = "";
+      const b = $("staffSave"); b.disabled = true; b.textContent = "Saving…";
+      try { const { business } = await api("PATCH", { staff: collectStaff() }); biz = business; $("stfOk").textContent = "Saved ✓"; }
+      catch (e) { $("stfOk").textContent = ""; alert(e.message); }
+      finally { b.disabled = false; b.textContent = "Save staff"; }
+    });
+
+    // ── delete account ──
+    $("acDelete").addEventListener("click", async () => {
+      if (!confirm("Delete your account, business, and all bookings permanently? This cannot be undone.")) return;
+      $("acErr").textContent = "";
+      const b = $("acDelete"); b.disabled = true; b.textContent = "Deleting…";
+      try { await api("DELETE"); await sb.auth.signOut(); alert("Your account has been deleted."); location.href = "/"; }
+      catch (e) { $("acErr").textContent = e.message; b.disabled = false; b.textContent = "Delete my account"; }
+    });
+
+    // ── nav ──
+    document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => showSection(b.dataset.sec)));
+    $("bkRefresh").addEventListener("click", () => { bookingsLoaded = false; loadBookings(); });
+    $("ovCopy").addEventListener("click", () => { navigator.clipboard.writeText($("ovChatLink").textContent); $("ovCopy").textContent = "Copied ✓"; setTimeout(() => ($("ovCopy").textContent = "Copy"), 1500); });
+    $("logout").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
 
     // ── auth ──
-    function showLogin() {
-      $("app").style.display = "none";
-      $("login").style.display = "block";
-    }
     function setMode(signup) {
       signupMode = signup;
-      $("loginTitle").textContent = signup ? "Create your account" : "Sign in";
       $("emailBtn").textContent = signup ? "Create account" : "Sign in";
       $("toggleText").textContent = signup ? "Already have an account?" : "New here?";
       $("toggleMode").textContent = signup ? "Sign in" : "Create an account";
       $("loginErr").textContent = "";
     }
-
     $("toggleMode").addEventListener("click", (e) => { e.preventDefault(); setMode(!signupMode); });
-    $("googleBtn").addEventListener("click", () => {
-      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/app" } });
-    });
+    $("googleBtn").addEventListener("click", () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/app" } }));
     $("emailBtn").addEventListener("click", async () => {
       $("loginErr").textContent = "";
       const email = $("email").value.trim(), password = $("password").value;
       if (!email || !password) { $("loginErr").textContent = "Enter email and password."; return; }
       try {
-        const fn = signupMode ? sb.auth.signUp({ email, password }) : sb.auth.signInWithPassword({ email, password });
-        const { data, error } = await fn;
+        const { data, error } = await (signupMode ? sb.auth.signUp({ email, password }) : sb.auth.signInWithPassword({ email, password }));
         if (error) throw error;
-        if (signupMode && !data.session) { $("loginErr").textContent = ""; alert("Check your email to confirm your account, then sign in."); return; }
+        if (signupMode && !data.session) { alert("Check your email to confirm your account, then sign in."); }
       } catch (e) { $("loginErr").textContent = e.message || "Login failed."; }
     });
-    $("logout").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
-    $("save").addEventListener("click", save);
 
-    // React to session changes (initial load, email login, Google redirect return, logout).
-    sb.auth.onAuthStateChange((_event, session) => {
-      if (session) { token = session.access_token; loadApp(); }
-      else { token = null; showLogin(); }
-    });
-    // Kick things off from any existing session.
-    sb.auth.getSession().then(({ data }) => {
-      if (data.session) { token = data.session.access_token; loadApp(); }
-      else { setMode(false); showLogin(); }
-    });
+    // ── session boot ──
+    function onSession(session) {
+      if (session) {
+        token = session.access_token;
+        if (session.user && session.user.email) $("acEmail").textContent = session.user.email;
+        loadApp();
+      } else { token = null; setMode(false); show("login"); }
+    }
+    sb.auth.onAuthStateChange((_e, session) => onSession(session));
+    sb.auth.getSession().then(({ data }) => onSession(data.session));
   </script>
 </body>
 </html>
