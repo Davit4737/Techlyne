@@ -117,6 +117,31 @@ export async function updateBusiness(id, fields) {
   return { ok: true, business: rows[0] };
 }
 
+// Deletes a business and all its appointments. Used when an owner deletes their account.
+// Appointments go first (they reference the business).
+export async function deleteBusinessCascade(businessId) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!businessId) return { ok: false, error: "businessId required" };
+
+  const delAppts = await fetch(`${REST()}/appointments?business_id=eq.${businessId}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  if (!delAppts.ok) {
+    console.error("Supabase delete appointments error:", delAppts.status, await delAppts.text());
+    return { ok: false, error: "Failed to delete appointments" };
+  }
+  const delBiz = await fetch(`${REST()}/businesses?id=eq.${businessId}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  if (!delBiz.ok) {
+    console.error("Supabase delete business error:", delBiz.status, await delBiz.text());
+    return { ok: false, error: "Failed to delete business" };
+  }
+  return { ok: true };
+}
+
 // ─────────────────────────── Appointments ───────────────────────────
 
 export async function insertAppointment({ businessId, name, phone, email, service, startISO, calcomBookingUid }) {

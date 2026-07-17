@@ -10,14 +10,14 @@
 // — those stay operator-controlled until Paddle automation lands. New businesses start
 // inactive; an operator flips them live after payment.
 
-import { getBusinessByOwner, createBusiness, updateBusiness } from "./_lib/db.js";
-import { bearerFromReq, getUserFromToken } from "./_lib/auth.js";
+import { getBusinessByOwner, createBusiness, updateBusiness, deleteBusinessCascade } from "./_lib/db.js";
+import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js";
 
 // Config fields a client may set on their own business. Deliberately excludes owner_id,
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).
 const OWNER_FIELDS = [
   "name", "timezone", "hours", "address", "phone", "services", "industry",
-  "availability", "slot_minutes",
+  "availability", "slot_minutes", "staff",
 ];
 
 const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
@@ -54,6 +54,18 @@ function pick(body) {
   if (out.slot_minutes !== undefined) {
     const n = Math.round(Number(out.slot_minutes));
     out.slot_minutes = Number.isFinite(n) ? Math.min(Math.max(n, 5), 480) : 30;
+  }
+
+  // Staff: rebuild from scratch — max 20 entries of { name, role }, strings capped.
+  if (out.staff !== undefined) {
+    if (Array.isArray(out.staff)) {
+      out.staff = out.staff
+        .slice(0, 20)
+        .map((m) => ({ name: String(m?.name || "").slice(0, 80), role: String(m?.role || "").slice(0, 80) }))
+        .filter((m) => m.name);
+    } else {
+      delete out.staff;
+    }
   }
 
   if (out.availability !== undefined) {
@@ -129,6 +141,20 @@ export default async function handler(req, res) {
     const upd = await updateBusiness(existing.business.id, fields);
     if (!upd.ok) return res.status(400).json({ error: upd.error });
     return res.status(200).json({ business: upd.business });
+  }
+
+  // Delete the caller's account: their business + appointments, then the auth user itself.
+  // Scoped to the verified user, so it can only ever delete the caller's own data.
+  if (req.method === "DELETE") {
+    const existing = await getBusinessByOwner(user.id);
+    if (!existing.ok) return res.status(500).json({ error: existing.error });
+    if (existing.business) {
+      const del = await deleteBusinessCascade(existing.business.id);
+      if (!del.ok) return res.status(500).json({ error: del.error });
+    }
+    const delUser = await deleteAuthUser(user.id);
+    if (!delUser.ok) return res.status(500).json({ error: delUser.error });
+    return res.status(200).json({ deleted: true });
   }
 
   return res.status(405).json({ error: "Method not allowed" });
