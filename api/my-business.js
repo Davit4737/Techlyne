@@ -108,6 +108,13 @@ export default async function handler(req, res) {
     for (const candidate of [base, `${base}-${Math.random().toString(36).slice(2, 6)}`]) {
       const r = await createBusiness({ ...fields, slug: candidate });
       if (r.ok) { created = r.business; break; }
+      // Race backstop: a concurrent request may have already created this owner's business
+      // (enforced by a unique index on owner_id). If so, update that row instead of erroring.
+      const owned = await getBusinessByOwner(user.id);
+      if (owned.ok && owned.business) {
+        const upd = await updateBusiness(owned.business.id, pick(body));
+        if (upd.ok) return res.status(200).json({ business: upd.business });
+      }
       if (r.error !== "That slug is already taken") return res.status(400).json({ error: r.error });
     }
     if (!created) return res.status(400).json({ error: "Could not generate a unique link — try a different business name." });
