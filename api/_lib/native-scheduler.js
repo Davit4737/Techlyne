@@ -74,7 +74,10 @@ function normalizeAvailability(availability) {
 export async function getAvailableSlots(cfg, startISO, endISO, timeZone = "UTC") {
   const tz = cfg?.timeZone || timeZone || "UTC";
   const rules = normalizeAvailability(cfg?.availability);
-  const slot = cfg?.slotMinutes || DEFAULT_SLOT_MINUTES;
+  // Defense in depth: a zero/negative slot length would make the slot loop below spin
+  // forever. The API clamps on write, but never trust a stored value with a hot loop.
+  const rawSlot = Math.round(Number(cfg?.slotMinutes)) || DEFAULT_SLOT_MINUTES;
+  const slot = Math.min(Math.max(rawSlot, 5), 480);
   const rangeStart = Date.parse(startISO);
   const rangeEnd = Date.parse(endISO);
   if (!Number.isFinite(rangeStart) || !Number.isFinite(rangeEnd)) {
