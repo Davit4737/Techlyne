@@ -4,8 +4,8 @@
 // vercel.json schedule to hourly and narrow this window to 24-25h for a tighter reminder time.
 // Appointments booked without an email are never queued here (see api/lib/db.js).
 
-import { getAppointmentsNeedingReminder, markReminderSent } from "./lib/db.js";
-import { sendEmail, senderFor, reminderEmail } from "./lib/email.js";
+import { getAppointmentsNeedingReminder, markReminderSent } from "./_lib/db.js";
+import { sendEmail, senderFor, reminderEmail } from "./_lib/email.js";
 
 // Fallbacks for appointments on the default (env-var) tenant, where business is null.
 const DEFAULT_NAME = process.env.CLINIC_NAME || "the clinic";

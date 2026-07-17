@@ -2,8 +2,8 @@
 // Gated by the master ADMIN_SECRET env var (that's YOU, the operator — not a client).
 // Powers onboard.html. Returns per-client Cal.com keys, so keep ADMIN_SECRET safe.
 
-import { listBusinesses, createBusiness, updateBusiness } from "./lib/db.js";
-import { provisionCalcom, isProvisioningConfigured } from "./lib/calcom-provision.js";
+import { listBusinesses, createBusiness, updateBusiness } from "./_lib/db.js";
+import { provisionCalcom, isProvisioningConfigured } from "./_lib/calcom-provision.js";
 
 const FIELDS = [
   "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",

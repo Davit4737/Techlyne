@@ -8,9 +8,9 @@
 // falls back to env vars — the "default" tenant — so the original single-client setup
 // keeps working. See SETUP.md / the onboarding form for per-client config.
 
-import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./lib/scheduler.js";
-import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment } from "./lib/db.js";
-import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./lib/email.js";
+import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./_lib/scheduler.js";
+import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment } from "./_lib/db.js";
+import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
 
 const MODEL = "claude-sonnet-5";
 // Enough headroom for adaptive thinking + a tool-heavy turn without truncation.

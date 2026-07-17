@@ -10,8 +10,8 @@
 // — those stay operator-controlled until Paddle automation lands. New businesses start
 // inactive; an operator flips them live after payment.
 
-import { getBusinessByOwner, createBusiness, updateBusiness } from "./lib/db.js";
-import { bearerFromReq, getUserFromToken } from "./lib/auth.js";
+import { getBusinessByOwner, createBusiness, updateBusiness } from "./_lib/db.js";
+import { bearerFromReq, getUserFromToken } from "./_lib/auth.js";
 
 // Config fields a client may set on their own business. Deliberately excludes owner_id,
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).

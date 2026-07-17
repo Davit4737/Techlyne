@@ -5,7 +5,7 @@
 //   - without ?b: returns the default (env-var) tenant's bookings; auth = master ADMIN_SECRET.
 // Returns customer contact info, so keep the secrets safe.
 
-import { listAppointments, getBusiness } from "./lib/db.js";
+import { listAppointments, getBusiness } from "./_lib/db.js";
 
 const DEFAULT_TZ = process.env.CLINIC_TIMEZONE || "America/New_York";
 const DEFAULT_NAME = process.env.CLINIC_NAME || "Your business";
