@@ -122,8 +122,6 @@
     let signupMode = false;
     let token = null;
 
-    function esc(s) { return String(s==null?"":s); }
-
     async function api(method, body) {
       const res = await fetch("/api/my-business", {
         method,

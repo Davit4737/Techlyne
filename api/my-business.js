@@ -20,9 +20,47 @@ const OWNER_FIELDS = [
   "availability", "slot_minutes",
 ];
 
+const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
+const HM = /^\d{1,2}:\d{2}$/;
+
+// Availability comes from an authenticated but untrusted browser — rebuild it from scratch
+// rather than storing whatever arrived. Max 7 rules of { days:[known weekday], startTime,
+// endTime as HH:MM }. Anything malformed is dropped; an empty result means "not provided".
+function sanitizeAvailability(raw) {
+  if (!Array.isArray(raw)) return undefined;
+  const rules = [];
+  for (const r of raw.slice(0, 7)) {
+    const days = Array.isArray(r?.days) ? r.days.filter((d) => WEEKDAYS.has(d)).slice(0, 7) : [];
+    const startTime = String(r?.startTime || "");
+    const endTime = String(r?.endTime || "");
+    if (days.length && HM.test(startTime) && HM.test(endTime)) rules.push({ days, startTime, endTime });
+  }
+  return rules.length ? rules : undefined;
+}
+
 function pick(body) {
   const out = {};
   for (const f of OWNER_FIELDS) if (body[f] !== undefined && body[f] !== "") out[f] = body[f];
+
+  // Free-text fields: cap lengths so no one can stuff megabytes into a row (they also feed
+  // the chat prompt, so this bounds token burn too).
+  for (const f of ["name", "timezone", "hours", "address", "phone", "industry"]) {
+    if (typeof out[f] === "string") out[f] = out[f].slice(0, 200);
+  }
+  if (typeof out.services === "string") out.services = out.services.slice(0, 1000);
+
+  // slot_minutes drives the native scheduler's slot loop — a zero/negative value would spin
+  // it forever (DoS), so clamp to a sane range instead of trusting the client.
+  if (out.slot_minutes !== undefined) {
+    const n = Math.round(Number(out.slot_minutes));
+    out.slot_minutes = Number.isFinite(n) ? Math.min(Math.max(n, 5), 480) : 30;
+  }
+
+  if (out.availability !== undefined) {
+    const clean = sanitizeAvailability(out.availability);
+    if (clean) out.availability = clean;
+    else delete out.availability;
+  }
   return out;
 }
 
