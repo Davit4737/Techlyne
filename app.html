@@ -183,7 +183,9 @@
       } catch (e) { $("formErr").textContent = e.message; }
     }
 
+    let saving = false;
     async function save() {
+      if (saving) return;                     // guard against double-submit (was creating dupes)
       $("formErr").textContent = ""; $("formOk").textContent = "";
       const payload = {
         name: $("f_name").value.trim(),
@@ -195,12 +197,27 @@
         hours: $("f_hours").value.trim(),
         ...readAvailability(),
       };
-      if (!payload.name) { $("formErr").textContent = "Business name is required."; return; }
+      if (!payload.name) { $("formErr").textContent = "Business name is required."; $("f_name").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+
+      saving = true;
+      const btn = $("save");
+      const label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Saving…"; btn.style.opacity = "0.6";
       try {
         const { business } = await api("POST", payload); // POST upserts (create or update)
-        $("formOk").textContent = "Saved ✓";
         renderBusiness(business);
-      } catch (e) { $("formErr").textContent = e.message; }
+        $("formOk").textContent = "Saved ✓";
+        btn.textContent = "Saved ✓";
+        // feedback lives at the top of the card — bring it into view so the save is obvious
+        $("banner").scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => { btn.textContent = label; }, 1800);
+      } catch (e) {
+        $("formErr").textContent = e.message;
+        $("formErr").scrollIntoView({ behavior: "smooth", block: "center" });
+        btn.textContent = label;
+      } finally {
+        saving = false; btn.disabled = false; btn.style.opacity = "1";
+      }
     }
 
     // ── auth ──
