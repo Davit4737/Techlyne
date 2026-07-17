@@ -72,6 +72,32 @@ manually, or created by auto-provisioning below. The env-var "default" tenant wo
 same way: with `CALCOM_API_KEY` set it books through Cal.com, without it the built-in
 scheduler takes over.
 
+### Self-serve accounts (client sign-up + own dashboard at `/app`)
+
+Clients register, log in, and configure their own business at `/app` — no operator needed.
+Auth is handled by **Supabase Auth**; the browser signs in and the server verifies the token.
+
+**One-time Supabase dashboard setup:**
+1. **Authentication → Providers → Email** — enabled by default. For frictionless testing you
+   can turn OFF "Confirm email" (Auth → Providers → Email), or leave it on for production.
+2. **Authentication → Providers → Google** — toggle on, then paste a Google OAuth **Client ID
+   + Secret** (create them in Google Cloud Console → Credentials → OAuth client → Web app).
+   In Google Cloud, set the authorized redirect URI to
+   `https://kxahngxkpcuxlblmtdqz.supabase.co/auth/v1/callback`.
+3. **Authentication → URL Configuration** — set Site URL to `https://bizzassist.xyz` and add
+   `https://bizzassist.xyz/app` to the redirect allow-list.
+
+**Env var (Vercel):**
+
+| Variable | Where it comes from |
+|---|---|
+| `SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon/public key (safe to expose; used to verify login tokens server-side) |
+
+Email/password works the moment Email confirmation is sorted; Google works once step 2 is done.
+New sign-ups create a business with `active = false` — an operator flips it live after payment
+(Paddle automation comes later). The anon key is also embedded in `app.html` (it's public by
+design, protected by the database's row-level security).
+
 ### Cal.com auto-provisioning (optional — Cal.com accounts without manual setup)
 
 Set these two and creating a client in `/onboard` automatically spins up an **isolated**

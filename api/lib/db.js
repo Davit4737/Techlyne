@@ -50,6 +50,27 @@ export async function getBusiness(slug) {
   return { ok: true, business: rows[0] || null };
 }
 
+// Fetches the business owned by a Supabase Auth user (self-serve accounts). One business per
+// owner for now. Returns { ok, business|null }.
+export async function getBusinessByOwner(ownerId) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!ownerId) return { ok: true, business: null };
+
+  const url = new URL(`${REST()}/businesses`);
+  url.searchParams.set("owner_id", `eq.${ownerId}`);
+  url.searchParams.set("order", "created_at.asc");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getBusinessByOwner error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load business" };
+  }
+  const rows = await res.json();
+  return { ok: true, business: rows[0] || null };
+}
+
 export async function listBusinesses() {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
   const url = new URL(`${REST()}/businesses`);
