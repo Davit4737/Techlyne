@@ -55,8 +55,6 @@
     .banner { border-radius:12px; padding:13px 16px; font-size:13.5px; margin-bottom:20px; }
     .banner.pending { background:#FBF3DC; color:#8A6D1A; border:1px solid #EDD9A3; }
     .banner.live { background:#E4F0E9; color:var(--green); border:1px solid #BFE0CE; }
-    .linkrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .linkrow code { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; flex:1; min-width:200px; overflow:auto; white-space:nowrap; }
     .stats { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
     .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; min-width:130px; }
     .stat .n { font-size:26px; font-weight:800; }
@@ -152,10 +150,6 @@
         <div class="stats">
           <div class="stat"><div class="n" id="stUpcoming">–</div><div class="l">Upcoming bookings</div></div>
           <div class="stat"><div class="n" id="stStatus">–</div><div class="l">Status</div></div>
-        </div>
-        <div class="panel">
-          <label>Your booking page — share this with customers</label>
-          <div class="linkrow"><code id="ovChatLink">—</code><button class="ghost" id="ovCopy">Copy</button><a id="ovOpen" href="#" target="_blank"><button class="ghost">Open</button></a></div>
         </div>
       </section>
 
@@ -300,8 +294,6 @@
         ? "🟢 Your AI receptionist is live and taking bookings."
         : "🟡 Set up! Your AI goes live once your subscription is activated — see the Subscription tab.";
       $("stStatus").textContent = live ? "Live" : "Pending";
-      $("ovChatLink").textContent = origin + "/c/" + (biz ? biz.slug : "");
-      $("ovOpen").href = "/c/" + (biz ? biz.slug : "");
       // Business form
       ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (biz && biz[f] != null) ? biz[f] : ""; });
       fillAvail(biz || {});
@@ -423,7 +415,6 @@
     // ── nav ──
     document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => showSection(b.dataset.sec)));
     $("bkRefresh").addEventListener("click", () => { bookingsLoaded = false; loadBookings(); });
-    $("ovCopy").addEventListener("click", () => { navigator.clipboard.writeText($("ovChatLink").textContent); $("ovCopy").textContent = "Copied ✓"; setTimeout(() => ($("ovCopy").textContent = "Copy"), 1500); });
     $("logout").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
 
     // ── auth ──
