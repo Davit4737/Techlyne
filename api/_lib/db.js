@@ -71,6 +71,47 @@ export async function getBusinessByOwner(ownerId) {
   return { ok: true, business: rows[0] || null };
 }
 
+// Fetches a business by its primary key. Used by the Paddle webhook, which identifies the
+// business via custom_data.business_id set at checkout. Returns { ok, business|null }.
+export async function getBusinessById(id) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!id) return { ok: true, business: null };
+
+  const url = new URL(`${REST()}/businesses`);
+  url.searchParams.set("id", `eq.${id}`);
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getBusinessById error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load business" };
+  }
+  const rows = await res.json();
+  return { ok: true, business: rows[0] || null };
+}
+
+// Fallback lookup for Paddle webhook events that don't carry custom_data (e.g. some
+// subscription.updated payloads) — matches by the Paddle customer id we stored on the first
+// event for this subscription. Returns { ok, business|null }.
+export async function getBusinessByPaddleCustomer(customerId) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!customerId) return { ok: true, business: null };
+
+  const url = new URL(`${REST()}/businesses`);
+  url.searchParams.set("paddle_customer_id", `eq.${customerId}`);
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getBusinessByPaddleCustomer error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load business" };
+  }
+  const rows = await res.json();
+  return { ok: true, business: rows[0] || null };
+}
+
 export async function listBusinesses() {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
   const url = new URL(`${REST()}/businesses`);

@@ -459,9 +459,28 @@
             <div><div style="font-family:var(--font-display);font-weight:700;font-size:17px" id="subPlan">Free</div><div class="muted" id="subStatus">—</div></div>
             <span class="pill" id="subPill">—</span>
           </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:16px 0"/>
-          <div class="muted">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
+          <div id="subManageWrap" style="display:none;margin-top:16px">
+            <button class="ghost" id="subManage">Manage billing →</button>
+          </div>
+          <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
         </div>
+
+        <div class="ov-label" id="plansLabel" style="display:none">Choose a plan</div>
+        <div class="quick" id="plansWrap" style="display:none">
+          <div class="quick-card" style="cursor:default">
+            <span class="qt">Standard</span>
+            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$250<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
+            <span class="qd">Up to 1,500 AI conversations/mo, 24/7 answering & booking, automatic reminders.</span>
+            <button class="wide" data-plan="standard" id="planStandardBtn" style="margin-top:14px">Choose Standard</button>
+          </div>
+          <div class="quick-card" style="cursor:default">
+            <span class="qt">Pro</span>
+            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$400<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
+            <span class="qd">Up to 4,500 AI conversations/mo (3×), priority setup & support.</span>
+            <button class="wide" data-plan="pro" id="planProBtn" style="margin-top:14px">Choose Pro</button>
+          </div>
+        </div>
+        <div id="subCheckoutErr" class="err"></div>
       </section>
 
       <!-- ACCOUNT -->
@@ -483,12 +502,14 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <script>
     const SUPABASE_URL = "https://kxahngxkpcuxlblmtdqz.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YWhuZ3hrcGN1eGxibG10ZHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjgzMTUsImV4cCI6MjA5OTYwNDMxNX0.jkVdky9bR1syFiAwcDZi4s695Hhg68bsA-bdnALIk-E";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = (id) => document.getElementById(id);
-    let token = null, biz = null, bookingsLoaded = false, signupMode = false;
+    let token = null, biz = null, bookingsLoaded = false, signupMode = false, userEmail = null;
+    let paddleCfg = null, paddleReady = false;
 
     async function api(method, body, path) {
       const res = await fetch(path || "/api/my-business", {
@@ -513,6 +534,56 @@
         if (on) { s.style.animation = 'none'; void s.offsetWidth; s.style.animation = ''; }
       });
       if (name === 'bookings' && !bookingsLoaded) loadBookings();
+      if (name === 'subscription') ensurePaddle();
+    }
+
+    // ── billing (Paddle) ──
+    async function ensurePaddle() {
+      if (paddleReady) return true;
+      try {
+        if (!paddleCfg) paddleCfg = await (await fetch("/api/paddle-config")).json();
+        if (!paddleCfg.configured || !window.Paddle) return false;
+        if (paddleCfg.environment === "sandbox") Paddle.Environment.set("sandbox");
+        Paddle.Initialize({
+          token: paddleCfg.clientToken,
+          eventCallback: (e) => {
+            if (e.name === "checkout.completed") onCheckoutCompleted();
+          },
+        });
+        paddleReady = true;
+      } catch (e) { console.error("Paddle init failed", e); }
+      if (biz) renderSubscription();
+      return paddleReady;
+    }
+
+    // Paddle's own webhook (not this tab) is what actually flips activation — this just
+    // refreshes our view of `biz` a few times so the UI catches up without a manual reload.
+    async function onCheckoutCompleted() {
+      $("subCheckoutErr").textContent = "";
+      $("subStatus").textContent = "Payment received — activating your AI…";
+      for (let i = 0; i < 6; i++) {
+        await new Promise((r) => setTimeout(r, 2500));
+        try {
+          const { business } = await api("GET");
+          biz = business; renderBiz();
+          if (business && business.active) break;
+        } catch {}
+      }
+    }
+
+    function openCheckout(plan) {
+      $("subCheckoutErr").textContent = "";
+      const priceId = paddleCfg && paddleCfg.prices && paddleCfg.prices[plan];
+      if (!paddleReady || !priceId) {
+        $("subCheckoutErr").textContent = "Payments aren't set up yet — email hello@bizzassist.xyz to go live.";
+        return;
+      }
+      Paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: { business_id: String(biz.id) },
+        customer: userEmail ? { email: userEmail } : undefined,
+        settings: { successUrl: location.origin + "/app" },
+      });
     }
 
     // ── availability helpers ──
@@ -545,12 +616,34 @@
       fillAvail(biz || {});
       // Staff
       renderStaff((biz && biz.staff) || []);
-      // Subscription
+      renderSubscription();
+    }
+
+    // ── subscription (Paddle) ──
+    const PLAN_LABEL = { standard: "Standard", pro: "Pro" };
+    const STATUS_LABEL = { trialing: "Trial active", active: "Active", past_due: "Payment overdue", paused: "Paused", canceled: "Cancelled", inactive: "Not started yet" };
+    function renderSubscription() {
+      const live = Boolean(biz && biz.active);
+      const planKey = biz && biz.plan;
+      $("subPlan").textContent = (planKey ? PLAN_LABEL[planKey] || planKey : "Free") + " plan";
       const st = (biz && biz.subscription_status) || "inactive";
-      $("subPlan").textContent = live ? "Active plan" : "Not active yet";
-      $("subStatus").textContent = "Status: " + st;
-      $("subPill").textContent = live ? "active" : "pending";
+      $("subStatus").textContent = STATUS_LABEL[st] || ("Status: " + st);
+      $("subPill").textContent = live ? "active" : st;
       $("subPill").className = "pill" + (live ? "" : " cancelled");
+
+      const hasPaddle = Boolean(paddleCfg && paddleCfg.configured);
+      $("subManageWrap").style.display = biz && biz.paddle_customer_id ? "block" : "none";
+      $("plansLabel").style.display = hasPaddle ? "flex" : "none";
+      $("plansWrap").style.display = hasPaddle ? "grid" : "none";
+      $("subFallback").style.display = hasPaddle ? "none" : "block";
+
+      for (const p of ["standard", "pro"]) {
+        const btn = $("plan" + PLAN_LABEL[p] + "Btn");
+        if (!btn) continue;
+        const isCurrent = planKey === p && live;
+        btn.textContent = isCurrent ? "Current plan" : planKey ? "Switch to " + PLAN_LABEL[p] : "Choose " + PLAN_LABEL[p];
+        btn.disabled = isCurrent;
+      }
     }
 
     // ── staff editor ──
@@ -674,6 +767,15 @@
     $("bkRefresh").addEventListener("click", () => { bookingsLoaded = false; loadBookings(); });
     $("logout").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
 
+    // ── billing actions ──
+    document.querySelectorAll('#plansWrap [data-plan]').forEach((b) => b.addEventListener('click', () => openCheckout(b.dataset.plan)));
+    $("subManage").addEventListener("click", async () => {
+      $("subCheckoutErr").textContent = "";
+      const b = $("subManage"); b.disabled = true; b.textContent = "Opening…";
+      try { const { url } = await api("POST", {}, "/api/paddle-portal"); location.href = url; }
+      catch (e) { $("subCheckoutErr").textContent = e.message; b.disabled = false; b.textContent = "Manage billing →"; }
+    });
+
     // ── auth ──
     function setMode(signup) {
       signupMode = signup;
@@ -701,7 +803,7 @@
     function onSession(session) {
       if (session) {
         token = session.access_token;
-        if (session.user && session.user.email) $("acEmail").textContent = session.user.email;
+        if (session.user && session.user.email) { userEmail = session.user.email; $("acEmail").textContent = session.user.email; }
         loadApp();
       } else { token = null; setMode(false); show("login"); }
     }

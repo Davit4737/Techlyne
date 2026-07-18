@@ -8,6 +8,6 @@
     "node": ">=18"
   },
   "scripts": {
-    "check": "node --check api/chat.js && node --check api/remind.js && node --check api/appointments.js && node --check api/diag.js"
+    "check": "node --check api/chat.js && node --check api/remind.js && node --check api/appointments.js && node --check api/diag.js && node --check api/paddle-webhook.js && node --check api/paddle-config.js && node --check api/paddle-portal.js && node --check api/_lib/paddle.js"
   }
 }
