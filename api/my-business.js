@@ -23,6 +23,21 @@ const OWNER_FIELDS = [
 const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
 const HM = /^\d{1,2}:\d{2}$/;
 
+// The row also carries server-side credentials (admin_secret, calcom_* keys/tokens) that the
+// owner's BROWSER must never see — an XSS or a curious devtools user could lift them. Rebuild
+// every response from this explicit allowlist instead of returning the row verbatim.
+const OWNER_VIEW_FIELDS = [
+  "id", "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",
+  "availability", "slot_minutes", "staff", "active", "subscription_status", "plan",
+  "paddle_customer_id", "created_at",
+];
+function ownerView(business) {
+  if (!business) return null;
+  const out = {};
+  for (const f of OWNER_VIEW_FIELDS) if (business[f] !== undefined) out[f] = business[f];
+  return out;
+}
+
 // Availability comes from an authenticated but untrusted browser — rebuild it from scratch
 // rather than storing whatever arrived. Max 7 rules of { days:[known weekday], startTime,
 // endTime as HH:MM }. Anything malformed is dropped; an empty result means "not provided".
@@ -48,6 +63,17 @@ function pick(body) {
     if (typeof out[f] === "string") out[f] = out[f].slice(0, 200);
   }
   if (typeof out.services === "string") out.services = out.services.slice(0, 1000);
+
+  // Timezone must be a real IANA name ("Asia/Yerevan"), not an abbreviation ("PST") —
+  // an invalid one is stored forever and then throws RangeError inside every
+  // toLocaleString(..., { timeZone }) call, taking the bookings list down with it.
+  if (out.timezone !== undefined) {
+    try {
+      new Intl.DateTimeFormat(undefined, { timeZone: out.timezone });
+    } catch {
+      delete out.timezone; // keep whatever valid value the row already has
+    }
+  }
 
   // slot_minutes drives the native scheduler's slot loop — a zero/negative value would spin
   // it forever (DoS), so clamp to a sane range instead of trusting the client.
@@ -82,7 +108,7 @@ function slugify(str) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
 
@@ -92,7 +118,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const r = await getBusinessByOwner(user.id);
     if (!r.ok) return res.status(500).json({ error: r.error });
-    return res.status(200).json({ business: r.business });
+    return res.status(200).json({ business: ownerView(r.business) });
   }
 
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
@@ -105,7 +131,7 @@ export default async function handler(req, res) {
       const fields = pick(body);
       const upd = await updateBusiness(existing.business.id, fields);
       if (!upd.ok) return res.status(400).json({ error: upd.error });
-      return res.status(200).json({ business: upd.business });
+      return res.status(200).json({ business: ownerView(upd.business) });
     }
 
     const fields = pick(body);
@@ -117,7 +143,11 @@ export default async function handler(req, res) {
     // Derive a unique slug from the business name; append a short suffix on collision.
     const base = slugify(fields.name) || "business";
     let created = null;
-    for (const candidate of [base, `${base}-${Math.random().toString(36).slice(2, 6)}`]) {
+    // Up to 4 candidates: the clean slug, then random suffixes. One suffix retry proved
+    // not enough in production (409s logged when popular names collide twice).
+    const candidates = [base];
+    while (candidates.length < 4) candidates.push(`${base}-${Math.random().toString(36).slice(2, 6)}`);
+    for (const candidate of candidates) {
       const r = await createBusiness({ ...fields, slug: candidate });
       if (r.ok) { created = r.business; break; }
       // Race backstop: a concurrent request may have already created this owner's business
@@ -125,12 +155,12 @@ export default async function handler(req, res) {
       const owned = await getBusinessByOwner(user.id);
       if (owned.ok && owned.business) {
         const upd = await updateBusiness(owned.business.id, pick(body));
-        if (upd.ok) return res.status(200).json({ business: upd.business });
+        if (upd.ok) return res.status(200).json({ business: ownerView(upd.business) });
       }
       if (r.error !== "That slug is already taken") return res.status(400).json({ error: r.error });
     }
     if (!created) return res.status(400).json({ error: "Could not generate a unique link — try a different business name." });
-    return res.status(200).json({ business: created });
+    return res.status(200).json({ business: ownerView(created) });
   }
 
   if (req.method === "PATCH") {
@@ -140,7 +170,7 @@ export default async function handler(req, res) {
     const fields = pick(body);
     const upd = await updateBusiness(existing.business.id, fields);
     if (!upd.ok) return res.status(400).json({ error: upd.error });
-    return res.status(200).json({ business: upd.business });
+    return res.status(200).json({ business: ownerView(upd.business) });
   }
 
   // Delete the caller's account: their business + appointments, then the auth user itself.

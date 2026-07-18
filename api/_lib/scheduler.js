@@ -11,8 +11,19 @@ function providerFor(cfg) {
   return hasCalcom ? calcom : native;
 }
 
-export function getAvailableSlots(cfg, ...rest) {
-  return providerFor(cfg).getAvailableSlots(cfg, ...rest);
+export async function getAvailableSlots(cfg, ...rest) {
+  const provider = providerFor(cfg);
+  const r = await provider.getAvailableSlots(cfg, ...rest);
+  // Config rot: Cal.com credentials that once worked but now 400/404 (deleted event type,
+  // malformed id — both seen in production). Rather than leaving the tenant unbookable,
+  // serve availability from the native scheduler; its defaults (Mon–Fri 9–17) apply if the
+  // row has no structured availability. Transient Cal.com outages (5xx/network) are NOT
+  // rerouted — mixing engines mid-outage could offer slots Cal.com later rejects.
+  if (!r.ok && provider === calcom && (r.status === 400 || r.status === 404)) {
+    console.warn("Cal.com availability config error — falling back to native scheduler for this request");
+    return native.getAvailableSlots(cfg, ...rest);
+  }
+  return r;
 }
 export function createBooking(cfg, ...rest) {
   return providerFor(cfg).createBooking(cfg, ...rest);

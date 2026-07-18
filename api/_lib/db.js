@@ -183,6 +183,26 @@ export async function deleteBusinessCascade(businessId) {
   return { ok: true };
 }
 
+// ─────────────────────────── Demo usage (landing-page bot cap) ───────────────────────────
+
+// Atomically bumps today's demo-message count for one identity key ("ip|…" or "visitor|…")
+// and returns the new count. Backed by the bump_demo_usage SQL function (009_demo_usage.sql)
+// so concurrent messages can't race under the cap. Returns { ok, count } or { ok:false }.
+export async function bumpDemoUsage(key, dayISO) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  const res = await fetch(`${REST()}/rpc/bump_demo_usage`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ p_key: key, p_day: dayISO }),
+  });
+  if (!res.ok) {
+    console.error("Supabase bumpDemoUsage error:", res.status, await res.text());
+    return { ok: false, error: "Failed to track demo usage" };
+  }
+  const count = await res.json();
+  return { ok: true, count: Number(count) };
+}
+
 // ─────────────────────────── Appointments ───────────────────────────
 
 export async function insertAppointment({ businessId, name, phone, email, service, startISO, calcomBookingUid }) {
@@ -345,13 +365,15 @@ export async function cancelAppointment(id) {
   return updateAppointment(id, { status: "cancelled" });
 }
 
-// Lists appointments for the admin dashboard from `sinceISO` onward, optionally scoped to
-// one business. Returns all statuses so the owner sees cancellations too.
-export async function listAppointments(sinceISO, businessId) {
+// Lists appointments for the admin dashboard from `sinceISO` onward (optionally bounded by
+// `untilISO`, exclusive — used by the calendar's month window), optionally scoped to one
+// business. Returns all statuses so the owner sees cancellations too.
+export async function listAppointments(sinceISO, businessId, untilISO) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const url = new URL(`${REST()}/appointments`);
   if (sinceISO) url.searchParams.set("start_time", `gte.${sinceISO}`);
+  if (untilISO) url.searchParams.append("start_time", `lt.${untilISO}`);
   if (businessId !== undefined) {
     url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
   }
