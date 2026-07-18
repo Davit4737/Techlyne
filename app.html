@@ -378,6 +378,11 @@
             <span class="qa">Open bookings <span>→</span></span>
           </button>
         </div>
+        <div class="ov-label">Latest bookings</div>
+        <div class="panel" style="padding:10px 20px 6px">
+          <div class="muted" id="ovBkEmpty" style="padding:14px 0 18px">Loading…</div>
+          <div style="overflow-x:auto"><table id="ovBkTable" style="display:none"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Status</th></tr></thead><tbody id="ovBkBody"></tbody></table></div>
+        </div>
       </section>
 
       <!-- BOOKINGS -->
@@ -534,6 +539,7 @@
         ? "Your AI receptionist is live and taking bookings."
         : "Almost there — your AI goes live once your subscription is activated. See the Subscription tab.";
       $("stStatus").textContent = live ? "Live" : "Pending";
+      $("stStatus").style.color = live ? "var(--green)" : "#B98A2F";
       // Business form
       ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (biz && biz[f] != null) ? biz[f] : ""; });
       fillAvail(biz || {});
@@ -570,17 +576,27 @@
     // ── bookings ──
     async function loadBookings() {
       $("bkEmpty").style.display = "block"; $("bkEmpty").textContent = "Loading…"; $("bkTable").style.display = "none";
+      $("ovBkEmpty").style.display = "block"; $("ovBkEmpty").textContent = "Loading…"; $("ovBkTable").style.display = "none";
       try {
         const { bookings } = await api("GET", null, "/api/my-bookings");
         bookingsLoaded = true;
         const upcoming = bookings.filter((b) => b.status === "confirmed").length;
         $("stUpcoming").textContent = upcoming;
-        if (!bookings.length) { $("bkEmpty").textContent = "No bookings yet — they'll appear here as soon as your AI books its first appointment."; return; }
+        if (!bookings.length) {
+          $("bkEmpty").textContent = "No bookings yet — they'll appear here as soon as your AI books its first appointment.";
+          $("ovBkEmpty").textContent = "No bookings yet — your AI is on duty, ready for the first one.";
+          return;
+        }
+        const statusCell = (b) => `<span class="pill ${b.status === "cancelled" ? "cancelled" : ""}">${esc(b.status)}</span>`;
         $("bkBody").innerHTML = bookings.map((b) =>
-          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td><span class="pill ${b.status === "cancelled" ? "cancelled" : ""}">${esc(b.status)}</span></td></tr>`
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td>${statusCell(b)}</td></tr>`
         ).join("");
         $("bkEmpty").style.display = "none"; $("bkTable").style.display = "table";
-      } catch (e) { $("bkEmpty").textContent = e.message; }
+        $("ovBkBody").innerHTML = bookings.slice(0, 5).map((b) =>
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${statusCell(b)}</td></tr>`
+        ).join("");
+        $("ovBkEmpty").style.display = "none"; $("ovBkTable").style.display = "table";
+      } catch (e) { $("bkEmpty").textContent = e.message; $("ovBkEmpty").textContent = e.message; }
     }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
