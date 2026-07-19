@@ -9,6 +9,11 @@ Live: [bizzassist.xyz](https://www.bizzassist.xyz)
 ## What it does
 
 - **Chat widget** on the landing page answers questions and books appointments.
+- **Embeddable widget** — a client copies one `<script>` tag from their dashboard's *Connect*
+  tab and drops the AI front desk onto their own website (WordPress, Wix, Shopify, Squarespace,
+  plain HTML — anywhere). It runs in an isolated Shadow DOM so it can't collide with the host
+  page, and only answers once the tenant's subscription is active. No-website clients can share
+  the hosted `/c/<slug>` page instead.
 - **Real availability** — the bot never invents times. By default a built-in scheduler
   computes each business's open slots from its working hours minus what's already booked
   (free, isolated per tenant); businesses with Cal.com credentials use Cal.com instead.
@@ -59,6 +64,7 @@ flowchart TD
 | `/admin` | `admin.html` | Bookings dashboard. `/admin?b=<slug>` for a specific client. |
 | `/onboard` | `onboard.html` | Operator form to add/edit client businesses (no redeploy). |
 | `/c/<slug>` | `chat.html` | A client's hosted chat page (rewrite in `vercel.json`). |
+| `/widget.js` | `widget.js` | The embeddable chat widget. A client pastes a one-line `<script>` (generated for them on the `/app` **Connect** tab) onto their own website; it renders a floating bubble scoped to their `slug`. Self-contained, Shadow-DOM-isolated, no dependencies. |
 
 ## Code layout
 
@@ -75,8 +81,28 @@ api/
 supabase/
   schema.sql       the appointments table (run once)
 admin.html         bookings dashboard
+app.html           self-serve client dashboard (config, bookings, Connect/install, billing)
+widget.js          embeddable chat widget (one-line <script> for the client's own site)
 index.html         landing page + chat widget
 ```
+
+## Embedding on a client's own site
+
+Nothing to configure server-side. A logged-in client opens the **Connect** tab in `/app`,
+tweaks the look (accent color, greeting, launcher label, position — all encoded into the
+snippet, nothing stored), and copies their `<script>` tag:
+
+```html
+<script src="https://www.bizzassist.xyz/widget.js"
+        data-slug="bright-smile" data-name="Bright Smile Dental"
+        data-color="#2E6B4F" defer></script>
+```
+
+The widget derives the API origin from its own `src`, so the same file works on any host
+domain (`/api/chat` already sends `Access-Control-Allow-Origin: *`). It exposes
+`window.BizAssist.open()` / `.close()` / `.toggle()` so a site can also open the chat from
+its own button. The AI answers only when the tenant is `active` (the subscription gate); until
+then the widget still installs and replies with a friendly "not switched on yet" note.
 
 ## Multi-tenant
 

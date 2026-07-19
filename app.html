@@ -247,6 +247,60 @@
       .stat .n { font-size:34px; }
     }
 
+    /* ── connect / install tab ── */
+    .conn-cols { display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start; }
+    .conn-preview { position:sticky; top:24px; }
+    .colorrow { display:flex; gap:10px; align-items:center; margin-bottom:16px; }
+    .colorrow input[type=color] { width:46px; height:44px; padding:3px; border-radius:12px; margin:0; cursor:pointer; flex:none; background:var(--paper); }
+    .colorrow input[type=text] { margin:0; text-transform:uppercase; letter-spacing:.02em; }
+    .seg { display:flex; gap:0; border:1.5px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:16px; background:var(--paper); }
+    .seg button { flex:1; background:transparent; color:var(--muted); border:0; border-radius:0; padding:11px 8px; font-size:13.5px; font-weight:600; box-shadow:none; }
+    .seg button:hover { background:var(--bg); color:var(--ink); transform:none; box-shadow:none; }
+    .seg button.on { background:var(--green-soft); color:var(--green-d); }
+    .codebox {
+      background:var(--choc); color:#EFE7D6; border-radius:14px; padding:16px 18px; margin:0 0 12px;
+      font-family:ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size:12.5px;
+      line-height:1.65; overflow-x:auto; white-space:pre; border:1px solid rgba(255,253,247,.08);
+    }
+    .codebox code { color:inherit; font-family:inherit; }
+    code.inline { background:var(--cream-dark); border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:.9em; font-family:ui-monospace,monospace; color:var(--choc); }
+    .copybtn { padding:9px 16px; font-size:13px; }
+    .copybtn.ok { background:var(--green-d); }
+    a.copybtn.ghostlink { display:inline-flex; align-items:center; text-decoration:none; background:transparent; color:var(--muted); border:1.5px solid var(--line); }
+    a.copybtn.ghostlink:hover { color:var(--ink); border-color:#D3C8AE; background:var(--paper); }
+    .hint { font-size:12.5px; color:var(--muted); }
+    .hint:empty { display:none; }
+    .linkrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .linkrow input { margin:0; flex:1; min-width:180px; font-size:13px; color:var(--muted); background:var(--bg); }
+    .acc details { border:1px solid var(--line); border-radius:12px; margin-bottom:9px; overflow:hidden; background:var(--paper); }
+    .acc summary { cursor:pointer; padding:13px 16px; font-weight:600; font-size:14px; list-style:none; display:flex; align-items:center; gap:10px; }
+    .acc summary::-webkit-details-marker { display:none; }
+    .acc summary::after { content:"+"; margin-left:auto; color:var(--muted); font-size:18px; font-weight:400; transition:transform .2s ease; }
+    .acc details[open] summary::after { transform:rotate(45deg); }
+    .acc summary:hover { background:var(--bg); }
+    .acc .acc-body { padding:2px 16px 16px; font-size:13.5px; color:var(--muted); line-height:1.6; }
+    .acc .acc-body ol { margin:0; padding-left:20px; }
+    .acc .acc-body li { margin-bottom:6px; }
+    .acc .acc-body strong { color:var(--ink); }
+    .preview-head { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.14em; margin-bottom:12px; justify-content:center; }
+    .preview-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 2.4s ease-out infinite; }
+    .preview-stage { display:flex; justify-content:center; }
+    .preview-browser {
+      position:relative; width:100%; max-width:340px; height:480px; background:#faf9f6;
+      border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:var(--shadow);
+    }
+    .pb-bar { display:flex; gap:6px; padding:12px 14px; background:var(--paper); border-bottom:1px solid var(--line-soft); }
+    .pb-bar span { width:9px; height:9px; border-radius:50%; background:#E0D7C4; }
+    .pb-body { padding:20px 18px; display:flex; flex-direction:column; gap:11px; }
+    .pb-line { height:9px; border-radius:6px; background:#E9E1CF; }
+    .pb-block { height:78px; border-radius:12px; background:#EDE6D4; margin:6px 0; }
+    #previewFrame { position:absolute; inset:0; width:100%; height:100%; border:0; background:transparent; }
+    @media (max-width: 900px) {
+      .conn-cols { grid-template-columns:1fr; }
+      .conn-preview { position:static; order:-1; }
+      .preview-browser { max-width:100%; height:420px; }
+    }
+
     /* ── boot loader ── */
     .boot { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:50; }
     .boot .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--ink); animation:bspin .8s linear infinite; }
@@ -388,6 +442,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 15.5c2.4.3 4.3 1.8 5 4.5"/></svg>
           Staff
         </button>
+        <button data-sec="connect">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="m8.5 9.5-2.5 2.5 2.5 2.5"/><path d="m15.5 9.5 2.5 2.5-2.5 2.5"/></svg>
+          Connect
+        </button>
         <button data-sec="subscription">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h4"/></svg>
           Subscription
@@ -419,6 +477,11 @@
         </div>
         <div class="ov-label">Make your AI smarter</div>
         <div class="quick">
+          <button class="quick-card" data-goto="connect">
+            <span class="qt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="m8.5 9.5-2.5 2.5 2.5 2.5"/><path d="m15.5 9.5 2.5 2.5-2.5 2.5"/></svg>Add it to your website</span>
+            <span class="qd">Copy one line of code and your AI answers customers right on your own site.</span>
+            <span class="qa">Open connect <span>→</span></span>
+          </button>
           <button class="quick-card" data-goto="business">
             <span class="qt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-8h6v8"/></svg>Tune your business info</span>
             <span class="qd">Services, hours and availability — everything your AI books against.</span>
@@ -527,6 +590,92 @@
         </div>
       </section>
 
+      <!-- CONNECT (install the widget on the client's own site) -->
+      <section data-sec="connect" style="display:none">
+        <div class="kicker">Go live on your site</div>
+        <h1>Connect</h1>
+        <div class="sub">Put your AI receptionist on your own website — <span class="serif">one line of code.</span></div>
+        <div id="connBanner"></div>
+
+        <div class="conn-cols">
+          <div>
+            <!-- Customize -->
+            <div class="panel">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">1. Make it yours</div>
+              <div class="muted" style="margin-bottom:18px">Match your brand. Changes update the code and preview instantly.</div>
+              <div class="grid">
+                <div>
+                  <label>Accent color</label>
+                  <div class="colorrow">
+                    <input type="color" id="w_color" value="#2E6B4F" aria-label="Accent color" />
+                    <input type="text" id="w_colorhex" value="#2E6B4F" spellcheck="false" maxlength="7" />
+                  </div>
+                </div>
+                <div>
+                  <label>Button position</label>
+                  <div class="seg" id="w_position" data-value="right">
+                    <button type="button" data-pos="right" class="on">Bottom-right</button>
+                    <button type="button" data-pos="left">Bottom-left</button>
+                  </div>
+                </div>
+                <div class="full"><label>Greeting message</label><input id="w_greeting" maxlength="300" placeholder="Hi! 👋 How can I help you today?" /></div>
+                <div class="full"><label>Launcher label <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional — icon only if blank)</span></label><input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" /></div>
+              </div>
+            </div>
+
+            <!-- Embed code -->
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+                <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px">2. Copy your code</div>
+                <button class="copybtn" id="copySnippet">Copy code</button>
+              </div>
+              <div class="muted" style="margin-bottom:14px">Paste this once, just before the closing <code class="inline">&lt;/body&gt;</code> tag of your site.</div>
+              <pre class="codebox"><code id="snippet"></code></pre>
+              <div class="hint" id="connHint"></div>
+            </div>
+
+            <!-- Install guides -->
+            <div class="panel">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">3. Where to paste it</div>
+              <div class="muted" style="margin-bottom:14px">Pick your platform for step-by-step instructions.</div>
+              <div class="acc" id="guides"></div>
+            </div>
+
+            <!-- No-website fallback -->
+            <div class="panel">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">No website? Share a direct link</div>
+              <div class="muted" style="margin-bottom:14px">A full-page version of your assistant, hosted for you. Drop it in your Instagram bio, Google Business profile, or a QR code.</div>
+              <div class="linkrow">
+                <input type="text" id="hostedLink" readonly spellcheck="false" />
+                <button class="copybtn" id="copyLink">Copy</button>
+                <a class="copybtn ghostlink" id="openLink" target="_blank" rel="noopener">Open ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live preview -->
+          <div class="conn-preview">
+            <div class="preview-head"><span class="preview-dot"></span> Live preview</div>
+            <div class="preview-stage">
+              <div class="preview-browser">
+                <div class="pb-bar"><span></span><span></span><span></span></div>
+                <div class="pb-body">
+                  <div class="pb-line" style="width:62%"></div>
+                  <div class="pb-line" style="width:88%"></div>
+                  <div class="pb-line" style="width:74%"></div>
+                  <div class="pb-line" style="width:40%"></div>
+                  <div class="pb-block"></div>
+                  <div class="pb-line" style="width:80%"></div>
+                  <div class="pb-line" style="width:55%"></div>
+                </div>
+                <iframe id="previewFrame" title="Widget preview" referrerpolicy="no-referrer"></iframe>
+              </div>
+            </div>
+            <div class="muted" style="font-size:12px;text-align:center;margin-top:12px">This is exactly how it appears to your visitors. Click the bubble to try it.</div>
+          </div>
+        </div>
+      </section>
+
       <!-- SUBSCRIPTION -->
       <section data-sec="subscription" style="display:none">
         <div class="kicker">Plan &amp; billing</div>
@@ -629,6 +778,7 @@
       if (name === 'bookings' && !bookingsLoaded) loadBookings();
       if (name === 'calendar') renderCalendar();
       if (name === 'subscription') ensurePaddle();
+      if (name === 'connect') renderConnect();
     }
 
     // ── billing (Paddle) ──
@@ -900,6 +1050,141 @@
     $("calPrev").addEventListener("click", () => calShift(-1));
     $("calNext").addEventListener("click", () => calShift(1));
     $("calToday").addEventListener("click", () => { calYear = null; calMonth = null; calSelected = null; $("calDayPanel").style.display = "none"; renderCalendar(); });
+
+    // ── connect / install the widget on the client's own site ──
+    // Everything the owner customizes (color, greeting, position, launcher label) is encoded
+    // straight into the embed snippet — nothing is stored server-side, so this stays stateless.
+    // The widget only *answers* once `active` is true (the API resolves tenants with active =
+    // true), which is exactly the subscription gate; before that it shows a "not switched on" note.
+    let connReady = false, connDebounce = null;
+    const widgetOrigin = () => location.origin.replace(/\/$/, "");
+    function escAttr(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+    function connConfig() {
+      return {
+        slug: (biz && biz.slug) || "",
+        name: (biz && biz.name) || "Front desk",
+        color: ($("w_colorhex").value.trim() || "#2E6B4F"),
+        greeting: $("w_greeting").value.trim(),
+        launcher: $("w_launcher").value.trim(),
+        position: $("w_position").dataset.value || "right",
+      };
+    }
+
+    function buildSnippet(c) {
+      const origin = widgetOrigin();
+      const lines = ["<!-- BizAssist AI front desk -->", "<script"];
+      lines.push('  src="' + origin + '/widget.js"');
+      lines.push('  data-slug="' + escAttr(c.slug) + '"');
+      lines.push('  data-name="' + escAttr(c.name) + '"');
+      lines.push('  data-color="' + escAttr(c.color) + '"');
+      if (c.greeting) lines.push('  data-greeting="' + escAttr(c.greeting) + '"');
+      if (c.launcher) lines.push('  data-launcher="' + escAttr(c.launcher) + '"');
+      if (c.position === "left") lines.push('  data-position="left"');
+      lines.push('  defer><\/script>');
+      return lines.join("\n");
+    }
+
+    // The preview is the REAL widget, loaded in a sandboxed iframe with the current settings —
+    // so what the owner sees here is exactly what a visitor gets.
+    function buildPreviewDoc(c) {
+      const origin = widgetOrigin();
+      const greeting = c.greeting || "Hi! 👋 How can I help you today?";
+      return [
+        '<!doctype html><html><head><meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width,initial-scale=1">',
+        '<style>html,body{margin:0;height:100%;background:transparent;}</style></head><body>',
+        '<script src="' + origin + '/widget.js"',
+        ' data-slug="' + escAttr(c.slug) + '"',
+        ' data-name="' + escAttr(c.name) + '"',
+        ' data-color="' + escAttr(c.color) + '"',
+        ' data-greeting="' + escAttr(greeting) + '"',
+        (c.launcher ? ' data-launcher="' + escAttr(c.launcher) + '"' : ''),
+        ' data-position="' + (c.position === "left" ? "left" : "right") + '"',
+        ' data-greeter="off"><\/script></body></html>',
+      ].join("");
+    }
+
+    function updateSnippet() {
+      $("snippet").textContent = buildSnippet(connConfig());
+      $("connHint").textContent = "Paste it on as many pages as you like — the same code works everywhere.";
+    }
+    function updatePreview() {
+      $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
+    }
+    function renderConnBanner() {
+      const live = Boolean(biz && biz.active);
+      const b = $("connBanner");
+      b.className = "banner " + (live ? "live" : "pending");
+      b.textContent = live
+        ? "Your assistant is live — the widget answers visitors the moment they open it."
+        : "Install it now — your widget starts answering automatically the second your subscription activates.";
+    }
+
+    function guidesHtml() {
+      const G = [
+        ["Any website (HTML)", ["Copy your code above.", "Open your site's HTML and paste it just before the closing <strong>&lt;/body&gt;</strong> tag.", "Save and publish — the chat bubble appears in the corner."]],
+        ["WordPress", ["Easiest: install the free <strong>WPCode</strong> plugin.", "Go to <strong>Code Snippets → Header &amp; Footer</strong>.", "Paste your code into the <strong>Footer</strong> box and Save. It now shows on every page."]],
+        ["Shopify", ["Go to <strong>Online Store → Themes → ⋯ → Edit code</strong>.", "Open <strong>theme.liquid</strong>.", "Paste your code right before <strong>&lt;/body&gt;</strong> and Save."]],
+        ["Squarespace", ["Go to <strong>Settings → Advanced → Code Injection</strong>.", "Paste your code into the <strong>Footer</strong> box.", "Save — it appears site-wide."]],
+        ["Wix", ["Go to <strong>Settings → Custom Code</strong> (under Advanced).", "Click <strong>+ Add Custom Code</strong> and paste your code.", "Set it to load on <strong>All pages</strong>, placed in <strong>Body – end</strong>, then Apply."]],
+        ["Webflow", ["Go to <strong>Project Settings → Custom Code</strong>.", "Paste your code into the <strong>Footer Code</strong> box.", "Save, then Publish your site."]],
+        ["GoDaddy / other builders", ["Add an <strong>Embed / Custom HTML</strong> section, or a site-wide footer code area if your plan has one.", "Paste your code and save.", "No code option? Use the direct link below — it always works."]],
+      ];
+      return G.map(function (g, i) {
+        return '<details' + (i === 0 ? " open" : "") + '><summary>' + g[0] + '</summary>' +
+          '<div class="acc-body"><ol><li>' + g[1].join("</li><li>") + "</li></ol></div></details>";
+      }).join("");
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+    }
+    function copyText(text, btn, label) {
+      const done = () => { btn.classList.add("ok"); btn.textContent = "Copied ✓"; setTimeout(() => { btn.classList.remove("ok"); btn.textContent = label; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopy(text); done(); });
+      } else { fallbackCopy(text); done(); }
+    }
+
+    function initConnectControls() {
+      connReady = true;
+      const onChange = () => { updateSnippet(); clearTimeout(connDebounce); connDebounce = setTimeout(updatePreview, 350); };
+      $("w_color").addEventListener("input", () => { $("w_colorhex").value = $("w_color").value.toUpperCase(); onChange(); });
+      $("w_colorhex").addEventListener("input", () => {
+        const v = $("w_colorhex").value.trim();
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) $("w_color").value = v.length === 4 ? "#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3] : v;
+        onChange();
+      });
+      $("w_greeting").addEventListener("input", onChange);
+      $("w_launcher").addEventListener("input", onChange);
+      $("w_position").querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          $("w_position").dataset.value = btn.dataset.pos;
+          $("w_position").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
+          onChange();
+        });
+      });
+      $("copySnippet").addEventListener("click", () => copyText($("snippet").textContent, $("copySnippet"), "Copy code"));
+      $("copyLink").addEventListener("click", () => copyText($("hostedLink").value, $("copyLink"), "Copy"));
+    }
+
+    function renderConnect() {
+      if (!biz) return;
+      if (!connReady) initConnectControls();
+      const origin = widgetOrigin();
+      const hosted = origin + "/c/" + (biz.slug || "");
+      $("hostedLink").value = hosted;
+      $("openLink").href = hosted;
+      if (!$("guides").childElementCount) $("guides").innerHTML = guidesHtml();
+      renderConnBanner();
+      updateSnippet();
+      updatePreview();
+    }
 
     // ── entering the app ──
     async function loadApp() {

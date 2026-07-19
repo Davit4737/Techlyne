@@ -131,11 +131,16 @@ function businessFromRow(row) {
   };
 }
 
-// Resolves which business a request is for. Slug → DB row; otherwise the env default tenant.
+// Resolves which business a request is for.
+//  - An explicit slug → that DB tenant, but ONLY when it's active (getBusiness filters
+//    active = true). An unknown or not-yet-active slug returns null, so the caller can say
+//    "not switched on yet" instead of silently serving the wrong (env "default") tenant —
+//    which would drop a real customer of an unpaid client in front of the demo clinic.
+//  - No slug → the env-var "default" tenant (powers the landing-page demo).
 async function resolveBusiness(slug) {
   if (slug) {
     const r = await getBusiness(slug);
-    if (r.ok && r.business) return businessFromRow(r.business);
+    return r.ok && r.business ? businessFromRow(r.business) : null;
   }
   return businessFromEnv();
 }
@@ -605,6 +610,17 @@ export default async function handler(req, res) {
     }
 
     const biz = await resolveBusiness(typeof slug === "string" ? slug.slice(0, 60) : null);
+    if (!biz) {
+      // An explicit slug that doesn't map to an ACTIVE business (unknown, or not paid yet).
+      // Answer with a friendly note rather than falling back to the default tenant. The
+      // embeddable widget renders `reply` like any other assistant message.
+      return res.status(200).json({
+        reply:
+          "This assistant isn't switched on yet. If you're the business owner, activate your " +
+          "subscription in your BizAssist dashboard to bring it online — otherwise, please contact the business directly.",
+        unavailable: true,
+      });
+    }
     const systemPrompt = buildSystemPrompt(biz);
     const tools = buildTools(biz);
 
