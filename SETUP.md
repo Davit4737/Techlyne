@@ -6,8 +6,8 @@ patient shared one), and send a reminder email 24-48h before the visit
 (`api/remind.js`, runs daily via Vercel Cron). Email is optional at booking time —
 the assistant offers it but never blocks a booking over it.
 
-Payments on Paddle stay manual for now — nothing here touches that. SMS/Twilio was
-considered and dropped in favor of email (simpler setup, works everywhere, no
+Billing is now self-serve via Paddle — see the "Paddle billing" section below. SMS/Twilio
+was considered and dropped in favor of email (simpler setup, works everywhere, no
 per-country restrictions) — can revisit later if you want texts too.
 
 ## What you need to create
@@ -94,9 +94,59 @@ Auth is handled by **Supabase Auth**; the browser signs in and the server verifi
 | `SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon/public key (safe to expose; used to verify login tokens server-side) |
 
 Email/password works the moment Email confirmation is sorted; Google works once step 2 is done.
-New sign-ups create a business with `active = false` — an operator flips it live after payment
-(Paddle automation comes later). The anon key is also embedded in `app.html` (it's public by
-design, protected by the database's row-level security).
+New sign-ups create a business with `active = false` — it goes live automatically the moment
+they check out via Paddle (see below), or an operator can still flip it manually from
+`/onboard` if you'd rather activate someone by hand. The anon key is also embedded in
+`app.html` (it's public by design, protected by the database's row-level security).
+
+### Paddle billing (self-serve checkout + automatic activation)
+
+A client picks a plan on the Subscription tab of `/app`, checks out in a Paddle overlay, and
+Paddle's webhook flips their `active` + `subscription_status` the moment payment goes through
+— no operator step. Until these env vars are set, the Subscription tab quietly falls back to
+the old "email us to activate" copy, so nothing breaks on a fresh deploy.
+
+**One-time Paddle dashboard setup** (Paddle Billing, not the older Paddle Classic):
+1. Sign up at paddle.com, create your seller account. Use **Sandbox** first to test end-to-end
+   for free — Sandbox and Production are separate accounts with separate keys.
+2. **Catalog → Products** — create a "Standard" and a "Pro" product, each with one recurring
+   monthly **Price**. Copy each price's id (`pri_...`) — those are `PADDLE_PRICE_ID_STANDARD`
+   and `PADDLE_PRICE_ID_PRO`.
+3. **Developer tools → Authentication** — create an **API key** (server-side, secret) — that's
+   `PADDLE_API_KEY`. It's only used server-side (webhook lookups, billing-portal sessions);
+   the browser never sees it.
+4. **Developer tools → Client-side tokens** — create one for your domain — that's
+   `PADDLE_CLIENT_TOKEN`. This one IS meant to be public (Paddle's equivalent of a Stripe
+   publishable key); it's fetched from `/api/paddle-config` and embedded in the checkout the
+   same way the Supabase anon key already is.
+5. **Developer tools → Notifications** — add a destination pointing at
+   `https://<your-domain>/api/paddle-webhook`, subscribed to the `subscription.*` events
+   (created, activated, updated, canceled, past_due, paused — "select all subscription events"
+   is fine). Copy the destination's **secret key** — that's `PADDLE_WEBHOOK_SECRET`.
+
+**Env vars (Vercel):**
+
+| Variable | Where it comes from |
+|---|---|
+| `PADDLE_API_KEY` | Paddle → Developer tools → Authentication → API key (secret, server-only) |
+| `PADDLE_CLIENT_TOKEN` | Paddle → Developer tools → Client-side tokens (public — embedded in `/app`) |
+| `PADDLE_WEBHOOK_SECRET` | Paddle → Developer tools → Notifications → your destination's secret key |
+| `PADDLE_PRICE_ID_STANDARD` | Paddle → Catalog → Products → Standard → its price id (`pri_...`) |
+| `PADDLE_PRICE_ID_PRO` | Paddle → Catalog → Products → Pro → its price id (`pri_...`) |
+| `PADDLE_ENV` | `sandbox` while testing, unset (or `production`) once you switch to your live Paddle account |
+
+Run `supabase/migrations/008_paddle.sql` once (adds `paddle_customer_id`, `paddle_subscription_id`,
+`plan` to `businesses`) before setting these — the webhook writes to those columns.
+
+**How it flows:** client clicks a plan → Paddle's overlay checkout opens with
+`customData: { business_id }` so the webhook knows which row to update → on
+`subscription.activated`/`subscription.updated`, `api/paddle-webhook.js` verifies the
+`Paddle-Signature` header (HMAC over the raw body — this is the one endpoint that keeps body
+parsing off, see the comment at the top of that file) and sets `active` (true for
+`trialing`/`active`, false otherwise), `subscription_status` to Paddle's own status string, and
+`plan` from the price id. The dashboard's "Manage billing" button (visible once a
+`paddle_customer_id` exists) opens Paddle's hosted customer portal via `api/paddle-portal.js`
+for card updates, plan switches, and cancellation — all self-serve, nothing to build.
 
 ### Cal.com auto-provisioning (optional — Cal.com accounts without manual setup)
 

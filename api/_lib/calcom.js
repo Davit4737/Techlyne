@@ -85,7 +85,9 @@ export async function getAvailableSlots(cfg, startISO, endISO, timeZone = "UTC")
   const res = await calFetch(cfg, url, {}, SLOTS_API_VERSION);
   if (!res.ok) {
     console.error("Cal.com slots error:", res.status, await res.text());
-    return { ok: false, error: "Failed to fetch availability" };
+    // status lets the dispatcher tell config-rot (400/404 → fall back to the native
+    // scheduler) apart from a transient outage (5xx → report the failure).
+    return { ok: false, error: "Failed to fetch availability", status: res.status };
   }
   const data = await res.json();
   return { ok: true, slots: data.data || {} };

@@ -246,11 +246,47 @@
       .grid { grid-template-columns:1fr; }
       .stat .n { font-size:34px; }
     }
+
+    /* ── boot loader ── */
+    .boot { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:50; }
+    .boot .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--ink); animation:bspin .8s linear infinite; }
+    @keyframes bspin { to { transform:rotate(360deg); } }
+
+    /* ── calendar ── */
+    .cal-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+    .cal-title { font-family:var(--font-display); font-weight:800; font-size:22px; letter-spacing:-.02em; }
+    .cal-nav { display:flex; gap:6px; }
+    .cal-nav button { padding:7px 13px; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+    .cal-dow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:center; padding:4px 0 8px; }
+    .cal-day { min-height:86px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:7px 7px 6px; text-align:left; cursor:pointer; transition:border-color .15s, transform .15s; display:flex; flex-direction:column; gap:3px; overflow:hidden; }
+    .cal-day:hover { border-color:var(--ink); transform:translateY(-1px); }
+    .cal-day.out { opacity:.38; }
+    .cal-day.sel { border-color:var(--ink); box-shadow:0 0 0 1.5px var(--ink) inset; }
+    .cal-day .dnum { font-size:12.5px; font-weight:700; color:var(--muted); }
+    .cal-day.today .dnum { color:var(--panel); background:var(--ink); border-radius:999px; width:21px; height:21px; display:inline-flex; align-items:center; justify-content:center; }
+    .cal-chip { font-size:10.5px; font-weight:600; line-height:1.25; padding:2.5px 6px; border-radius:6px; background:rgba(47,110,79,.12); color:var(--green, #2F6E4F); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-chip.cancelled { background:rgba(150,60,50,.10); color:#963C32; text-decoration:line-through; }
+    .cal-more { font-size:10.5px; font-weight:700; color:var(--muted); padding-left:2px; }
+    @media (max-width:760px) {
+      .cal-day { min-height:58px; padding:5px; }
+      .cal-chip { display:none; }
+      .cal-day .dots { display:flex; gap:2.5px; flex-wrap:wrap; }
+      .cal-day .dot-b { width:6px; height:6px; border-radius:50%; background:var(--green,#2F6E4F); }
+      .cal-day .dot-b.cancelled { background:#963C32; }
+    }
+    @media (min-width:761px) { .cal-day .dots { display:none; } }
   </style>
 </head>
 <body>
   <div class="orb a"></div>
   <div class="orb b"></div>
+
+  <!-- BOOT (shown until the session check resolves) -->
+  <div id="boot" class="boot">
+    <div class="brand" style="font-family:var(--font-display);font-weight:800;font-size:22px">BizAssist<span class="dot">.</span></div>
+    <div class="spin"></div>
+  </div>
 
   <!-- LOGIN -->
   <div id="login" class="center" style="display:none">
@@ -270,11 +306,28 @@
       <input id="email" type="email" placeholder="you@business.com" autocomplete="email" />
       <label>Password</label>
       <input id="password" type="password" placeholder="Min 6 characters" autocomplete="current-password" />
+      <div style="text-align:right;margin-top:6px"><a href="#" id="forgotLink" class="muted" style="font-size:12.5px">Forgot password?</a></div>
       <div id="loginErr" class="err"></div>
+      <div id="loginOk" class="ok"></div>
       <button class="wide" id="emailBtn">Sign in</button>
       <div class="muted" style="margin-top:16px;text-align:center">
         <span id="toggleText">New here?</span> <a href="#" id="toggleMode">Create an account</a>
       </div>
+    </div>
+  </div>
+
+  <!-- SET NEW PASSWORD (arrived from a reset-password email link) -->
+  <div id="recover" class="center" style="display:none">
+    <div class="card">
+      <div class="auth-head">
+        <div class="brand">BizAssist<span class="dot">.</span></div>
+        <h2>Set a new password</h2>
+        <div class="muted">Pick a new password for your account.</div>
+      </div>
+      <label>New password</label>
+      <input id="newPassword" type="password" placeholder="Min 6 characters" autocomplete="new-password" />
+      <div id="recoverErr" class="err"></div>
+      <button class="wide" id="recoverBtn">Save new password</button>
     </div>
   </div>
 
@@ -322,6 +375,10 @@
         <button data-sec="bookings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
           Bookings
+        </button>
+        <button data-sec="calendar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><circle cx="8.5" cy="14.5" r="1"/><circle cx="12" cy="14.5" r="1"/><circle cx="15.5" cy="14.5" r="1"/></svg>
+          Calendar
         </button>
         <button data-sec="business">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-8h6v8"/><path d="M2 21h20"/></svg>
@@ -395,6 +452,30 @@
         </div>
       </section>
 
+      <!-- CALENDAR -->
+      <section data-sec="calendar" style="display:none">
+        <div class="kicker">Your month</div>
+        <h1>Calendar</h1>
+        <div class="sub">Every appointment, <span class="serif">at a glance.</span></div>
+        <div class="panel">
+          <div class="cal-bar">
+            <div class="cal-title" id="calTitle">—</div>
+            <div class="cal-nav">
+              <button class="ghost" id="calPrev" aria-label="Previous month">←</button>
+              <button class="ghost" id="calToday">Today</button>
+              <button class="ghost" id="calNext" aria-label="Next month">→</button>
+            </div>
+          </div>
+          <div class="muted" id="calStatus" style="display:none;padding:8px 0"></div>
+          <div class="cal-grid" id="calDow"></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="panel" id="calDayPanel" style="display:none">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:10px" id="calDayTitle"></div>
+          <div id="calDayList"></div>
+        </div>
+      </section>
+
       <!-- BUSINESS -->
       <section data-sec="business" style="display:none">
         <div class="kicker">What your AI knows</div>
@@ -438,6 +519,8 @@
         <div class="sub">People at your business. Your AI can mention them to customers.</div>
         <div class="panel">
           <div id="stfOk" class="ok"></div>
+          <div id="stfErr" class="err"></div>
+          <div class="muted" id="staffEmpty" style="display:none;padding:2px 0 12px">Optional — add your team so your AI can answer questions like "who will I see?" and mention the right person for each service.</div>
           <div id="staffList"></div>
           <button class="ghost" id="staffAdd" style="margin:4px 0 16px">+ Add staff member</button>
           <div><button id="staffSave">Save staff</button></div>
@@ -459,9 +542,28 @@
             <div><div style="font-family:var(--font-display);font-weight:700;font-size:17px" id="subPlan">Free</div><div class="muted" id="subStatus">—</div></div>
             <span class="pill" id="subPill">—</span>
           </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:16px 0"/>
-          <div class="muted">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
+          <div id="subManageWrap" style="display:none;margin-top:16px">
+            <button class="ghost" id="subManage">Manage billing →</button>
+          </div>
+          <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
         </div>
+
+        <div class="ov-label" id="plansLabel" style="display:none">Choose a plan</div>
+        <div class="quick" id="plansWrap" style="display:none">
+          <div class="quick-card" style="cursor:default">
+            <span class="qt">Standard</span>
+            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$250<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
+            <span class="qd">Up to 1,500 AI conversations/mo, 24/7 answering & booking, automatic reminders.</span>
+            <button class="wide" data-plan="standard" id="planStandardBtn" style="margin-top:14px">Choose Standard</button>
+          </div>
+          <div class="quick-card" style="cursor:default">
+            <span class="qt">Pro</span>
+            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$400<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
+            <span class="qd">Up to 4,500 AI conversations/mo (3×), priority setup & support.</span>
+            <button class="wide" data-plan="pro" id="planProBtn" style="margin-top:14px">Choose Pro</button>
+          </div>
+        </div>
+        <div id="subCheckoutErr" class="err"></div>
       </section>
 
       <!-- ACCOUNT -->
@@ -483,12 +585,15 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <script>
     const SUPABASE_URL = "https://kxahngxkpcuxlblmtdqz.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YWhuZ3hrcGN1eGxibG10ZHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjgzMTUsImV4cCI6MjA5OTYwNDMxNX0.jkVdky9bR1syFiAwcDZi4s695Hhg68bsA-bdnALIk-E";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = (id) => document.getElementById(id);
-    let token = null, biz = null, bookingsLoaded = false, signupMode = false;
+    let token = null, biz = null, bookingsLoaded = false, signupMode = false, userEmail = null;
+    let paddleCfg = null, paddleReady = false;
+    let bookingsCache = [], recoveryMode = false;
 
     async function api(method, body, path) {
       const res = await fetch(path || "/api/my-business", {
@@ -496,6 +601,14 @@
         headers: { "content-type": "application/json", Authorization: "Bearer " + token },
         body: body ? JSON.stringify(body) : undefined,
       });
+      // Expired/revoked session: don't leave a half-broken dashboard — sign out cleanly
+      // and land on the login screen with an explanation.
+      if (res.status === 401) {
+        try { await sb.auth.signOut(); } catch {}
+        token = null; show("login"); setMode(false);
+        $("loginErr").textContent = "Your session expired — please sign in again.";
+        throw new Error("Your session expired — please sign in again.");
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       return data;
@@ -503,7 +616,8 @@
 
     // ── views ──
     function show(view) {
-      ["login", "onboard", "dash"].forEach((v) => { $(v).style.display = v === view ? (v === "dash" ? "flex" : "block") : "none"; });
+      const boot = $("boot"); if (boot) boot.style.display = "none";
+      ["login", "onboard", "dash", "recover"].forEach((v) => { $(v).style.display = v === view ? (v === "dash" ? "flex" : "block") : "none"; });
     }
     function showSection(name) {
       document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.sec === name));
@@ -513,6 +627,76 @@
         if (on) { s.style.animation = 'none'; void s.offsetWidth; s.style.animation = ''; }
       });
       if (name === 'bookings' && !bookingsLoaded) loadBookings();
+      if (name === 'calendar') renderCalendar();
+      if (name === 'subscription') ensurePaddle();
+    }
+
+    // ── billing (Paddle) ──
+    async function ensurePaddle() {
+      if (paddleReady) return true;
+      try {
+        if (!paddleCfg) paddleCfg = await (await fetch("/api/paddle-config")).json();
+        if (!paddleCfg.configured || !window.Paddle) return false;
+        if (paddleCfg.environment === "sandbox") Paddle.Environment.set("sandbox");
+        Paddle.Initialize({
+          token: paddleCfg.clientToken,
+          eventCallback: (e) => {
+            if (e.name === "checkout.completed") onCheckoutCompleted();
+          },
+        });
+        paddleReady = true;
+      } catch (e) { console.error("Paddle init failed", e); }
+      if (biz) renderSubscription();
+      return paddleReady;
+    }
+
+    // Paddle's own webhook (not this tab) is what actually flips activation — this just
+    // refreshes our view of `biz` a few times so the UI catches up without a manual reload.
+    async function onCheckoutCompleted() {
+      $("subCheckoutErr").textContent = "";
+      $("subStatus").textContent = "Payment received — activating your AI…";
+      for (let i = 0; i < 6; i++) {
+        await new Promise((r) => setTimeout(r, 2500));
+        try {
+          const { business } = await api("GET");
+          biz = business; renderBiz();
+          if (business && business.active) break;
+        } catch {}
+      }
+    }
+
+    function openCheckout(plan) {
+      $("subCheckoutErr").textContent = "";
+      const priceId = paddleCfg && paddleCfg.prices && paddleCfg.prices[plan];
+      if (!paddleReady || !priceId) {
+        $("subCheckoutErr").textContent = "Payments aren't set up yet — email hello@bizzassist.xyz to go live.";
+        return;
+      }
+      Paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: { business_id: String(biz.id) },
+        customer: userEmail ? { email: userEmail } : undefined,
+        settings: { successUrl: location.origin + "/app" },
+      });
+    }
+
+    // ── validation helpers ──
+    const BROWSER_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } })();
+    function validTimezone(tz) {
+      if (!tz) return true; // empty = server default, fine
+      // Browsers accept legacy abbreviations ("PST") that the server's Node runtime rejects,
+      // so ALSO require the canonical Area/City shape — otherwise the server would silently
+      // drop the field and the owner would think it saved.
+      if (tz !== "UTC" && !/^[A-Za-z_+-]+\/[A-Za-z_+.-]+/.test(tz)) return false;
+      try { new Intl.DateTimeFormat(undefined, { timeZone: tz }); return true; } catch { return false; }
+    }
+    // Shared checks for onboarding + Business form. Returns an error string or null.
+    function availabilityError(prefix) {
+      const days = $(prefix + "days").querySelectorAll("input:checked").length;
+      if (!days) return "Pick at least one working day — with none selected your AI has nothing to book.";
+      const open = $(prefix + "open").value, close = $(prefix + "close").value;
+      if (open && close && open >= close) return "Opening time must be before closing time.";
+      return null;
     }
 
     // ── availability helpers ──
@@ -545,12 +729,34 @@
       fillAvail(biz || {});
       // Staff
       renderStaff((biz && biz.staff) || []);
-      // Subscription
+      renderSubscription();
+    }
+
+    // ── subscription (Paddle) ──
+    const PLAN_LABEL = { standard: "Standard", pro: "Pro" };
+    const STATUS_LABEL = { trialing: "Trial active", active: "Active", past_due: "Payment overdue", paused: "Paused", canceled: "Cancelled", inactive: "Not started yet" };
+    function renderSubscription() {
+      const live = Boolean(biz && biz.active);
+      const planKey = biz && biz.plan;
+      $("subPlan").textContent = (planKey ? PLAN_LABEL[planKey] || planKey : "Free") + " plan";
       const st = (biz && biz.subscription_status) || "inactive";
-      $("subPlan").textContent = live ? "Active plan" : "Not active yet";
-      $("subStatus").textContent = "Status: " + st;
-      $("subPill").textContent = live ? "active" : "pending";
+      $("subStatus").textContent = STATUS_LABEL[st] || ("Status: " + st);
+      $("subPill").textContent = live ? "active" : st;
       $("subPill").className = "pill" + (live ? "" : " cancelled");
+
+      const hasPaddle = Boolean(paddleCfg && paddleCfg.configured);
+      $("subManageWrap").style.display = biz && biz.paddle_customer_id ? "block" : "none";
+      $("plansLabel").style.display = hasPaddle ? "flex" : "none";
+      $("plansWrap").style.display = hasPaddle ? "grid" : "none";
+      $("subFallback").style.display = hasPaddle ? "none" : "block";
+
+      for (const p of ["standard", "pro"]) {
+        const btn = $("plan" + PLAN_LABEL[p] + "Btn");
+        if (!btn) continue;
+        const isCurrent = planKey === p && live;
+        btn.textContent = isCurrent ? "Current plan" : planKey ? "Switch to " + PLAN_LABEL[p] : "Choose " + PLAN_LABEL[p];
+        btn.disabled = isCurrent;
+      }
     }
 
     // ── staff editor ──
@@ -566,6 +772,7 @@
     function renderStaff(list) {
       const wrap = $("staffList"); wrap.innerHTML = "";
       (list.length ? list : []).forEach((m) => wrap.appendChild(staffRow(m)));
+      $("staffEmpty").style.display = list.length ? "none" : "block";
     }
     function collectStaff() {
       return Array.from($("staffList").querySelectorAll(".staff-row")).map((r) => ({
@@ -580,7 +787,9 @@
       try {
         const { bookings } = await api("GET", null, "/api/my-bookings");
         bookingsLoaded = true;
-        const upcoming = bookings.filter((b) => b.status === "confirmed").length;
+        bookingsCache = bookings; // reused by the calendar for the current window
+        const now = Date.now();
+        const upcoming = bookings.filter((b) => b.status === "confirmed" && Date.parse(b.start_time) >= now).length;
         $("stUpcoming").textContent = upcoming;
         if (!bookings.length) {
           $("bkEmpty").textContent = "No bookings yet — they'll appear here as soon as your AI books its first appointment.";
@@ -600,6 +809,98 @@
     }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
+    // ── calendar (month grid) ──
+    // All bucketing happens in the BUSINESS's timezone: a 9 PM UTC booking must land on the
+    // right local day. Weekday-of-date math is tz-independent (calendar dates are absolute),
+    // so the grid itself uses plain Date(y, m, 1); only instant→date conversion needs the tz.
+    let calYear = null, calMonth = null, calSelected = null;
+    const calData = {}; // "YYYY-MM" -> bookings[]
+    const bizTz = () => (biz && biz.timezone) || BROWSER_TZ || "UTC";
+    const dateInTz = (iso) => new Intl.DateTimeFormat("en-CA", { timeZone: bizTz(), year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+    const timeInTz = (iso) => new Date(iso).toLocaleTimeString("en-US", { timeZone: bizTz(), hour: "numeric", minute: "2-digit" });
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    async function calFetchMonth(y, m) {
+      const key = `${y}-${String(m + 1).padStart(2, "0")}`;
+      if (calData[key]) return calData[key];
+      $("calStatus").style.display = "block"; $("calStatus").textContent = "Loading…";
+      try {
+        // Over-fetch a day each side so timezone offset can't clip the month's edges.
+        const from = new Date(Date.UTC(y, m, 1) - 36 * 3600 * 1000).toISOString();
+        const to = new Date(Date.UTC(y, m + 1, 1) + 36 * 3600 * 1000).toISOString();
+        const { bookings } = await api("GET", null, `/api/my-bookings?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        calData[key] = bookings.filter((b) => dateInTz(b.start_time).startsWith(key));
+        $("calStatus").style.display = "none";
+        return calData[key];
+      } catch (e) {
+        $("calStatus").textContent = e.message; // stays visible
+        return [];
+      }
+    }
+
+    async function renderCalendar() {
+      if (calYear === null) {
+        const [ty, tm] = dateInTz(new Date().toISOString()).split("-").map(Number);
+        calYear = ty; calMonth = tm - 1;
+      }
+      $("calTitle").textContent = `${MONTHS[calMonth]} ${calYear}`;
+      $("calDow").innerHTML = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => `<div class="cal-dow">${d}</div>`).join("");
+
+      const monthBookings = await calFetchMonth(calYear, calMonth);
+      const byDay = {};
+      for (const b of monthBookings) (byDay[dateInTz(b.start_time)] = byDay[dateInTz(b.start_time)] || []).push(b);
+      for (const k in byDay) byDay[k].sort((a, b2) => Date.parse(a.start_time) - Date.parse(b2.start_time));
+
+      const todayStr = dateInTz(new Date().toISOString());
+      const firstDow = new Date(calYear, calMonth, 1).getDay();
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const cells = [];
+      for (let i = 0; i < firstDow; i++) cells.push('<div class="cal-day out" style="cursor:default"></div>');
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const list = byDay[ds] || [];
+        const chips = list.slice(0, 3).map((b) =>
+          `<span class="cal-chip ${b.status === "cancelled" ? "cancelled" : ""}">${esc(timeInTz(b.start_time))} ${esc((b.name || "").split(" ")[0])}</span>`
+        ).join("");
+        const more = list.length > 3 ? `<span class="cal-more">+${list.length - 3} more</span>` : "";
+        const dots = list.slice(0, 4).map((b) => `<span class="dot-b ${b.status === "cancelled" ? "cancelled" : ""}"></span>`).join("");
+        cells.push(
+          `<button class="cal-day ${ds === todayStr ? "today" : ""} ${ds === calSelected ? "sel" : ""}" data-day="${ds}">` +
+          `<span class="dnum">${d}</span>${chips}${more}<span class="dots">${dots}</span></button>`
+        );
+      }
+      $("calGrid").innerHTML = cells.join("");
+      $("calGrid").querySelectorAll("[data-day]").forEach((el) => el.addEventListener("click", () => selectCalDay(el.dataset.day, byDay)));
+      if (calSelected) selectCalDay(calSelected, byDay, true);
+    }
+
+    function selectCalDay(ds, byDay, keepOnly) {
+      calSelected = ds;
+      if (!keepOnly) $("calGrid").querySelectorAll("[data-day]").forEach((el) => el.classList.toggle("sel", el.dataset.day === ds));
+      const list = (byDay && byDay[ds]) || [];
+      const [y, m, d] = ds.split("-").map(Number);
+      $("calDayTitle").textContent = new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+      $("calDayPanel").style.display = "block";
+      $("calDayList").innerHTML = list.length
+        ? list.map((b) =>
+            `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">` +
+            `<div><strong>${esc(timeInTz(b.start_time))}</strong> — ${esc(b.name)}${b.service ? ` · ${esc(b.service)}` : ""}</div>` +
+            `<div class="muted">${esc(b.phone || b.email || "")} <span class="pill ${b.status === "cancelled" ? "cancelled" : ""}" style="margin-left:8px">${esc(b.status)}</span></div></div>`
+          ).join("")
+        : '<div class="muted">No appointments this day.</div>';
+    }
+
+    function calShift(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      calSelected = null; $("calDayPanel").style.display = "none";
+      renderCalendar();
+    }
+    $("calPrev").addEventListener("click", () => calShift(-1));
+    $("calNext").addEventListener("click", () => calShift(1));
+    $("calToday").addEventListener("click", () => { calYear = null; calMonth = null; calSelected = null; $("calDayPanel").style.display = "none"; renderCalendar(); });
+
     // ── entering the app ──
     async function loadApp() {
       try {
@@ -610,6 +911,13 @@
       } catch (e) { show("onboard"); }
     }
 
+    // Prefill the browser's timezone so most owners never have to think about it (an empty
+    // field used to silently store UTC and render every booking time wrong).
+    if (BROWSER_TZ) {
+      if (!$("o_timezone").value) $("o_timezone").value = BROWSER_TZ;
+      $("f_timezone").placeholder = BROWSER_TZ;
+    }
+
     // ── onboarding submit ──
     let creating = false;
     $("o_save").addEventListener("click", async () => {
@@ -617,6 +925,9 @@
       $("oErr").textContent = "";
       const name = $("o_name").value.trim();
       if (!name) { $("oErr").textContent = "Business name is required."; return; }
+      if (!validTimezone($("o_timezone").value.trim())) { $("oErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York" — abbreviations like "PST" won\'t work.'; return; }
+      const availErr = availabilityError("o_");
+      if (availErr) { $("oErr").textContent = availErr; return; }
       const days = Array.from($("o_days").querySelectorAll("input:checked")).map((c) => c.value);
       const payload = {
         name, industry: $("o_industry").value.trim(), timezone: $("o_timezone").value.trim(),
@@ -643,6 +954,9 @@
         hours: $("f_hours").value.trim(), ...readAvail("f_"),
       };
       if (!payload.name) { $("bizErr").textContent = "Business name is required."; return; }
+      if (!validTimezone(payload.timezone)) { $("bizErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York" — abbreviations like "PST" won\'t work.'; return; }
+      const bizAvailErr = availabilityError("f_");
+      if (bizAvailErr) { $("bizErr").textContent = bizAvailErr; return; }
       savingBiz = true; const b = $("bizSave"); b.disabled = true; b.textContent = "Saving…";
       try { const { business } = await api("POST", payload); biz = business; renderBiz(); $("bizOk").textContent = "Saved ✓"; b.textContent = "Saved ✓"; setTimeout(() => (b.textContent = "Save changes"), 1600); }
       catch (e) { $("bizErr").textContent = e.message; b.textContent = "Save changes"; }
@@ -650,12 +964,12 @@
     });
 
     // ── save staff ──
-    $("staffAdd").addEventListener("click", () => $("staffList").appendChild(staffRow()));
+    $("staffAdd").addEventListener("click", () => { $("staffEmpty").style.display = "none"; $("staffList").appendChild(staffRow()); });
     $("staffSave").addEventListener("click", async () => {
-      $("stfOk").textContent = "";
+      $("stfOk").textContent = ""; $("stfErr").textContent = "";
       const b = $("staffSave"); b.disabled = true; b.textContent = "Saving…";
       try { const { business } = await api("PATCH", { staff: collectStaff() }); biz = business; $("stfOk").textContent = "Saved ✓"; }
-      catch (e) { $("stfOk").textContent = ""; alert(e.message); }
+      catch (e) { $("stfErr").textContent = e.message; }
       finally { b.disabled = false; b.textContent = "Save staff"; }
     });
 
@@ -671,8 +985,17 @@
     // ── nav ──
     document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => showSection(b.dataset.sec)));
     document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => showSection(b.dataset.goto)));
-    $("bkRefresh").addEventListener("click", () => { bookingsLoaded = false; loadBookings(); });
+    $("bkRefresh").addEventListener("click", () => { bookingsLoaded = false; for (const k in calData) delete calData[k]; loadBookings(); });
     $("logout").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
+
+    // ── billing actions ──
+    document.querySelectorAll('#plansWrap [data-plan]').forEach((b) => b.addEventListener('click', () => openCheckout(b.dataset.plan)));
+    $("subManage").addEventListener("click", async () => {
+      $("subCheckoutErr").textContent = "";
+      const b = $("subManage"); b.disabled = true; b.textContent = "Opening…";
+      try { const { url } = await api("POST", {}, "/api/paddle-portal"); location.href = url; }
+      catch (e) { $("subCheckoutErr").textContent = e.message; b.disabled = false; b.textContent = "Manage billing →"; }
+    });
 
     // ── auth ──
     function setMode(signup) {
@@ -685,27 +1008,88 @@
       $("loginErr").textContent = "";
     }
     $("toggleMode").addEventListener("click", (e) => { e.preventDefault(); setMode(!signupMode); });
-    $("googleBtn").addEventListener("click", () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/app" } }));
+
+    $("googleBtn").addEventListener("click", () => {
+      const b = $("googleBtn"); b.disabled = true;
+      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/app" } })
+        .catch(() => { b.disabled = false; $("loginErr").textContent = "Could not start Google sign-in — try again."; });
+    });
+
     $("emailBtn").addEventListener("click", async () => {
-      $("loginErr").textContent = "";
+      $("loginErr").textContent = ""; $("loginOk").textContent = "";
       const email = $("email").value.trim(), password = $("password").value;
       if (!email || !password) { $("loginErr").textContent = "Enter email and password."; return; }
+      const b = $("emailBtn"); b.disabled = true; b.textContent = signupMode ? "Creating account…" : "Signing in…";
       try {
         const { data, error } = await (signupMode ? sb.auth.signUp({ email, password }) : sb.auth.signInWithPassword({ email, password }));
         if (error) throw error;
-        if (signupMode && !data.session) { alert("Check your email to confirm your account, then sign in."); }
+        if (signupMode && !data.session) {
+          // Email confirmation is on: no session yet. Flip to sign-in mode with a persistent
+          // inline note instead of a dismissable alert that leaves the form in signup mode.
+          setMode(false);
+          $("loginOk").textContent = "Almost there — check " + email + " for a confirmation link, then sign in here.";
+        }
       } catch (e) { $("loginErr").textContent = e.message || "Login failed."; }
+      finally { b.disabled = false; b.textContent = signupMode ? "Create account" : "Sign in"; }
+    });
+
+    // ── forgot password ──
+    $("forgotLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      $("loginErr").textContent = ""; $("loginOk").textContent = "";
+      const email = $("email").value.trim();
+      if (!email) { $("loginErr").textContent = "Type your email above first, then click \"Forgot password?\"."; return; }
+      try {
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/app" });
+        if (error) throw error;
+        $("loginOk").textContent = "Reset link sent to " + email + " — open it and you'll be asked to set a new password.";
+      } catch (err) { $("loginErr").textContent = err.message || "Could not send the reset email."; }
+    });
+
+    $("recoverBtn").addEventListener("click", async () => {
+      $("recoverErr").textContent = "";
+      const password = $("newPassword").value;
+      if (!password || password.length < 6) { $("recoverErr").textContent = "Password must be at least 6 characters."; return; }
+      const b = $("recoverBtn"); b.disabled = true; b.textContent = "Saving…";
+      try {
+        const { error } = await sb.auth.updateUser({ password });
+        if (error) throw error;
+        recoveryMode = false;
+        loadApp();
+      } catch (e) { $("recoverErr").textContent = e.message || "Could not update the password."; b.disabled = false; b.textContent = "Save new password"; }
     });
 
     // ── session boot ──
+    // Surface auth errors that arrive in the URL (cancelled Google consent, expired
+    // confirmation/reset links) instead of silently dumping the user on a blank login form.
+    (function surfaceAuthErrors() {
+      const params = new URLSearchParams((location.hash || "").replace(/^#/, "") + "&" + location.search.replace(/^\?/, ""));
+      const desc = params.get("error_description") || (params.get("error") ? "Sign-in was cancelled or the link expired — try again." : "");
+      if (desc) {
+        $("loginErr").textContent = desc.replace(/\+/g, " ");
+        history.replaceState(null, "", location.pathname); // don't re-show on refresh
+      }
+    })();
+
     function onSession(session) {
+      if (recoveryMode) return; // stay on the set-new-password screen until it's saved
       if (session) {
         token = session.access_token;
-        if (session.user && session.user.email) $("acEmail").textContent = session.user.email;
+        if (session.user && session.user.email) { userEmail = session.user.email; $("acEmail").textContent = session.user.email; }
         loadApp();
       } else { token = null; setMode(false); show("login"); }
     }
-    sb.auth.onAuthStateChange((_e, session) => onSession(session));
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        // Arrived from a reset-password email: a session exists, but the user came here to
+        // set a new password — show that panel instead of the dashboard.
+        recoveryMode = true;
+        token = session && session.access_token;
+        show("recover");
+        return;
+      }
+      onSession(session);
+    });
     sb.auth.getSession().then(({ data }) => onSession(data.session));
   </script>
 </body>

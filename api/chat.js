@@ -9,7 +9,7 @@
 // keeps working. See SETUP.md / the onboarding form for per-client config.
 
 import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./_lib/scheduler.js";
-import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment } from "./_lib/db.js";
+import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage } from "./_lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
 
 const MODEL = "claude-sonnet-5";
@@ -18,6 +18,17 @@ const MAX_TOKENS = 900;
 const MAX_MSG_LEN = 600; // booking messages are short; caps token burn per request
 const MAX_HISTORY = 20;
 const MAX_UPCOMING_PER_CONTACT = 3; // bookings one phone can hold at once
+
+// ── Landing-page demo (requests with no slug) gets tighter, DURABLE limits ──
+// It's a taster, not a paid tenant: 20 messages/day per visitor, counted in Supabase so
+// cold starts and refreshes don't reset it. Identity = IP AND a device id the widget
+// persists in localStorage+cookie; whichever counter hits the cap first blocks.
+const DEMO_DAILY_LIMIT = 20;
+const DEMO_MAX_HISTORY = 12;   // shorter context than paid tenants — caps token burn
+const DEMO_MAX_TOKENS = 700;
+const DEMO_LIMIT_MESSAGE =
+  "You've reached today's demo limit — imagine what this does for your customers around the clock. " +
+  "Come back tomorrow, or get your own AI front desk at bizzassist.xyz/app.";
 
 // ── Rate limits (per warm instance — best-effort on serverless, raises the cost of abuse) ──
 const RATE_LIMIT = 20; // burst: msgs per 10 minutes
@@ -53,20 +64,34 @@ function nameMatches(stored, given) {
 
 // Normalizes a DB business row (or env vars, for the default tenant) into one config shape.
 function businessFromEnv() {
+  const tz = process.env.CLINIC_TIMEZONE || "America/New_York";
+  // Cal.com event type ids are numeric. Production once had the env var set to the event's
+  // URL, which made every availability call 400 — treat any non-numeric id as "no Cal.com"
+  // so the tenant cleanly runs on the native scheduler instead of erroring forever.
+  const rawEventTypeId = process.env.CALCOM_EVENT_TYPE_ID;
+  const validCalcom = /^\d+$/.test(String(rawEventTypeId || ""));
+  if (rawEventTypeId && !validCalcom) {
+    console.warn("CALCOM_EVENT_TYPE_ID is not numeric — ignoring Cal.com env config, using native scheduler");
+  }
   return {
     id: null,
     name: process.env.CLINIC_NAME || "the clinic",
-    timezone: process.env.CLINIC_TIMEZONE || "America/New_York",
+    timezone: tz,
     hours: process.env.CLINIC_HOURS || null,
     address: process.env.CLINIC_ADDRESS || null,
     phone: process.env.CLINIC_PHONE || null,
     services: process.env.CLINIC_SERVICES || null,
     industry: process.env.CLINIC_INDUSTRY || "dental clinic",
     calcom: {
-      apiKey: process.env.CALCOM_API_KEY,
-      eventTypeId: process.env.CALCOM_EVENT_TYPE_ID,
-      username: process.env.CALCOM_USERNAME,
-      eventSlug: process.env.CALCOM_EVENT_SLUG,
+      apiKey: validCalcom ? process.env.CALCOM_API_KEY : undefined,
+      eventTypeId: validCalcom ? rawEventTypeId : undefined,
+      username: validCalcom ? process.env.CALCOM_USERNAME : undefined,
+      eventSlug: validCalcom ? process.env.CALCOM_EVENT_SLUG : undefined,
+      // Native-scheduler context (used when Cal.com creds are absent/ignored). businessId
+      // null = the default tenant's appointments (business_id IS NULL in Supabase).
+      businessId: null,
+      slotMinutes: 30,
+      timeZone: tz,
     },
     emailFrom: process.env.EMAIL_FROM || null,
   };
@@ -379,6 +404,18 @@ async function runTool(biz, name, input) {
   }
 
   if (name === "book_appointment") {
+    // Phone is NOT NULL in the appointments table and is the identity key for cancel/
+    // reschedule/dedupe. Production showed a booking that passed no phone: Cal.com accepted
+    // it, then the DB insert failed — a half-booked orphan. Reject before ANY external call.
+    if (!input.phone || String(input.phone).replace(/\D/g, "").length < 5) {
+      return {
+        error: "phone_required",
+        message: "No valid phone number was provided. Ask the customer for their phone number before booking — it's required.",
+      };
+    }
+    if (!input.name || !String(input.name).trim()) {
+      return { error: "name_required", message: "Ask the customer for their name before booking — it's required." };
+    }
     const when = localLabel(input.start_time, tz);
 
     // Consistency guard: the start_time the model passed must actually be the time it told
@@ -536,7 +573,23 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    let { messages, slug } = body;
+    let { messages, slug, visitor } = body;
+    const isDemo = !(typeof slug === "string" && slug.trim());
+
+    // Demo cap, durable in Supabase (see 009_demo_usage.sql). Both identities are bumped
+    // every message; blocking on EITHER means a VPN hop alone (device id persists) or a
+    // cleared browser alone (IP persists) doesn't grant a fresh allowance. If the DB is
+    // unreachable the in-memory limiter above still stands — fail open, never break chat.
+    if (isDemo) {
+      const day = new Date().toISOString().slice(0, 10);
+      const visitorId = typeof visitor === "string" ? visitor.slice(0, 64).replace(/[^\w-]/g, "") : "";
+      const keys = [`ip|${ip}`];
+      if (visitorId) keys.push(`visitor|${visitorId}`);
+      const counts = await Promise.all(keys.map((k) => bumpDemoUsage(k, day)));
+      if (counts.some((c) => c.ok && c.count > DEMO_DAILY_LIMIT)) {
+        return res.status(429).json({ error: DEMO_LIMIT_MESSAGE, demo_limit: true });
+      }
+    }
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "No messages provided" });
@@ -544,7 +597,7 @@ export default async function handler(req, res) {
 
     messages = messages
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-      .slice(-MAX_HISTORY)
+      .slice(-(isDemo ? DEMO_MAX_HISTORY : MAX_HISTORY))
       .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_MSG_LEN) }));
 
     if (messages.length === 0 || messages[messages.length - 1].role !== "user") {
@@ -565,7 +618,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: MAX_TOKENS,
+          max_tokens: isDemo ? DEMO_MAX_TOKENS : MAX_TOKENS,
           // Medium effort: "low" was observed skipping tool calls and asserting outcomes
           // ("email added ✅" without actually calling the tool). Booking correctness is
           // worth the small cost bump.

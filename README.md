@@ -19,7 +19,8 @@ Live: [bizzassist.xyz](https://www.bizzassist.xyz)
 - **Emails** — branded HTML confirmation on booking, a reminder ~a day before, plus
   cancellation/reschedule notices — sent from the business's own domain via Resend.
 - **Admin dashboard** at `/admin` shows every booking in one branded place.
-- **Payments** (Paddle) are handled manually, by design — nothing here touches them.
+- **Self-serve billing** — a client picks a plan in `/app` and checks out with Paddle;
+  Paddle's webhook flips their subscription live automatically, no operator involved.
 
 ## Architecture
 
@@ -52,6 +53,9 @@ flowchart TD
 | `GET /api/appointments` | `api/appointments.js` | Powers a dashboard. `?b=<slug>` scopes to one client (auth = master `ADMIN_SECRET` or that client's own secret); no `b` = the default tenant. |
 | `GET/POST/PATCH /api/businesses` | `api/businesses.js` | Operator CRUD for client businesses. Gated by master `ADMIN_SECRET`. |
 | `GET /api/diag` | `api/diag.js` | Internal health check for the integrations. Gated by `CRON_SECRET`. |
+| `GET /api/paddle-config` | `api/paddle-config.js` | Public Paddle.js config (client token + price ids) for the `/app` checkout. |
+| `POST /api/paddle-webhook` | `api/paddle-webhook.js` | Paddle subscription events. Verified by HMAC signature; flips `active`/`subscription_status` on the matching business. |
+| `POST /api/paddle-portal` | `api/paddle-portal.js` | Owner-authenticated. Returns a Paddle billing-portal URL for the caller's own business. |
 | `/admin` | `admin.html` | Bookings dashboard. `/admin?b=<slug>` for a specific client. |
 | `/onboard` | `onboard.html` | Operator form to add/edit client businesses (no redeploy). |
 | `/c/<slug>` | `chat.html` | A client's hosted chat page (rewrite in `vercel.json`). |

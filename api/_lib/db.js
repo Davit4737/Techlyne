@@ -71,6 +71,47 @@ export async function getBusinessByOwner(ownerId) {
   return { ok: true, business: rows[0] || null };
 }
 
+// Fetches a business by its primary key. Used by the Paddle webhook, which identifies the
+// business via custom_data.business_id set at checkout. Returns { ok, business|null }.
+export async function getBusinessById(id) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!id) return { ok: true, business: null };
+
+  const url = new URL(`${REST()}/businesses`);
+  url.searchParams.set("id", `eq.${id}`);
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getBusinessById error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load business" };
+  }
+  const rows = await res.json();
+  return { ok: true, business: rows[0] || null };
+}
+
+// Fallback lookup for Paddle webhook events that don't carry custom_data (e.g. some
+// subscription.updated payloads) — matches by the Paddle customer id we stored on the first
+// event for this subscription. Returns { ok, business|null }.
+export async function getBusinessByPaddleCustomer(customerId) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  if (!customerId) return { ok: true, business: null };
+
+  const url = new URL(`${REST()}/businesses`);
+  url.searchParams.set("paddle_customer_id", `eq.${customerId}`);
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("select", "*");
+
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) {
+    console.error("Supabase getBusinessByPaddleCustomer error:", res.status, await res.text());
+    return { ok: false, error: "Failed to load business" };
+  }
+  const rows = await res.json();
+  return { ok: true, business: rows[0] || null };
+}
+
 export async function listBusinesses() {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
   const url = new URL(`${REST()}/businesses`);
@@ -140,6 +181,26 @@ export async function deleteBusinessCascade(businessId) {
     return { ok: false, error: "Failed to delete business" };
   }
   return { ok: true };
+}
+
+// ─────────────────────────── Demo usage (landing-page bot cap) ───────────────────────────
+
+// Atomically bumps today's demo-message count for one identity key ("ip|…" or "visitor|…")
+// and returns the new count. Backed by the bump_demo_usage SQL function (009_demo_usage.sql)
+// so concurrent messages can't race under the cap. Returns { ok, count } or { ok:false }.
+export async function bumpDemoUsage(key, dayISO) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  const res = await fetch(`${REST()}/rpc/bump_demo_usage`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ p_key: key, p_day: dayISO }),
+  });
+  if (!res.ok) {
+    console.error("Supabase bumpDemoUsage error:", res.status, await res.text());
+    return { ok: false, error: "Failed to track demo usage" };
+  }
+  const count = await res.json();
+  return { ok: true, count: Number(count) };
 }
 
 // ─────────────────────────── Appointments ───────────────────────────
@@ -304,13 +365,15 @@ export async function cancelAppointment(id) {
   return updateAppointment(id, { status: "cancelled" });
 }
 
-// Lists appointments for the admin dashboard from `sinceISO` onward, optionally scoped to
-// one business. Returns all statuses so the owner sees cancellations too.
-export async function listAppointments(sinceISO, businessId) {
+// Lists appointments for the admin dashboard from `sinceISO` onward (optionally bounded by
+// `untilISO`, exclusive — used by the calendar's month window), optionally scoped to one
+// business. Returns all statuses so the owner sees cancellations too.
+export async function listAppointments(sinceISO, businessId, untilISO) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const url = new URL(`${REST()}/appointments`);
   if (sinceISO) url.searchParams.set("start_time", `gte.${sinceISO}`);
+  if (untilISO) url.searchParams.append("start_time", `lt.${untilISO}`);
   if (businessId !== undefined) {
     url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
   }
