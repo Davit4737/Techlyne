@@ -17,7 +17,7 @@ import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js"
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).
 const OWNER_FIELDS = [
   "name", "timezone", "hours", "address", "phone", "services", "industry",
-  "availability", "slot_minutes", "staff",
+  "availability", "slot_minutes", "staff", "services_list",
 ];
 
 const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
@@ -28,7 +28,7 @@ const HM = /^\d{1,2}:\d{2}$/;
 // every response from this explicit allowlist instead of returning the row verbatim.
 const OWNER_VIEW_FIELDS = [
   "id", "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",
-  "availability", "slot_minutes", "staff", "active", "subscription_status", "plan",
+  "availability", "slot_minutes", "staff", "services_list", "active", "subscription_status", "plan",
   "paddle_customer_id", "created_at",
 ];
 function ownerView(business) {
@@ -80,6 +80,24 @@ function pick(body) {
   if (out.slot_minutes !== undefined) {
     const n = Math.round(Number(out.slot_minutes));
     out.slot_minutes = Number.isFinite(n) ? Math.min(Math.max(n, 5), 480) : 30;
+  }
+
+  // Services & prices: rebuild from scratch — max 40 entries of { name, price, duration }.
+  // Strings capped; duration is optional positive minutes (feeds the AI prompt, so bounded).
+  if (out.services_list !== undefined) {
+    if (Array.isArray(out.services_list)) {
+      out.services_list = out.services_list
+        .slice(0, 40)
+        .map((s) => {
+          const item = { name: String(s?.name || "").slice(0, 80), price: String(s?.price || "").slice(0, 40) };
+          const d = Math.round(Number(s?.duration));
+          if (Number.isFinite(d) && d > 0) item.duration = Math.min(d, 1440);
+          return item;
+        })
+        .filter((s) => s.name);
+    } else {
+      delete out.services_list;
+    }
   }
 
   // Staff: rebuild from scratch — max 20 entries of { name, role }, strings capped.

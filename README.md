@@ -64,7 +64,8 @@ flowchart TD
 | `/admin` | `admin.html` | Bookings dashboard. `/admin?b=<slug>` for a specific client. |
 | `/onboard` | `onboard.html` | Operator form to add/edit client businesses (no redeploy). |
 | `/c/<slug>` | `chat.html` | A client's hosted chat page (rewrite in `vercel.json`). |
-| `/widget.js` | `widget.js` | The embeddable chat widget. A client pastes a one-line `<script>` (generated for them on the `/app` **Connect** tab) onto their own website; it renders a floating bubble scoped to their `slug`. Self-contained, Shadow-DOM-isolated, no dependencies. |
+| `/widget.js` | `widget.js` | The embeddable chat widget. A client pastes a one-line `<script>` (generated for them on the `/app` **Connect** tab) onto their own website; it renders scoped to their `slug`. Three display modes via `data-mode`: `bubble` (floating launcher, default), `inline` (panel mounted into a `data-target` element), and `button` (no launcher — opened from the host's own button via `window.BizAssist.open()`). Self-contained, Shadow-DOM-isolated, no dependencies. |
+| `POST /api/support` | `api/support.js` | The dashboard's AI **Support** helper — a technical-support assistant for owners (how to install, billing, config). Reuses `ANTHROPIC_API_KEY`, rate-limited, no booking tools or DB access. |
 
 ## Code layout
 
@@ -80,11 +81,19 @@ api/
     email.js       Resend: sendEmail + branded HTML templates
 supabase/
   schema.sql       the appointments table (run once)
+api/
+  support.js       AI support helper for owners (technical Q&A; separate from the front desk)
 admin.html         bookings dashboard
-app.html           self-serve client dashboard (config, bookings, Connect/install, billing)
-widget.js          embeddable chat widget (one-line <script> for the client's own site)
+app.html           self-serve client dashboard (config, services & prices, bookings, Connect/install, billing, support)
+widget.js          embeddable chat widget (one-line <script> for the client's own site; bubble/inline/button)
 index.html         landing page + chat widget
 ```
+
+The client dashboard (`/app`) tabs: **Business** (name, hours, timezone, availability) and its
+**Services & prices** editor (structured price list the AI quotes from), **Staff**, **Connect**
+(the install flow above), **Subscription** (Paddle), and **Support** (FAQ + the `/api/support`
+AI helper). Everything a business's AI knows is configured here — the AI is assembled per tenant
+from this config, so each client's assistant only knows their own business.
 
 ## Embedding on a client's own site
 

@@ -57,7 +57,18 @@
   var SIDE = data.position === "left" ? "left" : "right";
   var LAUNCHER_LABEL = (data.launcher || "").slice(0, 40); // optional text next to the bubble
   var SHOW_BRANDING = data.branding !== "off";
-  var GREETER = data.greeter !== "off"; // the little teaser bubble that pops after a moment
+
+  // Display style:
+  //   "bubble" (default) — a floating launcher + panel in the corner.
+  //   "inline"           — the chat panel rendered inside the host's own element
+  //                        (data-target="#css-selector", default #bizassist-chat).
+  //   "button"           — no launcher; the host opens the panel from their own button via
+  //                        window.BizAssist.open().
+  var MODE = (["bubble", "inline", "button"].indexOf(data.mode) !== -1) ? data.mode : "bubble";
+  var TARGET = (data.target || "").trim();
+  var INLINE_HEIGHT = cssLen(data.height); // inline panel height, e.g. "560px" or "100%"
+  // The teaser bubble only makes sense for the floating launcher.
+  var GREETER = MODE === "bubble" && data.greeter !== "off";
 
   var STORE_KEY = "bizassist:" + SLUG; // per-tenant conversation state, per browser session
 
@@ -78,6 +89,12 @@
     // Perceived luminance (sRGB) — > 0.6 is a light color, use dark ink.
     var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return lum > 0.62 ? "#211C13" : "#FFFFFF";
+  }
+  // A bare number ("560") becomes "560px"; "560px" / "100%" / "40rem" pass through.
+  function cssLen(v) {
+    v = String(v == null ? "" : v).trim();
+    if (!v) return "560px";
+    return /^\d+$/.test(v) ? v + "px" : v;
   }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (ch) {
@@ -108,13 +125,28 @@
   var isOpen = false, sending = false, greeted = false;
 
   // ── mount: a host element + Shadow DOM so nothing collides with the host page ─────────
+  // Inline mode needs a target element on the host page to mount into. If it's missing, fall
+  // back to a floating bubble rather than silently rendering nothing.
+  var inlineTarget = null;
+  if (MODE === "inline") {
+    inlineTarget = TARGET ? document.querySelector(TARGET) : document.getElementById("bizassist-chat");
+    if (!inlineTarget) {
+      console.warn("[BizAssist] inline mode: target '" + (TARGET || "#bizassist-chat") + "' not found — using a floating bubble instead.");
+      MODE = "bubble";
+    }
+  }
+
   var host = document.createElement("div");
   host.id = "bizassist-widget";
   host.setAttribute("aria-live", "polite");
   // Only positioning lives on the host (in the light DOM) — everything else is shadowed.
-  host.style.cssText =
-    "position:fixed;z-index:2147483000;bottom:0;" + SIDE + ":0;width:0;height:0;";
-  (document.body || document.documentElement).appendChild(host);
+  if (MODE === "inline") {
+    host.style.cssText = "display:block;position:relative;width:100%;height:" + INLINE_HEIGHT + ";";
+    inlineTarget.appendChild(host);
+  } else {
+    host.style.cssText = "position:fixed;z-index:2147483000;bottom:0;" + SIDE + ":0;width:0;height:0;";
+    (document.body || document.documentElement).appendChild(host);
+  }
   var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
 
   var INITIAL = esc(NAME).charAt(0).toUpperCase() || "•";
@@ -125,7 +157,7 @@
   root.appendChild(style);
 
   var ui = document.createElement("div");
-  ui.className = "wrap " + SIDE + (reduced ? " reduced" : "");
+  ui.className = "wrap " + SIDE + " mode-" + MODE + (reduced ? " reduced" : "");
   ui.innerHTML = markup();
   root.appendChild(ui);
 
@@ -251,10 +283,16 @@
   });
   root.addEventListener("keydown", function (e) { if (e.key === "Escape" && isOpen) close(); });
 
-  // A gentle teaser after a beat — only if they haven't opened it this session.
-  if (!state.opened && GREETER) setTimeout(showTeaser, 1400);
-  // If they had it open when they navigated to another page on the site, reopen it.
-  if (state.opened) open();
+  if (MODE === "inline") {
+    // Inline chat is always "open" — render it straight into the page.
+    isOpen = true;
+    renderHistory();
+  } else {
+    // A gentle teaser after a beat — only if they haven't opened it this session (bubble only).
+    if (!state.opened && GREETER) setTimeout(showTeaser, 1400);
+    // If they had it open when they navigated to another page on the site, reopen it.
+    if (state.opened) open();
+  }
 
   // Public control surface so a host site can wire its own "Chat with us" button.
   window.BizAssist = { open: open, close: close, toggle: toggle };
@@ -373,10 +411,19 @@
     ".brandline{display:block;text-align:center;font-size:11px;color:var(--muted);text-decoration:none;padding:7px 0 9px;background:#fff;flex:none;}" +
     ".brandline strong{color:var(--ink);font-weight:700;}.brandline:hover{color:var(--ink);}" +
 
-    /* mobile: near-fullscreen panel */
+    /* inline mode: the panel fills the host's own element instead of floating */
+    ".wrap.mode-inline{position:relative;bottom:auto;right:auto;left:auto;width:100%;height:100%;display:block;}" +
+    ".wrap.mode-inline .launcher,.wrap.mode-inline .teaser,.wrap.mode-inline .phead .close{display:none;}" +
+    ".wrap.mode-inline .panel{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;" +
+      "bottom:auto;right:auto;left:auto;opacity:1;transform:none;pointer-events:auto;border-radius:16px;}" +
+
+    /* button mode: no launcher — the host opens it from their own button via BizAssist.open() */
+    ".wrap.mode-button .launcher,.wrap.mode-button .teaser{display:none;}" +
+
+    /* mobile: near-fullscreen floating panel (bubble/button only — inline stays in its box) */
     "@media (max-width:480px){" +
-      ".panel{width:100vw;max-width:100vw;height:100vh;max-height:100vh;bottom:0;right:0 !important;left:0 !important;border-radius:0;border:0;}" +
-      ".wrap.open .launcher{opacity:0;pointer-events:none;}" +
+      ".wrap:not(.mode-inline) .panel{width:100vw;max-width:100vw;height:100vh;max-height:100vh;bottom:0;right:0 !important;left:0 !important;border-radius:0;border:0;}" +
+      ".wrap.mode-bubble.open .launcher{opacity:0;pointer-events:none;}" +
       ".teaser{max-width:calc(100vw - 90px);}" +
     "}";
   }

@@ -301,6 +301,34 @@
       .preview-browser { max-width:100%; height:420px; }
     }
 
+    /* ── services & prices editor ── */
+    .svc-head { display:grid; grid-template-columns:1fr 120px 92px 42px; gap:8px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:0 2px 8px; }
+    .svc-row { display:grid; grid-template-columns:1fr 120px 92px 42px; gap:8px; margin-bottom:10px; animation:fadeUp .25s ease both; }
+    .svc-row input { margin-bottom:0; }
+    .svc-row .ghost { border-radius:12px; padding:8px 12px; }
+    @media (max-width:600px) {
+      .svc-head { display:none; }
+      .svc-row { grid-template-columns:1fr 1fr auto; }
+      .svc-row .sv-name { grid-column:1 / -1; }
+    }
+
+    /* ── 3-way segmented (display style) ── */
+    .seg3 button { font-size:12.5px; padding:11px 4px; }
+    @media (max-width:520px) { .seg3 { flex-direction:column; } }
+
+    /* ── support AI chat ── */
+    .sup-chat { display:flex; flex-direction:column; height:520px; background:var(--paper); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow); }
+    .sup-head { display:flex; align-items:center; gap:10px; padding:13px 15px; border-bottom:1px solid var(--line-soft); background:var(--bg); }
+    .sup-avatar { width:34px; height:34px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-display); flex:none; }
+    .sup-thread { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+    .sup-msg { max-width:86%; padding:10px 13px; border-radius:14px; font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; animation:fadeUp .2s ease both; }
+    .sup-msg.bot { background:var(--bg); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px; }
+    .sup-msg.user { background:var(--green); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+    .sup-msg.typing { color:var(--muted); font-style:italic; }
+    .sup-composer { display:flex; gap:8px; align-items:flex-end; padding:11px 12px; border-top:1px solid var(--line-soft); }
+    .sup-composer textarea { margin:0; min-height:0; max-height:96px; border-radius:12px; }
+    .sup-composer button { flex:none; width:44px; height:44px; padding:0; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+
     /* ── boot loader ── */
     .boot { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:50; }
     .boot .spin { width:26px; height:26px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--ink); animation:bspin .8s linear infinite; }
@@ -450,6 +478,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h4"/></svg>
           Subscription
         </button>
+        <button data-sec="support">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="m4.9 4.9 4.6 4.6M14.5 14.5l4.6 4.6M19.1 4.9l-4.6 4.6M9.5 14.5l-4.6 4.6"/></svg>
+          Support
+        </button>
         <button data-sec="account">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.12-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.12 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/></svg>
           Account
@@ -573,6 +605,17 @@
           </div>
           <button id="bizSave">Save changes</button>
         </div>
+
+        <div class="panel">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Services &amp; prices</div>
+          <div class="muted" style="margin-bottom:16px">Add each service with its price so your AI can quote exact prices to customers. Leave a price blank for "ask us".</div>
+          <div id="svcOk" class="ok"></div><div id="svcErr" class="err"></div>
+          <div class="muted" id="svcEmpty" style="display:none;padding:2px 0 12px">No services yet — add cleanings, checkups, whitening, and their prices so your AI never guesses.</div>
+          <div class="svc-head"><span>Service</span><span>Price</span><span>Minutes</span><span></span></div>
+          <div id="svcList"></div>
+          <button class="ghost" id="svcAdd" style="margin:4px 0 16px">+ Add service</button>
+          <div><button id="svcSave">Save services</button></div>
+        </div>
       </section>
 
       <!-- STAFF -->
@@ -604,6 +647,15 @@
               <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">1. Make it yours</div>
               <div class="muted" style="margin-bottom:18px">Match your brand. Changes update the code and preview instantly.</div>
               <div class="grid">
+                <div class="full">
+                  <label>Display style</label>
+                  <div class="seg seg3" id="w_mode" data-value="bubble">
+                    <button type="button" data-mode="bubble" class="on">💬 Floating bubble</button>
+                    <button type="button" data-mode="inline">▭ Inline on page</button>
+                    <button type="button" data-mode="button">☝ From your button</button>
+                  </div>
+                  <div class="muted" id="modeHint" style="font-size:12px;margin:-6px 0 16px">A chat bubble in the corner of every page — the classic, works everywhere.</div>
+                </div>
                 <div>
                   <label>Accent color</label>
                   <div class="colorrow">
@@ -611,7 +663,7 @@
                     <input type="text" id="w_colorhex" value="#2E6B4F" spellcheck="false" maxlength="7" />
                   </div>
                 </div>
-                <div>
+                <div id="posWrap">
                   <label>Button position</label>
                   <div class="seg" id="w_position" data-value="right">
                     <button type="button" data-pos="right" class="on">Bottom-right</button>
@@ -715,6 +767,38 @@
         <div id="subCheckoutErr" class="err"></div>
       </section>
 
+      <!-- SUPPORT -->
+      <section data-sec="support" style="display:none">
+        <div class="kicker">We've got you</div>
+        <h1>Support</h1>
+        <div class="sub">Quick answers below — and an <span class="serif">AI helper</span> if you're stuck.</div>
+        <div class="conn-cols">
+          <div>
+            <div class="panel">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Common questions</div>
+              <div class="muted" style="margin-bottom:14px">The stuff people ask most.</div>
+              <div class="acc" id="faq"></div>
+            </div>
+            <div class="panel">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Still stuck?</div>
+              <div class="muted" style="margin-bottom:14px">Email us and a real person gets back to you — usually within a day.</div>
+              <a class="copybtn ghostlink" href="mailto:hello@bizzassist.xyz" style="display:inline-flex">✉&nbsp; hello@bizzassist.xyz</a>
+            </div>
+          </div>
+          <div class="conn-preview" style="position:static">
+            <div class="sup-chat">
+              <div class="sup-head"><div class="sup-avatar">B</div><div><div style="font-weight:700;font-size:14.5px">BizAssist helper</div><div style="font-size:11.5px;color:var(--muted)">Ask me how to do anything</div></div></div>
+              <div class="sup-thread" id="supThread"></div>
+              <div class="sup-err err" id="supErr" style="padding:0 4px"></div>
+              <div class="sup-composer">
+                <textarea id="supInput" rows="1" placeholder="e.g. How do I add the chat to my Wix site?"></textarea>
+                <button id="supSend" aria-label="Send"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ACCOUNT -->
       <section data-sec="account" style="display:none">
         <div class="kicker">Your login</div>
@@ -779,6 +863,7 @@
       if (name === 'calendar') renderCalendar();
       if (name === 'subscription') ensurePaddle();
       if (name === 'connect') renderConnect();
+      if (name === 'support') renderSupport();
     }
 
     // ── billing (Paddle) ──
@@ -877,6 +962,8 @@
       // Business form
       ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (biz && biz[f] != null) ? biz[f] : ""; });
       fillAvail(biz || {});
+      // Services & prices
+      renderServices((biz && biz.services_list) || []);
       // Staff
       renderStaff((biz && biz.staff) || []);
       renderSubscription();
@@ -1068,21 +1155,44 @@
         greeting: $("w_greeting").value.trim(),
         launcher: $("w_launcher").value.trim(),
         position: $("w_position").dataset.value || "right",
+        mode: $("w_mode").dataset.value || "bubble",
       };
     }
 
     function buildSnippet(c) {
       const origin = widgetOrigin();
-      const lines = ["<!-- BizAssist AI front desk -->", "<script"];
-      lines.push('  src="' + origin + '/widget.js"');
-      lines.push('  data-slug="' + escAttr(c.slug) + '"');
-      lines.push('  data-name="' + escAttr(c.name) + '"');
-      lines.push('  data-color="' + escAttr(c.color) + '"');
-      if (c.greeting) lines.push('  data-greeting="' + escAttr(c.greeting) + '"');
-      if (c.launcher) lines.push('  data-launcher="' + escAttr(c.launcher) + '"');
-      if (c.position === "left") lines.push('  data-position="left"');
-      lines.push('  defer><\/script>');
-      return lines.join("\n");
+      const attrs = [
+        '  src="' + origin + '/widget.js"',
+        '  data-slug="' + escAttr(c.slug) + '"',
+        '  data-name="' + escAttr(c.name) + '"',
+        '  data-color="' + escAttr(c.color) + '"',
+      ];
+      if (c.greeting) attrs.push('  data-greeting="' + escAttr(c.greeting) + '"');
+
+      if (c.mode === "inline") {
+        attrs.push('  data-mode="inline"', '  data-target="#bizassist-chat"');
+        return [
+          "<!-- 1) Put this where you want the chat to appear on your page -->",
+          '<div id="bizassist-chat" style="max-width:420px;height:560px"></div>',
+          "",
+          "<!-- 2) Add this once, before </body> -->",
+          "<script", ...attrs, "  defer><\/script>",
+        ].join("\n");
+      }
+      if (c.mode === "button") {
+        attrs.push('  data-mode="button"');
+        return [
+          "<!-- 1) Put this button anywhere on your page -->",
+          '<button onclick="BizAssist.open()">' + escAttr(c.launcher || "Chat with us") + "</button>",
+          "",
+          "<!-- 2) Add this once, before </body> -->",
+          "<script", ...attrs, "  defer><\/script>",
+        ].join("\n");
+      }
+      // bubble (default)
+      if (c.launcher) attrs.push('  data-launcher="' + escAttr(c.launcher) + '"');
+      if (c.position === "left") attrs.push('  data-position="left"');
+      return ["<!-- BizAssist AI front desk — paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
     }
 
     // The preview is the REAL widget, loaded in a sandboxed iframe with the current settings —
@@ -1090,24 +1200,44 @@
     function buildPreviewDoc(c) {
       const origin = widgetOrigin();
       const greeting = c.greeting || "Hi! 👋 How can I help you today?";
-      return [
-        '<!doctype html><html><head><meta charset="utf-8">',
-        '<meta name="viewport" content="width=device-width,initial-scale=1">',
-        '<style>html,body{margin:0;height:100%;background:transparent;}</style></head><body>',
-        '<script src="' + origin + '/widget.js"',
-        ' data-slug="' + escAttr(c.slug) + '"',
-        ' data-name="' + escAttr(c.name) + '"',
-        ' data-color="' + escAttr(c.color) + '"',
-        ' data-greeting="' + escAttr(greeting) + '"',
-        (c.launcher ? ' data-launcher="' + escAttr(c.launcher) + '"' : ''),
-        ' data-position="' + (c.position === "left" ? "left" : "right") + '"',
-        ' data-greeter="off"><\/script></body></html>',
-      ].join("");
+      const common = ' data-slug="' + escAttr(c.slug) + '" data-name="' + escAttr(c.name) + '"' +
+        ' data-color="' + escAttr(c.color) + '" data-greeting="' + escAttr(greeting) + '"';
+      const head = '<!doctype html><html><head><meta charset="utf-8">' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<style>html,body{margin:0;height:100%;background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}' +
+        '.demo-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:' + escAttr(c.color) + ';color:#fff;border:0;border-radius:12px;padding:14px 26px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 10px 30px -8px rgba(0,0,0,.35);}' +
+        '</style></head><body>';
+
+      if (c.mode === "inline") {
+        return head +
+          '<div id="bizassist-chat" style="position:absolute;inset:14px;"></div>' +
+          '<script src="' + origin + '/widget.js"' + common + ' data-mode="inline" data-target="#bizassist-chat" data-height="100%"><\/script>' +
+          '</body></html>';
+      }
+      if (c.mode === "button") {
+        return head +
+          '<button class="demo-btn" onclick="BizAssist.open()">' + escAttr(c.launcher || "Chat with us") + '</button>' +
+          '<script src="' + origin + '/widget.js"' + common + ' data-mode="button"><\/script>' +
+          '<script>window.addEventListener("load",function(){setTimeout(function(){try{BizAssist.open();}catch(e){}},500);});<\/script>' +
+          '</body></html>';
+      }
+      // bubble
+      return head +
+        '<script src="' + origin + '/widget.js"' + common +
+        (c.launcher ? ' data-launcher="' + escAttr(c.launcher) + '"' : '') +
+        ' data-position="' + (c.position === "left" ? "left" : "right") + '" data-greeter="off"><\/script>' +
+        '</body></html>';
     }
 
+    const CONN_HINTS = {
+      bubble: "Paste it on as many pages as you like — the same code works everywhere.",
+      inline: "The chat shows wherever you place the &lt;div&gt;. The &lt;script&gt; can go anywhere before &lt;/body&gt;.",
+      button: "Put the button anywhere; the &lt;script&gt; goes once before &lt;/body&gt;. Clicking it opens the chat.",
+    };
     function updateSnippet() {
-      $("snippet").textContent = buildSnippet(connConfig());
-      $("connHint").textContent = "Paste it on as many pages as you like — the same code works everywhere.";
+      const c = connConfig();
+      $("snippet").textContent = buildSnippet(c);
+      $("connHint").innerHTML = CONN_HINTS[c.mode] || CONN_HINTS.bubble;
     }
     function updatePreview() {
       $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
@@ -1151,9 +1281,24 @@
       } else { fallbackCopy(text); done(); }
     }
 
+    const MODE_HINTS = {
+      bubble: "A chat bubble in the corner of every page — the classic, works everywhere.",
+      inline: "The chat sits inside a section of your page, like a contact form. Great for a dedicated 'Book online' area.",
+      button: "No bubble. Your own button (e.g. 'Book Now') opens the chat when clicked.",
+    };
     function initConnectControls() {
       connReady = true;
       const onChange = () => { updateSnippet(); clearTimeout(connDebounce); connDebounce = setTimeout(updatePreview, 350); };
+      $("w_mode").querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const m = btn.dataset.mode;
+          $("w_mode").dataset.value = m;
+          $("w_mode").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
+          $("modeHint").textContent = MODE_HINTS[m] || "";
+          $("posWrap").style.display = m === "bubble" ? "" : "none";
+          onChange();
+        });
+      });
       $("w_color").addEventListener("input", () => { $("w_colorhex").value = $("w_color").value.toUpperCase(); onChange(); });
       $("w_colorhex").addEventListener("input", () => {
         const v = $("w_colorhex").value.trim();
@@ -1184,6 +1329,88 @@
       renderConnBanner();
       updateSnippet();
       updatePreview();
+    }
+
+    // ── services & prices editor ──
+    function svcRow(item) {
+      const row = document.createElement("div");
+      row.className = "svc-row";
+      row.innerHTML = '<input class="sv-name" placeholder="e.g. Cleaning"><input class="sv-price" placeholder="$120"><input class="sv-duration" type="number" min="0" step="5" placeholder="30"><button class="ghost sv-del" aria-label="Remove">✕</button>';
+      row.querySelector(".sv-name").value = (item && item.name) || "";
+      row.querySelector(".sv-price").value = (item && item.price) || "";
+      row.querySelector(".sv-duration").value = (item && item.duration != null) ? item.duration : "";
+      row.querySelector(".sv-del").onclick = () => { row.remove(); if (!$("svcList").children.length) $("svcEmpty").style.display = "block"; };
+      return row;
+    }
+    function renderServices(list) {
+      const wrap = $("svcList"); wrap.innerHTML = "";
+      (list || []).forEach((s) => wrap.appendChild(svcRow(s)));
+      $("svcEmpty").style.display = (list && list.length) ? "none" : "block";
+    }
+    function collectServices() {
+      return Array.from($("svcList").querySelectorAll(".svc-row")).map((r) => {
+        const o = { name: r.querySelector(".sv-name").value.trim(), price: r.querySelector(".sv-price").value.trim() };
+        const d = parseInt(r.querySelector(".sv-duration").value, 10);
+        if (Number.isFinite(d) && d > 0) o.duration = d;
+        return o;
+      }).filter((s) => s.name);
+    }
+    $("svcAdd").addEventListener("click", () => { $("svcEmpty").style.display = "none"; $("svcList").appendChild(svcRow()); });
+    $("svcSave").addEventListener("click", async () => {
+      $("svcOk").textContent = ""; $("svcErr").textContent = "";
+      const b = $("svcSave"); b.disabled = true; b.textContent = "Saving…";
+      try { const { business } = await api("PATCH", { services_list: collectServices() }); biz = business; renderServices(biz.services_list || []); $("svcOk").textContent = "Saved ✓"; }
+      catch (e) { $("svcErr").textContent = e.message; }
+      finally { b.disabled = false; b.textContent = "Save services"; }
+    });
+
+    // ── support (FAQ + AI helper) ──
+    let supReady = false, supHistory = [], supSending = false;
+    function faqHtml() {
+      const F = [
+        ["How do I put the AI on my website?", "Open the <strong>Connect</strong> tab, pick a style (floating bubble, inline, or your own button), copy the one-line code, and paste it into your site just before the <strong>&lt;/body&gt;</strong> tag. That's it."],
+        ["When does my AI actually go live?", "The moment your subscription is active. You can install the code any time beforehand — it shows a friendly \"not switched on yet\" note until you subscribe, then goes live automatically."],
+        ["How does the AI know my prices and hours?", "From the <strong>Business</strong> tab (hours, timezone, address) and the <strong>Services &amp; prices</strong> section right below it. Fill those in and the AI quotes them exactly — it never makes prices up."],
+        ["Can customers cancel or reschedule on their own?", "Yes. They just tell the AI — it verifies their name and the phone or email they booked with, then handles it. No work for you."],
+        ["Where do I see the appointments it books?", "In the <strong>Bookings</strong> and <strong>Calendar</strong> tabs. You and the customer also get confirmation and reminder emails automatically."],
+        ["How do I change plans or cancel?", "Go to <strong>Subscription → Manage billing</strong> to switch plans or cancel any time."],
+        ["Is my data safe?", "Yes. Your business info and bookings are stored securely and used only to run your assistant — never shared or sold."],
+      ];
+      return F.map((f, i) => '<details' + (i === 0 ? " open" : "") + '><summary>' + f[0] + '</summary><div class="acc-body">' + f[1] + "</div></details>").join("");
+    }
+    function supAdd(role, text) {
+      const el = document.createElement("div");
+      el.className = "sup-msg " + (role === "user" ? "user" : "bot");
+      el.textContent = text;
+      $("supThread").appendChild(el);
+      $("supThread").scrollTop = $("supThread").scrollHeight;
+      return el;
+    }
+    async function supSend() {
+      const text = $("supInput").value.trim();
+      if (!text || supSending) return;
+      $("supErr").textContent = "";
+      $("supInput").value = ""; $("supInput").style.height = "auto";
+      supAdd("user", text); supHistory.push({ role: "user", content: text });
+      supSending = true; $("supSend").disabled = true;
+      const typing = supAdd("bot", "…"); typing.classList.add("typing");
+      try {
+        const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: supHistory.slice(-12) }) });
+        const data = await res.json().catch(() => ({}));
+        typing.remove();
+        if (!res.ok) throw new Error(data.error || "Something went wrong — try again.");
+        supAdd("bot", data.reply); supHistory.push({ role: "assistant", content: data.reply });
+      } catch (e) { typing.remove(); $("supErr").textContent = e.message; }
+      finally { supSending = false; $("supSend").disabled = false; $("supInput").focus(); }
+    }
+    function renderSupport() {
+      if (supReady) return;
+      supReady = true;
+      $("faq").innerHTML = faqHtml();
+      supAdd("bot", "Hey! 👋 I'm your BizAssist helper. Ask me anything about setting up — installing the widget, prices, billing, whatever you need.");
+      $("supSend").addEventListener("click", supSend);
+      $("supInput").addEventListener("input", () => { $("supInput").style.height = "auto"; $("supInput").style.height = Math.min($("supInput").scrollHeight, 96) + "px"; });
+      $("supInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); supSend(); } });
     }
 
     // ── entering the app ──
