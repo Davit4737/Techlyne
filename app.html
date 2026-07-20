@@ -225,9 +225,14 @@
     tbody tr:last-child td { border-bottom:none; }
     .pill { font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px; background:var(--green-soft); color:var(--green-d); text-transform:uppercase; letter-spacing:.04em; }
     .pill.cancelled { background:#F3E2DE; color:var(--danger); }
-    .staff-row { display:flex; gap:8px; margin-bottom:10px; animation:fadeUp .25s ease both; }
+    .staff-row { border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; margin-bottom:12px; background:var(--paper); animation:fadeUp .25s ease both; }
+    .staff-main { display:flex; gap:8px; }
     .staff-row input { margin-bottom:0; }
     .staff-row .ghost { border-radius:12px; }
+    .staff-days { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); }
+    .staff-days .sd-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+    .staff-days .sd-hint { font-size:11.5px; color:var(--faint); }
+    .day.mini { padding:5px 10px; font-size:12px; }
     .danger-zone { border:1px solid var(--danger-line); background:var(--danger-soft); border-radius:16px; padding:22px; }
     .empty {
       display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
@@ -353,6 +358,8 @@
     .cal-day.sel { border-color:var(--ink); box-shadow:0 0 0 1.5px var(--ink) inset; }
     .cal-day .dnum { font-size:12.5px; font-weight:700; color:var(--muted); }
     .cal-day.today .dnum { color:var(--panel); background:var(--ink); border-radius:999px; width:21px; height:21px; display:inline-flex; align-items:center; justify-content:center; }
+    .cal-day.cal-off { background-color:#efe7d6; background-image:repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(33,28,19,.035) 7px, rgba(33,28,19,.035) 8px); }
+    .cal-day.cal-off .dnum { color:var(--faint); }
     .cal-chip { font-size:10.5px; font-weight:600; line-height:1.25; padding:2.5px 6px; border-radius:6px; background:rgba(47,110,79,.12); color:var(--green, #2F6E4F); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cal-chip.cancelled { background:rgba(150,60,50,.10); color:#963C32; text-decoration:line-through; }
     .cal-more { font-size:10.5px; font-weight:700; color:var(--muted); padding-left:2px; }
@@ -549,7 +556,7 @@
         <h1>Bookings</h1>
         <div class="sub">Appointments your AI has booked. <button class="ghost" id="bkRefresh" style="padding:5px 11px">Refresh</button></div>
         <div class="panel" id="bkWrap"><div class="muted" id="bkEmpty">Loading…</div>
-          <div style="overflow-x:auto"><table id="bkTable" style="display:none"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>Contact</th><th>Status</th></tr></thead><tbody id="bkBody"></tbody></table></div>
+          <div style="overflow-x:auto"><table id="bkTable" style="display:none"><thead><tr><th>When</th><th>Customer</th><th>Service</th><th>With</th><th>Contact</th><th>Status</th></tr></thead><tbody id="bkBody"></tbody></table></div>
         </div>
       </section>
 
@@ -588,6 +595,7 @@
             <div class="section-label">Basics</div>
             <div><label>Business name *</label><input id="f_name"/></div>
             <div><label>Industry</label><input id="f_industry"/></div>
+            <div><label>Default language</label><input id="f_language" placeholder="English"/></div>
             <div><label>Timezone (IANA)</label><input id="f_timezone"/></div>
             <div><label>Phone</label><input id="f_phone"/></div>
             <div class="full"><label>Address</label><input id="f_address"/></div>
@@ -939,6 +947,7 @@
       $("stStatus").style.color = live ? "var(--green)" : "#B98A2F";
       // Business form
       ["name","industry","timezone","phone","address","services","hours"].forEach((f) => { $("f_" + f).value = (biz && biz[f] != null) ? biz[f] : ""; });
+      $("f_language").value = (biz && biz.default_language) || "";
       fillAvail(biz || {});
       // Services & prices
       renderServices((biz && biz.services_list) || []);
@@ -975,10 +984,16 @@
     }
 
     // ── staff editor ──
+    const DAYS_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const DAY_ABBR = { Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu", Friday: "Fri", Saturday: "Sat", Sunday: "Sun" };
     function staffRow(m) {
       const row = document.createElement("div");
       row.className = "staff-row";
-      row.innerHTML = '<input placeholder="Name" class="s-name"><input placeholder="Role (e.g. Dentist)" class="s-role"><button class="ghost s-del" style="padding:8px 12px">✕</button>';
+      const days = new Set(Array.isArray(m && m.days) ? m.days : []);
+      const chips = DAYS_FULL.map((d) => `<label class="day mini"><input type="checkbox" value="${d}"${days.has(d) ? " checked" : ""}> ${DAY_ABBR[d]}</label>`).join("");
+      row.innerHTML =
+        '<div class="staff-main"><input placeholder="Name" class="s-name"><input placeholder="Role (e.g. Dentist)" class="s-role"><button class="ghost s-del" style="padding:8px 12px">✕</button></div>' +
+        '<div class="staff-days"><span class="sd-label">Working days</span>' + chips + '<span class="sd-hint">— none = same as business</span></div>';
       row.querySelector(".s-name").value = (m && m.name) || "";
       row.querySelector(".s-role").value = (m && m.role) || "";
       row.querySelector(".s-del").onclick = () => row.remove();
@@ -990,9 +1005,12 @@
       $("staffEmpty").style.display = list.length ? "none" : "block";
     }
     function collectStaff() {
-      return Array.from($("staffList").querySelectorAll(".staff-row")).map((r) => ({
-        name: r.querySelector(".s-name").value.trim(), role: r.querySelector(".s-role").value.trim(),
-      })).filter((m) => m.name);
+      return Array.from($("staffList").querySelectorAll(".staff-row")).map((r) => {
+        const m = { name: r.querySelector(".s-name").value.trim(), role: r.querySelector(".s-role").value.trim() };
+        const days = Array.from(r.querySelectorAll(".staff-days input:checked")).map((c) => c.value);
+        if (days.length) m.days = days;
+        return m;
+      }).filter((m) => m.name);
     }
 
     // ── bookings ──
@@ -1013,7 +1031,7 @@
         }
         const statusCell = (b) => `<span class="pill ${b.status === "cancelled" ? "cancelled" : ""}">${esc(b.status)}</span>`;
         $("bkBody").innerHTML = bookings.map((b) =>
-          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td>${statusCell(b)}</td></tr>`
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.staff || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td>${statusCell(b)}</td></tr>`
         ).join("");
         $("bkEmpty").style.display = "none"; $("bkTable").style.display = "table";
         $("ovBkBody").innerHTML = bookings.slice(0, 5).map((b) =>
@@ -1053,6 +1071,15 @@
       }
     }
 
+    // The business's overall working days (union of availability rules) — the calendar shades
+    // the rest so the owner sees at a glance which days are closed. null = no availability set.
+    function bizWorkingDaysSet() {
+      const rules = (biz && Array.isArray(biz.availability)) ? biz.availability : [];
+      const s = new Set();
+      rules.forEach((r) => (Array.isArray(r && r.days) ? r.days : []).forEach((d) => s.add(d)));
+      return s.size ? s : null;
+    }
+
     async function renderCalendar() {
       if (calYear === null) {
         const [ty, tm] = dateInTz(new Date().toISOString()).split("-").map(Number);
@@ -1069,10 +1096,13 @@
       const todayStr = dateInTz(new Date().toISOString());
       const firstDow = new Date(calYear, calMonth, 1).getDay();
       const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const workDays = bizWorkingDaysSet(); // null = don't shade (no availability set)
+      const WD_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const cells = [];
       for (let i = 0; i < firstDow; i++) cells.push('<div class="cal-day out" style="cursor:default"></div>');
       for (let d = 1; d <= daysInMonth; d++) {
         const ds = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const off = workDays && !workDays.has(WD_NAMES[new Date(calYear, calMonth, d).getDay()]);
         const list = byDay[ds] || [];
         const chips = list.slice(0, 3).map((b) =>
           `<span class="cal-chip ${b.status === "cancelled" ? "cancelled" : ""}">${esc(timeInTz(b.start_time))} ${esc((b.name || "").split(" ")[0])}</span>`
@@ -1080,7 +1110,7 @@
         const more = list.length > 3 ? `<span class="cal-more">+${list.length - 3} more</span>` : "";
         const dots = list.slice(0, 4).map((b) => `<span class="dot-b ${b.status === "cancelled" ? "cancelled" : ""}"></span>`).join("");
         cells.push(
-          `<button class="cal-day ${ds === todayStr ? "today" : ""} ${ds === calSelected ? "sel" : ""}" data-day="${ds}">` +
+          `<button class="cal-day ${ds === todayStr ? "today" : ""} ${ds === calSelected ? "sel" : ""} ${off ? "cal-off" : ""}" data-day="${ds}"${off ? ' title="Closed — outside business working days"' : ""}>` +
           `<span class="dnum">${d}</span>${chips}${more}<span class="dots">${dots}</span></button>`
         );
       }
@@ -1099,7 +1129,7 @@
       $("calDayList").innerHTML = list.length
         ? list.map((b) =>
             `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">` +
-            `<div><strong>${esc(timeInTz(b.start_time))}</strong> — ${esc(b.name)}${b.service ? ` · ${esc(b.service)}` : ""}</div>` +
+            `<div><strong>${esc(timeInTz(b.start_time))}</strong> — ${esc(b.name)}${b.service ? ` · ${esc(b.service)}` : ""}${b.staff ? ` · with ${esc(b.staff)}` : ""}</div>` +
             `<div class="muted">${esc(b.phone || b.email || "")} <span class="pill ${b.status === "cancelled" ? "cancelled" : ""}" style="margin-left:8px">${esc(b.status)}</span></div></div>`
           ).join("")
         : '<div class="muted">No appointments this day.</div>';
@@ -1394,7 +1424,7 @@
       const payload = {
         name: $("f_name").value.trim(), industry: $("f_industry").value.trim(), timezone: $("f_timezone").value.trim(),
         phone: $("f_phone").value.trim(), address: $("f_address").value.trim(), services: $("f_services").value.trim(),
-        hours: $("f_hours").value.trim(), ...readAvail("f_"),
+        hours: $("f_hours").value.trim(), default_language: $("f_language").value.trim(), ...readAvail("f_"),
       };
       if (!payload.name) { $("bizErr").textContent = "Business name is required."; return; }
       if (!validTimezone(payload.timezone)) { $("bizErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York" — abbreviations like "PST" won\'t work.'; return; }

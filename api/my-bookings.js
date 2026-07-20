@@ -65,6 +65,7 @@ export default async function handler(req, res) {
     phone: a.phone,
     email: a.email,
     service: a.service,
+    staff: a.staff || null,
     when: localLabel(a.start_time, tz),
     start_time: a.start_time,
     status: a.status,

@@ -21,6 +21,14 @@ Live: [bizzassist.xyz](https://www.bizzassist.xyz)
   businesses also get them on their Google/Outlook calendar.
 - **Cancel & reschedule** are handled by the bot itself (no human needed) once the
   customer confirms the phone/email they booked with.
+- **Per-staff scheduling** — a multi-person business (e.g. a clinic with several doctors)
+  gives each team member optional working days (empty = the business's days). The bot books
+  a specific person, checks only that person's days + their own bookings for availability
+  (so two staff can hold the same time slot), and never books someone on a day off. Each
+  booking records who it's with; the Bookings list and Calendar show it. The Calendar also
+  shades days outside the business's working days.
+- **Language** — a per-business default language (English by default); the bot still
+  auto-matches whatever language the customer writes in.
 - **Emails** — branded HTML confirmation on booking, a reminder ~a day before, plus
   cancellation/reschedule notices — sent from the business's own domain via Resend.
 - **Admin dashboard** at `/admin` shows every booking in one branded place.

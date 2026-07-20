@@ -205,7 +205,7 @@ export async function bumpDemoUsage(key, dayISO) {
 
 // ─────────────────────────── Appointments ───────────────────────────
 
-export async function insertAppointment({ businessId, name, phone, email, service, startISO, calcomBookingUid }) {
+export async function insertAppointment({ businessId, name, phone, email, service, startISO, calcomBookingUid, staff }) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const res = await fetch(`${REST()}/appointments`, {
@@ -218,6 +218,7 @@ export async function insertAppointment({ businessId, name, phone, email, servic
         phone,
         email: email || null,
         service,
+        staff: staff || null,
         start_time: startISO,
         calcom_booking_uid: calcomBookingUid,
         // No email on file means there's nothing for the reminder cron to send —
@@ -294,7 +295,7 @@ export async function findAppointmentsByContact({ businessId, phone, email }) {
 // Confirmed appointments for a tenant within [fromISO, toISO). Powers the native scheduler:
 // availability = the business's working hours minus these already-taken slots, and the
 // booking race-check. Scoped by business_id so tenants never see or block each other.
-export async function getConfirmedAppointments({ businessId, fromISO, toISO }) {
+export async function getConfirmedAppointments({ businessId, fromISO, toISO, staff }) {
   if (!isConfigured()) return { ok: false, error: "Database not configured" };
 
   const url = new URL(`${REST()}/appointments`);
@@ -302,7 +303,10 @@ export async function getConfirmedAppointments({ businessId, fromISO, toISO }) {
   if (fromISO) url.searchParams.set("start_time", `gte.${fromISO}`);
   if (toISO) url.searchParams.append("start_time", `lt.${toISO}`);
   url.searchParams.set("business_id", businessId ? `eq.${businessId}` : "is.null");
-  url.searchParams.set("select", "id,start_time,phone");
+  // Per-staff availability: only THIS staff member's bookings block their own slots. Without a
+  // staff filter, every booking blocks (single-resource — correct for one-person businesses).
+  if (staff) url.searchParams.set("staff", `eq.${staff}`);
+  url.searchParams.set("select", "id,start_time,phone,staff");
 
   const res = await fetch(url, { headers: headers() });
   if (!res.ok) {

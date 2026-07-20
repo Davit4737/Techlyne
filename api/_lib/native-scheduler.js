@@ -85,8 +85,15 @@ export async function getAvailableSlots(cfg, startISO, endISO, timeZone = "UTC")
   }
   const earliest = Date.now() + MIN_NOTICE_MINUTES * 60000;
 
-  // Slots already taken by confirmed appointments for this tenant, keyed by epoch ms.
-  const booked = await getConfirmedAppointments({ businessId: cfg?.businessId, fromISO: startISO, toISO: endISO });
+  // Per-staff mode: when a specific team member is targeted, restrict to THEIR working days
+  // (their own `days`, or the business days if they have none) and only THEIR bookings block.
+  const staffFilter = cfg?.staffFilter;
+  const staffDays = staffFilter && Array.isArray(staffFilter.days) && staffFilter.days.length
+    ? new Set(staffFilter.days)
+    : null;
+
+  // Slots already taken by confirmed appointments for this tenant (or this staff member).
+  const booked = await getConfirmedAppointments({ businessId: cfg?.businessId, fromISO: startISO, toISO: endISO, staff: staffFilter?.name });
   if (!booked.ok) return { ok: false, error: booked.error };
   const taken = new Set((booked.appointments || []).map((a) => Date.parse(a.start_time)));
 
@@ -103,6 +110,9 @@ export async function getAvailableSlots(cfg, startISO, endISO, timeZone = "UTC")
     const Y = dt.getUTCFullYear(), Mo = dt.getUTCMonth() + 1, D = dt.getUTCDate();
     const weekday = WEEKDAYS[dt.getUTCDay()]; // weekday of the calendar date (tz-independent)
     const dateKey = `${Y}-${pad2(Mo)}-${pad2(D)}`;
+
+    // A targeted staff member who doesn't work this weekday has no slots today.
+    if (staffDays && !staffDays.has(weekday)) { dayCursor += 86400000; continue; }
 
     for (const rule of rules) {
       if (!Array.isArray(rule?.days) || !rule.days.includes(weekday)) continue;
@@ -138,6 +148,7 @@ export async function createBooking(cfg, { startISO }) {
     businessId: cfg?.businessId,
     fromISO: new Date(ms).toISOString(),
     toISO: new Date(ms + 60000).toISOString(),
+    staff: cfg?.staffFilter?.name, // only a clash for the SAME staff member is a real conflict
   });
   if (check.ok && (check.appointments || []).some((a) => Date.parse(a.start_time) === ms)) {
     return { ok: false, error: "slot_taken", conflict: true };
@@ -161,6 +172,7 @@ export async function rescheduleBooking(cfg, uid, startISO) {
     businessId: cfg?.businessId,
     fromISO: new Date(ms).toISOString(),
     toISO: new Date(ms + 60000).toISOString(),
+    staff: cfg?.staffFilter?.name,
   });
   if (check.ok && (check.appointments || []).some((a) => Date.parse(a.start_time) === ms)) {
     return { ok: false, error: "That time is no longer available." };

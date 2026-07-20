@@ -17,7 +17,7 @@ import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js"
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).
 const OWNER_FIELDS = [
   "name", "timezone", "hours", "address", "phone", "services", "industry",
-  "availability", "slot_minutes", "staff", "services_list",
+  "availability", "slot_minutes", "staff", "services_list", "default_language",
 ];
 
 const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
@@ -28,7 +28,7 @@ const HM = /^\d{1,2}:\d{2}$/;
 // every response from this explicit allowlist instead of returning the row verbatim.
 const OWNER_VIEW_FIELDS = [
   "id", "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",
-  "availability", "slot_minutes", "staff", "services_list", "active", "subscription_status", "plan",
+  "availability", "slot_minutes", "staff", "services_list", "default_language", "active", "subscription_status", "plan",
   "paddle_customer_id", "created_at",
 ];
 function ownerView(business) {
@@ -59,7 +59,7 @@ function pick(body) {
 
   // Free-text fields: cap lengths so no one can stuff megabytes into a row (they also feed
   // the chat prompt, so this bounds token burn too).
-  for (const f of ["name", "timezone", "hours", "address", "phone", "industry"]) {
+  for (const f of ["name", "timezone", "hours", "address", "phone", "industry", "default_language"]) {
     if (typeof out[f] === "string") out[f] = out[f].slice(0, 200);
   }
   if (typeof out.services === "string") out.services = out.services.slice(0, 1000);
@@ -105,7 +105,15 @@ function pick(body) {
     if (Array.isArray(out.staff)) {
       out.staff = out.staff
         .slice(0, 20)
-        .map((m) => ({ name: String(m?.name || "").slice(0, 80), role: String(m?.role || "").slice(0, 80) }))
+        .map((m) => {
+          const entry = { name: String(m?.name || "").slice(0, 80), role: String(m?.role || "").slice(0, 80) };
+          // Optional per-person working days. Empty/absent = follows the business's days.
+          if (Array.isArray(m?.days)) {
+            const days = m.days.filter((d) => WEEKDAYS.has(d)).slice(0, 7);
+            if (days.length) entry.days = days;
+          }
+          return entry;
+        })
         .filter((m) => m.name);
     } else {
       delete out.staff;
