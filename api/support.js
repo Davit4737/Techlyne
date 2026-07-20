@@ -6,7 +6,9 @@
 // safe. Rate-limited per IP. It's the "if the user is struggling, it goes to the AI" fallback
 // behind the Support tab's FAQ.
 
-const MODEL = "claude-sonnet-5";
+// Owner FAQ help is simple Q&A — the cheap/fast model is plenty and keeps costs down. The
+// system prompt is cached (below), so follow-ups are ~10% of the input price.
+const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 600;
 const MAX_MSG_LEN = 800;
 const MAX_HISTORY = 12;

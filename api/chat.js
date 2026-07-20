@@ -12,7 +12,11 @@ import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } fr
 import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage } from "./_lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
 
+// Paid tenants get the smart model (booking correctness is the product). The free landing-page
+// demo runs on the cheap/fast model — it's an anonymous, rate-limited taster, not worth premium
+// tokens. Both keep tool use, so the demo still books.
 const MODEL = "claude-sonnet-5";
+const DEMO_MODEL = "claude-haiku-4-5-20251001";
 // Enough headroom for adaptive thinking + a tool-heavy turn without truncation.
 const MAX_TOKENS = 900;
 const MAX_MSG_LEN = 600; // booking messages are short; caps token burn per request
@@ -730,6 +734,23 @@ export default async function handler(req, res) {
     const systemPrompt = buildSystemPrompt(biz);
     const tools = buildTools(biz);
 
+    // Cache the conversation prefix too, not just system+tools. The tool loop re-sends the
+    // growing message list on every hop, and multi-turn chats re-send the whole history — a
+    // cache breakpoint on the LAST message means each call re-reads that history at ~10% price
+    // instead of re-billing it in full. The static system+tools stay cached by their own
+    // breakpoint below; this adds an incremental one that moves with the conversation.
+    function withMsgCache(msgs) {
+      if (!msgs.length) return msgs;
+      const last = msgs[msgs.length - 1];
+      const blocks = typeof last.content === "string"
+        ? [{ type: "text", text: last.content }]
+        : last.content.map((b) => ({ ...b }));
+      if (blocks.length) {
+        blocks[blocks.length - 1] = { ...blocks[blocks.length - 1], cache_control: { type: "ephemeral" } };
+      }
+      return [...msgs.slice(0, -1), { ...last, content: blocks }];
+    }
+
     async function callClaude(msgs) {
       return fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -739,7 +760,7 @@ export default async function handler(req, res) {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: MODEL,
+          model: isDemo ? DEMO_MODEL : MODEL,
           max_tokens: isDemo ? DEMO_MAX_TOKENS : MAX_TOKENS,
           // Medium effort: "low" was observed skipping tool calls and asserting outcomes
           // ("email added ✅" without actually calling the tool). Booking correctness is
@@ -757,7 +778,7 @@ export default async function handler(req, res) {
             },
           ],
           tools,
-          messages: msgs,
+          messages: withMsgCache(msgs),
         }),
       });
     }
