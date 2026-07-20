@@ -266,8 +266,8 @@
     code.inline { background:var(--cream-dark); border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:.9em; font-family:ui-monospace,monospace; color:var(--choc); }
     .copybtn { padding:9px 16px; font-size:13px; }
     .copybtn.ok { background:var(--green-d); }
-    a.copybtn.ghostlink { display:inline-flex; align-items:center; text-decoration:none; background:transparent; color:var(--muted); border:1.5px solid var(--line); }
-    a.copybtn.ghostlink:hover { color:var(--ink); border-color:#D3C8AE; background:var(--paper); }
+    a.copybtn.ghostlink, button.copybtn.ghostlink { display:inline-flex; align-items:center; text-decoration:none; background:transparent; color:var(--muted); border:1.5px solid var(--line); }
+    a.copybtn.ghostlink:hover, button.copybtn.ghostlink:hover { color:var(--ink); border-color:#D3C8AE; background:var(--paper); box-shadow:none; transform:none; }
     .hint { font-size:12.5px; color:var(--muted); }
     .hint:empty { display:none; }
     .linkrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -326,8 +326,8 @@
     .sup-msg.user { background:var(--green); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
     .sup-msg.typing { color:var(--muted); font-style:italic; }
     .sup-composer { display:flex; gap:8px; align-items:flex-end; padding:11px 12px; border-top:1px solid var(--line-soft); }
-    .sup-composer textarea { margin:0; min-height:0; max-height:96px; border-radius:12px; }
-    .sup-composer button { flex:none; width:44px; height:44px; padding:0; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+    .sup-composer textarea { margin:0; min-height:46px; height:46px; max-height:96px; border-radius:12px; padding:12px 14px; line-height:1.4; overflow-y:hidden; }
+    .sup-composer button { flex:none; width:46px; height:46px; padding:0; border-radius:12px; display:flex; align-items:center; justify-content:center; }
 
     /* ── boot loader ── */
     .boot { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:50; }
@@ -679,9 +679,12 @@
             <div class="panel">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
                 <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px">2. Copy your code</div>
-                <button class="copybtn" id="copySnippet">Copy code</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="copybtn" id="copySnippet">Copy code</button>
+                  <button class="copybtn ghostlink" id="emailSnippet" style="border-radius:999px">✉ Send to your web person</button>
+                </div>
               </div>
-              <div class="muted" style="margin-bottom:14px">Paste this once, just before the closing <code class="inline">&lt;/body&gt;</code> tag of your site.</div>
+              <div class="muted" style="margin-bottom:14px">Paste this once, just before the closing <code class="inline">&lt;/body&gt;</code> tag of your site. Not technical? Hit <strong>Send to your web person</strong> — it writes the whole email for you.</div>
               <pre class="codebox"><code id="snippet"></code></pre>
               <div class="hint" id="connHint"></div>
             </div>
@@ -791,7 +794,7 @@
               <div class="sup-thread" id="supThread"></div>
               <div class="sup-err err" id="supErr" style="padding:0 4px"></div>
               <div class="sup-composer">
-                <textarea id="supInput" rows="1" placeholder="e.g. How do I add the chat to my Wix site?"></textarea>
+                <textarea id="supInput" rows="1" placeholder="Ask a question…"></textarea>
                 <button id="supSend" aria-label="Send"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
               </div>
             </div>
@@ -838,7 +841,7 @@
       // and land on the login screen with an explanation.
       if (res.status === 401) {
         try { await sb.auth.signOut(); } catch {}
-        token = null; show("login"); setMode(false);
+        token = null; appLoaded = false; show("login"); setMode(false);
         $("loginErr").textContent = "Your session expired — please sign in again.";
         throw new Error("Your session expired — please sign in again.");
       }
@@ -1170,12 +1173,11 @@
       if (c.greeting) attrs.push('  data-greeting="' + escAttr(c.greeting) + '"');
 
       if (c.mode === "inline") {
-        attrs.push('  data-mode="inline"', '  data-target="#bizassist-chat"');
+        // One block, pasted in place — the div and script travel together, nothing to split up.
+        attrs.push('  data-mode="inline"');
         return [
-          "<!-- 1) Put this where you want the chat to appear on your page -->",
-          '<div id="bizassist-chat" style="max-width:420px;height:560px"></div>',
-          "",
-          "<!-- 2) Add this once, before </body> -->",
+          "<!-- BizAssist chat — paste this wherever you want the chat to appear -->",
+          '<div id="bizassist-chat"></div>',
           "<script", ...attrs, "  defer><\/script>",
         ].join("\n");
       }
@@ -1209,9 +1211,14 @@
         '</style></head><body>';
 
       if (c.mode === "inline") {
+        // Show it the way it really sits: page content above, the chat embedded below.
         return head +
-          '<div id="bizassist-chat" style="position:absolute;inset:14px;"></div>' +
-          '<script src="' + origin + '/widget.js"' + common + ' data-mode="inline" data-target="#bizassist-chat" data-height="100%"><\/script>' +
+          '<div style="padding:16px 14px 8px">' +
+          '<div style="height:9px;width:55%;border-radius:6px;background:#E9E1CF;margin-bottom:10px"></div>' +
+          '<div style="height:9px;width:80%;border-radius:6px;background:#E9E1CF;margin-bottom:14px"></div>' +
+          '</div>' +
+          '<div id="bizassist-chat" style="padding:0 14px"></div>' +
+          '<script src="' + origin + '/widget.js"' + common + ' data-mode="inline" data-height="330px"><\/script>' +
           '</body></html>';
       }
       if (c.mode === "button") {
@@ -1231,7 +1238,7 @@
 
     const CONN_HINTS = {
       bubble: "Paste it on as many pages as you like — the same code works everywhere.",
-      inline: "The chat shows wherever you place the &lt;div&gt;. The &lt;script&gt; can go anywhere before &lt;/body&gt;.",
+      inline: "One block — paste it exactly where the chat should appear (a contact section, a 'Book online' page…).",
       button: "Put the button anywhere; the &lt;script&gt; goes once before &lt;/body&gt;. Clicking it opens the chat.",
     };
     function updateSnippet() {
@@ -1316,6 +1323,23 @@
       });
       $("copySnippet").addEventListener("click", () => copyText($("snippet").textContent, $("copySnippet"), "Copy code"));
       $("copyLink").addEventListener("click", () => copyText($("hostedLink").value, $("copyLink"), "Copy"));
+      // "Send to your web person": a ready-made email — subject, instructions, and the code —
+      // so a non-technical owner never touches HTML. The full text is also copied to the
+      // clipboard, because mailto: does nothing on machines with no mail app configured.
+      $("emailSnippet").addEventListener("click", () => {
+        const c = connConfig();
+        const where = c.mode === "inline"
+          ? "paste it exactly where the chat should appear on the page"
+          : "paste it just before the closing </body> tag";
+        const bodyText =
+          "Hi!\n\nCould you add our AI booking assistant to the website? It's one small snippet — " + where + ":\n\n" +
+          buildSnippet(c) +
+          "\n\nThat's everything — it works on any platform (WordPress, Wix, Shopify, Squarespace, plain HTML). " +
+          "Step-by-step guides per platform: " + widgetOrigin() + "/app (Connect tab).\n\nThanks!";
+        copyText(bodyText, $("emailSnippet"), "✉ Send to your web person");
+        location.href = "mailto:?subject=" + encodeURIComponent("Add our AI chat to the website (2-min job)") +
+          "&body=" + encodeURIComponent(bodyText);
+      });
     }
 
     function renderConnect() {
@@ -1386,16 +1410,31 @@
       $("supThread").scrollTop = $("supThread").scrollHeight;
       return el;
     }
+    // Daily helper budget per browser: past this, a human takes over. Backstopped by the
+    // server's own per-IP rate limits, so clearing localStorage doesn't buy much.
+    const SUP_DAILY_LIMIT = 25;
+    function supUsedToday(bump) {
+      const key = "sup_used_" + new Date().toISOString().slice(0, 10);
+      let n = 0; try { n = parseInt(localStorage.getItem(key), 10) || 0; } catch {}
+      if (bump) { n++; try { localStorage.setItem(key, String(n)); } catch {} }
+      return n;
+    }
     async function supSend() {
       const text = $("supInput").value.trim();
       if (!text || supSending) return;
+      if (supUsedToday(false) >= SUP_DAILY_LIMIT) {
+        $("supErr").textContent = "";
+        supAdd("bot", "You've reached today's helper limit — email hello@bizzassist.xyz and a real person will pick it up from here. 🙌");
+        return;
+      }
       $("supErr").textContent = "";
       $("supInput").value = ""; $("supInput").style.height = "auto";
       supAdd("user", text); supHistory.push({ role: "user", content: text });
+      supUsedToday(true);
       supSending = true; $("supSend").disabled = true;
       const typing = supAdd("bot", "…"); typing.classList.add("typing");
       try {
-        const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: supHistory.slice(-12) }) });
+        const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: supHistory.slice(-12), count: supUsedToday(false) }) });
         const data = await res.json().catch(() => ({}));
         typing.remove();
         if (!res.ok) throw new Error(data.error || "Something went wrong — try again.");
@@ -1583,13 +1622,18 @@
       }
     })();
 
+    // Supabase fires auth events constantly (TOKEN_REFRESHED on a timer, SIGNED_IN every time
+    // the tab regains focus). Only the FIRST session should boot the app — later events must
+    // just refresh the token silently, or the dashboard re-renders and dumps the user back on
+    // Overview mid-work (the "page keeps refreshing" bug).
+    let appLoaded = false;
     function onSession(session) {
       if (recoveryMode) return; // stay on the set-new-password screen until it's saved
       if (session) {
         token = session.access_token;
         if (session.user && session.user.email) { userEmail = session.user.email; $("acEmail").textContent = session.user.email; }
-        loadApp();
-      } else { token = null; setMode(false); show("login"); }
+        if (!appLoaded) { appLoaded = true; loadApp(); }
+      } else { appLoaded = false; token = null; setMode(false); show("login"); }
     }
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
@@ -1603,6 +1647,19 @@
       onSession(session);
     });
     sb.auth.getSession().then(({ data }) => onSession(data.session));
+
+    // mailto: links do nothing on machines with no mail app configured (very common on
+    // Windows) — so every mailto click ALSO copies the address and says so. The mail app
+    // still opens where one exists; everyone else gets the address on their clipboard.
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest && e.target.closest('a[href^="mailto:"]');
+      if (!a) return;
+      const addr = a.getAttribute("href").replace(/^mailto:/, "").split("?")[0];
+      try { navigator.clipboard && navigator.clipboard.writeText(addr); } catch {}
+      if (!a.dataset.orig) a.dataset.orig = a.textContent;
+      a.textContent = "Copied " + addr + " ✓";
+      setTimeout(() => { a.textContent = a.dataset.orig; }, 1800);
+    });
   </script>
 </body>
 </html>

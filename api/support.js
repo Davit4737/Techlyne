@@ -39,7 +39,7 @@ HOW OWNERS USE THE DASHBOARD (the tabs, at /app):
 - Business: set name, industry, timezone, address, phone, working days/hours, and appointment length. This is what the AI books against.
 - Services & prices: add each service with its price and duration so the AI quotes exact prices.
 - Staff: optionally list team members so the AI can mention them.
-- Connect: put the AI on the owner's OWN website. They copy a one-line <script> tag and paste it before </body> — works on WordPress, Wix, Shopify, Squarespace, plain HTML, etc. They can pick a display style: a floating bubble, an inline panel embedded in a page, or opening from their own button. No-website owners can share the hosted link (bizzassist.xyz/c/<their-slug>).
+- Connect: put the AI on the owner's OWN website. They copy a short code snippet and paste it into their site — works on WordPress, Wix, Shopify, Squarespace, plain HTML, etc. Three display styles: "Floating bubble" (a chat bubble in the corner of every page; paste before </body>), "Inline on page" (the chat sits inside a section of their page — paste the snippet where they want it to appear), and "From your button" (no bubble; their own button, e.g. "Book Now", opens the chat via BizAssist.open()). They can customize accent color and greeting; the code and a live preview update instantly. If the owner doesn't manage their own site, they can copy the code and email it to their web person — it's a 2-minute job for any developer. No-website owners can share the hosted link (bizzassist.xyz/c/<their-slug>) in an Instagram bio, Google Business profile, or QR code.
 - Subscription: pick a plan (Standard $250/mo, Pro $400/mo) and check out. Billing is handled by Paddle.
 - Bookings & Calendar: every appointment the AI books shows up here.
 - Account: sign-in details; delete account.
@@ -96,6 +96,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "No message to answer." });
   }
 
+  // Per-browser daily budget (the dashboard reports its own count; per-IP limits above are
+  // the backstop for anyone who tampers). Past the cap, a human takes over — no model call.
+  const DAILY_HELPER_CAP = 25;
+  if (Number(body.count) > DAILY_HELPER_CAP) {
+    return res.status(200).json({
+      reply: "You've reached today's helper limit — email hello@bizzassist.xyz and a real person will pick it up from here. 🙌",
+      limit: true,
+    });
+  }
+
   try {
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -104,7 +114,14 @@ export default async function handler(req, res) {
         "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, system: SYSTEM, messages }),
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        // Prompt caching: the system prompt is by far the biggest part of every request and
+        // never changes, so cache it — follow-up messages read it at ~10% of the input price.
+        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+        messages,
+      }),
     });
     if (!resp.ok) {
       console.error("support.js Anthropic error:", resp.status, await resp.text().catch(() => ""));

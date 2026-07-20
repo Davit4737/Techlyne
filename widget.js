@@ -141,7 +141,9 @@
   host.setAttribute("aria-live", "polite");
   // Only positioning lives on the host (in the light DOM) — everything else is shadowed.
   if (MODE === "inline") {
-    host.style.cssText = "display:block;position:relative;width:100%;height:" + INLINE_HEIGHT + ";";
+    // Self-size inside a bare <div>: full width up to a sane chat width, fixed height.
+    // data-height overrides; a target that sets its own height can pass data-height="100%".
+    host.style.cssText = "display:block;position:relative;width:100%;max-width:460px;height:" + INLINE_HEIGHT + ";";
     inlineTarget.appendChild(host);
   } else {
     host.style.cssText = "position:fixed;z-index:2147483000;bottom:0;" + SIDE + ":0;width:0;height:0;";
