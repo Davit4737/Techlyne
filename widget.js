@@ -67,6 +67,13 @@
   var MODE = (["bubble", "inline", "button"].indexOf(data.mode) !== -1) ? data.mode : "bubble";
   var TARGET = (data.target || "").trim();
   var INLINE_HEIGHT = cssLen(data.height); // inline panel height, e.g. "560px" or "100%"
+  // Button mode attaches to the host's OWN element(s) — nothing is added to their page.
+  //   data-trigger      → a CSS selector ("#book", ".cta")
+  //   data-trigger-text → match a link/button by its visible text ("Book Now") — the
+  //                       non-technical path: the owner just types what their button says.
+  //   any element with onclick="BizAssist.open()" or [data-bizassist-open] also works.
+  var TRIGGER = (data.trigger || "").trim();
+  var TRIGGER_TEXT = (data.triggerText || "").trim();
   // The teaser bubble only makes sense for the floating launcher.
   var GREETER = MODE === "bubble" && data.greeter !== "off";
 
@@ -217,6 +224,39 @@
   }
   function toggle() { isOpen ? close() : open(); }
 
+  // Button mode: wire the host's OWN buttons to open the chat — by selector, by visible text,
+  // or via [data-bizassist-open]. Nothing is injected into their page, so the trigger stays
+  // exactly where they already have it (no more "button lands at the bottom"). Site builders
+  // render late, so retry a few times until something matches.
+  function wireTriggers() {
+    function attach() {
+      var els = [];
+      if (TRIGGER) { try { els = els.concat(slice(document.querySelectorAll(TRIGGER))); } catch (e) {} }
+      if (TRIGGER_TEXT) {
+        var t = TRIGGER_TEXT.toLowerCase();
+        slice(document.querySelectorAll("a,button,[role=button],input[type=button],input[type=submit]")).forEach(function (el) {
+          if (host.contains(el)) return; // never our own UI
+          var label = (el.textContent || el.value || "").trim().toLowerCase();
+          if (label && label.indexOf(t) !== -1) els.push(el);
+        });
+      }
+      slice(document.querySelectorAll("[data-bizassist-open]")).forEach(function (el) { els.push(el); });
+      var wired = 0;
+      els.forEach(function (el) {
+        if (el.__baWired) return;
+        el.__baWired = true; wired++;
+        el.style.cursor = "pointer";
+        el.addEventListener("click", function (e) { e.preventDefault(); open(); });
+      });
+      return wired;
+    }
+    function slice(nl) { return Array.prototype.slice.call(nl); }
+    if (!attach()) {
+      var tries = 0;
+      var iv = setInterval(function () { if (attach() || ++tries > 8) clearInterval(iv); }, 500);
+    }
+  }
+
   function persist() {
     saveState({ history: history.slice(-24), opened: isOpen });
   }
@@ -284,6 +324,8 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   });
   root.addEventListener("keydown", function (e) { if (e.key === "Escape" && isOpen) close(); });
+
+  if (MODE === "button") wireTriggers();
 
   if (MODE === "inline") {
     // Inline chat is always "open" — render it straight into the page.

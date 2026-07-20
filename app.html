@@ -650,11 +650,11 @@
                 <div class="full">
                   <label>Display style</label>
                   <div class="seg seg3" id="w_mode" data-value="bubble">
-                    <button type="button" data-mode="bubble" class="on">💬 Floating bubble</button>
-                    <button type="button" data-mode="inline">▭ Inline on page</button>
-                    <button type="button" data-mode="button">☝ From your button</button>
+                    <button type="button" data-mode="bubble" class="on">💬 Chat bubble</button>
+                    <button type="button" data-mode="button">☝ My own button</button>
+                    <button type="button" data-mode="inline">▭ Embed in page</button>
                   </div>
-                  <div class="muted" id="modeHint" style="font-size:12px;margin:-6px 0 16px">A chat bubble in the corner of every page — the classic, works everywhere.</div>
+                  <div class="muted" id="modeHint" style="font-size:12px;margin:-6px 0 16px">A chat bubble in the corner of every page — works everywhere, no setup. Recommended.</div>
                 </div>
                 <div>
                   <label>Accent color</label>
@@ -671,7 +671,12 @@
                   </div>
                 </div>
                 <div class="full"><label>Greeting message</label><input id="w_greeting" maxlength="300" placeholder="Hi! 👋 How can I help you today?" /></div>
-                <div class="full"><label>Launcher label <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional — icon only if blank)</span></label><input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" /></div>
+                <div class="full" id="launcherWrap"><label>Launcher label <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional — icon only if blank)</span></label><input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" /></div>
+                <div class="full" id="triggerWrap" style="display:none">
+                  <label>What does your button say?</label>
+                  <input id="w_trigger" maxlength="60" placeholder="e.g. Book Now" />
+                  <div class="muted" style="font-size:12px;margin:-8px 0 16px">We find the button already on your site with this text and make it open the chat — nothing new is added to your page. (Not case-sensitive.)</div>
+                </div>
               </div>
             </div>
 
@@ -1157,6 +1162,7 @@
         color: ($("w_colorhex").value.trim() || "#2E6B4F"),
         greeting: $("w_greeting").value.trim(),
         launcher: $("w_launcher").value.trim(),
+        trigger: $("w_trigger").value.trim(),
         position: $("w_position").dataset.value || "right",
         mode: $("w_mode").dataset.value || "bubble",
       };
@@ -1183,13 +1189,11 @@
       }
       if (c.mode === "button") {
         attrs.push('  data-mode="button"');
-        return [
-          "<!-- 1) Put this button anywhere on your page -->",
-          '<button onclick="BizAssist.open()">' + escAttr(c.launcher || "Chat with us") + "</button>",
-          "",
-          "<!-- 2) Add this once, before </body> -->",
-          "<script", ...attrs, "  defer><\/script>",
-        ].join("\n");
+        if (c.trigger) attrs.push('  data-trigger-text="' + escAttr(c.trigger) + '"');
+        const note = c.trigger
+          ? '<!-- BizAssist chat — makes your "' + escAttr(c.trigger) + '" button open the chat. Paste anywhere before </body>. -->'
+          : '<!-- BizAssist chat — add onclick="BizAssist.open()" to any button, or type your button text above. Paste before </body>. -->';
+        return [note, "<script", ...attrs, "  defer><\/script>"].join("\n");
       }
       // bubble (default)
       if (c.launcher) attrs.push('  data-launcher="' + escAttr(c.launcher) + '"');
@@ -1222,10 +1226,14 @@
           '</body></html>';
       }
       if (c.mode === "button") {
+        // Show a real "your button" and let the widget attach to it by text — then auto-click
+        // it so the preview demonstrates the actual behavior (their button opens the chat).
+        const label = c.trigger || "Book Now";
         return head +
-          '<button class="demo-btn" onclick="BizAssist.open()">' + escAttr(c.launcher || "Chat with us") + '</button>' +
-          '<script src="' + origin + '/widget.js"' + common + ' data-mode="button"><\/script>' +
-          '<script>window.addEventListener("load",function(){setTimeout(function(){try{BizAssist.open();}catch(e){}},500);});<\/script>' +
+          '<div style="position:absolute;top:22px;left:0;right:0;text-align:center;color:#9a917f;font-size:12px">↓ your existing button</div>' +
+          '<button class="demo-btn">' + escAttr(label) + '</button>' +
+          '<script src="' + origin + '/widget.js"' + common + ' data-mode="button" data-trigger-text="' + escAttr(label) + '"><\/script>' +
+          '<script>window.addEventListener("load",function(){setTimeout(function(){var b=document.querySelector(".demo-btn"); if(b) b.click();},700);});<\/script>' +
           '</body></html>';
       }
       // bubble
@@ -1239,7 +1247,7 @@
     const CONN_HINTS = {
       bubble: "Paste it on as many pages as you like — the same code works everywhere.",
       inline: "One block — paste it exactly where the chat should appear (a contact section, a 'Book online' page…).",
-      button: "Put the button anywhere; the &lt;script&gt; goes once before &lt;/body&gt;. Clicking it opens the chat.",
+      button: "Nothing is added to your page — this makes a button you already have open the chat. Paste it before &lt;/body&gt;.",
     };
     function updateSnippet() {
       const c = connConfig();
@@ -1289,9 +1297,9 @@
     }
 
     const MODE_HINTS = {
-      bubble: "A chat bubble in the corner of every page — the classic, works everywhere.",
-      inline: "The chat sits inside a section of your page, like a contact form. Great for a dedicated 'Book online' area.",
-      button: "No bubble. Your own button (e.g. 'Book Now') opens the chat when clicked.",
+      bubble: "A chat bubble in the corner of every page — works everywhere, no setup. Recommended.",
+      button: "Opens from a button you ALREADY have (like 'Book Now'). Nothing is added to your page — just tell us your button's text.",
+      inline: "The chat is embedded inside a section of your page. Best if you use a site builder where you can drop an HTML block exactly where you want it.",
     };
     function initConnectControls() {
       connReady = true;
@@ -1303,6 +1311,8 @@
           $("w_mode").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
           $("modeHint").textContent = MODE_HINTS[m] || "";
           $("posWrap").style.display = m === "bubble" ? "" : "none";
+          $("launcherWrap").style.display = m === "bubble" ? "" : "none"; // launcher text is bubble-only
+          $("triggerWrap").style.display = m === "button" ? "" : "none";  // "your button text" is button-only
           onChange();
         });
       });
@@ -1314,6 +1324,7 @@
       });
       $("w_greeting").addEventListener("input", onChange);
       $("w_launcher").addEventListener("input", onChange);
+      $("w_trigger").addEventListener("input", onChange);
       $("w_position").querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", () => {
           $("w_position").dataset.value = btn.dataset.pos;
