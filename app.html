@@ -251,6 +251,11 @@
     /* ── connect / install tab ── */
     .conn-cols { display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start; }
     .conn-preview { position:sticky; top:24px; }
+    .setup-note { display:flex; gap:10px; align-items:flex-start; background:var(--gold-soft); border:1px solid var(--gold-line); color:#7a5f1a; border-radius:14px; padding:13px 16px; font-size:13px; line-height:1.5; margin-bottom:22px; }
+    .setup-note strong { color:#5f4a12; }
+    .setup-note::before { content:"⚠"; font-size:15px; line-height:1.35; }
+    .preview-chatframe { width:100%; max-width:360px; height:520px; margin:0 auto; border-radius:18px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--line); background:#faf9f6; }
+    .preview-chatframe iframe { width:100%; height:100%; border:0; display:block; }
     .colorrow { display:flex; gap:10px; align-items:center; margin-bottom:16px; }
     .colorrow input[type=color] { width:46px; height:44px; padding:3px; border-radius:12px; margin:0; cursor:pointer; flex:none; background:var(--paper); }
     .colorrow input[type=text] { margin:0; text-transform:uppercase; letter-spacing:.02em; }
@@ -639,6 +644,7 @@
         <div class="kicker">Go live on your site</div>
         <h1>Connect</h1>
         <div class="sub">Put your AI receptionist on your own website — <span class="serif">one line of code.</span></div>
+        <div class="setup-note"><span>Fill in your <strong>Business</strong> info first — details, hours, and Services &amp; prices — before you connect. That's what your AI answers with. You can still edit it anytime.</span></div>
         <div id="connBanner"></div>
 
         <div class="conn-cols">
@@ -648,36 +654,15 @@
               <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">1. Make it yours</div>
               <div class="muted" style="margin-bottom:18px">Match your brand. Changes update the code and preview instantly.</div>
               <div class="grid">
+                <div class="full"><label>Chat name</label><input id="w_name" maxlength="60" placeholder="Your business name" /></div>
                 <div class="full">
-                  <label>Display style</label>
-                  <div class="seg seg3" id="w_mode" data-value="bubble">
-                    <button type="button" data-mode="bubble" class="on">💬 Chat bubble</button>
-                    <button type="button" data-mode="button">☝ My own button</button>
-                    <button type="button" data-mode="inline">▭ Embed in page</button>
-                  </div>
-                  <div class="muted" id="modeHint" style="font-size:12px;margin:-6px 0 16px">A chat bubble in the corner of every page — works everywhere, no setup. Recommended.</div>
-                </div>
-                <div>
                   <label>Accent color</label>
                   <div class="colorrow">
                     <input type="color" id="w_color" value="#2E6B4F" aria-label="Accent color" />
                     <input type="text" id="w_colorhex" value="#2E6B4F" spellcheck="false" maxlength="7" />
                   </div>
                 </div>
-                <div id="posWrap">
-                  <label>Button position</label>
-                  <div class="seg" id="w_position" data-value="right">
-                    <button type="button" data-pos="right" class="on">Bottom-right</button>
-                    <button type="button" data-pos="left">Bottom-left</button>
-                  </div>
-                </div>
                 <div class="full"><label>Greeting message</label><input id="w_greeting" maxlength="300" placeholder="Hi! 👋 How can I help you today?" /></div>
-                <div class="full" id="launcherWrap"><label>Launcher label <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional — icon only if blank)</span></label><input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" /></div>
-                <div class="full" id="triggerWrap" style="display:none">
-                  <label>What does your button say?</label>
-                  <input id="w_trigger" maxlength="60" placeholder="e.g. Book Now" />
-                  <div class="muted" style="font-size:12px;margin:-8px 0 16px">We find the button already on your site with this text and make it open the chat — nothing new is added to your page. (Not case-sensitive.)</div>
-                </div>
               </div>
             </div>
 
@@ -704,35 +689,19 @@
 
             <!-- No-website fallback -->
             <div class="panel">
-              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">No website? Share a direct link</div>
-              <div class="muted" style="margin-bottom:14px">A full-page version of your assistant, hosted for you. Drop it in your Instagram bio, Google Business profile, or a QR code.</div>
-              <div class="linkrow">
-                <input type="text" id="hostedLink" readonly spellcheck="false" />
-                <button class="copybtn" id="copyLink">Copy</button>
-                <a class="copybtn ghostlink" id="openLink" target="_blank" rel="noopener">Open ↗</a>
-              </div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Don't have a website?</div>
+              <div class="muted" style="margin-bottom:14px">No problem — email us and we'll help you get your assistant online.</div>
+              <a class="copybtn ghostlink" href="mailto:hello@bizzassist.xyz" style="display:inline-flex">✉&nbsp; hello@bizzassist.xyz</a>
             </div>
           </div>
 
-          <!-- Live preview -->
+          <!-- Live preview: the open chat itself -->
           <div class="conn-preview">
             <div class="preview-head"><span class="preview-dot"></span> Live preview</div>
-            <div class="preview-stage">
-              <div class="preview-browser">
-                <div class="pb-bar"><span></span><span></span><span></span></div>
-                <div class="pb-body">
-                  <div class="pb-line" style="width:62%"></div>
-                  <div class="pb-line" style="width:88%"></div>
-                  <div class="pb-line" style="width:74%"></div>
-                  <div class="pb-line" style="width:40%"></div>
-                  <div class="pb-block"></div>
-                  <div class="pb-line" style="width:80%"></div>
-                  <div class="pb-line" style="width:55%"></div>
-                </div>
-                <iframe id="previewFrame" title="Widget preview" referrerpolicy="no-referrer"></iframe>
-              </div>
+            <div class="preview-chatframe">
+              <iframe id="previewFrame" title="Chat preview" referrerpolicy="no-referrer"></iframe>
             </div>
-            <div class="muted" style="font-size:12px;text-align:center;margin-top:12px">This is exactly how it appears to your visitors. Click the bubble to try it.</div>
+            <div class="muted" style="font-size:12px;text-align:center;margin-top:12px">This is your assistant. On your site it opens from a small chat bubble in the corner.</div>
           </div>
         </div>
       </section>
@@ -1159,13 +1128,9 @@
     function connConfig() {
       return {
         slug: (biz && biz.slug) || "",
-        name: (biz && biz.name) || "Front desk",
+        name: ($("w_name").value.trim()) || (biz && biz.name) || "Front desk",
         color: ($("w_colorhex").value.trim() || "#2E6B4F"),
         greeting: $("w_greeting").value.trim(),
-        launcher: $("w_launcher").value.trim(),
-        trigger: $("w_trigger").value.trim(),
-        position: $("w_position").dataset.value || "right",
-        mode: $("w_mode").dataset.value || "bubble",
       };
     }
 
@@ -1178,82 +1143,28 @@
         '  data-color="' + escAttr(c.color) + '"',
       ];
       if (c.greeting) attrs.push('  data-greeting="' + escAttr(c.greeting) + '"');
-
-      if (c.mode === "inline") {
-        // One block, pasted in place — the div and script travel together, nothing to split up.
-        attrs.push('  data-mode="inline"');
-        return [
-          "<!-- BizAssist chat — paste this wherever you want the chat to appear -->",
-          '<div id="bizassist-chat"></div>',
-          "<script", ...attrs, "  defer><\/script>",
-        ].join("\n");
-      }
-      if (c.mode === "button") {
-        attrs.push('  data-mode="button"');
-        if (c.trigger) attrs.push('  data-trigger-text="' + escAttr(c.trigger) + '"');
-        const note = c.trigger
-          ? '<!-- BizAssist chat — makes your "' + escAttr(c.trigger) + '" button open the chat. Paste anywhere before </body>. -->'
-          : '<!-- BizAssist chat — add onclick="BizAssist.open()" to any button, or type your button text above. Paste before </body>. -->';
-        return [note, "<script", ...attrs, "  defer><\/script>"].join("\n");
-      }
-      // bubble (default)
-      if (c.launcher) attrs.push('  data-launcher="' + escAttr(c.launcher) + '"');
-      if (c.position === "left") attrs.push('  data-position="left"');
       return ["<!-- BizAssist AI front desk — paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
     }
 
-    // The preview is the REAL widget, loaded in a sandboxed iframe with the current settings —
-    // so what the owner sees here is exactly what a visitor gets.
+    // The preview IS the real chat, loaded in a sandboxed iframe filling the frame (inline mode,
+    // fixed height — so it can't stretch anything). Shows exactly how the chat looks with the
+    // current name / color / greeting.
     function buildPreviewDoc(c) {
       const origin = widgetOrigin();
       const greeting = c.greeting || "Hi! 👋 How can I help you today?";
       const common = ' data-slug="' + escAttr(c.slug) + '" data-name="' + escAttr(c.name) + '"' +
         ' data-color="' + escAttr(c.color) + '" data-greeting="' + escAttr(greeting) + '"';
-      const head = '<!doctype html><html><head><meta charset="utf-8">' +
+      return '<!doctype html><html><head><meta charset="utf-8">' +
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-        '<style>html,body{margin:0;height:100%;background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}' +
-        '.demo-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:' + escAttr(c.color) + ';color:#fff;border:0;border-radius:12px;padding:14px 26px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 10px 30px -8px rgba(0,0,0,.35);}' +
-        '</style></head><body>';
-
-      if (c.mode === "inline") {
-        // Show it the way it really sits: page content above, the chat embedded below.
-        return head +
-          '<div style="padding:16px 14px 8px">' +
-          '<div style="height:9px;width:55%;border-radius:6px;background:#E9E1CF;margin-bottom:10px"></div>' +
-          '<div style="height:9px;width:80%;border-radius:6px;background:#E9E1CF;margin-bottom:14px"></div>' +
-          '</div>' +
-          '<div id="bizassist-chat" style="padding:0 14px"></div>' +
-          '<script src="' + origin + '/widget.js"' + common + ' data-mode="inline" data-height="330px"><\/script>' +
-          '</body></html>';
-      }
-      if (c.mode === "button") {
-        // Show a real "your button" and let the widget attach to it by text — then auto-click
-        // it so the preview demonstrates the actual behavior (their button opens the chat).
-        const label = c.trigger || "Book Now";
-        return head +
-          '<div style="position:absolute;top:22px;left:0;right:0;text-align:center;color:#9a917f;font-size:12px">↓ your existing button</div>' +
-          '<button class="demo-btn">' + escAttr(label) + '</button>' +
-          '<script src="' + origin + '/widget.js"' + common + ' data-mode="button" data-trigger-text="' + escAttr(label) + '"><\/script>' +
-          '<script>window.addEventListener("load",function(){setTimeout(function(){var b=document.querySelector(".demo-btn"); if(b) b.click();},700);});<\/script>' +
-          '</body></html>';
-      }
-      // bubble
-      return head +
-        '<script src="' + origin + '/widget.js"' + common +
-        (c.launcher ? ' data-launcher="' + escAttr(c.launcher) + '"' : '') +
-        ' data-position="' + (c.position === "left" ? "left" : "right") + '" data-greeter="off"><\/script>' +
+        '<style>html,body{margin:0;height:100%;background:transparent;}#bizassist-chat{position:absolute;inset:0;}</style></head><body>' +
+        '<div id="bizassist-chat"></div>' +
+        '<script src="' + origin + '/widget.js"' + common + ' data-mode="inline" data-target="#bizassist-chat" data-height="100%"><\/script>' +
         '</body></html>';
     }
 
-    const CONN_HINTS = {
-      bubble: "Paste it on as many pages as you like — the same code works everywhere.",
-      inline: "One block — paste it exactly where the chat should appear (a contact section, a 'Book online' page…).",
-      button: "Nothing is added to your page — this makes a button you already have open the chat. Paste it before &lt;/body&gt;.",
-    };
     function updateSnippet() {
-      const c = connConfig();
-      $("snippet").textContent = buildSnippet(c);
-      $("connHint").innerHTML = CONN_HINTS[c.mode] || CONN_HINTS.bubble;
+      $("snippet").textContent = buildSnippet(connConfig());
+      $("connHint").textContent = "Same code works on every page — paste it wherever you like.";
     }
     function updatePreview() {
       $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
@@ -1275,7 +1186,7 @@
         ["Squarespace", ["Go to <strong>Settings → Advanced → Code Injection</strong>.", "Paste your code into the <strong>Footer</strong> box.", "Save — it appears site-wide."]],
         ["Wix", ["Go to <strong>Settings → Custom Code</strong> (under Advanced).", "Click <strong>+ Add Custom Code</strong> and paste your code.", "Set it to load on <strong>All pages</strong>, placed in <strong>Body – end</strong>, then Apply."]],
         ["Webflow", ["Go to <strong>Project Settings → Custom Code</strong>.", "Paste your code into the <strong>Footer Code</strong> box.", "Save, then Publish your site."]],
-        ["GoDaddy / other builders", ["Add an <strong>Embed / Custom HTML</strong> section, or a site-wide footer code area if your plan has one.", "Paste your code and save.", "No code option? Use the direct link below — it always works."]],
+        ["GoDaddy / other builders", ["Add an <strong>Embed / Custom HTML</strong> section, or a site-wide footer code area if your plan has one.", "Paste your code and save.", "Stuck? Email <strong>hello@bizzassist.xyz</strong> and we'll help you get it on."]],
       ];
       return G.map(function (g, i) {
         return '<details' + (i === 0 ? " open" : "") + '><summary>' + g[0] + '</summary>' +
@@ -1297,26 +1208,10 @@
       } else { fallbackCopy(text); done(); }
     }
 
-    const MODE_HINTS = {
-      bubble: "A chat bubble in the corner of every page — works everywhere, no setup. Recommended.",
-      button: "Opens from a button you ALREADY have (like 'Book Now'). Nothing is added to your page — just tell us your button's text.",
-      inline: "The chat is embedded inside a section of your page. Best if you use a site builder where you can drop an HTML block exactly where you want it.",
-    };
     function initConnectControls() {
       connReady = true;
       const onChange = () => { updateSnippet(); clearTimeout(connDebounce); connDebounce = setTimeout(updatePreview, 350); };
-      $("w_mode").querySelectorAll("button").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const m = btn.dataset.mode;
-          $("w_mode").dataset.value = m;
-          $("w_mode").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
-          $("modeHint").textContent = MODE_HINTS[m] || "";
-          $("posWrap").style.display = m === "bubble" ? "" : "none";
-          $("launcherWrap").style.display = m === "bubble" ? "" : "none"; // launcher text is bubble-only
-          $("triggerWrap").style.display = m === "button" ? "" : "none";  // "your button text" is button-only
-          onChange();
-        });
-      });
+      $("w_name").addEventListener("input", onChange);
       $("w_color").addEventListener("input", () => { $("w_colorhex").value = $("w_color").value.toUpperCase(); onChange(); });
       $("w_colorhex").addEventListener("input", () => {
         const v = $("w_colorhex").value.trim();
@@ -1324,27 +1219,15 @@
         onChange();
       });
       $("w_greeting").addEventListener("input", onChange);
-      $("w_launcher").addEventListener("input", onChange);
-      $("w_trigger").addEventListener("input", onChange);
-      $("w_position").querySelectorAll("button").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          $("w_position").dataset.value = btn.dataset.pos;
-          $("w_position").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
-          onChange();
-        });
-      });
       $("copySnippet").addEventListener("click", () => copyText($("snippet").textContent, $("copySnippet"), "Copy code"));
-      $("copyLink").addEventListener("click", () => copyText($("hostedLink").value, $("copyLink"), "Copy"));
       // "Send to your web person": a ready-made email — subject, instructions, and the code —
       // so a non-technical owner never touches HTML. The full text is also copied to the
       // clipboard, because mailto: does nothing on machines with no mail app configured.
       $("emailSnippet").addEventListener("click", () => {
         const c = connConfig();
-        const where = c.mode === "inline"
-          ? "paste it exactly where the chat should appear on the page"
-          : "paste it just before the closing </body> tag";
         const bodyText =
-          "Hi!\n\nCould you add our AI booking assistant to the website? It's one small snippet — " + where + ":\n\n" +
+          "Hi!\n\nCould you add our AI booking assistant to the website? It's one small snippet — " +
+          "paste it just before the closing </body> tag:\n\n" +
           buildSnippet(c) +
           "\n\nThat's everything — it works on any platform (WordPress, Wix, Shopify, Squarespace, plain HTML). " +
           "Step-by-step guides per platform: " + widgetOrigin() + "/app (Connect tab).\n\nThanks!";
@@ -1357,10 +1240,7 @@
     function renderConnect() {
       if (!biz) return;
       if (!connReady) initConnectControls();
-      const origin = widgetOrigin();
-      const hosted = origin + "/c/" + (biz.slug || "");
-      $("hostedLink").value = hosted;
-      $("openLink").href = hosted;
+      if (!$("w_name").value) $("w_name").value = biz.name || "";
       if (!$("guides").childElementCount) $("guides").innerHTML = guidesHtml();
       renderConnBanner();
       updateSnippet();
@@ -1404,7 +1284,7 @@
     let supReady = false, supHistory = [], supSending = false;
     function faqHtml() {
       const F = [
-        ["How do I put the AI on my website?", "Open the <strong>Connect</strong> tab, pick a style (floating bubble, inline, or your own button), copy the one-line code, and paste it into your site just before the <strong>&lt;/body&gt;</strong> tag. That's it."],
+        ["How do I put the AI on my website?", "Open the <strong>Connect</strong> tab, copy the one-line code, and paste it into your site just before the <strong>&lt;/body&gt;</strong> tag — a chat bubble appears in the corner. Not technical? Hit <strong>Send to your web person</strong> and it emails the whole thing for you."],
         ["When does my AI actually go live?", "The moment your subscription is active. You can install the code any time beforehand — it shows a friendly \"not switched on yet\" note until you subscribe, then goes live automatically."],
         ["How does the AI know my prices and hours?", "From the <strong>Business</strong> tab (hours, timezone, address) and the <strong>Services &amp; prices</strong> section right below it. Fill those in and the AI quotes them exactly — it never makes prices up."],
         ["Can customers cancel or reschedule on their own?", "Yes. They just tell the AI — it verifies their name and the phone or email they booked with, then handles it. No work for you."],
