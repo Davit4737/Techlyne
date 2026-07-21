@@ -12,11 +12,13 @@ import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } fr
 import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage } from "./_lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
 
-// Paid tenants get the smart model (booking correctness is the product). The free landing-page
-// demo runs on the cheap/fast model — it's an anonymous, rate-limited taster, not worth premium
-// tokens. Both keep tool use, so the demo still books.
+// Both paid tenants and the free landing-page demo run on Sonnet 5 — booking correctness is the
+// product, and the demo is the first thing a prospect sees. The demo trims cost by running at
+// "low" effort (see the output_config below) plus prompt caching, not by dropping to a weaker
+// model. (An earlier attempt to run the demo on Haiku broke it: Haiku 4.5 rejects the effort
+// output_config the tool loop sets, so every demo request 400'd and users saw "unavailable".)
 const MODEL = "claude-sonnet-5";
-const DEMO_MODEL = "claude-haiku-4-5-20251001";
+const DEMO_MODEL = "claude-sonnet-5";
 // Enough headroom for adaptive thinking + a tool-heavy turn without truncation.
 const MAX_TOKENS = 900;
 const MAX_MSG_LEN = 600; // booking messages are short; caps token burn per request
@@ -762,10 +764,11 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: isDemo ? DEMO_MODEL : MODEL,
           max_tokens: isDemo ? DEMO_MAX_TOKENS : MAX_TOKENS,
-          // Medium effort: "low" was observed skipping tool calls and asserting outcomes
-          // ("email added ✅" without actually calling the tool). Booking correctness is
-          // worth the small cost bump.
-          output_config: { effort: "medium" },
+          // Paid tenants run at medium effort: "low" was observed skipping tool calls and
+          // asserting outcomes ("email added ✅" without actually calling the tool), and booking
+          // correctness is worth the small cost bump. The free demo runs at "low" to keep the
+          // anonymous taster cheap — a missed tool call there costs nothing real.
+          output_config: { effort: isDemo ? "low" : "medium" },
           system: [
             { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
             {
