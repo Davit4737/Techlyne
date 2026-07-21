@@ -679,42 +679,18 @@
                   <label>How it opens on your site</label>
                   <div class="seg" id="w_modeseg" role="tablist">
                     <button type="button" data-mode="bubble" class="on">💬 Floating bubble</button>
-                    <button type="button" data-mode="design">🎨 Design a button</button>
                     <button type="button" data-mode="button">👆 My own button</button>
-                  </div>
-
-                  <!-- Position (shared: bubble + designed button) -->
-                  <div id="w_opts_position" class="modeopts">
-                    <label>Position</label>
-                    <div class="seg" id="w_posseg">
-                      <button type="button" data-pos="right" class="on">Bottom-right</button>
-                      <button type="button" data-pos="left">Bottom-left</button>
-                    </div>
                   </div>
 
                   <!-- Bubble options -->
                   <div id="w_opts_bubble" class="modeopts">
+                    <label>Bubble position</label>
+                    <div class="seg" id="w_posseg">
+                      <button type="button" data-pos="right" class="on">Bottom-right</button>
+                      <button type="button" data-pos="left">Bottom-left</button>
+                    </div>
                     <label>Label next to the bubble <span class="muted" style="font-weight:400">— optional</span></label>
                     <input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" />
-                  </div>
-
-                  <!-- Design-a-button options -->
-                  <div id="w_opts_design" class="modeopts" style="display:none">
-                    <label>Button text</label>
-                    <input id="w_btnlabel" maxlength="40" placeholder="e.g. Chat with us" />
-                    <label>Size</label>
-                    <div class="seg" id="w_sizeseg">
-                      <button type="button" data-size="s">Small</button>
-                      <button type="button" data-size="m" class="on">Medium</button>
-                      <button type="button" data-size="l">Large</button>
-                    </div>
-                    <label>Animation</label>
-                    <div class="seg" id="w_animseg">
-                      <button type="button" data-anim="none" class="on">None</button>
-                      <button type="button" data-anim="pulse">Pulse</button>
-                      <button type="button" data-anim="bounce">Bounce</button>
-                    </div>
-                    <div class="hint">We build the button for you — it uses your accent colour above and floats in the corner you picked, so there's nothing to place on your page.</div>
                   </div>
 
                   <!-- Own-button options -->
@@ -1205,9 +1181,7 @@
     // The widget only *answers* once `active` is true (the API resolves tenants with active =
     // true), which is exactly the subscription gate; before that it shows a "not switched on" note.
     let connReady = false, connDebounce = null;
-    // How the widget opens on the client's site: mode = bubble | design (a button we render) |
-    // button (attach to their own). btnSize/btnAnim only apply to the designed button.
-    let connMode = "bubble", connPos = "right", connBtnSize = "m", connBtnAnim = "none";
+    let connMode = "bubble", connPos = "right"; // how the widget opens on the client's site
     const widgetOrigin = () => location.origin.replace(/\/$/, "");
     function escAttr(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
@@ -1220,9 +1194,6 @@
         mode: connMode,
         position: connPos,
         launcher: ($("w_launcher") && $("w_launcher").value.trim()) || "",
-        btnLabel: ($("w_btnlabel") && $("w_btnlabel").value.trim()) || "",
-        btnSize: connBtnSize,
-        btnAnim: connBtnAnim,
         triggerText: ($("w_triggertext") && $("w_triggertext").value.trim()) || "",
       };
     }
@@ -1243,17 +1214,6 @@
         attrs.push('  data-mode="button"');
         if (c.triggerText) attrs.push('  data-trigger-text="' + escAttr(c.triggerText) + '"');
         return ["<!-- BizAssist AI front desk — opens from your own button -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
-      }
-
-      // "Design a button": a floating launcher styled as a labelled pill button (still the widget's
-      // built-in launcher, so it stays position-independent — nothing to place on the page).
-      if (c.mode === "design") {
-        attrs.push('  data-launcher-style="button"');
-        if (c.btnLabel) attrs.push('  data-launcher="' + escAttr(c.btnLabel) + '"');
-        if (c.btnSize && c.btnSize !== "m") attrs.push('  data-launcher-size="' + escAttr(c.btnSize) + '"');
-        if (c.btnAnim && c.btnAnim !== "none") attrs.push('  data-launcher-anim="' + escAttr(c.btnAnim) + '"');
-        if (c.position === "left") attrs.push('  data-position="left"');
-        return ["<!-- BizAssist AI front desk — paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
       }
 
       // Bubble (default): floating round launcher in the corner.
@@ -1281,16 +1241,12 @@
     // Show the option fields for the active mode and update the guidance copy to match.
     function applyModeUI() {
       const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? "" : "none"; };
-      show("w_opts_position", connMode === "bubble" || connMode === "design"); // position only for floating openers
       show("w_opts_bubble", connMode === "bubble");
-      show("w_opts_design", connMode === "design");
       show("w_opts_button", connMode === "button");
       $("w_modeseg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === connMode));
       const note = $("connPreviewNote");
       if (note) note.textContent = connMode === "button"
         ? "This is your assistant. On your site it opens from your own button — no bubble is shown."
-        : connMode === "design"
-        ? "This is your assistant. On your site it opens from the button you designed, floating in the corner."
         : "This is your assistant. On your site it opens from a small chat bubble in the corner.";
     }
 
@@ -1354,20 +1310,17 @@
       });
       $("w_greeting").addEventListener("input", onChange);
       $("w_launcher").addEventListener("input", onChange);
-      $("w_btnlabel").addEventListener("input", onChange);
       $("w_triggertext").addEventListener("input", onChange);
-      // A segmented control where each button carries dataset[key]; sets the state var + rebuilds.
-      const wireSeg = (segId, apply) => $(segId).querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => {
-        $(segId).querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
-        apply(btn); onChange();
-      }));
-      // Mode picker (bubble / design / own-button): swap the visible options, then rebuild.
+      // Mode picker (bubble / own-button): swap the visible options, then rebuild.
       $("w_modeseg").querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => {
         connMode = btn.dataset.mode; applyModeUI(); onChange();
       }));
-      wireSeg("w_posseg", (btn) => { connPos = btn.dataset.pos; });
-      wireSeg("w_sizeseg", (btn) => { connBtnSize = btn.dataset.size; });
-      wireSeg("w_animseg", (btn) => { connBtnAnim = btn.dataset.anim; });
+      // Bubble position (right / left).
+      $("w_posseg").querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => {
+        connPos = btn.dataset.pos;
+        $("w_posseg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
+        onChange();
+      }));
       $("copySnippet").addEventListener("click", () => copyText($("snippet").textContent, $("copySnippet"), "Copy code"));
       // "Send to your web person": a ready-made email — subject, instructions, and the code —
       // so a non-technical owner never touches HTML. The full text is also copied to the
