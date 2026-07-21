@@ -58,6 +58,13 @@
   var LAUNCHER_LABEL = (data.launcher || "").slice(0, 40); // optional text next to the bubble
   var SHOW_BRANDING = data.branding !== "off";
 
+  // Launcher appearance (the floating opener). Default is the round chat bubble; "button" makes
+  // it a pill-shaped, labelled button the owner designs (text + size + animation) — same floating
+  // launcher + panel underneath, just styled differently, so it stays position-independent.
+  var LAUNCHER_STYLE = data.launcherStyle === "button" ? "button" : "bubble";
+  var LAUNCHER_SIZE = (["s", "m", "l"].indexOf(data.launcherSize) !== -1) ? data.launcherSize : "m";
+  var LAUNCHER_ANIM = (["none", "pulse", "bounce"].indexOf(data.launcherAnim) !== -1) ? data.launcherAnim : "none";
+
   // Display style:
   //   "bubble" (default) — a floating launcher + panel in the corner.
   //   "inline"           — the chat panel rendered inside the host's own element
@@ -74,8 +81,9 @@
   //   any element with onclick="BizAssist.open()" or [data-bizassist-open] also works.
   var TRIGGER = (data.trigger || "").trim();
   var TRIGGER_TEXT = (data.triggerText || "").trim();
-  // The teaser bubble only makes sense for the floating launcher.
-  var GREETER = MODE === "bubble" && data.greeter !== "off";
+  // The teaser bubble only makes sense for the round floating bubble (a designed button already
+  // carries its own label, so a teaser on top of it is noise).
+  var GREETER = MODE === "bubble" && LAUNCHER_STYLE === "bubble" && data.greeter !== "off";
 
   var STORE_KEY = "bizassist:" + SLUG; // per-tenant conversation state, per browser session
 
@@ -348,10 +356,18 @@
       '  <button class="teaser-x" aria-label="Dismiss">&times;</button>',
       '  <div class="teaser-text"></div>',
       '</div>',
-      '<button class="launcher" aria-label="Chat with ' + esc(NAME) + '" aria-expanded="false">',
-      '  <svg class="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.9 8.4 9 9 0 0 1-4.1-.9L3 20l1.1-4.9A8.38 8.38 0 0 1 3.5 11 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"/></svg>',
-      '  <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
-      '</button>',
+      LAUNCHER_STYLE === "button"
+        ? // Designed pill button: shows the owner's label; size + animation come from CSS classes.
+          '<button class="launcher launcher-btn size-' + LAUNCHER_SIZE +
+            (LAUNCHER_ANIM !== "none" ? " anim-" + LAUNCHER_ANIM : "") +
+            '" aria-label="Chat with ' + esc(NAME) + '" aria-expanded="false">' +
+            '<span class="lbl">' + esc(LAUNCHER_LABEL || "Chat with us") + '</span>' +
+          '</button>'
+        : // Default round bubble: chat icon that swaps to a close icon when open.
+          '<button class="launcher" aria-label="Chat with ' + esc(NAME) + '" aria-expanded="false">' +
+            '<svg class="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.9 8.4 9 9 0 0 1-4.1-.9L3 20l1.1-4.9A8.38 8.38 0 0 1 3.5 11 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"/></svg>' +
+            '<svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+          '</button>',
       '<section class="panel" role="dialog" aria-label="' + esc(NAME) + ' chat" aria-hidden="true">',
       '  <header class="phead">',
       '    <div class="avatar">' + INITIAL + '</div>',
@@ -392,6 +408,20 @@
     ".ic-close{opacity:0;transform:rotate(-90deg) scale(.6);}" +
     ".wrap.open .ic-chat{opacity:0;transform:rotate(90deg) scale(.6);}" +
     ".wrap.open .ic-close{opacity:1;transform:none;}" +
+
+    /* designed pill button (launcher-style=button): auto-width, labelled, size + animation */
+    ".launcher-btn{width:auto;height:auto;border-radius:999px;padding:14px 24px;font-weight:700;" +
+      "font-size:15px;letter-spacing:.01em;line-height:1;white-space:nowrap;}" +
+    ".launcher-btn.size-s{padding:10px 18px;font-size:13.5px;}" +
+    ".launcher-btn.size-l{padding:18px 32px;font-size:17.5px;}" +
+    "@keyframes ba-pulse{0%{box-shadow:0 8px 26px -6px rgba(20,20,20,.4),0 0 0 0 rgba(20,20,20,.22);}" +
+      "70%{box-shadow:0 8px 26px -6px rgba(20,20,20,.4),0 0 0 16px rgba(20,20,20,0);}" +
+      "100%{box-shadow:0 8px 26px -6px rgba(20,20,20,.4),0 0 0 0 rgba(20,20,20,0);}}" +
+    ".launcher-btn.anim-pulse{animation:ba-pulse 2.2s ease-out infinite;}" +
+    "@keyframes ba-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}" +
+    ".launcher-btn.anim-bounce{animation:ba-bounce 1.7s ease-in-out infinite;}" +
+    ".launcher-btn:hover{transform:translateY(-2px) scale(1.03);}" +
+    ".wrap.reduced .launcher-btn{animation:none;}" +
 
     /* teaser bubble */
     ".teaser{position:fixed;bottom:92px;max-width:260px;background:var(--bg);color:var(--ink);" +
