@@ -268,6 +268,9 @@
     .seg button { flex:1; background:transparent; color:var(--muted); border:0; border-radius:0; padding:11px 8px; font-size:13.5px; font-weight:600; box-shadow:none; }
     .seg button:hover { background:var(--bg); color:var(--ink); transform:none; box-shadow:none; }
     .seg button.on { background:var(--green-soft); color:var(--green-d); }
+    .modeopts { margin-top:4px; }
+    .modeopts label { display:block; margin:2px 0 6px; }
+    .modeopts .seg { margin-top:2px; }
     .codebox {
       background:var(--choc); color:#EFE7D6; border-radius:14px; padding:16px 18px; margin:0 0 12px;
       font-family:ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size:12.5px;
@@ -671,6 +674,38 @@
                   </div>
                 </div>
                 <div class="full"><label>Greeting message</label><input id="w_greeting" maxlength="300" placeholder="Hi! 👋 How can I help you today?" /></div>
+
+                <div class="full">
+                  <label>How it opens on your site</label>
+                  <div class="seg" id="w_modeseg" role="tablist">
+                    <button type="button" data-mode="bubble" class="on">💬 Floating bubble</button>
+                    <button type="button" data-mode="button">👆 Your own button</button>
+                    <button type="button" data-mode="inline">🧩 Embedded panel</button>
+                  </div>
+
+                  <!-- Bubble options -->
+                  <div id="w_opts_bubble" class="modeopts">
+                    <label>Bubble position</label>
+                    <div class="seg" id="w_posseg">
+                      <button type="button" data-pos="right" class="on">Bottom-right</button>
+                      <button type="button" data-pos="left">Bottom-left</button>
+                    </div>
+                    <label>Label next to the bubble <span class="muted" style="font-weight:400">— optional</span></label>
+                    <input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" />
+                  </div>
+
+                  <!-- Own-button options -->
+                  <div id="w_opts_button" class="modeopts" style="display:none">
+                    <label>What does your button say?</label>
+                    <input id="w_triggertext" maxlength="40" placeholder="e.g. Book Now" />
+                    <div class="hint">Type the exact words on the button (or link) you already have. The chat opens when a visitor clicks it — no bubble is added. Works with any button on your site.</div>
+                  </div>
+
+                  <!-- Inline / embedded options -->
+                  <div id="w_opts_inline" class="modeopts" style="display:none">
+                    <div class="hint">The chat panel appears right inside your page, wherever you paste the code — great for a "Book an appointment" section. Drop it into a Custom&nbsp;HTML / Embed block.</div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -709,7 +744,7 @@
             <div class="preview-chatframe">
               <iframe id="previewFrame" title="Chat preview" referrerpolicy="no-referrer"></iframe>
             </div>
-            <div class="muted" style="font-size:12px;text-align:center;margin-top:12px">This is your assistant. On your site it opens from a small chat bubble in the corner.</div>
+            <div class="muted" style="font-size:12px;text-align:center;margin-top:12px" id="connPreviewNote">This is your assistant. On your site it opens from a small chat bubble in the corner.</div>
           </div>
         </div>
       </section>
@@ -1152,6 +1187,7 @@
     // The widget only *answers* once `active` is true (the API resolves tenants with active =
     // true), which is exactly the subscription gate; before that it shows a "not switched on" note.
     let connReady = false, connDebounce = null;
+    let connMode = "bubble", connPos = "right"; // how the widget opens on the client's site
     const widgetOrigin = () => location.origin.replace(/\/$/, "");
     function escAttr(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
@@ -1161,6 +1197,10 @@
         name: ($("w_name").value.trim()) || (biz && biz.name) || "Front desk",
         color: ($("w_colorhex").value.trim() || "#2E6B4F"),
         greeting: $("w_greeting").value.trim(),
+        mode: connMode,
+        position: connPos,
+        launcher: ($("w_launcher") && $("w_launcher").value.trim()) || "",
+        triggerText: ($("w_triggertext") && $("w_triggertext").value.trim()) || "",
       };
     }
 
@@ -1173,6 +1213,30 @@
         '  data-color="' + escAttr(c.color) + '"',
       ];
       if (c.greeting) attrs.push('  data-greeting="' + escAttr(c.greeting) + '"');
+
+      // "Your own button": no bubble — the widget wires the client's existing button/link to
+      // open the chat, matched by the text they typed.
+      if (c.mode === "button") {
+        attrs.push('  data-mode="button"');
+        if (c.triggerText) attrs.push('  data-trigger-text="' + escAttr(c.triggerText) + '"');
+        return ["<!-- BizAssist AI front desk — opens from your own button -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
+      }
+
+      // "Embedded panel": the chat renders inline, right where the code is pasted. Ships with its
+      // own container div so it's still a single copy-paste block for builder "Embed HTML" areas.
+      if (c.mode === "inline") {
+        attrs.push('  data-mode="inline"');
+        attrs.push('  data-target="#bizassist-chat"');
+        return [
+          "<!-- BizAssist AI front desk — paste where you want the chat to appear -->",
+          '<div id="bizassist-chat"></div>',
+          "<script", ...attrs, "  defer><\/script>",
+        ].join("\n");
+      }
+
+      // Bubble (default): floating launcher in the corner.
+      if (c.position === "left") attrs.push('  data-position="left"');
+      if (c.launcher) attrs.push('  data-launcher="' + escAttr(c.launcher) + '"');
       return ["<!-- BizAssist AI front desk — paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
     }
 
@@ -1192,9 +1256,28 @@
         '</body></html>';
     }
 
+    // Show the option fields for the active mode and update the guidance copy to match.
+    function applyModeUI() {
+      const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? "" : "none"; };
+      show("w_opts_bubble", connMode === "bubble");
+      show("w_opts_button", connMode === "button");
+      show("w_opts_inline", connMode === "inline");
+      $("w_modeseg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === connMode));
+      const note = $("connPreviewNote");
+      if (note) note.textContent = connMode === "button"
+        ? "This is your assistant. On your site it opens from your own button — no bubble is shown."
+        : connMode === "inline"
+        ? "This is your assistant. On your site it sits right inside the page where you paste it."
+        : "This is your assistant. On your site it opens from a small chat bubble in the corner.";
+    }
+
     function updateSnippet() {
       $("snippet").textContent = buildSnippet(connConfig());
-      $("connHint").textContent = "Same code works on every page — paste it wherever you like.";
+      $("connHint").textContent = connMode === "button"
+        ? "Paste this once before </body>. Make sure a button or link with that text exists on your page."
+        : connMode === "inline"
+        ? "Paste this exactly where you want the chat to appear on the page."
+        : "Same code works on every page — paste it wherever you like.";
     }
     function updatePreview() {
       $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
@@ -1249,6 +1332,18 @@
         onChange();
       });
       $("w_greeting").addEventListener("input", onChange);
+      $("w_launcher").addEventListener("input", onChange);
+      $("w_triggertext").addEventListener("input", onChange);
+      // Mode picker (bubble / own-button / inline): swap the visible options, then rebuild.
+      $("w_modeseg").querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => {
+        connMode = btn.dataset.mode; applyModeUI(); onChange();
+      }));
+      // Bubble position (right / left).
+      $("w_posseg").querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => {
+        connPos = btn.dataset.pos;
+        $("w_posseg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
+        onChange();
+      }));
       $("copySnippet").addEventListener("click", () => copyText($("snippet").textContent, $("copySnippet"), "Copy code"));
       // "Send to your web person": a ready-made email — subject, instructions, and the code —
       // so a non-technical owner never touches HTML. The full text is also copied to the
@@ -1273,6 +1368,7 @@
       if (!$("w_name").value) $("w_name").value = biz.name || "";
       if (!$("guides").childElementCount) $("guides").innerHTML = guidesHtml();
       renderConnBanner();
+      applyModeUI();
       updateSnippet();
       updatePreview();
     }
