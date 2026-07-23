@@ -1587,9 +1587,17 @@
       const email = $("email").value.trim();
       if (!email) { $("loginErr").textContent = "Type your email above first, then click \"Forgot password?\"."; return; }
       try {
-        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/app" });
-        if (error) throw error;
-        $("loginOk").textContent = "Reset link sent to " + email + ", open it and you'll be asked to set a new password.";
+        // Goes through our own /api/reset-request (branded email via Resend from bizzassist.xyz),
+        // not Supabase's rate-limited, unbranded mailer. The link it sends is a normal Supabase
+        // recovery link, so the PASSWORD_RECOVERY landing below is unchanged.
+        const r = await fetch("/api/reset-request", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || "Could not send the reset email.");
+        $("loginOk").textContent = "If an account exists for " + email + ", a reset link is on its way. Open it to set a new password.";
       } catch (err) { $("loginErr").textContent = err.message || "Could not send the reset email."; }
     });
 
