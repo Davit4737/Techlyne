@@ -1,0 +1,53 @@
+<!--
+  BizAssist — Supabase auth email: "Confirm signup" template.
+  Paste the whole thing into Supabase → Authentication → Email Templates → Confirm signup.
+  Suggested Subject: Confirm your email to start your BizAssist trial
+  Uses Supabase's {{ .ConfirmationURL }} variable for the one-time confirmation link.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E6;margin:0;padding:32px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="width:480px;max-width:92%;background:#FFFDF7;border:1px solid #E3DAC6;border-radius:18px;overflow:hidden;">
+        <!-- header -->
+        <tr>
+          <td style="padding:30px 36px 8px;">
+            <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#211C13;">BizAssist<span style="color:#2E6B4F;">.</span></span>
+          </td>
+        </tr>
+        <!-- body -->
+        <tr>
+          <td style="padding:8px 36px 4px;">
+            <h1 style="margin:0 0 12px;font-size:23px;font-weight:800;letter-spacing:-0.5px;color:#211C13;line-height:1.2;">Confirm your email</h1>
+            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#5C5645;">Welcome to BizAssist. Confirm your email to activate your account and start your <strong style="color:#211C13;">7-day free trial</strong> — your AI front desk that answers clients and books appointments 24/7.</p>
+          </td>
+        </tr>
+        <!-- button -->
+        <tr>
+          <td style="padding:4px 36px 24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="border-radius:999px;background:#2E6B4F;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:13px 28px;font-size:15px;font-weight:700;color:#FFFDF7;text-decoration:none;border-radius:999px;">Confirm my email</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- fallback link -->
+        <tr>
+          <td style="padding:0 36px 26px;">
+            <p style="margin:0 0 6px;font-size:12.5px;line-height:1.6;color:#8A8069;">If the button doesn't work, paste this link into your browser:</p>
+            <p style="margin:0;font-size:12.5px;line-height:1.5;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#2E6B4F;">{{ .ConfirmationURL }}</a></p>
+          </td>
+        </tr>
+        <!-- footer -->
+        <tr>
+          <td style="padding:20px 36px 28px;border-top:1px solid #EFE7D6;">
+            <p style="margin:0 0 4px;font-size:12.5px;line-height:1.6;color:#8A8069;">Didn't create a BizAssist account? You can safely ignore this email.</p>
+            <p style="margin:0;font-size:12px;color:#A79D8A;">© BizAssist · The front desk that never sleeps.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
