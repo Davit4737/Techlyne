@@ -333,7 +333,8 @@
     /* ── support AI chat ── */
     .sup-chat { display:flex; flex-direction:column; height:520px; background:var(--paper); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow); }
     .sup-head { display:flex; align-items:center; gap:10px; padding:13px 15px; border-bottom:1px solid var(--line-soft); background:var(--bg); }
-    .sup-avatar { width:34px; height:34px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-display); flex:none; }
+    .sup-avatar { width:34px; height:34px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-display); flex:none; overflow:hidden; }
+    .sup-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
     .sup-thread { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
     .sup-msg { max-width:86%; padding:10px 13px; border-radius:14px; font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; animation:fadeUp .2s ease both; }
     .sup-msg.bot { background:var(--bg); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px; }
@@ -802,7 +803,7 @@
           </div>
           <div class="conn-preview" style="position:static">
             <div class="sup-chat">
-              <div class="sup-head"><div class="sup-avatar">B</div><div><div style="font-weight:700;font-size:14.5px">BizAssist helper</div><div style="font-size:11.5px;color:var(--muted)">Ask me how to do anything</div></div></div>
+              <div class="sup-head"><div class="sup-avatar"><img src="/img/favicon.svg" alt="BizAssist" /></div><div><div style="font-weight:700;font-size:14.5px">BizAssist helper</div><div style="font-size:11.5px;color:var(--muted)">Ask me how to do anything</div></div></div>
               <div class="sup-thread" id="supThread"></div>
               <div class="sup-err err" id="supErr" style="padding:0 4px"></div>
               <div class="sup-composer">
