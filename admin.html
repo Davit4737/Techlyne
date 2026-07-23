@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>BizAssist — Bookings</title>
+  <title>BizAssist: Bookings</title>
   <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
   <style>
     :root {
@@ -115,7 +115,7 @@
     function render(data) {
       $("login").style.display = "none";
       $("dash").style.display = "block";
-      $("title").textContent = data.clinic_name + " — Bookings";
+      $("title").textContent = data.clinic_name + " : Bookings";
       $("sub").textContent = "Times shown in " + data.timezone;
 
       const now = Date.now();

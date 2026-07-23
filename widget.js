@@ -293,13 +293,13 @@
       var payload = await res.json().catch(function () { return {}; });
       typing.remove();
       if (!res.ok) throw new Error(payload.error || "Something went wrong. Please try again.");
-      var reply = payload.reply || "Sorry, I didn't catch that — could you say it another way?";
+      var reply = payload.reply || "Sorry, I didn't catch that. Could you say it another way?";
       addMsg("bot", reply);
       history.push({ role: "assistant", content: reply });
       persist();
     } catch (e) {
       typing.remove();
-      errEl.textContent = e.message || "Network error — please try again.";
+      errEl.textContent = e.message || "Network error. Please try again.";
     } finally {
       sending = false; sendBtn.disabled = false;
       try { input.focus(); } catch (err) {}
@@ -356,7 +356,7 @@
       '  <header class="phead">',
       '    <div class="avatar">' + INITIAL + '</div>',
       '    <div class="pmeta"><div class="pname">' + esc(NAME) + '</div>',
-      '      <div class="pstatus"><span class="dot"></span> Online — replies in seconds</div></div>',
+      '      <div class="pstatus"><span class="dot"></span> Online, replies in seconds</div></div>',
       '    <button class="close" aria-label="Close chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>',
       '  </header>',
       '  <div class="thread" role="log" aria-live="polite"></div>',

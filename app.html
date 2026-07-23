@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BizAssist — Dashboard</title>
+  <title>BizAssist: Dashboard</title>
   <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -391,7 +391,7 @@
     <div class="card">
       <div class="auth-head">
         <div class="brand">BizAssist<span class="dot">.</span></div>
-        <div class="badge">Answering right now — 24/7</div>
+        <div class="badge">Answering right now, 24/7</div>
         <h2>Welcome back</h2>
         <div class="muted" id="loginSub">Log in to manage your AI front desk.</div>
       </div>
@@ -532,7 +532,7 @@
           </button>
           <button class="quick-card" data-goto="business">
             <span class="qt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-8h6v8"/></svg>Tune your business info</span>
-            <span class="qd">Services, hours and availability — everything your AI books against.</span>
+            <span class="qd">Services, hours and availability: everything your AI books against.</span>
             <span class="qa">Open business <span>→</span></span>
           </button>
           <button class="quick-card" data-goto="staff">
@@ -570,7 +570,7 @@
         <div class="sub">Every appointment, <span class="serif">at a glance.</span></div>
         <div class="panel">
           <div class="cal-bar">
-            <div class="cal-title" id="calTitle">—</div>
+            <div class="cal-title" id="calTitle">-</div>
             <div class="cal-nav">
               <button class="ghost" id="calPrev" aria-label="Previous month">←</button>
               <button class="ghost" id="calToday">Today</button>
@@ -604,7 +604,7 @@
             <div class="full"><label>Address</label><input id="f_address"/></div>
             <div class="full"><label>Services</label><textarea id="f_services"></textarea></div>
             <div class="full"><label>Hours (shown to customers)</label><input id="f_hours"/></div>
-            <div class="section-label">Availability — what your AI books against</div>
+            <div class="section-label">Availability: what your AI books against</div>
             <div class="full"><label>Working days</label>
               <div id="f_days" class="days">
                 <label class="day"><input type="checkbox" value="Monday"/> Mon</label>
@@ -627,7 +627,7 @@
           <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Services &amp; prices</div>
           <div class="muted" style="margin-bottom:16px">Add each service with its price so your AI can quote exact prices to customers. Leave a price blank for "ask us".</div>
           <div id="svcOk" class="ok"></div><div id="svcErr" class="err"></div>
-          <div class="muted" id="svcEmpty" style="display:none;padding:2px 0 12px">No services yet — add cleanings, checkups, whitening, and their prices so your AI never guesses.</div>
+          <div class="muted" id="svcEmpty" style="display:none;padding:2px 0 12px">No services yet. Add cleanings, checkups, whitening, and their prices so your AI never guesses.</div>
           <div class="svc-head"><span>Service</span><span>Price</span><span>Minutes</span><span></span></div>
           <div id="svcList"></div>
           <button class="ghost" id="svcAdd" style="margin:4px 0 16px">+ Add service</button>
@@ -643,7 +643,7 @@
         <div class="panel">
           <div id="stfOk" class="ok"></div>
           <div id="stfErr" class="err"></div>
-          <div class="muted" id="staffEmpty" style="display:none;padding:2px 0 12px">Optional — add your team so your AI can answer questions like "who will I see?" and mention the right person for each service.</div>
+          <div class="muted" id="staffEmpty" style="display:none;padding:2px 0 12px">Optional. Add your team so your AI can answer questions like "who will I see?" and mention the right person for each service.</div>
           <div id="staffList"></div>
           <button class="ghost" id="staffAdd" style="margin:4px 0 16px">+ Add staff member</button>
           <div><button id="staffSave">Save staff</button></div>
@@ -654,8 +654,8 @@
       <section data-sec="connect" style="display:none">
         <div class="kicker">Go live on your site</div>
         <h1>Connect</h1>
-        <div class="sub">Put your AI receptionist on your own website — <span class="serif">one line of code.</span></div>
-        <div class="setup-note"><span>Fill in your <strong>Business</strong> info first — details, hours, and Services &amp; prices — before you connect. That's what your AI answers with. You can still edit it anytime.</span></div>
+        <div class="sub">Put your AI receptionist on your own website: <span class="serif">one line of code.</span></div>
+        <div class="setup-note"><span>Fill in your <strong>Business</strong> info first: details, hours, and Services &amp; prices, before you connect. That's what your AI answers with. You can still edit it anytime.</span></div>
         <div id="connBanner"></div>
 
         <div class="conn-cols">
@@ -689,7 +689,7 @@
                       <button type="button" data-pos="right" class="on">Bottom-right</button>
                       <button type="button" data-pos="left">Bottom-left</button>
                     </div>
-                    <label>Label next to the bubble <span class="muted" style="font-weight:400">— optional</span></label>
+                    <label>Label next to the bubble <span class="muted" style="font-weight:400">(optional)</span></label>
                     <input id="w_launcher" maxlength="40" placeholder="e.g. Chat with us" />
                   </div>
 
@@ -697,7 +697,7 @@
                   <div id="w_opts_button" class="modeopts" style="display:none">
                     <label>What does your button say?</label>
                     <input id="w_triggertext" maxlength="40" placeholder="e.g. Book Now" />
-                    <div class="hint">Type the exact words on the button (or link) you already have. The chat opens when a visitor clicks it — no bubble is added. Works with any button on your site.</div>
+                    <div class="hint">Type the exact words on the button (or link) you already have. The chat opens when a visitor clicks it. No bubble is added. Works with any button on your site.</div>
                   </div>
                 </div>
               </div>
@@ -712,7 +712,7 @@
                   <button class="copybtn ghostlink" id="emailSnippet" style="border-radius:999px">✉ Send to your web person</button>
                 </div>
               </div>
-              <div class="muted" style="margin-bottom:14px">Paste this once, just before the closing <code class="inline">&lt;/body&gt;</code> tag of your site. Not technical? Hit <strong>Send to your web person</strong> — it writes the whole email for you.</div>
+              <div class="muted" style="margin-bottom:14px">Paste this once, just before the closing <code class="inline">&lt;/body&gt;</code> tag of your site. Not technical? Hit <strong>Send to your web person</strong>. It writes the whole email for you.</div>
               <pre class="codebox"><code id="snippet"></code></pre>
               <div class="hint" id="connHint"></div>
             </div>
@@ -727,7 +727,7 @@
             <!-- No-website fallback -->
             <div class="panel">
               <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Don't have a website?</div>
-              <div class="muted" style="margin-bottom:14px">No problem — email us and we'll help you get your assistant online.</div>
+              <div class="muted" style="margin-bottom:14px">No problem, email us and we'll help you get your assistant online.</div>
               <a class="copybtn ghostlink" href="mailto:hello@bizzassist.xyz" style="display:inline-flex">✉&nbsp; hello@bizzassist.xyz</a>
             </div>
           </div>
@@ -751,17 +751,17 @@
         <div class="promo">
           <div class="p-kicker">While you sleep</div>
           <div class="p-big">A front desk for less than a coffee a day.</div>
-          <div class="p-sub">A full-time receptionist runs $2,500+/mo and works 8 hours a day. Your AI answers 24/7 — weekends, holidays, 3&nbsp;AM — from $250/mo.</div>
+          <div class="p-sub">A full-time receptionist runs $2,500+/mo and works 8 hours a day. Your AI answers 24/7: weekends, holidays, 3&nbsp;AM, from $250/mo.</div>
         </div>
         <div class="panel">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-            <div><div style="font-family:var(--font-display);font-weight:700;font-size:17px" id="subPlan">Free</div><div class="muted" id="subStatus">—</div></div>
-            <span class="pill" id="subPill">—</span>
+            <div><div style="font-family:var(--font-display);font-weight:700;font-size:17px" id="subPlan">Free</div><div class="muted" id="subStatus">-</div></div>
+            <span class="pill" id="subPill">-</span>
           </div>
           <div id="subManageWrap" style="display:none;margin-top:16px">
             <button class="ghost" id="subManage">Manage billing →</button>
           </div>
-          <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team — reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
+          <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team. Reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
         </div>
 
         <div class="ov-label" id="plansLabel" style="display:none">Choose a plan</div>
@@ -786,7 +786,7 @@
       <section data-sec="support" style="display:none">
         <div class="kicker">We've got you</div>
         <h1>Support</h1>
-        <div class="sub">Quick answers below — and an <span class="serif">AI helper</span> if you're stuck.</div>
+        <div class="sub">Quick answers below, and an <span class="serif">AI helper</span> if you're stuck.</div>
         <div class="conn-cols">
           <div>
             <div class="panel">
@@ -796,7 +796,7 @@
             </div>
             <div class="panel">
               <div style="font-family:var(--font-display);font-weight:700;font-size:16.5px;margin-bottom:3px">Still stuck?</div>
-              <div class="muted" style="margin-bottom:14px">Email us and a real person gets back to you — usually within a day.</div>
+              <div class="muted" style="margin-bottom:14px">Email us and a real person gets back to you, usually within a day.</div>
               <a class="copybtn ghostlink" href="mailto:hello@bizzassist.xyz" style="display:inline-flex">✉&nbsp; hello@bizzassist.xyz</a>
             </div>
           </div>
@@ -820,7 +820,7 @@
         <h1>Account</h1>
         <div class="sub">Your login and account controls.</div>
         <div class="panel">
-          <label>Signed in as</label><div style="font-weight:600" id="acEmail">—</div>
+          <label>Signed in as</label><div style="font-weight:600" id="acEmail">-</div>
         </div>
         <div class="danger-zone">
           <div style="font-weight:700;margin-bottom:4px">Delete account</div>
@@ -854,8 +854,8 @@
       if (res.status === 401) {
         try { await sb.auth.signOut(); } catch {}
         token = null; appLoaded = false; show("login"); setMode(false);
-        $("loginErr").textContent = "Your session expired — please sign in again.";
-        throw new Error("Your session expired — please sign in again.");
+        $("loginErr").textContent = "Your session expired. Please sign in again.";
+        throw new Error("Your session expired. Please sign in again.");
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -904,7 +904,7 @@
     // refreshes our view of `biz` a few times so the UI catches up without a manual reload.
     async function onCheckoutCompleted() {
       $("subCheckoutErr").textContent = "";
-      $("subStatus").textContent = "Payment received — activating your AI…";
+      $("subStatus").textContent = "Payment received. Activating your AI…";
       for (let i = 0; i < 6; i++) {
         await new Promise((r) => setTimeout(r, 2500));
         try {
@@ -919,7 +919,7 @@
       $("subCheckoutErr").textContent = "";
       const priceId = paddleCfg && paddleCfg.prices && paddleCfg.prices[plan];
       if (!paddleReady || !priceId) {
-        $("subCheckoutErr").textContent = "Payments aren't set up yet — email hello@bizzassist.xyz to go live.";
+        $("subCheckoutErr").textContent = "Payments aren't set up yet. Email hello@bizzassist.xyz to go live.";
         return;
       }
       Paddle.Checkout.open({
@@ -943,7 +943,7 @@
     // Shared checks for onboarding + Business form. Returns an error string or null.
     function availabilityError(prefix) {
       const days = $(prefix + "days").querySelectorAll("input:checked").length;
-      if (!days) return "Pick at least one working day — with none selected your AI has nothing to book.";
+      if (!days) return "Pick at least one working day. With none selected your AI has nothing to book.";
       const open = $(prefix + "open").value, close = $(prefix + "close").value;
       if (open && close && open >= close) return "Opening time must be before closing time.";
       return null;
@@ -971,7 +971,7 @@
       $("ovBanner").className = "banner " + (live ? "live" : "pending");
       $("ovBanner").textContent = live
         ? "Your AI receptionist is live and taking bookings."
-        : "Almost there — your AI goes live once your subscription is activated. See the Subscription tab.";
+        : "Almost there. Your AI goes live once your subscription is activated. See the Subscription tab.";
       $("stStatus").textContent = live ? "Live" : "Pending";
       $("stStatus").style.color = live ? "var(--green)" : "#B98A2F";
       // Business form
@@ -1022,7 +1022,7 @@
       const chips = DAYS_FULL.map((d) => `<label class="day mini"><input type="checkbox" value="${d}"${days.has(d) ? " checked" : ""}> ${DAY_ABBR[d]}</label>`).join("");
       row.innerHTML =
         '<div class="staff-main"><input placeholder="Name" class="s-name"><input placeholder="Role (e.g. Dentist)" class="s-role"><button class="ghost s-del" style="padding:8px 12px">✕</button></div>' +
-        '<div class="staff-days"><span class="sd-label">Working days</span>' + chips + '<span class="sd-hint">— none = same as business</span></div>';
+        '<div class="staff-days"><span class="sd-label">Working days</span>' + chips + '<span class="sd-hint">(none = same as business)</span></div>';
       row.querySelector(".s-name").value = (m && m.name) || "";
       row.querySelector(".s-role").value = (m && m.role) || "";
       row.querySelector(".s-del").onclick = () => row.remove();
@@ -1054,17 +1054,17 @@
         const upcoming = bookings.filter((b) => b.status === "confirmed" && Date.parse(b.start_time) >= now).length;
         $("stUpcoming").textContent = upcoming;
         if (!bookings.length) {
-          $("bkEmpty").textContent = "No bookings yet — they'll appear here as soon as your AI books its first appointment.";
-          $("ovBkEmpty").textContent = "No bookings yet — your AI is on duty, ready for the first one.";
+          $("bkEmpty").textContent = "No bookings yet. They'll appear here as soon as your AI books its first appointment.";
+          $("ovBkEmpty").textContent = "No bookings yet. Your AI is on duty, ready for the first one.";
           return;
         }
         const statusCell = (b) => `<span class="pill ${b.status === "cancelled" ? "cancelled" : ""}">${esc(b.status)}</span>`;
         $("bkBody").innerHTML = bookings.map((b) =>
-          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${esc(b.staff || "—")}</td><td>${esc(b.phone || b.email || "—")}</td><td>${statusCell(b)}</td></tr>`
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "-")}</td><td>${esc(b.staff || "-")}</td><td>${esc(b.phone || b.email || "-")}</td><td>${statusCell(b)}</td></tr>`
         ).join("");
         $("bkEmpty").style.display = "none"; $("bkTable").style.display = "table";
         $("ovBkBody").innerHTML = bookings.slice(0, 5).map((b) =>
-          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "—")}</td><td>${statusCell(b)}</td></tr>`
+          `<tr><td>${esc(b.when)}</td><td>${esc(b.name)}</td><td>${esc(b.service || "-")}</td><td>${statusCell(b)}</td></tr>`
         ).join("");
         $("ovBkEmpty").style.display = "none"; $("ovBkTable").style.display = "table";
       } catch (e) { $("bkEmpty").textContent = e.message; $("ovBkEmpty").textContent = e.message; }
@@ -1139,7 +1139,7 @@
         const more = list.length > 3 ? `<span class="cal-more">+${list.length - 3} more</span>` : "";
         const dots = list.slice(0, 4).map((b) => `<span class="dot-b ${b.status === "cancelled" ? "cancelled" : ""}"></span>`).join("");
         cells.push(
-          `<button class="cal-day ${ds === todayStr ? "today" : ""} ${ds === calSelected ? "sel" : ""} ${off ? "cal-off" : ""}" data-day="${ds}"${off ? ' title="Closed — outside business working days"' : ""}>` +
+          `<button class="cal-day ${ds === todayStr ? "today" : ""} ${ds === calSelected ? "sel" : ""} ${off ? "cal-off" : ""}" data-day="${ds}"${off ? ' title="Closed: outside business working days"' : ""}>` +
           `<span class="dnum">${d}</span>${chips}${more}<span class="dots">${dots}</span></button>`
         );
       }
@@ -1158,7 +1158,7 @@
       $("calDayList").innerHTML = list.length
         ? list.map((b) =>
             `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">` +
-            `<div><strong>${esc(timeInTz(b.start_time))}</strong> — ${esc(b.name)}${b.service ? ` · ${esc(b.service)}` : ""}${b.staff ? ` · with ${esc(b.staff)}` : ""}</div>` +
+            `<div><strong>${esc(timeInTz(b.start_time))}</strong>: ${esc(b.name)}${b.service ? ` · ${esc(b.service)}` : ""}${b.staff ? ` · with ${esc(b.staff)}` : ""}</div>` +
             `<div class="muted">${esc(b.phone || b.email || "")} <span class="pill ${b.status === "cancelled" ? "cancelled" : ""}" style="margin-left:8px">${esc(b.status)}</span></div></div>`
           ).join("")
         : '<div class="muted">No appointments this day.</div>';
@@ -1213,13 +1213,13 @@
       if (c.mode === "button") {
         attrs.push('  data-mode="button"');
         if (c.triggerText) attrs.push('  data-trigger-text="' + escAttr(c.triggerText) + '"');
-        return ["<!-- BizAssist AI front desk — opens from your own button -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
+        return ["<!-- BizAssist AI front desk: opens from your own button -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
       }
 
       // Bubble (default): floating round launcher in the corner.
       if (c.position === "left") attrs.push('  data-position="left"');
       if (c.launcher) attrs.push('  data-launcher="' + escAttr(c.launcher) + '"');
-      return ["<!-- BizAssist AI front desk — paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
+      return ["<!-- BizAssist AI front desk: paste before </body> -->", "<script", ...attrs, "  defer><\/script>"].join("\n");
     }
 
     // The preview IS the real chat, loaded in a sandboxed iframe filling the frame (inline mode,
@@ -1246,7 +1246,7 @@
       $("w_modeseg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === connMode));
       const note = $("connPreviewNote");
       if (note) note.textContent = connMode === "button"
-        ? "This is your assistant. On your site it opens from your own button — no bubble is shown."
+        ? "This is your assistant. On your site it opens from your own button. No bubble is shown."
         : "This is your assistant. On your site it opens from a small chat bubble in the corner.";
     }
 
@@ -1254,7 +1254,7 @@
       $("snippet").textContent = buildSnippet(connConfig());
       $("connHint").textContent = connMode === "button"
         ? "Paste this once before </body>. Make sure a button or link with that text exists on your page."
-        : "Same code works on every page — paste it wherever you like.";
+        : "Same code works on every page. Paste it wherever you like.";
     }
     function updatePreview() {
       $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
@@ -1264,16 +1264,16 @@
       const b = $("connBanner");
       b.className = "banner " + (live ? "live" : "pending");
       b.textContent = live
-        ? "Your assistant is live — the widget answers visitors the moment they open it."
-        : "Install it now — your widget starts answering automatically the second your subscription activates.";
+        ? "Your assistant is live. The widget answers visitors the moment they open it."
+        : "Install it now. Your widget starts answering automatically the second your subscription activates.";
     }
 
     function guidesHtml() {
       const G = [
-        ["Any website (HTML)", ["Copy your code above.", "Open your site's HTML and paste it just before the closing <strong>&lt;/body&gt;</strong> tag.", "Save and publish — the chat bubble appears in the corner."]],
+        ["Any website (HTML)", ["Copy your code above.", "Open your site's HTML and paste it just before the closing <strong>&lt;/body&gt;</strong> tag.", "Save and publish. The chat bubble appears in the corner."]],
         ["WordPress", ["Easiest: install the free <strong>WPCode</strong> plugin.", "Go to <strong>Code Snippets → Header &amp; Footer</strong>.", "Paste your code into the <strong>Footer</strong> box and Save. It now shows on every page."]],
         ["Shopify", ["Go to <strong>Online Store → Themes → ⋯ → Edit code</strong>.", "Open <strong>theme.liquid</strong>.", "Paste your code right before <strong>&lt;/body&gt;</strong> and Save."]],
-        ["Squarespace", ["Go to <strong>Settings → Advanced → Code Injection</strong>.", "Paste your code into the <strong>Footer</strong> box.", "Save — it appears site-wide."]],
+        ["Squarespace", ["Go to <strong>Settings → Advanced → Code Injection</strong>.", "Paste your code into the <strong>Footer</strong> box.", "Save. It appears site-wide."]],
         ["Wix", ["Go to <strong>Settings → Custom Code</strong> (under Advanced).", "Click <strong>+ Add Custom Code</strong> and paste your code.", "Set it to load on <strong>All pages</strong>, placed in <strong>Body – end</strong>, then Apply."]],
         ["Webflow", ["Go to <strong>Project Settings → Custom Code</strong>.", "Paste your code into the <strong>Footer Code</strong> box.", "Save, then Publish your site."]],
         ["GoDaddy / other builders", ["Add an <strong>Embed / Custom HTML</strong> section, or a site-wide footer code area if your plan has one.", "Paste your code and save.", "Stuck? Email <strong>hello@bizzassist.xyz</strong> and we'll help you get it on."]],
@@ -1328,10 +1328,10 @@
       $("emailSnippet").addEventListener("click", () => {
         const c = connConfig();
         const bodyText =
-          "Hi!\n\nCould you add our AI booking assistant to the website? It's one small snippet — " +
+          "Hi!\n\nCould you add our AI booking assistant to the website? It's one small snippet, " +
           "paste it just before the closing </body> tag:\n\n" +
           buildSnippet(c) +
-          "\n\nThat's everything — it works on any platform (WordPress, Wix, Shopify, Squarespace, plain HTML). " +
+          "\n\nThat's everything, it works on any platform (WordPress, Wix, Shopify, Squarespace, plain HTML). " +
           "Step-by-step guides per platform: " + widgetOrigin() + "/app (Connect tab).\n\nThanks!";
         copyText(bodyText, $("emailSnippet"), "✉ Send to your web person");
         location.href = "mailto:?subject=" + encodeURIComponent("Add our AI chat to the website (2-min job)") +
@@ -1387,13 +1387,13 @@
     let supReady = false, supHistory = [], supSending = false;
     function faqHtml() {
       const F = [
-        ["How do I put the AI on my website?", "Open the <strong>Connect</strong> tab, copy the one-line code, and paste it into your site just before the <strong>&lt;/body&gt;</strong> tag — a chat bubble appears in the corner. Not technical? Hit <strong>Send to your web person</strong> and it emails the whole thing for you."],
-        ["When does my AI actually go live?", "The moment your subscription is active. You can install the code any time beforehand — it shows a friendly \"not switched on yet\" note until you subscribe, then goes live automatically."],
-        ["How does the AI know my prices and hours?", "From the <strong>Business</strong> tab (hours, timezone, address) and the <strong>Services &amp; prices</strong> section right below it. Fill those in and the AI quotes them exactly — it never makes prices up."],
-        ["Can customers cancel or reschedule on their own?", "Yes. They just tell the AI — it verifies their name and the phone or email they booked with, then handles it. No work for you."],
+        ["How do I put the AI on my website?", "Open the <strong>Connect</strong> tab, copy the one-line code, and paste it into your site just before the <strong>&lt;/body&gt;</strong> tag. A chat bubble appears in the corner. Not technical? Hit <strong>Send to your web person</strong> and it emails the whole thing for you."],
+        ["When does my AI actually go live?", "The moment your subscription is active. You can install the code any time beforehand. It shows a friendly \"not switched on yet\" note until you subscribe, then goes live automatically."],
+        ["How does the AI know my prices and hours?", "From the <strong>Business</strong> tab (hours, timezone, address) and the <strong>Services &amp; prices</strong> section right below it. Fill those in and the AI quotes them exactly. It never makes prices up."],
+        ["Can customers cancel or reschedule on their own?", "Yes. They just tell the AI. It verifies their name and the phone or email they booked with, then handles it. No work for you."],
         ["Where do I see the appointments it books?", "In the <strong>Bookings</strong> and <strong>Calendar</strong> tabs. You and the customer also get confirmation and reminder emails automatically."],
         ["How do I change plans or cancel?", "Go to <strong>Subscription → Manage billing</strong> to switch plans or cancel any time."],
-        ["Is my data safe?", "Yes. Your business info and bookings are stored securely and used only to run your assistant — never shared or sold."],
+        ["Is my data safe?", "Yes. Your business info and bookings are stored securely and used only to run your assistant. Never shared or sold."],
       ];
       return F.map((f, i) => '<details' + (i === 0 ? " open" : "") + '><summary>' + f[0] + '</summary><div class="acc-body">' + f[1] + "</div></details>").join("");
     }
@@ -1419,7 +1419,7 @@
       if (!text || supSending) return;
       if (supUsedToday(false) >= SUP_DAILY_LIMIT) {
         $("supErr").textContent = "";
-        supAdd("bot", "You've reached today's helper limit — email hello@bizzassist.xyz and a real person will pick it up from here. 🙌");
+        supAdd("bot", "You've reached today's helper limit. Email hello@bizzassist.xyz and a real person will pick it up from here. 🙌");
         return;
       }
       $("supErr").textContent = "";
@@ -1432,7 +1432,7 @@
         const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: supHistory.slice(-12), count: supUsedToday(false) }) });
         const data = await res.json().catch(() => ({}));
         typing.remove();
-        if (!res.ok) throw new Error(data.error || "Something went wrong — try again.");
+        if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
         supAdd("bot", data.reply); supHistory.push({ role: "assistant", content: data.reply });
       } catch (e) { typing.remove(); $("supErr").textContent = e.message; }
       finally { supSending = false; $("supSend").disabled = false; $("supInput").focus(); }
@@ -1441,7 +1441,7 @@
       if (supReady) return;
       supReady = true;
       $("faq").innerHTML = faqHtml();
-      supAdd("bot", "Hey! 👋 I'm your BizAssist helper. Ask me anything about setting up — installing the widget, prices, billing, whatever you need.");
+      supAdd("bot", "Hey! 👋 I'm your BizAssist helper. Ask me anything about setting up: installing the widget, prices, billing, whatever you need.");
       $("supSend").addEventListener("click", supSend);
       $("supInput").addEventListener("input", () => { $("supInput").style.height = "auto"; $("supInput").style.height = Math.min($("supInput").scrollHeight, 96) + "px"; });
       $("supInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); supSend(); } });
@@ -1471,7 +1471,7 @@
       $("oErr").textContent = "";
       const name = $("o_name").value.trim();
       if (!name) { $("oErr").textContent = "Business name is required."; return; }
-      if (!validTimezone($("o_timezone").value.trim())) { $("oErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York" — abbreviations like "PST" won\'t work.'; return; }
+      if (!validTimezone($("o_timezone").value.trim())) { $("oErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York". Abbreviations like "PST" won\'t work.'; return; }
       const availErr = availabilityError("o_");
       if (availErr) { $("oErr").textContent = availErr; return; }
       const days = Array.from($("o_days").querySelectorAll("input:checked")).map((c) => c.value);
@@ -1500,7 +1500,7 @@
         hours: $("f_hours").value.trim(), default_language: $("f_language").value.trim(), ...readAvail("f_"),
       };
       if (!payload.name) { $("bizErr").textContent = "Business name is required."; return; }
-      if (!validTimezone(payload.timezone)) { $("bizErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York" — abbreviations like "PST" won\'t work.'; return; }
+      if (!validTimezone(payload.timezone)) { $("bizErr").textContent = 'Timezone must be an IANA name like "Asia/Yerevan" or "America/New_York". Abbreviations like "PST" won\'t work.'; return; }
       const bizAvailErr = availabilityError("f_");
       if (bizAvailErr) { $("bizErr").textContent = bizAvailErr; return; }
       savingBiz = true; const b = $("bizSave"); b.disabled = true; b.textContent = "Saving…";
@@ -1558,7 +1558,7 @@
     $("googleBtn").addEventListener("click", () => {
       const b = $("googleBtn"); b.disabled = true;
       sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/app" } })
-        .catch(() => { b.disabled = false; $("loginErr").textContent = "Could not start Google sign-in — try again."; });
+        .catch(() => { b.disabled = false; $("loginErr").textContent = "Could not start Google sign-in. Try again."; });
     });
 
     $("emailBtn").addEventListener("click", async () => {
@@ -1573,7 +1573,7 @@
           // Email confirmation is on: no session yet. Flip to sign-in mode with a persistent
           // inline note instead of a dismissable alert that leaves the form in signup mode.
           setMode(false);
-          $("loginOk").textContent = "Almost there — check " + email + " for a confirmation link, then sign in here.";
+          $("loginOk").textContent = "Almost there, check " + email + " for a confirmation link, then sign in here.";
         }
       } catch (e) { $("loginErr").textContent = e.message || "Login failed."; }
       finally { b.disabled = false; b.textContent = signupMode ? "Create account" : "Sign in"; }
@@ -1588,7 +1588,7 @@
       try {
         const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/app" });
         if (error) throw error;
-        $("loginOk").textContent = "Reset link sent to " + email + " — open it and you'll be asked to set a new password.";
+        $("loginOk").textContent = "Reset link sent to " + email + ", open it and you'll be asked to set a new password.";
       } catch (err) { $("loginErr").textContent = err.message || "Could not send the reset email."; }
     });
 
@@ -1610,7 +1610,7 @@
     // confirmation/reset links) instead of silently dumping the user on a blank login form.
     (function surfaceAuthErrors() {
       const params = new URLSearchParams((location.hash || "").replace(/^#/, "") + "&" + location.search.replace(/^\?/, ""));
-      const desc = params.get("error_description") || (params.get("error") ? "Sign-in was cancelled or the link expired — try again." : "");
+      const desc = params.get("error_description") || (params.get("error") ? "Sign-in was cancelled or the link expired. Try again." : "");
       if (desc) {
         $("loginErr").textContent = desc.replace(/\+/g, " ");
         history.replaceState(null, "", location.pathname); // don't re-show on refresh
