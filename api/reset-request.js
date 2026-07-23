@@ -95,10 +95,14 @@ export default async function handler(req, res) {
       const data = await gl.json();
       actionLink = data.action_link || (data.properties && data.properties.action_link) || null;
     } else {
-      // Most common non-ok: the email has no account. Don't reveal that (email enumeration) —
-      // fall through and return the same success response as a real send.
       const t = await gl.text();
-      console.warn("reset-request: generate_link non-ok", gl.status, t.slice(0, 200));
+      console.warn("reset-request: generate_link non-ok", gl.status, t.slice(0, 300));
+      // 404/422 = no account for this email → stay silent (no email enumeration).
+      // Anything else (401/403 bad key, 5xx) is a real server/config problem — surface it
+      // instead of pretending we sent a link (which hides broken admin credentials).
+      if (gl.status !== 404 && gl.status !== 422) {
+        return res.status(502).json({ error: "Password reset is temporarily unavailable. Please try again shortly." });
+      }
     }
   } catch (e) {
     console.error("reset-request: generate_link error", e);
