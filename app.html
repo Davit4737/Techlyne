@@ -1610,6 +1610,7 @@
         const { error } = await sb.auth.updateUser({ password });
         if (error) throw error;
         recoveryMode = false;
+        history.replaceState(null, "", "/app"); // drop the recovery hash so a refresh won't re-trigger it
         loadApp();
       } catch (e) { $("recoverErr").textContent = e.message || "Could not update the password."; b.disabled = false; b.textContent = "Save new password"; }
     });
@@ -1624,6 +1625,14 @@
         $("loginErr").textContent = desc.replace(/\+/g, " ");
         history.replaceState(null, "", location.pathname); // don't re-show on refresh
       }
+    })();
+
+    // A password-reset link lands on /app#...&type=recovery. Detect it SYNCHRONOUSLY here —
+    // before getSession() below resolves and boots the dashboard — and pin recoveryMode on, so
+    // the "set a new password" screen sticks instead of flashing and bouncing to the dashboard.
+    (function detectRecovery() {
+      const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+      if (h.get("type") === "recovery") { recoveryMode = true; show("recover"); }
     })();
 
     // Supabase fires auth events constantly (TOKEN_REFRESHED on a timer, SIGNED_IN every time
