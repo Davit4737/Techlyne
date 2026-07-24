@@ -312,7 +312,12 @@
     @media (max-width: 900px) {
       .conn-cols { grid-template-columns:1fr; }
       .conn-preview { position:static; order:-1; }
-      .preview-browser { max-width:100%; height:420px; }
+      .preview-chatframe { height:360px; } /* was a no-op (.preview-browser doesn't exist); the real preview stayed 520px tall on phones */
+    }
+    /* Narrow phones: the two-word mode buttons wrap to 2 lines side by side — stack them full-width instead. */
+    @media (max-width: 400px) {
+      #w_modeseg { flex-direction:column; }
+      #w_modeseg button + button { border-top:1.5px solid var(--line); }
     }
 
     /* ── services & prices editor ── */
