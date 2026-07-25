@@ -243,10 +243,14 @@
     @media (max-width: 720px) {
       .center { padding-top:5vh; }
       .shell { flex-direction:column; }
-      .side { width:auto; height:auto; position:sticky; top:0; z-index:10; flex-direction:row; align-items:center; overflow-x:auto; gap:6px; padding:10px 12px; }
+      /* Was a horizontal-scroll strip with no scroll affordance — "Connect" (6th of 9 tabs) sat
+         off-screen with nothing hinting it was reachable. Wrap instead: every tab visible, no
+         scrolling, no hunting. */
+      .side { width:auto; height:auto; position:sticky; top:0; z-index:10; padding:10px 12px 8px; }
       .side .brand, .side .foot { display:none; }
-      .nav { flex-direction:row; flex:none; }
-      .nav button { white-space:nowrap; padding:9px 13px; }
+      .nav { flex-direction:row; flex-wrap:wrap; flex:none; gap:6px; }
+      .nav button { white-space:nowrap; padding:8px 12px; font-size:13px; gap:6px; }
+      .nav button svg { width:15px; height:15px; }
       .nav button.active::before { display:none; }
       .main { padding:26px 16px 70px; }
       .grid { grid-template-columns:1fr; }
