@@ -24,6 +24,13 @@
     }
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
+    /* Nothing may ever scroll the PAGE sideways on a phone. The decorative .orb blobs are
+       deliberately oversized and positioned off-screen (right:-90px / left:-100px); Chromium
+       ignores that for position:fixed, but iOS Safari lets it widen the page, which is what
+       dragged the whole dashboard (nav included) sideways on the Connect tab. */
+    /* `clip` (with `hidden` as the older-browser fallback) clips without creating a scroll
+       container, so the sticky nav keeps working. */
+    html, body { max-width:100%; overflow-x:hidden; overflow-x:clip; }
     body {
       margin:0; font-family:var(--font-body); background:var(--bg); color:var(--ink);
       background-image:radial-gradient(1000px 520px at 88% -10%, rgba(46,107,79,.05), transparent 60%),
@@ -152,7 +159,9 @@
     .side .foot { border-top:1px solid rgba(255,253,247,.12); padding-top:14px; }
     .side .foot .ghost { border-color:rgba(255,253,247,.18); color:var(--sand-dark); }
     .side .foot .ghost:hover { background:rgba(255,253,247,.07); color:var(--cream-dark); border-color:rgba(255,253,247,.3); }
-    .main { flex:1; padding:40px 44px 90px; max-width:980px; }
+    /* min-width:0 — a flex item defaults to min-width:auto and won't shrink below its content's
+       intrinsic width, the same trap as the grid column below. */
+    .main { flex:1; min-width:0; padding:40px 44px 90px; max-width:980px; }
     .main section { animation:fadeUp .35s cubic-bezier(.22,.9,.3,1) both; }
     .main h1 { font-family:var(--font-display); font-size:31px; font-weight:800; letter-spacing:-.03em; margin:0 0 5px; }
     .main .sub { color:var(--muted); font-size:14px; margin-bottom:26px; }
