@@ -816,7 +816,7 @@
           <div id="subWarn" class="sub-warn" style="display:none"></div>
           <div id="subManageWrap" style="display:none;margin-top:16px">
             <button class="ghost" id="subManage">Manage billing →</button>
-            <div class="muted" style="font-size:12px;margin-top:8px">Update your card, switch plans, or cancel — handled securely by Paddle.</div>
+            <div class="muted" style="font-size:12px;margin-top:8px" id="subManageNote"></div>
           </div>
           <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team. Reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
         </div>
@@ -1113,6 +1113,11 @@
       // cancel; /api/paddle-portal resolves them by email instead and says so plainly if they
       // genuinely have no subscription.
       $("subManageWrap").style.display = hasPaddle ? "block" : "none";
+      // Explains why the button is here at all for someone with no subscription on record —
+      // which is exactly the person who paid and is stuck looking inactive.
+      $("subManageNote").textContent = biz && biz.paddle_customer_id
+        ? "Update your card, switch plans, or cancel — handled securely by Paddle."
+        : "Already paid but still showing as inactive? Open the billing portal to check or cancel.";
       $("plansLabel").style.display = hasPaddle ? "flex" : "none";
       $("plansWrap").style.display = hasPaddle ? "grid" : "none";
       $("subTrust").style.display = hasPaddle ? "flex" : "none";
