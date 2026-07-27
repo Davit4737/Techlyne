@@ -44,6 +44,28 @@ export function planFromPriceId(priceId) {
   return null;
 }
 
+// Looks up a Paddle customer by email address. This is the safety net behind "Manage billing":
+// normally we know the customer id because the webhook stored it, but if that webhook was
+// missed, misconfigured, or is simply still in flight, the owner would otherwise have paid us
+// with no way to reach the cancel button. Billing access must never depend on our own webhook
+// health. Returns { ok, customerId|null }.
+export async function findCustomerByEmail(email) {
+  if (!isPaddleConfigured()) return { ok: false, error: "Paddle is not configured" };
+  if (!email) return { ok: true, customerId: null };
+
+  const url = new URL(`${apiBase()}/customers`);
+  url.searchParams.set("email", email);
+  url.searchParams.set("status", "active");
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.PADDLE_API_KEY}` } });
+  if (!res.ok) {
+    console.error("Paddle findCustomerByEmail error:", res.status, await res.text());
+    return { ok: false, error: "Could not look up your billing account" };
+  }
+  const data = await res.json();
+  return { ok: true, customerId: data?.data?.[0]?.id || null };
+}
+
 // Creates a Paddle-hosted "customer portal" session so an owner can update payment details,
 // swap plans, or cancel — without us building any billing UI. Returns the URL to redirect
 // to, scoped to this one customer.

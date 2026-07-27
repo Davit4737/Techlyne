@@ -1108,7 +1108,11 @@
       }
 
       const hasPaddle = Boolean(paddleCfg && paddleCfg.configured);
-      $("subManageWrap").style.display = biz && biz.paddle_customer_id ? "block" : "none";
+      // Shown whenever billing is switched on, NOT only when we have a stored customer id. Gating
+      // this on our own webhook having succeeded is how a paying customer ends up with no way to
+      // cancel; /api/paddle-portal resolves them by email instead and says so plainly if they
+      // genuinely have no subscription.
+      $("subManageWrap").style.display = hasPaddle ? "block" : "none";
       $("plansLabel").style.display = hasPaddle ? "flex" : "none";
       $("plansWrap").style.display = hasPaddle ? "grid" : "none";
       $("subTrust").style.display = hasPaddle ? "flex" : "none";
