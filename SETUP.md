@@ -149,6 +149,15 @@ dashboard's "Manage billing" button (visible once a `paddle_customer_id` exists)
 hosted customer portal via `api/paddle-portal.js` for card updates, plan switches, and
 cancellation — all self-serve, nothing to build.
 
+**Activation does not depend on the webhook arriving.** The webhook is the fast path, not the
+only path. Whenever the dashboard loads a business that is *not* live, `api/my-business.js` asks
+Paddle directly whether that owner's email has a subscription (`findSubscriptionByEmail`) and
+activates from the answer, writing back the customer/subscription ids and plan. So a destination
+that is misconfigured, blocked, or still retrying delays activation by one page refresh instead
+of stranding a paying customer. Live businesses skip the lookup entirely, so the normal case
+costs nothing. If Paddle is unreachable the row is served as-is — billing trouble never takes
+the dashboard down.
+
 **Failed payments get a grace period.** `past_due` counts as live, so a declined card does not
 instantly silence a client's phone line — Paddle retries over several days (dunning), and the
 dashboard shows an amber "update your card" prompt with a link to the billing portal meanwhile.

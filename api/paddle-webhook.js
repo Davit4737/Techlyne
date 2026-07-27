@@ -8,7 +8,7 @@
 // original — a byte-for-byte reformat (key order, spacing) is enough to break the HMAC.
 export const config = { api: { bodyParser: false } };
 
-import { verifyPaddleSignature, planFromPriceId } from "./_lib/paddle.js";
+import { verifyPaddleSignature, planFromPriceId, LIVE_STATUSES } from "./_lib/paddle.js";
 import { getBusinessById, getBusinessByPaddleCustomer, updateBusiness } from "./_lib/db.js";
 
 function readRawBody(req) {
@@ -20,14 +20,8 @@ function readRawBody(req) {
   });
 }
 
-// Paddle's subscription statuses map onto whether the AI should be answering.
-//
-// `past_due` deliberately stays LIVE: Paddle marks a subscription past_due on the first failed
-// charge, then retries over several days (dunning). Killing a clinic's phone line over a bank
-// blip that resolves on retry #2 is worse than carrying them through it — and if dunning
-// ultimately fails, Paddle moves the subscription to `canceled`, which deactivates here anyway.
-// The dashboard shows an amber "update your card" prompt in the meantime.
-const LIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
+// LIVE_STATUSES lives in _lib/paddle.js — the dashboard's reconcile path applies the same set,
+// and two copies would eventually drift into disagreeing about who is live.
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
