@@ -34,6 +34,15 @@ export function verifyPaddleSignature(rawBody, signatureHeader, secret) {
   return crypto.timingSafeEqual(a, b);
 }
 
+// Paddle subscription statuses that mean the AI should be answering. Shared by the webhook
+// (push) and the dashboard reconcile (pull) so the two can never disagree about who is live.
+//
+// `past_due` is deliberately included: Paddle marks a subscription past_due on the first failed
+// charge, then retries over several days (dunning). Killing a clinic's phone line over a bank
+// blip that clears on retry #2 is worse than carrying them — and if dunning ultimately fails,
+// Paddle moves the subscription to `canceled`, which deactivates through both paths anyway.
+export const LIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
+
 // Maps a Paddle price id (from a subscription's `items[]`) to our internal plan name, via
 // the PADDLE_PRICE_ID_* env vars. Unknown/unset price ids map to null (kept as-is, not
 // overwritten) so an unrecognized price never silently blanks out a working plan.
@@ -64,6 +73,46 @@ export async function findCustomerByEmail(email) {
   }
   const data = await res.json();
   return { ok: true, customerId: data?.data?.[0]?.id || null };
+}
+
+// Asks Paddle directly what subscription an email address has, rather than waiting to be told.
+//
+// Webhooks are best-effort: they can be misconfigured, blocked, retried for hours, or replayed
+// out of order, and while any of that is happening a customer who has genuinely paid sits
+// looking inactive. This is the pull-based counterpart — the dashboard reconciles against
+// Paddle on read, so activation is correct even when no webhook ever arrives.
+//
+// Returns { ok, subscription: { customerId, subscriptionId, status, priceId } | null }.
+export async function findSubscriptionByEmail(email) {
+  if (!isPaddleConfigured()) return { ok: false, error: "Paddle is not configured" };
+
+  const customer = await findCustomerByEmail(email);
+  if (!customer.ok) return { ok: false, error: customer.error };
+  if (!customer.customerId) return { ok: true, subscription: null };
+
+  const url = new URL(`${apiBase()}/subscriptions`);
+  url.searchParams.set("customer_id", customer.customerId);
+  // Every state that means "this person is paying us", including the dunning window.
+  url.searchParams.set("status", "active,trialing,past_due");
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.PADDLE_API_KEY}` } });
+  if (!res.ok) {
+    console.error("Paddle findSubscriptionByEmail error:", res.status, await res.text());
+    return { ok: false, error: "Could not check your subscription" };
+  }
+  const data = await res.json();
+  const sub = data?.data?.[0];
+  if (!sub) return { ok: true, subscription: null };
+
+  return {
+    ok: true,
+    subscription: {
+      customerId: customer.customerId,
+      subscriptionId: sub.id || null,
+      status: sub.status || null,
+      priceId: sub.items?.[0]?.price?.id || null,
+    },
+  };
 }
 
 // Creates a Paddle-hosted "customer portal" session so an owner can update payment details,

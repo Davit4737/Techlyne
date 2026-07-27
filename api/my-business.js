@@ -13,6 +13,7 @@
 
 import { getBusinessByOwner, createBusiness, updateBusiness, deleteBusinessCascade } from "./_lib/db.js";
 import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js";
+import { isPaddleConfigured, findSubscriptionByEmail, planFromPriceId, LIVE_STATUSES } from "./_lib/paddle.js";
 
 // Config fields a client may set on their own business. Deliberately excludes owner_id,
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).
@@ -129,6 +130,50 @@ function pick(body) {
   return out;
 }
 
+// Reconciles a not-yet-live business against Paddle before answering the dashboard.
+//
+// The webhook is the fast path, but it is not a guarantee: a destination can be misconfigured,
+// blocked, or retrying for hours, and until it lands a customer who genuinely paid keeps seeing
+// "Not started yet". Rather than leave activation at the mercy of inbound delivery, ask Paddle
+// what it knows whenever we are about to tell someone they are inactive.
+//
+// Only runs for businesses that are NOT already live, so the common case costs nothing extra.
+// Never throws: billing being unreachable must not take the whole dashboard down with it.
+async function reconcileBilling(business, email) {
+  if (!business || business.active || !email || !isPaddleConfigured()) return business;
+
+  try {
+    const r = await findSubscriptionByEmail(email);
+    if (!r.ok || !r.subscription) return business;
+
+    const { customerId, subscriptionId, status, priceId } = r.subscription;
+    const fields = {
+      subscription_status: status,
+      active: LIVE_STATUSES.has(status),
+      paddle_customer_id: customerId,
+      paddle_subscription_id: subscriptionId,
+    };
+    const plan = planFromPriceId(priceId);
+    if (plan) fields.plan = plan;
+
+    // Nothing actually changed (e.g. the subscription is canceled and we were already inactive)
+    // — skip the write so a dashboard refresh isn't a pointless UPDATE every time.
+    if (!fields.active && business.subscription_status === status) return business;
+
+    const upd = await updateBusiness(business.id, fields);
+    if (upd.ok && upd.business) {
+      console.log("Reconciled billing from Paddle (webhook had not landed):", {
+        businessId: business.id,
+        status,
+      });
+      return upd.business;
+    }
+  } catch (e) {
+    console.error("reconcileBilling failed (serving the row as-is):", e);
+  }
+  return business;
+}
+
 function slugify(str) {
   return String(str || "").toLowerCase().trim().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 }
@@ -145,7 +190,8 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const r = await getBusinessByOwner(user.id);
     if (!r.ok) return res.status(500).json({ error: r.error });
-    return res.status(200).json({ business: ownerView(r.business) });
+    const business = await reconcileBilling(r.business, user.email);
+    return res.status(200).json({ business: ownerView(business) });
   }
 
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
