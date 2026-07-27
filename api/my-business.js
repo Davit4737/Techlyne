@@ -6,9 +6,10 @@
 //   POST  → create the caller's business on first setup (one per owner)
 //   PATCH → update the caller's business config
 //
-// Billing/activation fields (active, subscription_status) are intentionally NOT editable here
-// — those stay operator-controlled until Paddle automation lands. New businesses start
-// inactive; an operator flips them live after payment.
+// Billing/activation fields (active, subscription_status, plan, paddle_*) are intentionally NOT
+// editable here — api/paddle-webhook.js is their only writer. Letting an owner PATCH `active`
+// would be a free subscription. New businesses start inactive and go live when Paddle confirms
+// payment (an operator can still flip one by hand from /onboard).
 
 import { getBusinessByOwner, createBusiness, updateBusiness, deleteBusinessCascade } from "./_lib/db.js";
 import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js";
@@ -163,7 +164,7 @@ export default async function handler(req, res) {
     const fields = pick(body);
     if (!fields.name) return res.status(400).json({ error: "Business name is required" });
     fields.owner_id = user.id;
-    fields.active = false;                 // goes live after payment (operator flips it)
+    fields.active = false;                 // goes live when Paddle's webhook confirms payment
     fields.subscription_status = "inactive";
 
     // Derive a unique slug from the business name; append a short suffix on collision.

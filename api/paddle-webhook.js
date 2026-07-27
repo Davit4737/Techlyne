@@ -20,9 +20,14 @@ function readRawBody(req) {
   });
 }
 
-// Paddle's subscription statuses map straight onto whether the AI should be answering:
-// trialing/active are live, everything else pauses the tenant until it's resolved.
-const LIVE_STATUSES = new Set(["trialing", "active"]);
+// Paddle's subscription statuses map onto whether the AI should be answering.
+//
+// `past_due` deliberately stays LIVE: Paddle marks a subscription past_due on the first failed
+// charge, then retries over several days (dunning). Killing a clinic's phone line over a bank
+// blip that resolves on retry #2 is worse than carrying them through it — and if dunning
+// ultimately fails, Paddle moves the subscription to `canceled`, which deactivates here anyway.
+// The dashboard shows an amber "update your card" prompt in the meantime.
+const LIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
