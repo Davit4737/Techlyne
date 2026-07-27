@@ -139,14 +139,26 @@ Run `supabase/migrations/008_paddle.sql` once (adds `paddle_customer_id`, `paddl
 `plan` to `businesses`) before setting these — the webhook writes to those columns.
 
 **How it flows:** client clicks a plan → Paddle's overlay checkout opens with
-`customData: { business_id }` so the webhook knows which row to update → on
+`customData: { business_id }` so the webhook knows which row to update (Paddle copies that custom
+data onto the subscription it creates, which is why the subscription events carry it) → on
 `subscription.activated`/`subscription.updated`, `api/paddle-webhook.js` verifies the
 `Paddle-Signature` header (HMAC over the raw body — this is the one endpoint that keeps body
-parsing off, see the comment at the top of that file) and sets `active` (true for
-`trialing`/`active`, false otherwise), `subscription_status` to Paddle's own status string, and
-`plan` from the price id. The dashboard's "Manage billing" button (visible once a
-`paddle_customer_id` exists) opens Paddle's hosted customer portal via `api/paddle-portal.js`
-for card updates, plan switches, and cancellation — all self-serve, nothing to build.
+parsing off, see the comment at the top of that file) and sets `active`,
+`subscription_status` to Paddle's own status string, and `plan` from the price id. The
+dashboard's "Manage billing" button (visible once a `paddle_customer_id` exists) opens Paddle's
+hosted customer portal via `api/paddle-portal.js` for card updates, plan switches, and
+cancellation — all self-serve, nothing to build.
+
+**Failed payments get a grace period.** `past_due` counts as live, so a declined card does not
+instantly silence a client's phone line — Paddle retries over several days (dunning), and the
+dashboard shows an amber "update your card" prompt with a link to the billing portal meanwhile.
+If dunning ultimately fails, Paddle moves the subscription to `canceled` and the webhook
+deactivates the tenant then. To cut service off on the first failed charge instead, drop
+`"past_due"` from `LIVE_STATUSES` in `api/paddle-webhook.js`.
+
+The checkout deliberately sets **no `successUrl`**: redirecting on payment would navigate the
+page away and kill the `checkout.completed` handler that polls for activation, leaving a paying
+customer staring at "Not started yet". Staying put lets the dashboard show the switch-on live.
 
 ### Cal.com auto-provisioning (optional — Cal.com accounts without manual setup)
 

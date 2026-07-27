@@ -234,6 +234,31 @@
     tbody tr:last-child td { border-bottom:none; }
     .pill { font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px; background:var(--green-soft); color:var(--green-d); text-transform:uppercase; letter-spacing:.04em; }
     .pill.cancelled { background:#F3E2DE; color:var(--danger); }
+    .pill.warn { background:var(--gold-soft); color:var(--gold-deep); }
+    .pill.idle { background:var(--bg); color:var(--muted); }
+
+    /* subscription plan cards — a current plan reads as chosen, not just disabled */
+    .plan-card { position:relative; }
+    .plan-card.current { border-color:var(--green-line); background:var(--paper); box-shadow:0 0 0 2px var(--green-soft), var(--shadow); }
+    .plan-card .plan-tag {
+      position:absolute; top:13px; right:13px; font-size:9.5px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.12em; padding:3px 9px; border-radius:999px;
+      background:var(--gold-soft); color:var(--gold-deep); border:1px solid var(--gold-line);
+    }
+    .plan-card.current .plan-tag { background:var(--green-soft); color:var(--green-d); border-color:var(--green-line); }
+    .plan-price { font-family:var(--font-display); font-size:30px; font-weight:800; letter-spacing:-.03em; margin:2px 0 6px; }
+    .plan-price span { font-size:13px; font-weight:500; color:var(--muted); }
+    /* margin-top:auto pins both CTAs to the card floor, so a one-line blurb next to a
+       two-line one doesn't leave the buttons at different heights */
+    .plan-card > button { margin-top:auto; }
+    .plan-card .qd { margin-bottom:9px; }
+    .trust { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:14px; font-size:12px; color:var(--muted); }
+    .trust i { font-style:normal; color:var(--green); font-weight:700; }
+    /* full-sentence warning — a squared box, not the pill-shaped .banner, so it wraps cleanly */
+    .sub-warn {
+      margin-top:16px; padding:12px 15px; border-radius:12px; font-size:13px; line-height:1.5;
+      background:var(--gold-soft); color:#8A6D1A; border:1px solid var(--gold-line);
+    }
     .staff-row { border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; margin-bottom:12px; background:var(--paper); animation:fadeUp .25s ease both; }
     .staff-main { display:flex; gap:8px; }
     .staff-row input { margin-bottom:0; }
@@ -788,28 +813,37 @@
             <div><div style="font-family:var(--font-display);font-weight:700;font-size:17px" id="subPlan">Free</div><div class="muted" id="subStatus">-</div></div>
             <span class="pill" id="subPill">-</span>
           </div>
+          <div id="subWarn" class="sub-warn" style="display:none"></div>
           <div id="subManageWrap" style="display:none;margin-top:16px">
             <button class="ghost" id="subManage">Manage billing →</button>
+            <div class="muted" style="font-size:12px;margin-top:8px" id="subManageNote"></div>
           </div>
           <div id="subFallback" class="muted" style="margin-top:16px">Online payments are coming soon. For now, activation is handled by our team. Reach out at <a href="mailto:hello@bizzassist.xyz">hello@bizzassist.xyz</a> to go live.</div>
         </div>
 
         <div class="ov-label" id="plansLabel" style="display:none">Choose a plan</div>
         <div class="quick" id="plansWrap" style="display:none">
-          <div class="quick-card" style="cursor:default">
+          <div class="quick-card plan-card" id="planStandardCard" style="cursor:default">
+            <span class="plan-tag" id="planStandardTag">Most popular</span>
             <span class="qt">Standard</span>
-            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$250<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
-            <span class="qd">Up to 1,500 AI conversations/mo, 24/7 answering & booking, automatic reminders.</span>
-            <button class="wide" data-plan="standard" id="planStandardBtn" style="margin-top:14px">Choose Standard</button>
+            <div class="plan-price">$250<span>/mo</span></div>
+            <span class="qd">Up to 1,500 AI conversations/mo, 24/7 answering &amp; booking, automatic reminders.</span>
+            <button class="wide" data-plan="standard" id="planStandardBtn">Choose Standard</button>
           </div>
-          <div class="quick-card" style="cursor:default">
+          <div class="quick-card plan-card" id="planProCard" style="cursor:default">
+            <span class="plan-tag" id="planProTag" style="display:none">Current</span>
             <span class="qt">Pro</span>
-            <div style="font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px">$400<span class="muted" style="font-size:13px;font-weight:500">/mo</span></div>
-            <span class="qd">Up to 4,500 AI conversations/mo (3×), priority setup & support.</span>
-            <button class="wide" data-plan="pro" id="planProBtn" style="margin-top:14px">Choose Pro</button>
+            <div class="plan-price">$400<span>/mo</span></div>
+            <span class="qd">Up to 4,500 AI conversations/mo (3×), priority setup &amp; support.</span>
+            <button class="wide" data-plan="pro" id="planProBtn">Choose Pro</button>
           </div>
         </div>
-        <div id="subCheckoutErr" class="err"></div>
+        <div class="trust" id="subTrust" style="display:none">
+          <span><i>✓</i> Secure payment via Paddle</span>
+          <span><i>✓</i> Cancel any time</span>
+          <span><i>✓</i> Your AI goes live automatically</span>
+        </div>
+        <div id="subCheckoutErr" class="err" style="margin-top:12px"></div>
       </section>
 
       <!-- SUPPORT -->
@@ -871,7 +905,10 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = (id) => document.getElementById(id);
     let token = null, biz = null, bookingsLoaded = false, signupMode = false, userEmail = null;
-    let paddleCfg = null, paddleReady = false;
+    // paddleFailed = config says billing is on, but Paddle.js itself never loaded (ad blockers
+    // routinely block cdn.paddle.com) — a different problem from "billing isn't set up yet", and
+    // it needs different copy or the owner emails support about a blocker on their own machine.
+    let paddleCfg = null, paddleReady = false, paddleFailed = false, activating = false;
     let bookingsCache = [], recoveryMode = false;
 
     async function api(method, body, path) {
@@ -917,16 +954,23 @@
       if (paddleReady) return true;
       try {
         if (!paddleCfg) paddleCfg = await (await fetch("/api/paddle-config")).json();
-        if (!paddleCfg.configured || !window.Paddle) return false;
-        if (paddleCfg.environment === "sandbox") Paddle.Environment.set("sandbox");
-        Paddle.Initialize({
-          token: paddleCfg.clientToken,
-          eventCallback: (e) => {
-            if (e.name === "checkout.completed") onCheckoutCompleted();
-          },
-        });
-        paddleReady = true;
-      } catch (e) { console.error("Paddle init failed", e); }
+        if (paddleCfg.configured && !window.Paddle) paddleFailed = true;
+        if (paddleCfg.configured && window.Paddle) {
+          if (paddleCfg.environment === "sandbox") Paddle.Environment.set("sandbox");
+          Paddle.Initialize({
+            token: paddleCfg.clientToken,
+            eventCallback: (e) => {
+              if (e.name === "checkout.completed") onCheckoutCompleted();
+            },
+          });
+          paddleReady = true;
+        }
+      } catch (e) {
+        console.error("Paddle init failed", e);
+        paddleFailed = true;
+      }
+      // Always re-render: the first render ran before this config landed, so the plan cards and
+      // fallback copy are still showing the pre-config guess until we repaint here.
       if (biz) renderSubscription();
       return paddleReady;
     }
@@ -935,29 +979,43 @@
     // refreshes our view of `biz` a few times so the UI catches up without a manual reload.
     async function onCheckoutCompleted() {
       $("subCheckoutErr").textContent = "";
-      $("subStatus").textContent = "Payment received. Activating your AI…";
-      for (let i = 0; i < 6; i++) {
+      // `activating` outranks the row's real status while we poll — without it every renderBiz()
+      // below would repaint "Not started yet" over this message, so a customer who just paid
+      // would watch the page insist they hadn't.
+      activating = true;
+      renderSubscription();
+      for (let i = 0; i < 12; i++) {
         await new Promise((r) => setTimeout(r, 2500));
         try {
           const { business } = await api("GET");
           biz = business; renderBiz();
-          if (business && business.active) break;
+          if (business && business.active) { activating = false; renderSubscription(); return; }
         } catch {}
       }
+      // Paddle's webhook is what activates the account, and it can lag behind the payment.
+      // Say so plainly instead of silently dropping back to "Not started yet".
+      activating = false;
+      renderSubscription();
+      $("subCheckoutErr").textContent =
+        "Payment went through, but activation is taking longer than usual. It usually lands within a few minutes — refresh this page, and email hello@bizzassist.xyz if it's still pending.";
     }
 
     function openCheckout(plan) {
       $("subCheckoutErr").textContent = "";
       const priceId = paddleCfg && paddleCfg.prices && paddleCfg.prices[plan];
       if (!paddleReady || !priceId) {
-        $("subCheckoutErr").textContent = "Payments aren't set up yet. Email hello@bizzassist.xyz to go live.";
+        $("subCheckoutErr").textContent = paddleFailed
+          ? "The payment window couldn't load — an ad blocker or privacy extension is usually the cause. Disable it for this page and try again, or email hello@bizzassist.xyz."
+          : "Payments aren't set up yet. Email hello@bizzassist.xyz to go live.";
         return;
       }
+      // No successUrl on purpose: it would navigate the page away the instant payment lands,
+      // killing the checkout.completed handler that polls for activation. Keeping the customer
+      // here lets them watch their AI actually switch on.
       Paddle.Checkout.open({
         items: [{ priceId, quantity: 1 }],
         customData: { business_id: String(biz.id) },
         customer: userEmail ? { email: userEmail } : undefined,
-        settings: { successUrl: location.origin + "/app" },
       });
     }
 
@@ -1019,27 +1077,74 @@
     // ── subscription (Paddle) ──
     const PLAN_LABEL = { standard: "Standard", pro: "Pro" };
     const STATUS_LABEL = { trialing: "Trial active", active: "Active", past_due: "Payment overdue", paused: "Paused", canceled: "Cancelled", inactive: "Not started yet" };
+    // Short pill copy. The pill is uppercased by CSS, so raw Paddle keys would render as
+    // "PAST_DUE" — underscore and all.
+    const PILL_LABEL = { trialing: "Trial", active: "Active", past_due: "Payment issue", paused: "Paused", canceled: "Cancelled", inactive: "Not active" };
     function renderSubscription() {
       const live = Boolean(biz && biz.active);
       const planKey = biz && biz.plan;
-      $("subPlan").textContent = (planKey ? PLAN_LABEL[planKey] || planKey : "Free") + " plan";
       const st = (biz && biz.subscription_status) || "inactive";
-      $("subStatus").textContent = STATUS_LABEL[st] || ("Status: " + st);
-      $("subPill").textContent = live ? "active" : st;
-      $("subPill").className = "pill" + (live ? "" : " cancelled");
+      $("subPlan").textContent = (planKey ? PLAN_LABEL[planKey] || planKey : "Free") + " plan";
+
+      if (activating) {
+        $("subStatus").textContent = "Payment received — switching your AI on…";
+        $("subPill").textContent = "Activating";
+        $("subPill").className = "pill warn";
+      } else {
+        $("subStatus").textContent = STATUS_LABEL[st] || ("Status: " + st);
+        $("subPill").textContent = PILL_LABEL[st] || st.replace(/_/g, " ");
+        // past_due keeps the AI answering (see api/paddle-webhook.js), so it earns its own
+        // amber state rather than the green "all good" or the red "you're cut off".
+        $("subPill").className = "pill" + (st === "past_due" ? " warn" : live ? "" : st === "inactive" ? " idle" : " cancelled");
+      }
+
+      // A failed card is the one status the owner must act on, and the fix is one click away.
+      const warn = $("subWarn");
+      if (st === "past_due" && !activating) {
+        warn.textContent = "We couldn't charge your card. Your AI is still answering for now — update your payment details to keep it that way.";
+        warn.style.display = "block";
+      } else {
+        warn.style.display = "none";
+      }
 
       const hasPaddle = Boolean(paddleCfg && paddleCfg.configured);
-      $("subManageWrap").style.display = biz && biz.paddle_customer_id ? "block" : "none";
+      // Shown whenever billing is switched on, NOT only when we have a stored customer id. Gating
+      // this on our own webhook having succeeded is how a paying customer ends up with no way to
+      // cancel; /api/paddle-portal resolves them by email instead and says so plainly if they
+      // genuinely have no subscription.
+      $("subManageWrap").style.display = hasPaddle ? "block" : "none";
+      // Explains why the button is here at all for someone with no subscription on record —
+      // which is exactly the person who paid and is stuck looking inactive.
+      $("subManageNote").textContent = biz && biz.paddle_customer_id
+        ? "Update your card, switch plans, or cancel — handled securely by Paddle."
+        : "Already paid but still showing as inactive? Open the billing portal to check or cancel.";
       $("plansLabel").style.display = hasPaddle ? "flex" : "none";
       $("plansWrap").style.display = hasPaddle ? "grid" : "none";
+      $("subTrust").style.display = hasPaddle ? "flex" : "none";
       $("subFallback").style.display = hasPaddle ? "none" : "block";
+      $("subFallback").innerHTML = paddleFailed
+        ? "The payment window couldn't load — an ad blocker or privacy extension is the usual cause. Disable it for this page and reload, or email <a href=\"mailto:hello@bizzassist.xyz\">hello@bizzassist.xyz</a> and we'll set you up."
+        : "Online payments are coming soon. For now, activation is handled by our team. Reach out at <a href=\"mailto:hello@bizzassist.xyz\">hello@bizzassist.xyz</a> to go live.";
 
       for (const p of ["standard", "pro"]) {
         const btn = $("plan" + PLAN_LABEL[p] + "Btn");
+        const card = $("plan" + PLAN_LABEL[p] + "Card");
+        const tag = $("plan" + PLAN_LABEL[p] + "Tag");
         if (!btn) continue;
         const isCurrent = planKey === p && live;
-        btn.textContent = isCurrent ? "Current plan" : planKey ? "Switch to " + PLAN_LABEL[p] : "Choose " + PLAN_LABEL[p];
-        btn.disabled = isCurrent;
+        // Lapsed on this same plan reads as "start it again", not "switch" to what they had.
+        btn.textContent = isCurrent
+          ? "Current plan"
+          : planKey === p ? "Restart " + PLAN_LABEL[p]
+          : planKey ? "Switch to " + PLAN_LABEL[p]
+          : "Choose " + PLAN_LABEL[p];
+        btn.disabled = isCurrent || activating;
+        if (card) card.classList.toggle("current", isCurrent);
+        if (tag) {
+          if (isCurrent) { tag.textContent = "Current"; tag.style.display = "block"; }
+          else if (p === "standard" && !planKey) { tag.textContent = "Most popular"; tag.style.display = "block"; }
+          else tag.style.display = "none";
+        }
       }
     }
 
