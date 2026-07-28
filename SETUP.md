@@ -158,6 +158,15 @@ of stranding a paying customer. Live businesses skip the lookup entirely, so the
 costs nothing. If Paddle is unreachable the row is served as-is — billing trouble never takes
 the dashboard down.
 
+**Cancellations are caught by a daily sweep.** Reconcile-on-read only rescues businesses that are
+*not* live, so it can start a subscription but never end one. Cancellations, expired trials, and
+exhausted dunning all happen to businesses that ARE live, and those owners have no reason to load
+the dashboard again. `api/_lib/billing.js` therefore re-checks every business carrying a
+`paddle_subscription_id` once a day (piggy-backed on the `/api/remind` cron, since Hobby allows
+one daily trigger) and deactivates any whose subscription is no longer live. Businesses activated
+by hand have no subscription id and are deliberately left alone, and a Paddle outage never
+deactivates anyone — an unreachable billing API is not evidence that someone stopped paying.
+
 **Failed payments get a grace period.** `past_due` counts as live, so a declined card does not
 instantly silence a client's phone line — Paddle retries over several days (dunning), and the
 dashboard shows an amber "update your card" prompt with a link to the billing portal meanwhile.

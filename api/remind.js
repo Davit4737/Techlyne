@@ -6,6 +6,7 @@
 
 import { getAppointmentsNeedingReminder, markReminderSent } from "./_lib/db.js";
 import { sendEmail, senderFor, reminderEmail } from "./_lib/email.js";
+import { syncActiveSubscriptions } from "./_lib/billing.js";
 
 // Fallbacks for appointments on the default (env-var) tenant, where business is null.
 const DEFAULT_NAME = process.env.CLINIC_NAME || "the clinic";
@@ -57,5 +58,18 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ checked: result.appointments.length, sent });
+  // Piggy-backs on this cron because Vercel's Hobby plan gives us one daily trigger and this
+  // job needs no tighter schedule. It catches the billing changes a dashboard visit cannot:
+  // cancellations and expired trials happen to businesses that are already live, and those
+  // owners have no reason to come back and load the page. Isolated so a billing failure can
+  // never make the reminder run look like it failed — the emails already went out.
+  let billing = null;
+  try {
+    billing = await syncActiveSubscriptions();
+  } catch (e) {
+    console.error("Billing sweep threw:", e);
+    billing = { ok: false, error: "sweep failed" };
+  }
+
+  return res.status(200).json({ checked: result.appointments.length, sent, billing });
 }

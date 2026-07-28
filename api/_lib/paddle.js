@@ -115,6 +115,27 @@ export async function findSubscriptionByEmail(email) {
   };
 }
 
+// Fetches one subscription by id. Used by the daily billing sweep to answer "is this business
+// still paying?" without needing the owner's email — the id is already on the row.
+// Returns { ok, subscription: { status, priceId } | null }. A 404 means Paddle has no such
+// subscription, which is reported as null rather than an error so the caller can act on it.
+export async function getSubscription(subscriptionId) {
+  if (!isPaddleConfigured()) return { ok: false, error: "Paddle is not configured" };
+  if (!subscriptionId) return { ok: true, subscription: null };
+
+  const res = await fetch(`${apiBase()}/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+    headers: { Authorization: `Bearer ${process.env.PADDLE_API_KEY}` },
+  });
+  if (res.status === 404) return { ok: true, subscription: null };
+  if (!res.ok) {
+    console.error("Paddle getSubscription error:", res.status, await res.text());
+    return { ok: false, error: "Could not load subscription" };
+  }
+  const sub = (await res.json())?.data;
+  if (!sub) return { ok: true, subscription: null };
+  return { ok: true, subscription: { status: sub.status || null, priceId: sub.items?.[0]?.price?.id || null } };
+}
+
 // Creates a Paddle-hosted "customer portal" session so an owner can update payment details,
 // swap plans, or cancel — without us building any billing UI. Returns the URL to redirect
 // to, scoped to this one customer.
