@@ -203,6 +203,24 @@ export async function bumpDemoUsage(key, dayISO) {
   return { ok: true, count: Number(count) };
 }
 
+// Increments a business's conversation count for the given month and returns the new total.
+// Backed by bump_business_usage (010_business_usage.sql), which does the increment atomically
+// so concurrent messages can't both read "under the limit" and slip past the cap.
+export async function bumpBusinessUsage(businessId, monthISO) {
+  if (!isConfigured()) return { ok: false, error: "Database not configured" };
+  const res = await fetch(`${REST()}/rpc/bump_business_usage`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ p_business_id: businessId, p_month: monthISO }),
+  });
+  if (!res.ok) {
+    console.error("Supabase bumpBusinessUsage error:", res.status, await res.text());
+    return { ok: false, error: "Failed to track usage" };
+  }
+  const count = await res.json();
+  return { ok: true, count: Number(count) };
+}
+
 // ─────────────────────────── Appointments ───────────────────────────
 
 export async function insertAppointment({ businessId, name, phone, email, service, startISO, calcomBookingUid, staff }) {
