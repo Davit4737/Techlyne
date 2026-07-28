@@ -43,13 +43,30 @@ export function verifyPaddleSignature(rawBody, signatureHeader, secret) {
 // Paddle moves the subscription to `canceled`, which deactivates through both paths anyway.
 export const LIVE_STATUSES = new Set(["trialing", "active", "past_due"]);
 
-// Maps a Paddle price id (from a subscription's `items[]`) to our internal plan name, via
-// the PADDLE_PRICE_ID_* env vars. Unknown/unset price ids map to null (kept as-is, not
-// overwritten) so an unrecognized price never silently blanks out a working plan.
+// Maps a Paddle price id (from a subscription's `items[]`) to our internal plan name, via the
+// PADDLE_PRICE_ID_* env vars. Unknown price ids map to null (the stored plan is kept as-is
+// rather than blanked) — but they are LOUD about it, because a silent null here is how someone
+// ends up subscribed to Pro while the dashboard shows Standard.
+//
+// Each var accepts a comma-separated list, so a discounted, grandfathered, or $1 test price can
+// sit alongside the list price without editing code. Paddle mints a NEW price id whenever the
+// amount changes — an existing price's amount is immutable once used — so any pricing change
+// means adding the new id here, and forgetting to is the failure this warning catches.
+function priceIdsFor(envValue) {
+  return String(envValue || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export function planFromPriceId(priceId) {
   if (!priceId) return null;
-  if (priceId === process.env.PADDLE_PRICE_ID_STANDARD) return "standard";
-  if (priceId === process.env.PADDLE_PRICE_ID_PRO) return "pro";
+  if (priceIdsFor(process.env.PADDLE_PRICE_ID_STANDARD).includes(priceId)) return "standard";
+  if (priceIdsFor(process.env.PADDLE_PRICE_ID_PRO).includes(priceId)) return "pro";
+  console.warn(
+    `Paddle price id "${priceId}" matches no configured plan — the subscription is live but its ` +
+      `plan will not update. Add it to PADDLE_PRICE_ID_STANDARD or PADDLE_PRICE_ID_PRO.`
+  );
   return null;
 }
 

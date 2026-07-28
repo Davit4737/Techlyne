@@ -9,7 +9,7 @@
 // keeps working. See SETUP.md / the onboarding form for per-client config.
 
 import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./_lib/scheduler.js";
-import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage } from "./_lib/db.js";
+import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage, bumpBusinessUsage } from "./_lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
 
 // Both paid tenants and the free landing-page demo run on Sonnet 5 — booking correctness is the
@@ -30,6 +30,20 @@ const MAX_UPCOMING_PER_CONTACT = 3; // bookings one phone can hold at once
 // cold starts and refreshes don't reset it. Identity = IP AND a device id the widget
 // persists in localStorage+cookie; whichever counter hits the cap first blocks.
 const DEMO_DAILY_LIMIT = 20;
+
+// ── Per-tenant monthly allowance (what the plans on the Subscription tab actually sell) ──
+// Without this the allowance is marketing copy: a Standard tenant could run unlimited
+// conversations, so the model bill scaled with usage while revenue didn't, and nobody had a
+// reason to upgrade. A tenant on no recognised plan (operator-comped, or a price id we failed to
+// map) gets the Standard allowance rather than nothing — never cut off an account we activated.
+const PLAN_MONTHLY_LIMIT = { standard: 1500, pro: 4500 };
+const DEFAULT_MONTHLY_LIMIT = PLAN_MONTHLY_LIMIT.standard;
+
+// Said to the visitor, so it must not leak the tenant's billing state or sound like a fault of
+// theirs — the customer chatting is not the person who can fix it.
+const TENANT_LIMIT_MESSAGE =
+  "Thanks for your patience — this assistant has reached its message limit for this month. " +
+  "Please contact the business directly and they'll be glad to help.";
 const DEMO_MAX_HISTORY = 12;   // shorter context than paid tenants — caps token burn
 const DEMO_MAX_TOKENS = 700;
 const DEMO_LIMIT_MESSAGE =
@@ -134,6 +148,7 @@ function businessFromRow(row) {
   return {
     id: row.id,
     name: row.name,
+    plan: row.plan, // drives the monthly conversation allowance — see PLAN_MONTHLY_LIMIT
     timezone: row.timezone || "UTC",
     hours: row.hours,
     address: row.address,
@@ -733,6 +748,20 @@ export default async function handler(req, res) {
         unavailable: true,
       });
     }
+    // Meter the tenant BEFORE spending anything on the model. Counted per calendar month and
+    // incremented atomically, so a burst of concurrent messages can't both read "under the cap".
+    // Fails open on a DB error: metering trouble must never take a paying clinic's front desk
+    // offline — we'd rather serve a few uncounted messages than drop real customers.
+    if (biz.id) {
+      const month = new Date().toISOString().slice(0, 8) + "01";
+      const usage = await bumpBusinessUsage(biz.id, month);
+      const limit = PLAN_MONTHLY_LIMIT[biz.plan] || DEFAULT_MONTHLY_LIMIT;
+      if (usage.ok && usage.count > limit) {
+        console.warn("Tenant over monthly allowance:", { businessId: biz.id, plan: biz.plan, count: usage.count, limit });
+        return res.status(429).json({ reply: TENANT_LIMIT_MESSAGE, tenant_limit: true });
+      }
+    }
+
     const systemPrompt = buildSystemPrompt(biz);
     const tools = buildTools(biz);
 

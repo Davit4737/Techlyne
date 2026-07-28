@@ -131,8 +131,8 @@ the old "email us to activate" copy, so nothing breaks on a fresh deploy.
 | `PADDLE_API_KEY` | Paddle → Developer tools → Authentication → API key (secret, server-only) |
 | `PADDLE_CLIENT_TOKEN` | Paddle → Developer tools → Client-side tokens (public — embedded in `/app`) |
 | `PADDLE_WEBHOOK_SECRET` | Paddle → Developer tools → Notifications → your destination's secret key |
-| `PADDLE_PRICE_ID_STANDARD` | Paddle → Catalog → Products → Standard → its price id (`pri_...`) |
-| `PADDLE_PRICE_ID_PRO` | Paddle → Catalog → Products → Pro → its price id (`pri_...`) |
+| `PADDLE_PRICE_ID_STANDARD` | Paddle → Catalog → Products → Standard → its price id (`pri_...`). Accepts a comma-separated list |
+| `PADDLE_PRICE_ID_PRO` | Paddle → Catalog → Products → Pro → its price id (`pri_...`). Accepts a comma-separated list |
 | `PADDLE_ENV` | `sandbox` while testing, unset (or `production`) once you switch to your live Paddle account |
 
 Run `supabase/migrations/008_paddle.sql` once (adds `paddle_customer_id`, `paddle_subscription_id`,
@@ -157,6 +157,23 @@ that is misconfigured, blocked, or still retrying delays activation by one page 
 of stranding a paying customer. Live businesses skip the lookup entirely, so the normal case
 costs nothing. If Paddle is unreachable the row is served as-is — billing trouble never takes
 the dashboard down.
+
+**Changing a price mints a NEW price id.** Paddle prices are immutable once used — editing the
+amount creates a new `pri_...` and archives the old one. If the env var still holds the old id,
+the subscription activates fine but its **plan silently stops updating**, so a client can be on
+Pro while the dashboard shows Standard. Both price vars therefore accept a comma-separated list
+(keep the old id and add the new one, e.g. a $1 test price alongside the list price), and any
+unmapped price id is logged as a warning in the Vercel runtime logs so the mismatch is visible
+instead of silent.
+
+**Plan allowances are enforced, not just advertised.** Each tenant's conversations are metered
+per calendar month in `business_usage` (run `supabase/migrations/010_business_usage.sql`) and
+capped at 1,500 on Standard / 4,500 on Pro — see `PLAN_MONTHLY_LIMIT` in `api/chat.js`. Over the
+cap, the widget returns a polite "reached its message limit this month" reply instead of calling
+the model, so the Anthropic bill can't outrun revenue and one client's public widget can't be
+hammered indefinitely. A tenant on no recognised plan gets the Standard allowance rather than
+zero, and a metering failure fails **open** — a database blip must never take a paying clinic's
+front desk offline.
 
 **Cancellations are caught by a daily sweep.** Reconcile-on-read only rescues businesses that are
 *not* live, so it can start a subscription but never end one. Cancellations, expired trials, and
