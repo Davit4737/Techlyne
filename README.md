@@ -65,7 +65,6 @@ flowchart TD
 | `GET /api/remind` | `api/remind.js` | Daily Vercel Cron. Emails reminders for appointments 24–48h out. Gated by `CRON_SECRET`. |
 | `GET /api/appointments` | `api/appointments.js` | Powers a dashboard. `?b=<slug>` scopes to one client (auth = master `ADMIN_SECRET` or that client's own secret); no `b` = the default tenant. |
 | `GET/POST/PATCH /api/businesses` | `api/businesses.js` | Operator CRUD for client businesses. Gated by master `ADMIN_SECRET`. |
-| `GET /api/diag` | `api/diag.js` | Internal health check for the integrations. Gated by `CRON_SECRET`. |
 | `GET /api/paddle-config` | `api/paddle-config.js` | Public Paddle.js config (client token + price ids) for the `/app` checkout. |
 | `POST /api/paddle-webhook` | `api/paddle-webhook.js` | Paddle subscription events. Verified by HMAC signature; flips `active`/`subscription_status` on the matching business. |
 | `POST /api/paddle-portal` | `api/paddle-portal.js` | Owner-authenticated. Returns a Paddle billing-portal URL for the caller's own business. |
@@ -82,7 +81,6 @@ api/
   chat.js          AI endpoint + tool loop + system prompt
   remind.js        daily reminder cron
   appointments.js  admin bookings API
-  diag.js          integration health check
   lib/
     calcom.js      Cal.com: availability, book, cancel, reschedule
     db.js          Supabase: insert/find/update/cancel/list appointments
