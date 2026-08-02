@@ -3,11 +3,20 @@
 // the customer-facing front desk. It answers "how do I..." questions about BizAssist itself
 // (installing the widget, billing, configuring the business) and escalates to a human when it
 // can't help. Reuses ANTHROPIC_API_KEY; no booking tools, no DB access, so it stays cheap and
-// safe. Rate-limited per IP. It's the "if the user is struggling, it goes to the AI" fallback
-// behind the Support tab's FAQ.
+// safe. It's the "if the user is struggling, it goes to the AI" fallback behind the Support
+// tab's FAQ.
+//
+// Requires a signed-in owner. It shipped open, which made it a free Claude proxy for anyone who
+// found the URL: the only defences were a per-warm-instance IP limiter (resets on every cold
+// start, and is per-instance, so it barely holds) and a message count the CLIENT reports about
+// itself. Since the Support tab only ever renders inside the authenticated dashboard, requiring
+// the caller's Supabase token costs a real owner nothing and closes the endpoint completely.
+// The IP limiter stays as a backstop against one signed-in account hammering it.
 
 // Owner FAQ help is simple Q&A — the cheap/fast model is plenty and keeps costs down. The
 // system prompt is cached (below), so follow-ups are ~10% of the input price.
+import { bearerFromReq, getUserFromToken } from "./_lib/auth.js";
+
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 600;
 const MAX_MSG_LEN = 800;
@@ -80,6 +89,11 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  // Checked before anything else: an unauthenticated caller should not be able to probe whether
+  // the model is configured, let alone reach it.
+  const user = await getUserFromToken(bearerFromReq(req));
+  if (!user) return res.status(401).json({ error: "Please sign in again." });
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(200).json({

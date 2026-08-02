@@ -1565,7 +1565,7 @@
       supSending = true; $("supSend").disabled = true;
       const typing = supAdd("bot", "…"); typing.classList.add("typing");
       try {
-        const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: supHistory.slice(-12), count: supUsedToday(false) }) });
+        const res = await fetch("/api/support", { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ messages: supHistory.slice(-12), count: supUsedToday(false) }) });
         const data = await res.json().catch(() => ({}));
         typing.remove();
         if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
