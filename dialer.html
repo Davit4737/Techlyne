@@ -7,7 +7,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
-<script src="https://sdk.twilio.com/js/voice/releases/2.11.0/twilio.min.js"></script>
+<!--
+  Not sdk.twilio.com: as of the SDK's 2.0 release Twilio stopped hosting it there, and that
+  domain now returns 403 Forbidden (an S3/CloudFront AccessDenied response, not a client-side
+  block) for every version, including this one. That single dead URL was the entire fault this
+  whole page kept getting blamed for — no ad blocker, no trial account, no missing microphone
+  permission ever mattered, because window.Twilio was never going to exist.
+  Twilio's own docs now point at jsDelivr's npm mirror instead. Pinned to an exact version with
+  a Subresource Integrity hash (computed from the real published npm tarball, not guessed) so a
+  compromised or altered CDN response is rejected by the browser rather than silently executed.
+-->
+<script src="https://cdn.jsdelivr.net/npm/@twilio/voice-sdk@2.18.3/dist/twilio.min.js"
+        integrity="sha384-11P5HWF8oWyRF2MfktRrB2yWoVU12FUbjAVUwpwXhB7ziNEkkm/M/YcLs0boQLgS"
+        crossorigin="anonymous"></script>
 <style>
   :root{
     --bg:#0e1420; --panel:#161d2b; --panel2:#1c2536; --raise:#222d42;
@@ -689,7 +701,7 @@ const DIALER = (function(){
 
   const GATE_ERR = {
     badcode: "Wrong passcode — check for a typo.",
-    nosdk:   "Passcode accepted, but the phone library is blocked. Disable your ad blocker or privacy extension for this page and reload.",
+    nosdk:   "Passcode accepted, but the phone library failed to load. Check your connection and reload — if this keeps happening, the CDN link may need attention.",
     failed:  "Passcode accepted, but the phone couldn't start. Open the browser console (F12) for the reason.",
     nocode:  "Enter your passcode.",
   };
@@ -728,9 +740,10 @@ const DIALER = (function(){
       if(!r.ok) throw new Error("token endpoint returned " + r.status);
       const { token } = await r.json();
       sessionStorage.setItem("dialer_code", pass);
-      // The SDK comes from sdk.twilio.com, which ad blockers and corporate networks routinely
-      // block. Checked explicitly so that failure reads as itself instead of a ReferenceError
-      // swallowed by the catch below and shown as a passcode problem.
+      // The SDK is loaded from a third-party CDN (see the <script> tag at the top of this file);
+      // any CDN outage or connectivity failure lands here. Checked explicitly so that failure
+      // reads as itself instead of a ReferenceError swallowed by the catch below and shown as a
+      // passcode problem.
       if(typeof Twilio === "undefined" || !Twilio.Device){
         ready = false; lastReason = "nosdk"; setLine("phone library blocked", "bad");
         return "nosdk";
