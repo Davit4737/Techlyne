@@ -19,6 +19,14 @@
     {
       "source": "/c/:slug",
       "destination": "/chat.html"
+    },
+    {
+      "source": "/api/token",
+      "destination": "/api/dialer?action=token"
+    },
+    {
+      "source": "/api/voice",
+      "destination": "/api/dialer?action=voice"
     }
   ],
   "headers": [
