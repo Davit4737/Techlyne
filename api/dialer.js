@@ -242,11 +242,94 @@ async function handleCheck(req, res) {
   return res.status(200).json(out);
 }
 
+// ─────────────────────────── /api/dialer?action=calls ───────────────────────────
+// Passcode-gated. When Twilio's gateway hangs up (error 31005), the browser only ever learns
+// "the gateway hung up" — the actual reason lives in Twilio's Monitor Alerts, which record the
+// specific error code and a human description for every failed call. This asks for exactly
+// that, plus the call records themselves and the account balance, so the cause is a fact rather
+// than another guess.
+async function handleCalls(req, res) {
+  const expected = process.env.DIALER_PASSCODE;
+  const supplied = (req.headers && req.headers["x-dialer-code"]) || (req.query && req.query.code) || "";
+  if (!expected || String(supplied).trim() !== String(expected).trim()) {
+    return res.status(401).json({ error: "Wrong passcode." });
+  }
+
+  const sid = (process.env.TWILIO_ACCOUNT_SID || "").trim();
+  const key = (process.env.TWILIO_API_KEY || "").trim();
+  const secret = (process.env.TWILIO_API_SECRET || "").trim();
+  const auth = "Basic " + Buffer.from(`${key}:${secret}`).toString("base64");
+  const get = async (url) => {
+    const r = await fetch(url, { headers: { Authorization: auth } });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+
+  const out = { verdicts: [] };
+  try {
+    // Balance first: an exhausted balance hangs calls up immediately and looks exactly like
+    // this, and it is the one cause the caller can fix without touching any settings.
+    const bal = await get(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Balance.json`);
+    if (bal.status === 200 && bal.body) {
+      out.balance = `${bal.body.balance} ${bal.body.currency || ""}`.trim();
+      const n = parseFloat(bal.body.balance);
+      out.verdicts.push(Number.isFinite(n) && n <= 0
+        ? `FAIL account balance is ${out.balance} — Twilio drops outbound calls with no funds. Add credit.`
+        : `PASS account balance: ${out.balance}`);
+    }
+
+    const calls = await get(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json?PageSize=5`);
+    if (calls.status === 200 && calls.body && Array.isArray(calls.body.calls)) {
+      out.recentCalls = calls.body.calls.map((c) => ({
+        to: c.to, from: c.from, status: c.status, duration: c.duration,
+        price: c.price, started: c.start_time,
+      }));
+      if (!out.recentCalls.length) {
+        out.verdicts.push("WARN Twilio has no record of ANY outbound call on this account — the call never got past the gateway.");
+      }
+    }
+
+    // The Monitor Alerts API is where the real reason lives.
+    const alerts = await get("https://monitor.twilio.com/v1/Alerts?PageSize=5");
+    if (alerts.status === 200 && alerts.body && Array.isArray(alerts.body.alerts)) {
+      out.recentAlerts = alerts.body.alerts.map((a) => ({
+        errorCode: a.error_code,
+        message: (a.alert_text || "").slice(0, 400),
+        date: a.date_created,
+        url: a.more_info,
+      }));
+      for (const a of out.recentAlerts) {
+        // The codes that actually explain a 31005 hangup, translated into the fix.
+        const known = {
+          13224: "Twilio will not dial this number: VOICE GEOGRAPHIC PERMISSIONS block the destination country. Enable it in Console → Voice → Settings → Geo Permissions.",
+          13227: "Twilio will not dial this number: geographic permissions block the destination country. Enable it in Console → Voice → Settings → Geo Permissions.",
+          21215: "Geo permissions: this account is not enabled to call that country. Console → Voice → Settings → Geo Permissions.",
+          21210: "The caller ID is not verified/owned for outbound use on this account.",
+          21212: "Invalid caller ID — it must be a Twilio number you own or a verified caller ID.",
+          20003: "Authentication failed against the Twilio API.",
+          31005: "Gateway hangup — check the alerts above this one for the underlying cause.",
+        };
+        if (known[a.errorCode]) out.verdicts.push(`FAIL ${a.errorCode}: ${known[a.errorCode]}`);
+        else if (a.errorCode) out.verdicts.push(`INFO Twilio alert ${a.errorCode}: ${a.message.slice(0, 200)}`);
+      }
+      if (!out.recentAlerts.length) out.verdicts.push("INFO no recent Twilio alerts recorded.");
+    } else if (alerts.status === 401) {
+      out.verdicts.push("WARN could not read Twilio Alerts with this API key (401). Check Console → Monitor → Alerts manually for the error code.");
+    }
+  } catch (e) {
+    console.error("dialer calls diagnostic failed:", e);
+    out.verdicts.push("FAIL could not reach the Twilio API: " + (e.message || e));
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).json(out);
+}
+
 export default function handler(req, res) {
   const action = req.query && req.query.action;
   if (action === "token") return handleToken(req, res);
   if (action === "voice") return handleVoice(req, res);
   if (action === "check") return handleCheck(req, res);
+  if (action === "calls") return handleCalls(req, res);
   return res.status(404).json({ error: "Not found" });
 }
 
