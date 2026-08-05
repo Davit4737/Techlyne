@@ -103,10 +103,102 @@ function handleVoice(req, res) {
   return res.status(200).send(twiml.toString());
 }
 
+// ─────────────────────────── /api/dialer?action=check ───────────────────────────
+// Passcode-gated diagnostic. The browser dialer fails BEFORE our server is involved (Twilio
+// never fetches /api/voice), so nothing in our logs can explain a dead call — but the server
+// holds the same credentials the token is minted from, and Twilio's REST API will happily say
+// whether they're valid, whether the account is a restricted trial, where the TwiML app really
+// points, and which numbers are usable. One URL replaces a guessing game.
+async function handleCheck(req, res) {
+  const expected = process.env.DIALER_PASSCODE;
+  const supplied = (req.headers && req.headers["x-dialer-code"]) || (req.query && req.query.code) || "";
+  if (!expected || String(supplied).trim() !== String(expected).trim()) {
+    return res.status(401).json({ error: "Wrong passcode." });
+  }
+
+  const sid = process.env.TWILIO_ACCOUNT_SID || "";
+  const key = process.env.TWILIO_API_KEY || "";
+  const secret = process.env.TWILIO_API_SECRET || "";
+  const appSid = process.env.TWILIO_TWIML_APP_SID || "";
+  const callerId = process.env.TWILIO_CALLER_ID || "";
+
+  const out = { verdicts: [] };
+  const envShape = [
+    ["TWILIO_ACCOUNT_SID", sid, /^AC[0-9a-f]{32}$/i],
+    ["TWILIO_API_KEY", key, /^SK[0-9a-f]{32}$/i],
+    ["TWILIO_TWIML_APP_SID", appSid, /^AP[0-9a-f]{32}$/i],
+    ["TWILIO_CALLER_ID", callerId, /^\+\d{8,15}$/],
+  ];
+  for (const [name, val, re] of envShape) {
+    if (!val) out.verdicts.push(`FAIL ${name} is not set`);
+    else if (!re.test(val.trim())) out.verdicts.push(`FAIL ${name} has the wrong shape (got "${val.slice(0, 4)}...", length ${val.length})`);
+  }
+  if (!secret) out.verdicts.push("FAIL TWILIO_API_SECRET is not set");
+
+  const auth = "Basic " + Buffer.from(`${key.trim()}:${secret.trim()}`).toString("base64");
+  const base = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid.trim())}`;
+  const get = async (url) => {
+    const r = await fetch(url, { headers: { Authorization: auth } });
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+
+  try {
+    const acct = await get(`${base}.json`);
+    if (acct.status === 401) {
+      out.verdicts.push("FAIL Twilio rejected the API key/secret pair (401). Re-create the API key and paste BOTH values fresh.");
+    } else if (acct.status === 404) {
+      out.verdicts.push("FAIL TWILIO_ACCOUNT_SID doesn't match any account (404).");
+    } else if (acct.body) {
+      out.account = { status: acct.body.status, type: acct.body.type };
+      out.verdicts.push(`PASS credentials valid — account status "${acct.body.status}", type "${acct.body.type}"`);
+      if (acct.body.type === "Trial") {
+        out.verdicts.push("WARN TRIAL ACCOUNT: it can ONLY call numbers listed under Verified Caller IDs, and plays a trial message first. Upgrade the account (add a payment method) to call clinics.");
+      }
+      if (acct.body.status !== "active") {
+        out.verdicts.push(`FAIL account status is "${acct.body.status}" — calls are blocked until it's active.`);
+      }
+    }
+
+    const app = await get(`${base}/Applications/${encodeURIComponent(appSid.trim())}.json`);
+    if (app.status === 404) {
+      out.verdicts.push("FAIL TWILIO_TWIML_APP_SID doesn't match any TwiML app on this account.");
+    } else if (app.body) {
+      out.twimlApp = { voiceUrl: app.body.voice_url, voiceMethod: app.body.voice_method };
+      const ok = /^https:\/\/(www\.)?bizzassist\.xyz\/api\/voice$/.test(app.body.voice_url || "");
+      out.verdicts.push(ok
+        ? `PASS TwiML app voice URL is "${app.body.voice_url}" (${app.body.voice_method})`
+        : `FAIL TwiML app voice URL is "${app.body.voice_url || "(empty)"}" — it must be https://bizzassist.xyz/api/voice`);
+    }
+
+    const nums = await get(`${base}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(callerId.trim())}`);
+    const owned = Boolean(nums.body && Array.isArray(nums.body.incoming_phone_numbers) && nums.body.incoming_phone_numbers.length);
+    out.verdicts.push(owned
+      ? `PASS caller ID ${callerId.trim()} is a number this account owns`
+      : `FAIL caller ID ${callerId.trim()} is NOT owned by this account — outbound <Dial> will be rejected.`);
+
+    const vids = await get(`${base}/OutgoingCallerIds.json`);
+    if (vids.body && Array.isArray(vids.body.outgoing_caller_ids)) {
+      out.verifiedCallerIds = vids.body.outgoing_caller_ids.map((v) => v.phone_number);
+      if (out.account && out.account.type === "Trial") {
+        out.verdicts.push(out.verifiedCallerIds.length
+          ? `INFO on a trial, callable numbers are ONLY: ${out.verifiedCallerIds.join(", ")}`
+          : "WARN trial account with NO verified caller IDs — it cannot call anything. Verify your own mobile under Phone Numbers → Verified Caller IDs, or upgrade.");
+      }
+    }
+  } catch (e) {
+    console.error("dialer check failed:", e);
+    out.verdicts.push("FAIL could not reach the Twilio API from the server: " + (e.message || e));
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).json(out);
+}
+
 export default function handler(req, res) {
   const action = req.query && req.query.action;
   if (action === "token") return handleToken(req, res);
   if (action === "voice") return handleVoice(req, res);
+  if (action === "check") return handleCheck(req, res);
   return res.status(404).json({ error: "Not found" });
 }
 
