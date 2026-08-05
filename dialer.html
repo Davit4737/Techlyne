@@ -769,6 +769,33 @@ const DIALER = (function(){
 
   function isOn(id){ return currentId === id && !!call; }
 
+  // The Voice SDK cannot open a call without a microphone, and the browser only grants one after
+  // an explicit permission prompt. Nothing here asked for it, so device.connect() was failing at
+  // the media step — before Twilio ever placed the call, which is exactly why /api/voice was
+  // never hit and why it broke identically on desktop and phone. Asked for up front so the
+  // failure names itself instead of arriving as a silent dead call.
+  async function ensureMic(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      return "This browser won't allow microphone access here (the page must be on https).";
+    }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Permission is all we needed; Twilio opens its own stream when the call starts.
+      stream.getTracks().forEach(t => t.stop());
+      return null;
+    }catch(err){
+      console.error("microphone unavailable:", err);
+      const n = (err && err.name) || "";
+      if(n === "NotAllowedError" || n === "SecurityError")
+        return "Microphone blocked. Click the padlock in the address bar, allow the microphone for this site, then reload.";
+      if(n === "NotFoundError" || n === "DevicesNotFoundError")
+        return "No microphone found. Plug in a headset or mic and reload.";
+      if(n === "NotReadableError" || n === "TrackStartError")
+        return "Your microphone is being used by another app. Close it (Zoom, Meet, Teams) and try again.";
+      return "Couldn't access the microphone: " + (err && (err.message || err.name) || "unknown");
+    }
+  }
+
   async function dial(clinic){
     if(!ready){
       // Only reprompt when a passcode is actually what's missing. If the code was already
@@ -793,6 +820,19 @@ const DIALER = (function(){
     D("btnKeypad").disabled = true;
     D("dockTimer").textContent = "00:00";
     document.body.classList.add("docked");
+    setState("checking mic…", "ringing");
+    render();
+
+    const micErr = await ensureMic();
+    if(micErr){
+      // finish() resets the dock and writes its own "call ended" state, so the explanation has
+      // to be written after it or the reason vanishes the instant it appears.
+      finish();
+      setState(micErr, "ended");
+      setLine("microphone blocked", "bad");
+      return;
+    }
+
     setState("dialing…", "ringing");
     render();
 
@@ -813,15 +853,17 @@ const DIALER = (function(){
       // as the only symptom — show it and log it.
       call.on("error", (err) => {
         console.error("dialer call error:", err);
-        setState("failed — " + ((err && (err.code ? err.code + " " : "") + (err.message||"")) || "unknown"), "ended");
+        const msg = "failed — " + ((err && (err.code ? err.code + " " : "") + (err.message||"")) || "unknown");
         setLine("call error " + ((err && err.code) || ""), "bad");
-        finish();
+        finish();                 // resets the dock, then the reason is written over its default
+        setState(msg, "ended");
       });
     }catch(e){
       console.error("dialer connect failed:", e);
-      setState("failed — " + ((e && (e.message||e.code)) || "couldn't start"), "ended");
+      const msg = "failed — " + ((e && (e.message||e.code)) || "couldn't start");
       setLine("call failed", "bad");
       finish();
+      setState(msg, "ended");
     }
   }
 
