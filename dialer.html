@@ -701,19 +701,29 @@ const DIALER = (function(){
     secs++; D("dockTimer").textContent = fmtSecs(secs);
   }
 
+  // Returns a REASON, not a boolean. It previously returned false for both "wrong passcode" and
+  // "the token was fine but the phone would not start", so a correct passcode could be reported
+  // to the user as a wrong one — with the real fault (a blocked Twilio SDK) never surfaced.
   async function boot(code){
     const pass = code || sessionStorage.getItem("dialer_code") || "";
-    if(!pass){ ready = false; setLine("locked — click to unlock", ""); return false; }
+    if(!pass){ ready = false; setLine("locked — click to unlock", ""); return "nocode"; }
     try{
       const r = await fetch("/api/token", { headers: { "x-dialer-code": pass } });
       if(r.status === 401){
         sessionStorage.removeItem("dialer_code");
         ready = false; setLine("wrong passcode", "bad");
-        return false;
+        return "badcode";
       }
-      if(!r.ok) throw new Error("no token");
+      if(!r.ok) throw new Error("token endpoint returned " + r.status);
       const { token } = await r.json();
       sessionStorage.setItem("dialer_code", pass);
+      // The SDK comes from sdk.twilio.com, which ad blockers and corporate networks routinely
+      // block. Checked explicitly so that failure reads as itself instead of a ReferenceError
+      // swallowed by the catch below and shown as a passcode problem.
+      if(typeof Twilio === "undefined" || !Twilio.Device){
+        ready = false; setLine("phone library blocked", "bad");
+        return "nosdk";
+      }
       device = new Twilio.Device(token, { codecPreferences:["opus","pcmu"], logLevel:"error" });
       device.on("error", e => setLine("error — " + (e.message||"unknown"), "bad"));
       device.on("tokenWillExpire", async () => {
@@ -726,11 +736,14 @@ const DIALER = (function(){
       });
       ready = true;
       setLine("ready", "ok");
-      return true;
+      return "ok";
     }catch(e){
+      // Surfaced to the console because the on-screen line has no room for the real cause, and
+      // without it "not connected" is undiagnosable.
+      console.error("dialer boot failed:", e);
       ready = false;
       setLine("not connected — check setup", "bad");
-      return false;
+      return "failed";
     }
   }
 
@@ -883,13 +896,25 @@ const DIALER = (function(){
     // nothing at all until the code is accepted.
     function unlock(){ document.documentElement.classList.remove("locked"); }
 
+    // Each failure gets its own message. A single "that didn't work" sent the owner hunting for
+    // a passcode typo when the passcode was already accepted and the phone library was blocked.
+    const GATE_ERR = {
+      badcode: "Wrong passcode — check for a typo.",
+      nosdk:   "Passcode accepted, but the phone library is blocked. Disable your ad blocker or privacy extension for this page and reload.",
+      failed:  "Passcode accepted, but the phone couldn't start. Open the browser console for the reason.",
+      nocode:  "Enter your passcode.",
+    };
+
     async function submitCode(){
       const v = D("gateInput").value.trim();
       if(!v){ D("gateErr").textContent = "Enter your passcode."; return; }
       D("gateErr").textContent = "checking…";
-      const ok = await boot(v);
-      if(ok){ unlock(); D("gate").classList.remove("open"); }
-      else { D("gateErr").textContent = "That didn't work. Try again."; }
+      const reason = await boot(v);
+      // Unlock on anything that is not a rejected passcode: the lead list is useful even when
+      // the phone will not start, and holding it hostage to a browser extension helps nobody.
+      if(reason === "ok"){ unlock(); D("gate").classList.remove("open"); }
+      else if(reason === "badcode"){ D("gateErr").textContent = GATE_ERR.badcode; }
+      else { unlock(); D("gate").classList.remove("open"); setLine("calling unavailable", "bad"); console.warn("dialer:", GATE_ERR[reason] || reason); }
     }
     D("gateGo").addEventListener("click", submitCode);
     D("gateInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitCode(); });
@@ -904,7 +929,7 @@ const DIALER = (function(){
 
     // A refresh in the same tab re-uses the code boot() kept in sessionStorage; a new tab or a
     // reopened browser has none, so it locks and asks again.
-    boot().then(ok => { if(ok) unlock(); else openGate(); });
+    boot().then(reason => { if(reason === "ok") unlock(); else openGate(); });
   }
   if(document.readyState !== "loading") wire();
 
