@@ -63,14 +63,13 @@ function handleToken(req, res) {
 }
 
 // ─────────────────────────── /api/voice ───────────────────────────
-// Toll-fraud guard: only ordinary US/Canada numbers.
-// Blocks international premium-rate destinations, which is how open
-// dialers get drained. Also blocks US premium (900) and directory (976).
+// Toll-fraud guard: only ordinary US/Canada numbers, plus Armenia by request.
+// Blocks every other international destination, which is how open dialers get drained by bots
+// hunting for premium-rate lines. Also blocks US premium (900) and directory (976).
 //
-// DO NOT loosen this. An endpoint that will dial anything gets found by bots that call expensive
-// international premium lines and drain the account balance within hours.
-function allowed(raw) {
-  const d = String(raw).replace(/\D/g, "");
+// DO NOT loosen this without adding an equally specific carve-out. An endpoint that will dial
+// anything gets found and drains the account balance within hours.
+function allowedNANP(d) {
   if (d.length !== 11) return false;      // must be 1 + 10 digits
   if (d[0] !== "1") return false;         // North America only
   const area = d.slice(1, 4);
@@ -78,6 +77,25 @@ function allowed(raw) {
   if (area === "900") return false;       // premium rate
   if (d.slice(4, 7) === "976") return false;
   return true;
+}
+
+// Armenia: country code 374 + an 8-digit national number (confirmed against this account's own
+// verified caller ID, and against independent numbering-plan references — Yerevan uses a 2-digit
+// area code + 6 digits, provincial areas a 3-digit code + 5 digits, mobiles a 2-digit prefix + 6
+// digits; all three shapes are exactly 8 digits). Numbers starting 80 (toll-free) or 90
+// (premium-rate, per the same references) are excluded, mirroring how the US branch excludes 900
+// and 976 rather than trying to allowlist every valid prefix individually.
+function allowedArmenia(d) {
+  if (d.length !== 11) return false;      // 374 + 8
+  if (!d.startsWith("374")) return false;
+  const nsn = d.slice(3);
+  if (nsn.startsWith("80") || nsn.startsWith("90")) return false;
+  return true;
+}
+
+function allowed(raw) {
+  const d = String(raw).replace(/\D/g, "");
+  return allowedNANP(d) || allowedArmenia(d);
 }
 
 function handleVoice(req, res) {
