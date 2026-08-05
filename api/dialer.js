@@ -27,7 +27,11 @@ function handleToken(req, res) {
   if (!expected) {
     return res.status(500).json({ error: "DIALER_PASSCODE is not set on the server." });
   }
-  if (String(supplied) !== String(expected)) {
+  // Both sides are trimmed. Pasting a value into a dashboard env-var box picks up a trailing
+  // space or newline almost invisibly, and the browser already trims what the user types — so
+  // an exact comparison rejects a passcode that looks identical to the person entering it, with
+  // no way to tell from the error. Whitespace at either end is never meaningful in a passcode.
+  if (String(supplied).trim() !== String(expected).trim()) {
     return res.status(401).json({ error: "Wrong passcode." });
   }
 
