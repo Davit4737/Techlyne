@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizAssist — Lead Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<script src="https://sdk.twilio.com/js/voice/releases/2.11.0/twilio.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1420; --panel:#161d2b; --panel2:#1c2536; --raise:#222d42;
+    --border:#293449; --border-soft:#212b3d;
+    --text:#e8eef7; --muted:#8695ac; --muted2:#61708a;
+    --teal:#2fd4b5; --teal-dim:#183f3a;
+    --amber:#f2b545; --amber-dim:#3d3117;
+    --slate:#7488a5; --slate-dim:#232d3f;
+    --red:#e5687a; --red-dim:#3a2028;
+    --blue:#5b9dff;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 500px at 82% -8%, rgba(47,212,181,.07), transparent 60%),
+      radial-gradient(900px 500px at 5% 0%, rgba(91,157,255,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:14px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 20px 80px}
+
+  /* ---- header ---- */
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(150deg,var(--teal),#1a9e9e);
+    display:grid;place-items:center;color:#06231f;font-family:'Space Grotesk';font-weight:700;font-size:19px;
+    box-shadow:0 4px 14px rgba(47,212,181,.28)}
+  .brand h1{font-family:'Space Grotesk';font-weight:600;font-size:20px;margin:0;letter-spacing:-.2px}
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+  .ki{font-family:'Space Grotesk';font-variant-numeric:tabular-nums}
+
+  /* ---- pipeline strip ---- */
+  .pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+  .stat{background:var(--panel);border:1px solid var(--border-soft);border-radius:13px;padding:12px 13px;position:relative;overflow:hidden}
+  .stat .n{font-family:'Space Grotesk';font-weight:600;font-size:23px;font-variant-numeric:tabular-nums;line-height:1}
+  .stat .l{color:var(--muted);font-size:11px;margin-top:5px;text-transform:uppercase;letter-spacing:.6px}
+  .stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--slate)}
+  .stat.hot::after{background:var(--teal)} .stat.hot .n{color:var(--teal)}
+  .stat.warm::after{background:var(--amber)} .stat.warm .n{color:var(--amber)}
+  .stat.contacted::after{background:var(--blue)}
+  .stat.replied::after{background:#a48bff}
+  .stat.won::after{background:var(--teal)} .stat.won .n{color:var(--teal)}
+  .stat.total::after{background:var(--muted2)}
+
+  /* ---- toolbar ---- */
+  .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);
+    border-radius:11px;padding:11px 12px 11px 36px;font-size:13.5px;font-family:inherit}
+  .search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(47,212,181,.12)}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5}
+  select.f{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:11px;
+    padding:10px 30px 10px 12px;font-size:13px;font-family:inherit;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238695ac' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center}
+  select.f:focus{outline:none;border-color:var(--teal)}
+
+  /* ---- grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .card{background:linear-gradient(180deg,var(--panel),#141b28);border:1px solid var(--border-soft);
+    border-radius:16px;padding:15px 15px 13px;box-shadow:var(--shadow);position:relative;transition:border-color .15s,transform .12s}
+  .card:hover{border-color:var(--border);transform:translateY(-1px)}
+  .card.tier-Hot{border-left:3px solid var(--teal)}
+  .card.tier-Warm{border-left:3px solid var(--amber)}
+  .card.tier-Cool{border-left:3px solid var(--slate)}
+  .card.tier-Skip{border-left:3px solid var(--red);opacity:.82}
+
+  .chead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .cname{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:-.2px;line-height:1.25}
+  .cloc{color:var(--muted);font-size:12px;margin-top:2px;display:flex;align-items:center;gap:6px}
+  .cloc .rev{color:var(--muted2)}
+
+  .meter{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+  .bars{display:flex;gap:3px;align-items:flex-end;height:20px}
+  .bar{width:6px;border-radius:2px;background:var(--slate-dim)}
+  .bar.b1{height:9px}.bar.b2{height:14px}.bar.b3{height:20px}
+  .tier-Hot .bar{background:var(--teal)}
+  .tier-Warm .bar.on{background:var(--amber)}.tier-Warm .bar.off{background:var(--amber-dim)}
+  .tier-Cool .bar.on{background:var(--slate)}.tier-Cool .bar.off{background:var(--slate-dim)}
+  .tier-Skip .bar{background:var(--red-dim)}
+  .tlabel{font-family:'Space Grotesk';font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px}
+  .tier-Hot .tlabel{color:var(--teal)} .tier-Warm .tlabel{color:var(--amber)}
+  .tier-Cool .tlabel{color:var(--slate)} .tier-Skip .tlabel{color:var(--red)}
+
+  .crow{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+  a.phone{color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;font-weight:500;
+    background:var(--panel2);border:1px solid var(--border-soft);padding:3px 9px;border-radius:8px}
+  a.phone:hover{border-color:var(--teal);color:var(--teal)}
+  .addr{color:var(--muted);font-size:11.5px;margin-top:6px;line-height:1.35}
+
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+  .tag{font-size:10.5px;padding:3px 8px;border-radius:20px;border:1px solid var(--border);
+    color:var(--muted);background:var(--panel2);white-space:nowrap;font-weight:450}
+  .tag.hot{color:var(--teal);border-color:rgba(47,212,181,.35);background:rgba(47,212,181,.08)}
+  .tag.warn{color:var(--amber);border-color:rgba(242,181,69,.32);background:rgba(242,181,69,.07)}
+  .tag.neg{color:var(--red);border-color:rgba(229,104,122,.32);background:rgba(229,104,122,.07)}
+
+  .note{margin-top:10px;font-size:12px;color:#b9c6da;background:var(--panel2);border:1px dashed var(--border);
+    border-radius:9px;padding:8px 10px;line-height:1.4}
+  .note b{color:var(--teal);font-weight:600}
+
+  .contact{margin-top:11px;background:rgba(47,212,181,.05);border:1px solid rgba(47,212,181,.22);
+    border-radius:10px;padding:9px 11px}
+  .contact .ch{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--teal);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+  .contact .crow2{display:flex;gap:7px;font-size:12px;margin-top:4px;color:var(--muted);align-items:baseline}
+  .contact .crow2 .k{color:var(--muted2);min-width:60px;flex-shrink:0}
+  .contact .crow2 .v{color:var(--text);word-break:break-word}
+  .contact a{color:var(--teal);text-decoration:none}
+  .contact a:hover{text-decoration:underline}
+  .contact .socials{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .contact .soc{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--border);color:var(--text);text-decoration:none}
+  .contact .soc:hover{border-color:var(--teal);color:var(--teal)}
+  .book-live{color:var(--teal)!important;font-weight:600}
+  .book-manual{color:var(--amber)!important;font-weight:600}
+
+  .verify{display:flex;gap:8px;margin-top:11px}
+  .vgroup{flex:1}
+  .vgroup .vl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+  .seg{display:flex;background:var(--panel2);border:1px solid var(--border-soft);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:11px;
+    padding:5px 2px;cursor:pointer;transition:background .12s,color .12s}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{background:var(--raise);color:var(--text);font-weight:600}
+  .seg button.on.yes{color:var(--teal)} .seg button.on.no{color:var(--red)}
+
+  .status-wrap{margin-top:12px}
+  .status-wrap .vl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .statuses{display:flex;flex-wrap:wrap;gap:5px}
+  .st{font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);
+    color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s}
+  .st:hover{color:var(--text);border-color:var(--muted2)}
+  .st.on{color:#0a1a17;font-weight:600;border-color:transparent}
+  .st.on[data-s="New"]{background:var(--muted);color:#10151f}
+  .st.on[data-s="Contacted"]{background:var(--blue);color:#06152b}
+  .st.on[data-s="Replied"]{background:#a48bff;color:#160a2b}
+  .st.on[data-s="Interested"]{background:var(--amber);color:#2a1f04}
+  .st.on[data-s="Rejected"]{background:var(--red);color:#2b0a10}
+  .st.on[data-s="Closed-Won"]{background:var(--teal);color:#052019}
+
+  textarea.notes{width:100%;margin-top:10px;background:var(--panel2);border:1px solid var(--border-soft);
+    color:var(--text);border-radius:9px;padding:8px 10px;font-family:inherit;font-size:12px;resize:vertical;min-height:34px;line-height:1.4}
+  textarea.notes:focus{outline:none;border-color:var(--teal)}
+  textarea.notes::placeholder{color:var(--muted2)}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty h3{font-family:'Space Grotesk';color:var(--text);font-weight:600}
+  .foot{margin-top:26px;color:var(--muted2);font-size:11.5px;text-align:center;line-height:1.6}
+  .foot b{color:var(--muted)}
+
+
+  /* ---- call window (Dubai time) ---- */
+  .clockbar{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-bottom:14px}
+  .clk{background:var(--panel);border:1px solid var(--border-soft);border-radius:12px;padding:9px 13px;min-width:104px}
+  .clk .z{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted2)}
+  .clk .t{font-family:'Space Grotesk';font-weight:600;font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px}
+  .clk.me{border-color:rgba(47,212,181,.4);background:rgba(47,212,181,.06)}
+  .clk.me .z{color:var(--teal)} .clk.me .t{color:var(--teal)}
+  .clk .s{font-size:10.5px;margin-top:3px;color:var(--muted2)}
+  .clk .cd{font-size:10.5px;margin-top:2px;color:var(--blue);font-variant-numeric:tabular-nums}
+  .clk.me .cd{color:var(--teal)}
+  .clk.live .s{color:var(--teal);font-weight:600}
+  .clk.soon .s{color:var(--amber);font-weight:600}
+
+  .cw{margin-top:11px;background:rgba(91,157,255,.06);border:1px solid rgba(91,157,255,.22);
+    border-radius:10px;padding:9px 11px}
+  .cw .cwh{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--blue);
+    font-weight:600;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cw .win{display:flex;align-items:baseline;gap:8px;font-size:12.5px;margin-top:3px}
+  .cw .win .k{color:var(--muted2);min-width:52px;flex-shrink:0;font-size:11px}
+  .cw .win .v{font-family:'Space Grotesk';font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+  .cw .win.best .v{color:var(--blue)}
+  .cw .win .loc{color:var(--muted2);font-size:11px}
+  .cdown{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin:7px 0 2px;
+    padding:6px 9px;border-radius:8px;background:var(--panel2);border:1px solid var(--border-soft)}
+  .cdown.go{background:rgba(47,212,181,.09);border-color:rgba(47,212,181,.32)}
+  .cdown .cdl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2)}
+  .cdown .cdv{font-family:'Space Grotesk';font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--blue)}
+  .cdown.go .cdv{color:var(--teal)}
+  .cdown .cdn{font-size:10.5px;color:var(--muted2)}
+  .cw .days{margin-top:7px;font-size:11px;color:var(--muted);line-height:1.35}
+  .cw .days b{color:var(--text);font-weight:600}
+  .livebadge{font-size:9.5px;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+  .livebadge.on{background:var(--teal);color:#052019}
+  .livebadge.soon{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(242,181,69,.4)}
+  .livebadge.off{background:var(--panel2);color:var(--muted2);border:1px solid var(--border-soft)}
+  .card.callable{border-color:rgba(47,212,181,.45)}
+
+  /* ---- dialer: card row ---- */
+  .dialrow{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .dialbtn{display:inline-flex;align-items:center;gap:7px;background:var(--teal);color:#052019;
+    border:none;border-radius:9px;padding:9px 15px;font-family:'Inter',sans-serif;font-weight:600;
+    font-size:12.5px;cursor:pointer;transition:filter .15s,transform .05s}
+  .dialbtn:hover{filter:brightness(1.08)}
+  .dialbtn:active{transform:translateY(1px)}
+  .dialbtn:disabled{opacity:.4;cursor:not-allowed}
+  .dialbtn.onair{background:var(--red);color:#2b0a10}
+  .attempts{font-size:11px;color:var(--muted2);font-variant-numeric:tabular-nums}
+  .attempts b{color:var(--muted);font-weight:600}
+
+  /* ---- dialer: sticky dock ---- */
+  .dock{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(16,22,34,.96);
+    backdrop-filter:blur(14px);border-top:1px solid var(--border);
+    box-shadow:0 -8px 30px rgba(0,0,0,.45);transform:translateY(105%);transition:transform .22s ease}
+  .dock.up{transform:translateY(0)}
+  .dock.live{border-top-color:rgba(47,212,181,.55)}
+  .dockin{max-width:1280px;margin:0 auto;padding:12px 20px}
+  .dockmain{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .dockwho{min-width:0;flex:1 1 220px}
+  .dockwho .dn{font-family:'Space Grotesk';font-weight:600;font-size:15px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dockwho .dp{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+  .dockstate{display:flex;align-items:center;gap:10px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);flex-shrink:0}
+  .dock.live .dot{background:var(--teal);animation:pulse 1.6s infinite}
+  .dock.ringing .dot{background:var(--amber);animation:pulse .9s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .dstate{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:600}
+  .dtimer{font-family:'Space Grotesk';font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;
+    letter-spacing:.5px;color:var(--muted2);min-width:66px}
+  .dock.live .dtimer{color:var(--teal)}
+  .dockacts{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .dbtn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:9px;
+    padding:9px 15px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:filter .15s,transform .05s}
+  .dbtn:hover{filter:brightness(1.15)}
+  .dbtn:active{transform:translateY(1px)}
+  .dbtn:disabled{opacity:.35;cursor:not-allowed}
+  .dbtn.on{background:var(--amber);border-color:var(--amber);color:#2a1f04}
+  .dbtn.hang{background:var(--red);border-color:var(--red);color:#2b0a10}
+  .dbtn.go{background:var(--teal);border-color:var(--teal);color:#052019}
+
+  /* ---- keypad ---- */
+  .keypad{display:none;grid-template-columns:repeat(3,1fr);gap:7px;max-width:250px;margin:12px 0 2px}
+  .keypad.open{display:grid}
+  .keypad button{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:9px;padding:11px 0;font-family:'Space Grotesk';font-weight:600;font-size:17px;cursor:pointer}
+  .keypad button:hover{background:var(--raise)}
+  .kpsent{font-family:'Space Grotesk';font-size:13px;color:var(--amber);letter-spacing:2px;
+    margin-top:8px;min-height:18px;font-variant-numeric:tabular-nums}
+  .kphint{font-size:11px;color:var(--muted2);margin-top:6px;max-width:260px;line-height:1.4}
+
+  /* ---- post-call outcome bar ---- */
+  .wrapup{border-top:1px solid var(--border-soft);margin-top:11px;padding-top:11px;display:none}
+  .wrapup.open{display:block}
+  .wrapup .wl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);
+    font-weight:600;margin-bottom:8px}
+  .outs{display:flex;gap:7px;flex-wrap:wrap}
+  .outs button{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:20px;padding:7px 14px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer}
+  .outs button:hover{border-color:var(--teal);color:var(--teal)}
+
+  .tw{font-size:11px;color:var(--muted2);text-align:right;line-height:1.5;cursor:pointer}
+  .tw b{font-weight:600}
+  .tw.ok b{color:var(--teal)} .tw.bad b{color:var(--red)}
+
+  /* ---- passcode gate ---- */
+  .gate{position:fixed;inset:0;z-index:90;background:rgba(8,12,20,.86);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:20px}
+  .gate.open{display:flex}
+  .gatebox{background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    padding:26px;max-width:360px;width:100%;box-shadow:var(--shadow)}
+  .gatebox h3{font-family:'Space Grotesk';font-weight:600;font-size:17px;margin:0 0 6px}
+  .gatebox p{color:var(--muted);font-size:12.5px;margin:0 0 16px;line-height:1.5}
+  .gatebox input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);padding:12px 14px;font-family:'Space Grotesk';font-size:16px;letter-spacing:3px}
+  .gatebox input:focus{outline:none;border-color:var(--teal)}
+  .gatebox button{width:100%;margin-top:11px;background:var(--teal);color:#052019;border:none;
+    border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer}
+  .gateerr{color:var(--red);font-size:12px;margin-top:9px;min-height:16px}
+
+  body{padding-bottom:0}
+  body.docked{padding-bottom:120px}
+
+  @media(max-width:720px){
+    .pipe{grid-template-columns:repeat(3,1fr)}
+    .grid{grid-template-columns:1fr}
+    .dockacts{margin-left:0;width:100%}
+    .dockin{padding:11px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <h1>Lead Console</h1>
+        <p>BizAssist outbound &middot; independent dental practices &middot; <span class="ki" id="cityCount"></span> markets</p>
+      </div>
+    </div>
+    <div style="color:var(--muted);font-size:12px;text-align:right">
+      <div><span class="ki" id="totalCount" style="color:var(--text);font-size:15px"></span> clinics</div>
+      <div class="tw" id="twStatus" style="margin-top:3px">line: <b>connecting…</b></div>
+    </div>
+  </header>
+
+  <div class="clockbar" id="clockbar"></div>
+
+  <div class="pipe" id="pipe"></div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" placeholder="Search clinic, city, phone…" autocomplete="off">
+    </div>
+    <select class="f" id="fCity"></select>
+    <select class="f" id="fTier">
+      <option value="">All tiers</option>
+      <option value="Hot">Hot</option><option value="Warm">Warm</option>
+      <option value="Cool">Cool</option><option value="Skip">Skip</option>
+    </select>
+    <select class="f" id="fStatus">
+      <option value="">Any status</option>
+      <option>New</option><option>Contacted</option><option>Replied</option>
+      <option>Interested</option><option>Rejected</option><option>Closed-Won</option>
+    </select>
+    <select class="f" id="fTag"><option value="">Any tag</option></select>
+    <select class="f" id="fWin"></select>
+    <select class="f" id="sort">
+      <option value="tier">Sort: Lead strength</option>
+      <option value="reviews">Sort: Call volume</option>
+      <option value="city">Sort: City</option>
+      <option value="name">Sort: Name</option>
+      <option value="window">Sort: Call window (earliest first)</option>
+    </select>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none"><h3>No clinics match</h3><p>Try clearing a filter.</p></div>
+
+  <div class="foot">
+    <b>How the tags work:</b> lead strength is scored from real Google signals — access complaints in reviews, call volume, closed days, and whether it's solo-run vs a chain. <b>Website / Booking</b> aren't returned by the data source, so mark those yourself after a quick look. Your status, notes and checks save automatically on this device. <b>Call windows</b> are shown in <b>your Dubai time</b> and recalculated live from each clinic's real US time zone (handles US daylight saving automatically). Best = their 9 to 11 in the morning, Backup = their 2 to 4 in the afternoon; closed days are excluded.
+  </div>
+</div>
+
+<div class="gate" id="gate">
+  <div class="gatebox">
+    <h3>Unlock the line</h3>
+    <p>Enter your passcode to enable calling. The lead list works without it — this only unlocks the dialer.</p>
+    <input type="password" id="gateInput" placeholder="passcode" autocomplete="off" inputmode="numeric">
+    <button id="gateGo">Unlock</button>
+    <div class="gateerr" id="gateErr"></div>
+  </div>
+</div>
+
+<div class="dock" id="dock">
+  <div class="dockin">
+    <div class="dockmain">
+      <div class="dockwho">
+        <div class="dn" id="dockName">—</div>
+        <div class="dp" id="dockPhone"></div>
+      </div>
+      <div class="dockstate">
+        <span class="dot"></span>
+        <span class="dstate" id="dockState">idle</span>
+        <span class="dtimer" id="dockTimer">00:00</span>
+      </div>
+      <div class="dockacts">
+        <button class="dbtn" id="btnKeypad">Keypad</button>
+        <button class="dbtn" id="btnMute">Mute</button>
+        <button class="dbtn hang" id="btnHang">Hang up</button>
+        <button class="dbtn go" id="btnNext" style="display:none">Call next lead</button>
+        <button class="dbtn" id="btnClose" style="display:none">Close</button>
+      </div>
+    </div>
+
+    <div class="keypad" id="keypad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button data-k="*">*</button><button data-k="0">0</button><button data-k="#">#</button>
+    </div>
+    <div class="kpsent" id="kpSent"></div>
+
+    <div class="wrapup" id="wrapup">
+      <div class="wl">How did it go? <span id="wrapName" style="color:var(--muted)"></span></div>
+      <div class="outs" id="outs">
+        <button data-o="Spoke to decision maker" data-s="Interested">Spoke to the dentist/owner</button>
+        <button data-o="Gatekeeper — call back" data-s="Contacted">Gatekeeper</button>
+        <button data-o="Left voicemail" data-s="Contacted">Voicemail</button>
+        <button data-o="No answer" data-s="">No answer</button>
+        <button data-o="Not interested" data-s="Rejected">Not interested</button>
+        <button data-o="Booked a demo" data-s="Interested">Booked a demo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLINICS = [{"name": "ATX Family Dental", "city": "Austin", "state": "TX", "phone": "+1 512-717-3147", "address": "1700 S 1st St", "rating": 4.9, "reviews": 867, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_00", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Tech Ridge Dental", "city": "Austin", "state": "TX", "phone": "+1 512-821-2394", "address": "12400 N I-35 Ste A131", "rating": 5.0, "reviews": 1169, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_01", "tags": ["High call volume", "Closed weekends"], "score": 2, "tier": "Warm"}, {"name": "Lucent Dentistry", "city": "Austin", "state": "TX", "phone": "+1 512-458-5600", "address": "3909 N I-35 Ste A1", "rating": 4.9, "reviews": 528, "closedDays": ["Sun"], "note": "", "id": "clinic_02", "tags": ["Evening hours"], "score": 0, "tier": "Cool"}, {"name": "Breeze Dental", "city": "Austin", "state": "TX", "phone": "+1 512-745-8825", "address": "1601 S Lamar Blvd", "rating": 4.8, "reviews": 855, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_03", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Swish Dental Downtown", "city": "Austin", "state": "TX", "phone": "+1 512-713-1099", "address": "201 W 5th St Ste 175", "rating": 4.6, "reviews": 934, "closedDays": ["Sat", "Sun"], "note": "Swish is a multi-location group \u2014 decisions may run through HQ.", "id": "clinic_04", "tags": ["Group / Multi-site", "High call volume", "Closed weekends"], "score": 0, "tier": "Skip"}, {"name": "myDental at Tech Ridge", "city": "Austin", "state": "TX", "phone": "+1 512-815-2524", "address": "13000 N I-35 Ste 206", "rating": 4.8, "reviews": 1489, "closedDays": ["Sun"], "note": "", "id": "clinic_05", "tags": ["High call volume"], "score": 1, "tier": "Cool"}, {"name": "North Austin Dentistry", "city": "Austin", "state": "TX", "phone": "+1 512-489-9933", "address": "6850 Austin Center Blvd #310", "rating": 4.8, "reviews": 703, "closedDays": ["Fri", "Sun"], "note": "", "id": "clinic_06", "tags": ["Closed Fri"], "score": 1, "tier": "Cool"}, {"name": "Austin Dental Works", "city": "Austin", "state": "TX", "phone": "+1 512-877-9822", "address": "4601 N Lamar Blvd #503", "rating": 4.9, "reviews": 626, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_07", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "Smile Haus Austin", "city": "Austin", "state": "TX", "phone": "+1 512-454-5153", "address": "3701 Guadalupe St Ste 104", "rating": 4.9, "reviews": 336, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_08", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "High Point Dentistry", "city": "Austin", "state": "TX", "phone": "+1 512-473-8444", "address": "2719 E 7th St", "rating": 4.9, "reviews": 597, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_09", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Forest Family Dentistry", "city": "Austin", "state": "TX", "phone": "+1 512-334-9894", "address": "2700 W Anderson Ln #418", "rating": 4.9, "reviews": 1054, "closedDays": ["Sun"], "note": "", "id": "clinic_10", "tags": ["High call volume", "Evening hours"], "score": 1, "tier": "Cool"}, {"name": "The Tooth Inc", "city": "Austin", "state": "TX", "phone": "+1 512-593-1874", "address": "1700 E Oltorf St #100", "rating": 5.0, "reviews": 579, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_11", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "38th Street Dental", "city": "Austin", "state": "TX", "phone": "+1 737-260-5523", "address": "1500 W 38th St Ste 56", "rating": 5.0, "reviews": 719, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_12", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "Barton Oaks Dental Group", "city": "Austin", "state": "TX", "phone": "+1 512-327-6947", "address": "901 S MoPac Bldg 1 #470", "rating": 4.9, "reviews": 725, "closedDays": ["Sat", "Sun"], "note": "Group practice \u2014 larger, may already have front-desk systems.", "id": "clinic_13", "tags": ["Group / Multi-site", "Closed weekends"], "score": -1, "tier": "Skip"}, {"name": "Sonrisas Nashville", "city": "Nashville", "state": "TN", "phone": "+1 615-857-9596", "address": "1009 Murfreesboro Pike #101", "rating": 4.9, "reviews": 774, "closedDays": ["Mon", "Sun"], "note": "Part of All Smiles (3 local offices, dentist-owned). Already books online via Modento, so lead with the phone/after-hours + the missed-callback review, not booking.", "id": "clinic_14", "tags": ["Access complaints", "Closed Mon", "Group / Multi-site"], "score": 4, "tier": "Hot", "website": "https://myallsmiles.com/", "email": "doctor@allsmilesnashville.com", "booking": "Online (Modento) + phone", "book_known": "Yes", "web_known": "Yes", "socials": [{"label": "Instagram", "url": "https://instagram.com/allsmilestennessee"}, {"label": "Facebook", "url": "https://www.facebook.com/profile.php?id=61576798683759"}, {"label": "TikTok", "url": "https://www.tiktok.com/@sonrisas.nashville"}], "researched": true}, {"name": "Iroquois Dentistry", "city": "Nashville", "state": "TN", "phone": "+1 615-298-2040", "address": "5115 Harding Pike Ste 101", "rating": 4.9, "reviews": 1392, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_15", "tags": ["High call volume", "Closed weekends"], "score": 2, "tier": "Warm"}, {"name": "Smiles Up Dentistry", "city": "Nashville", "state": "TN", "phone": "+1 615-678-8965", "address": "1916 Patterson St Ste 712", "rating": 4.8, "reviews": 995, "closedDays": [], "note": "Already lists 24/7 hours \u2014 pitch text/booking automation, not after-hours coverage.", "id": "clinic_16", "tags": ["Already 24/7", "High call volume"], "score": -1, "tier": "Cool"}, {"name": "Dentistry of Nashville", "city": "Nashville", "state": "TN", "phone": "+1 615-383-3690", "address": "2125 Blakemore Ave", "rating": 4.8, "reviews": 1052, "closedDays": ["Fri", "Sat", "Sun"], "note": "Family practice since 1919, closed Fri\u2013Sun. Booking is a request form they call back on \u2014 reviews cite rescheduling drops. Strong booking-automation + after-hours fit.", "id": "clinic_17", "tags": ["Access complaints", "High call volume", "Closed weekends", "Closed Fri"], "score": 6, "tier": "Hot", "website": "https://dentistryofnashville.com/", "email": "drappt@dentistryofnashville.com", "booking": "Request form + phone (no live booking)", "book_known": "No", "web_known": "Yes", "socials": [{"label": "Facebook", "url": "https://www.facebook.com/TheDentistryofNashville/"}], "researched": true}, {"name": "Dental Faith Aesthetic & Family", "city": "Nashville", "state": "TN", "phone": "+1 615-285-3949", "address": "390 Harding Pl #101", "rating": 4.8, "reviews": 267, "closedDays": ["Sun"], "note": "", "id": "clinic_18", "tags": [], "score": 0, "tier": "Cool"}, {"name": "Dillard Dental Services", "city": "Nashville", "state": "TN", "phone": "+1 615-646-9992", "address": "121 Belle Forest Cir Ste 2", "rating": 4.9, "reviews": 629, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_19", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Smile On Nashville", "city": "Nashville", "state": "TN", "phone": "+1 615-891-3192", "address": "1914 Charlotte Ave #104", "rating": 4.9, "reviews": 279, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_20", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Cornerstone Family Dentistry", "city": "Nashville", "state": "TN", "phone": "+1 615-333-3382", "address": "404 Welshwood Dr Ste A", "rating": 4.9, "reviews": 400, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_21", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Woodbine Dental Care", "city": "Nashville", "state": "TN", "phone": "+1 615-583-4100", "address": "81 Thompson Ln", "rating": 4.7, "reviews": 68, "closedDays": ["Sun"], "note": "Small review count \u2014 likely a newer/growing solo practice, lower budget but fast decision.", "id": "clinic_22", "tags": ["Solo / owner-run"], "score": 1, "tier": "Cool"}, {"name": "Dr. Paula Fedler / Dental Faith", "city": "Nashville", "state": "TN", "phone": "+1 615-285-3949", "address": "390 Harding Pl #101", "rating": 5.0, "reviews": 23, "closedDays": ["Sun"], "note": "Very small footprint \u2014 possibly same office as Dental Faith; verify before contacting twice.", "id": "clinic_23", "tags": ["Solo / owner-run"], "score": 1, "tier": "Cool"}, {"name": "Raleigh Dental", "city": "Raleigh", "state": "NC", "phone": "+1 919-789-0400", "address": "309 W Millbrook Rd Ste 181", "rating": 5.0, "reviews": 334, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_24", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "North Hills Dentistry", "city": "Raleigh", "state": "NC", "phone": "+1 919-781-0056", "address": "4905 Professional Ct Ste 101", "rating": 5.0, "reviews": 587, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_25", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Village Dental - Olde Raleigh", "city": "Raleigh", "state": "NC", "phone": "+1 919-297-2396", "address": "3101 Edwards Mill Rd #103", "rating": 4.6, "reviews": 1722, "closedDays": ["Sat", "Sun"], "note": "Multi-location Village Dental group.", "id": "clinic_26", "tags": ["Group / Multi-site", "High call volume", "Closed weekends"], "score": 0, "tier": "Skip"}, {"name": "Village Dental - North Raleigh", "city": "Raleigh", "state": "NC", "phone": "+1 919-295-9565", "address": "7371 Six Forks Rd", "rating": 4.7, "reviews": 1903, "closedDays": ["Sat", "Sun"], "note": "Multi-location Village Dental group.", "id": "clinic_27", "tags": ["Group / Multi-site", "High call volume", "Closed weekends"], "score": 0, "tier": "Skip"}, {"name": "Wells Family Dental Group", "city": "Raleigh", "state": "NC", "phone": "+1 984-343-8236", "address": "13271 Strickland Rd Ste 110", "rating": 4.9, "reviews": 912, "closedDays": ["Sat", "Sun"], "note": "Multi-site group (Strickland + Ten-Ten Rd).", "id": "clinic_28", "tags": ["Group / Multi-site", "High call volume", "Closed weekends"], "score": 0, "tier": "Skip"}, {"name": "Hillsborough Street Dental", "city": "Raleigh", "state": "NC", "phone": "+1 919-834-1432", "address": "1407 Hillsborough St #203", "rating": 4.9, "reviews": 424, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_29", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Fusion Dental Care", "city": "Raleigh", "state": "NC", "phone": "+1 919-977-7438", "address": "6400 Creedmoor Rd #103", "rating": 4.9, "reviews": 1182, "closedDays": ["Mon", "Sat", "Sun"], "note": "", "id": "clinic_30", "tags": ["High call volume", "Closed weekends", "Closed Mon"], "score": 3, "tier": "Warm"}, {"name": "Peace Street Dental", "city": "Raleigh", "state": "NC", "phone": "+1 919-755-3450", "address": "615 St Marys St", "rating": 5.0, "reviews": 550, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_31", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "Atlantic Family Dental", "city": "Raleigh", "state": "NC", "phone": "+1 919-789-8682", "address": "4814 Six Forks Rd Ste 02", "rating": 4.5, "reviews": 400, "closedDays": ["Sat", "Sun"], "note": "Owner-run 3-office group (Apex/Garner/Raleigh, Dr. Eisberg), bilingual (ES/VN). Reviews cite long waits + insurance/booking mixups \u2014 front-desk load angle.", "id": "clinic_32", "tags": ["Access complaints", "Closed weekends", "Group / Multi-site"], "score": 4, "tier": "Hot", "website": "https://www.atlanticfamilydental.net/", "email": null, "booking": "Phone + contact form (limited online)", "book_known": "No", "web_known": "Yes", "socials": [], "researched": true}, {"name": "Your Raleigh Dentist", "city": "Raleigh", "state": "NC", "phone": "+1 984-283-5342", "address": "8105 Fayetteville Rd Ste 101", "rating": 4.8, "reviews": 451, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_33", "tags": ["Closed weekends"], "score": 1, "tier": "Cool"}, {"name": "Ohio State Dental Center", "city": "Columbus", "state": "OH", "phone": "+1 614-688-3763", "address": "305 W 12th Ave, Postle Hall", "rating": 2.9, "reviews": 117, "closedDays": ["Sat", "Sun"], "note": "University teaching clinic \u2014 institutional, not a sales target.", "id": "clinic_34", "tags": ["Institutional", "Closed weekends"], "score": -9, "tier": "Skip"}, {"name": "US Dental and Medical Care", "city": "Columbus", "state": "OH", "phone": "+1 614-252-3181", "address": "949 E Livingston Ave", "rating": 4.4, "reviews": 297, "closedDays": ["Wed", "Sat", "Sun"], "note": "", "id": "clinic_35", "tags": ["Closed weekends", "Closed Wed"], "score": 2, "tier": "Warm"}, {"name": "Emergency Dental of Columbus", "city": "Columbus", "state": "OH", "phone": "+1 614-665-0910", "address": "4034 Morse Rd", "rating": 4.7, "reviews": 1013, "closedDays": ["Tue"], "note": "Part of Emergency Dental of America \u2014 a national multi-city chain. Corporate buyer, and after-hours is their whole model. Deprioritize.", "id": "clinic_36", "tags": ["Access complaints", "High call volume", "Closed Tue", "Evening hours", "Group / Multi-site"], "score": 5, "tier": "Skip", "website": "https://emergencydentalofcolumbus.com/", "email": null, "booking": "Online + phone + walk-in", "book_known": "Yes", "web_known": "Yes", "socials": [{"label": "Facebook", "url": "https://www.facebook.com/emergencydentalofamerica"}, {"label": "Instagram", "url": "https://www.instagram.com/emergencydentalofamerica"}], "researched": true}, {"name": "Grandview Dental Care", "city": "Columbus", "state": "OH", "phone": "+1 614-486-7378", "address": "1220 Grandview Ave", "rating": 4.9, "reviews": 1175, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_37", "tags": ["High call volume", "Closed weekends"], "score": 2, "tier": "Warm"}, {"name": "Merion Village Dental", "city": "Columbus", "state": "OH", "phone": "+1 614-443-4400", "address": "1250 S High St", "rating": 4.6, "reviews": 1072, "closedDays": ["Sun"], "note": "Digitally mature (online booking, chat, evenings+Sat, socials) \u2014 angle is intake accuracy (booking mismatch at visit), not after-hours. Warmer than hot.", "id": "clinic_38", "tags": ["Access complaints", "High call volume", "Evening hours"], "score": 4, "tier": "Hot", "website": "https://www.merionvillagedental.com/", "email": null, "booking": "Online (2-wk window) + live chat + phone", "book_known": "Yes", "web_known": "Yes", "socials": [{"label": "Facebook", "url": "https://www.facebook.com/merionvillagedental"}, {"label": "LinkedIn", "url": "https://www.linkedin.com/company/merion-village-dental"}], "researched": true}, {"name": "The Dental Center at Easton", "city": "Columbus", "state": "OH", "phone": "+1 614-414-0111", "address": "4030 Easton Station #250", "rating": 4.6, "reviews": 339, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_39", "tags": ["Closed weekends", "Evening hours"], "score": 1, "tier": "Cool"}, {"name": "Comfort Dental Whitehall", "city": "Columbus", "state": "OH", "phone": "+1 614-231-1600", "address": "4545 E Main St", "rating": 4.1, "reviews": 667, "closedDays": ["Sun"], "note": "Comfort Dental franchise + reviews cite unhonored appts and no communication. Chain = slow buyer.", "id": "clinic_40", "tags": ["Group / Multi-site", "Access complaints"], "score": 1, "tier": "Cool"}, {"name": "Community Dental", "city": "Columbus", "state": "OH", "phone": "+1 614-272-0110", "address": "2150 Marble Cliff Office Park Ste C", "rating": 4.8, "reviews": 260, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_41", "tags": ["Closed weekends", "Evening hours"], "score": 1, "tier": "Cool"}, {"name": "Dennison Dental Care", "city": "Columbus", "state": "OH", "phone": "+1 614-443-3400", "address": "910 Dennison Ave", "rating": 5.0, "reviews": 822, "closedDays": ["Wed", "Sat", "Sun"], "note": "", "id": "clinic_42", "tags": ["Closed weekends", "Closed Wed", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "Capitol Square Dental", "city": "Columbus", "state": "OH", "phone": "+1 614-461-4600", "address": "212 S High St", "rating": 4.4, "reviews": 198, "closedDays": ["Mon", "Wed", "Fri", "Sat", "Sun"], "note": "HOT: open only Tue+Thu, thin digital presence (no public email/socials found), reviews describe 14-day no-callback. Textbook missed-call problem.", "id": "clinic_43", "tags": ["Access complaints", "Closed weekends", "Closed Mon/Wed/Fri"], "score": 5, "tier": "Hot", "website": "https://drsafavian.com/", "email": null, "booking": "Online form + phone (no live booking)", "book_known": "No", "web_known": "Yes", "socials": [], "researched": true}, {"name": "Dental Walk-In Clinic of Tampa Bay", "city": "Tampa", "state": "FL", "phone": "+1 813-636-9400", "address": "4240 W Kennedy Blvd", "rating": 4.5, "reviews": 1654, "closedDays": [], "note": "Open 7 days 7a\u20139p since 2002 \u2014 after-hours is already covered. Real pain from reviews is 3\u20134hr waits: pitch overflow call-handling + triage, not coverage.", "id": "clinic_44", "tags": ["Access complaints", "High call volume", "Evening hours"], "score": 4, "tier": "Hot", "website": "https://dentalwalkin.com/", "email": null, "booking": "Phone + walk-in", "book_known": "No", "web_known": "Yes", "socials": [], "researched": true}, {"name": "Tampa Smile Co. - South Tampa", "city": "Tampa", "state": "FL", "phone": "+1 813-837-2380", "address": "3404 S Dale Mabry Hwy", "rating": 4.9, "reviews": 1920, "closedDays": ["Sun"], "note": "", "id": "clinic_45", "tags": ["High call volume"], "score": 1, "tier": "Cool"}, {"name": "South Tampa Dentistry", "city": "Tampa", "state": "FL", "phone": "+1 813-835-0090", "address": "3308 S Dale Mabry Hwy", "rating": 4.9, "reviews": 4123, "closedDays": ["Sat", "Sun"], "note": "4,000+ reviews = very high call volume. Closed weekends despite huge demand.", "id": "clinic_46", "tags": ["High call volume", "Closed weekends", "Evening hours"], "score": 2, "tier": "Warm"}, {"name": "Tampa Dentistry", "city": "Tampa", "state": "FL", "phone": "+1 813-333-0633", "address": "1311 W Busch Blvd", "rating": 4.9, "reviews": 980, "closedDays": ["Mon", "Sat", "Sun"], "note": "Part of My Dentist Group (6 Tampa offices \u2014 South Tampa Dentistry on your list is the same group). Pitch MDG once to reach all 6. Reviews cite months-long callback waits.", "id": "clinic_47", "tags": ["Access complaints", "High call volume", "Closed weekends", "Closed Mon", "Group / Multi-site"], "score": 6, "tier": "Hot", "website": "https://mytampadentistry.com/", "email": "tampa@mydentistgroup.com", "booking": "Online + phone", "book_known": "Yes", "web_known": "Yes", "socials": [{"label": "Facebook", "url": "https://www.facebook.com/mytampadentistry/"}], "researched": true}, {"name": "Heights Dental Tampa", "city": "Tampa", "state": "FL", "phone": "+1 813-578-7887", "address": "6008 N Florida Ave Ste 110", "rating": 5.0, "reviews": 315, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_48", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Dental Associates of Florida - Tampa", "city": "Tampa", "state": "FL", "phone": "+1 813-559-0049", "address": "315 W Busch Blvd A", "rating": 4.7, "reviews": 611, "closedDays": ["Sat", "Sun"], "note": "Regional DSO group \u2014 enterprise sales cycle.", "id": "clinic_49", "tags": ["Group / Multi-site", "Closed weekends"], "score": -1, "tier": "Skip"}, {"name": "Advanced Dental Care of Tampa", "city": "Tampa", "state": "FL", "phone": "+1 813-603-5109", "address": "3922 W Hillsborough Ave", "rating": 4.7, "reviews": 831, "closedDays": ["Sat", "Sun"], "note": "Actually part of Advanced Dental Care of FLORIDA \u2014 a 20-office DSO. Enterprise sales cycle, not a solo-founder close. Deprioritize.", "id": "clinic_50", "tags": ["Access complaints", "Closed weekends", "Evening hours", "Group / Multi-site"], "score": 4, "tier": "Skip", "website": "https://www.adc-fl.com/dentist-office/tampa-fl-33614", "email": null, "booking": "Online + phone", "book_known": "Yes", "web_known": "Yes", "socials": [], "researched": true}, {"name": "West Tampa Dental", "city": "Tampa", "state": "FL", "phone": "+1 813-877-6574", "address": "4700 N Habana Ave Ste 304", "rating": 4.9, "reviews": 244, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_51", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Elevate Smiles Dental", "city": "Tampa", "state": "FL", "phone": "+1 813-308-9489", "address": "206 N Howard Ave #2", "rating": 4.9, "reviews": 256, "closedDays": ["Fri", "Sat", "Sun"], "note": "", "id": "clinic_52", "tags": ["Closed weekends", "Closed Fri", "Solo / owner-run"], "score": 3, "tier": "Warm"}, {"name": "Smile L.A. Downtown Modern", "city": "Los Angeles", "state": "CA", "phone": "+1 213-570-8775", "address": "523 W 6th St #202", "rating": 4.9, "reviews": 831, "closedDays": ["Thu", "Sat", "Sun"], "note": "", "id": "clinic_53", "tags": ["Closed weekends", "Closed Thu"], "score": 2, "tier": "Warm"}, {"name": "Beverly Grove Dentistry", "city": "Los Angeles", "state": "CA", "phone": "+1 323-238-8114", "address": "6200 Wilshire Blvd #1109", "rating": 4.9, "reviews": 345, "closedDays": ["Sun"], "note": "", "id": "clinic_54", "tags": ["Solo / owner-run"], "score": 1, "tier": "Cool"}, {"name": "Personal Dental Office & Ortho", "city": "Los Angeles", "state": "CA", "phone": "+1 323-688-5855", "address": "6222 Wilshire Blvd #103", "rating": 4.7, "reviews": 299, "closedDays": ["Sat", "Sun"], "note": "Owner-run since 1992 (Dr. Salo). Booking form is explicitly 'callback only' \u2014 no live scheduling. Reviews note hard-to-reach scheduling. Solid owner-decision lead.", "id": "clinic_55", "tags": ["Access complaints", "Closed weekends"], "score": 4, "tier": "Hot", "website": "https://www.personaldentaloffice.com/", "email": null, "booking": "Callback-request form + phone (no live booking)", "book_known": "No", "web_known": "Yes", "socials": [], "researched": true}, {"name": "Healthy Smiles Dental Office", "city": "Sherman Oaks", "state": "CA", "phone": "+1 818-788-3168", "address": "14622 Ventura Blvd Ste 202", "rating": 5.0, "reviews": 1162, "closedDays": ["Mon", "Sun"], "note": "", "id": "clinic_56", "tags": ["High call volume", "Closed Mon"], "score": 2, "tier": "Warm"}, {"name": "Restore Dental", "city": "Los Angeles", "state": "CA", "phone": "+1 310-858-7373", "address": "2002 S Hoover St", "rating": 4.7, "reviews": 651, "closedDays": ["Sun"], "note": "", "id": "clinic_57", "tags": ["Evening hours"], "score": 0, "tier": "Cool"}, {"name": "Lasry Dental Clinic", "city": "Los Angeles", "state": "CA", "phone": "+1 310-734-7705", "address": "1125 S Beverly Dr Ste 750A", "rating": 5.0, "reviews": 310, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_58", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Samaritan Dental Arts", "city": "Los Angeles", "state": "CA", "phone": "+1 213-986-2933", "address": "1127 Wilshire Blvd #914", "rating": 4.9, "reviews": 183, "closedDays": ["Sat", "Sun"], "note": "", "id": "clinic_59", "tags": ["Closed weekends", "Solo / owner-run"], "score": 2, "tier": "Warm"}, {"name": "Vision Dental", "city": "Los Angeles", "state": "CA", "phone": "+1 310-470-6121", "address": "10700 Santa Monica Blvd Ste 100", "rating": 4.9, "reviews": 252, "closedDays": ["Sun"], "note": "", "id": "clinic_60", "tags": [], "score": 0, "tier": "Cool"}, {"name": "Fuller Smiles - Venice", "city": "Culver City", "state": "CA", "phone": "+1 310-204-2475", "address": "9808 Venice Blvd #506", "rating": 4.8, "reviews": 687, "closedDays": ["Sun"], "note": "Fuller Smiles is multi-location.", "id": "clinic_61", "tags": ["Group / Multi-site"], "score": -2, "tier": "Skip"}, {"name": "Historic Core Dental Care", "city": "Los Angeles", "state": "CA", "phone": "+1 213-629-9222", "address": "1127 Wilshire Blvd Ste 702", "rating": 4.6, "reviews": 104, "closedDays": ["Sun"], "note": "", "id": "clinic_62", "tags": ["Solo / owner-run"], "score": 1, "tier": "Cool"}];
+
+
+/* ===================== CALL-WINDOW ENGINE (Dubai local time) ===================== */
+const MY_TZ = "Asia/Dubai";
+const TZ_BY_STATE = { TX:"CT", TN:"CT", NC:"ET", OH:"ET", FL:"ET", CA:"PT" };
+const TZ_META = {
+  ET:{ iana:"America/New_York",    label:"Eastern" },
+  CT:{ iana:"America/Chicago",     label:"Central" },
+  PT:{ iana:"America/Los_Angeles", label:"Pacific" }
+};
+// Front-desk sweet spots in the CLINIC's own local time (24h decimal)
+const PRIME  = [9, 11];    // just after open, before the lunch rush
+const BACKUP = [14, 16];   // post-lunch lull
+
+function tzOffsetMin(tz, date){
+  const parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
+    year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+    .formatToParts(date).reduce((a,p)=>(a[p.type]=p.value,a),{});
+  let h = parseInt(parts.hour,10); if(h===24) h=0;
+  const asUTC = Date.UTC(+parts.year, +parts.month-1, +parts.day, h, +parts.minute, +parts.second);
+  return (asUTC - date.getTime()) / 60000;
+}
+// How many hours AHEAD Dubai is of the clinic, right now (DST-safe)
+function shiftHours(tzKey, date){
+  date = date || new Date();
+  return (tzOffsetMin(MY_TZ, date) - tzOffsetMin(TZ_META[tzKey].iana, date)) / 60;
+}
+function tzKeyOf(c){ return TZ_BY_STATE[c.state] || "ET"; }
+
+// Turn a wall-clock time in a given zone into a real UTC instant (DST-safe).
+function zonedInstant(tz, y, m, d, h, min){
+  const naive = Date.UTC(y, m-1, d, h, min);
+  let ts = naive;
+  for(let i=0;i<2;i++){ ts = naive - tzOffsetMin(tz, new Date(ts)) * 60000; }
+  return ts;
+}
+function localYMD(tz, date){
+  const p = new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
+    .formatToParts(date).reduce((a,x)=>(a[x.type]=x.value,a),{});
+  return {y:+p.year, m:+p.month, d:+p.day};
+}
+
+// Next (or currently running) call window. closedDays may be null for a whole zone.
+function nextWindow(tzKey, closedDays){
+  const tz = TZ_META[tzKey].iana, now = Date.now();
+  const base = localYMD(tz, new Date());
+  const start0 = Date.UTC(base.y, base.m-1, base.d);
+  for(let i=0;i<14;i++){
+    const dd = new Date(start0 + i*86400000);
+    const y=dd.getUTCFullYear(), m=dd.getUTCMonth()+1, d=dd.getUTCDate();
+    const dow = DAYS[dd.getUTCDay()];
+    if(dow==="Sat" || dow==="Sun") continue;              // front desks are thin
+    if((closedDays||[]).includes(dow)) continue;
+    for(const [w,tag] of [[PRIME,"prime"],[BACKUP,"backup"]]){
+      const a = zonedInstant(tz, y, m, d, w[0], 0);
+      const b = zonedInstant(tz, y, m, d, w[1], 0);
+      if(now < b) return { tag, dow, startsIn:a-now, endsIn:b-now, live: now>=a };
+    }
+  }
+  return null;
+}
+
+function dur(ms){
+  if(ms < 0) ms = 0;
+  const mins = Math.round(ms/60000);
+  const h = Math.floor(mins/60), m = mins%60;
+  if(h >= 24){ const d=Math.floor(h/24); return d+"d "+(h%24)+"h"; }
+  if(h) return h+"h "+(m?m+"m":"00m");
+  return m+"m";
+}
+// Short human string: "live, 48m left" / "in 4h 50m" / "Tue, in 19h 10m"
+function countdownText(nw){
+  if(!nw) return "no window found";
+  if(nw.live) return "live \u00b7 " + dur(nw.endsIn) + " left";
+  const soon = nw.startsIn < 20*3600000;
+  return (soon ? "" : nw.dow + " \u00b7 ") + "in " + dur(nw.startsIn);
+}
+
+// No am/pm anywhere — plain hour + day-part instead ("6 o'clock in the evening").
+function partPhrase(hh){
+  if(hh>=5 && hh<12) return "in the morning";
+  if(hh>=12 && hh<17) return "in the afternoon";
+  if(hh>=17 && hh<21) return "in the evening";
+  return "at night";
+}
+function partWord(hh){
+  if(hh>=5 && hh<12) return "morning";
+  if(hh>=12 && hh<17) return "afternoon";
+  if(hh>=17 && hh<21) return "evening";
+  return "night";
+}
+function numOnly(h){
+  let x = ((h % 24) + 24) % 24;
+  const hh = Math.floor(x), mm = Math.round((x-hh)*60);
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return { str: mm ? (h12 + ":" + String(mm).padStart(2,"0")) : String(h12), hh };
+}
+function fmtH(h){
+  const n = numOnly(h);
+  const withOClock = n.str.indexOf(":") === -1 ? n.str + " o'clock" : n.str;
+  return withOClock + " " + partPhrase(n.hh);
+}
+function fmtRange(a,b){
+  const tail = b > 24 ? (a >= 24 ? " (next day)" : " (rolls past midnight)") : "";
+  const na = numOnly(a), nb = numOnly(b);
+  const pa = partPhrase(na.hh), pb = partPhrase(nb.hh);
+  if(pa === pb) return na.str + " – " + nb.str + " " + pa + tail;
+  return na.str + " " + pa + " – " + nb.str + " " + pb + tail;
+}
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const WEEK = ["Mon","Tue","Wed","Thu","Fri"];
+
+function callPlan(c){
+  const key   = tzKeyOf(c);
+  const sh    = shiftHours(key);
+  const open  = WEEK.filter(d => !(c.closedDays||[]).includes(d));
+  const satOpen = !(c.closedDays||[]).includes("Sat");
+  return {
+    key, sh, open, satOpen,
+    tzLabel: TZ_META[key].label,
+    prime : [PRIME[0]  + sh, PRIME[1]  + sh],
+    backup: [BACKUP[0] + sh, BACKUP[1] + sh]
+  };
+}
+
+// live state: is the clinic reachable at this exact moment?
+function liveState(c){
+  const now = new Date();
+  const tz  = TZ_META[tzKeyOf(c)].iana;
+  const parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
+    weekday:"short",hour:"2-digit",minute:"2-digit"})
+    .formatToParts(now).reduce((a,p)=>(a[p.type]=p.value,a),{});
+  let h = parseInt(parts.hour,10); if(h===24) h=0;
+  const t   = h + (+parts.minute)/60;
+  const day = parts.weekday;
+  const closed = (c.closedDays||[]).includes(day);
+  if(closed) return {code:"off", text:"CLOSED TODAY"};
+  if(t >= PRIME[0]  && t < PRIME[1])  return {code:"on",   text:"PRIME — CALL NOW"};
+  if(t >= BACKUP[0] && t < BACKUP[1]) return {code:"on",   text:"GOOD — CALL NOW"};
+  if(t >= 8 && t < 17)                return {code:"soon", text:"OPEN, OFF-PEAK"};
+  return {code:"off", text:"OUTSIDE HOURS"};
+}
+
+function callBlock(c){
+  const p  = callPlan(c);
+  const ls = liveState(c);
+  const nw = nextWindow(p.key, c.closedDays);
+  const daysTxt = p.open.length
+    ? p.open.join(" · ") + (p.satOpen ? " (+ Sat)" : "")
+    : "no weekdays open — check hours";
+  return `<div class="cw">
+    <div class="cwh"><span>📞 Call at (your time)</span>
+      <span class="livebadge ${ls.code}">${ls.text}</span></div>
+    <div class="cdown ${nw && nw.live ? 'go' : ''}">
+      <span class="cdl">${nw && nw.live ? 'Window closes in' : 'Next good window'}</span>
+      <span class="cdv">${nw ? (nw.live ? dur(nw.endsIn) : dur(nw.startsIn)) : '—'}</span>
+      ${nw && !nw.live ? `<span class="cdn">${nw.dow} · ${fmtH((nw.tag==="prime"?PRIME[0]:BACKUP[0]) + p.sh)} your time</span>` : ''}
+    </div>
+    <div class="win best"><span class="k">Best</span>
+      <span class="v">${fmtRange(p.prime[0], p.prime[1])}</span>
+      <span class="loc">= 9–11 morning, ${p.tzLabel}</span></div>
+    <div class="win"><span class="k">Backup</span>
+      <span class="v">${fmtRange(p.backup[0], p.backup[1])}</span>
+      <span class="loc">= 2–4 afternoon, ${p.tzLabel}</span></div>
+    <div class="days">Open <b>${daysTxt}</b> &middot; you're <b>${p.sh}h ahead</b> of them</div>
+  </div>`;
+}
+
+function renderClocks(){
+  const now = new Date();
+  const f = tz => new Intl.DateTimeFormat("en-GB",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
+  const cells = [`<div class="clk me"><div class="z">You · Dubai</div><div class="t">${f(MY_TZ)}</div>
+      <div class="s">calling base</div>
+      <div class="cd" id="nextAny"></div></div>`];
+  ["ET","CT","PT"].forEach(k=>{
+    const tz = TZ_META[k].iana;
+    const parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,weekday:"short",hour:"2-digit"})
+      .formatToParts(now).reduce((a,p)=>(a[p.type]=p.value,a),{});
+    let h = parseInt(parts.hour,10); if(h===24) h=0;
+    const weekend = parts.weekday==="Sat" || parts.weekday==="Sun";
+    let cls="", note="asleep / closed";
+    if(weekend){ note="weekend"; }
+    else if(h>=9 && h<11){ cls="live"; note="● PRIME WINDOW"; }
+    else if(h>=14 && h<16){ cls="live"; note="● good window"; }
+    else if(h>=8 && h<17){ cls="soon"; note="open, off-peak"; }
+    const n = CLINICS.filter(c=>tzKeyOf(c)===k).length;
+    const znw = nextWindow(k, null);
+    cells.push(`<div class="clk ${cls}"><div class="z">${TZ_META[k].label} · ${n} leads</div>
+      <div class="t">${f(tz)}</div><div class="s">${note}</div>
+      <div class="cd">${countdownText(znw)}</div></div>`);
+  });
+  el("clockbar").innerHTML = cells.join("");
+  const all = ["ET","CT","PT"].map(k=>nextWindow(k,null)).filter(Boolean);
+  const live = all.filter(w=>w.live);
+  const nextUp = live.length
+    ? {live:true, endsIn:Math.max(...live.map(w=>w.endsIn))}
+    : all.sort((a,b)=>a.startsIn-b.startsIn)[0];
+  if(el("nextAny")) el("nextAny").innerHTML = nextUp
+    ? (nextUp.live ? "\u25CF calling window open" : "next window in " + dur(nextUp.startsIn))
+    : "";
+}
+/* =============================================================================== */
+
+const STORE_KEY = "bizassist_crm_v1";
+let state = {};        // id -> {status, website, booking, notes}
+let saveTimer = null;
+
+const TAG_CLASS = t => {
+  if(/Access complaints/.test(t)) return "neg";
+  if(/High call volume|Solo|Evening/.test(t)) return "hot";
+  if(/Closed/.test(t)) return "warn";
+  return "";
+};
+const BARS = tier => tier==="Hot"?3:tier==="Warm"?2:tier==="Cool"?1:0;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) state = JSON.parse(raw);
+  }catch(e){ state = {}; }
+  CLINICS.forEach(c=>{
+    if(!state[c.id]) state[c.id] = {
+      status:"New",
+      website: c.web_known || "?",
+      booking: c.book_known || "?",
+      notes:""
+    };
+    if(!state[c.id].calls) state[c.id].calls = [];   // [{at, secs, outcome}]
+  });
+}
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("save failed", e); }
+  }, 350);
+}
+
+const el = id => document.getElementById(id);
+const esc = s => (s||"").replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+function renderPipe(){
+  const t = {Hot:0,Warm:0,Contacted:0,Replied:0,Won:0};
+  CLINICS.forEach(c=>{
+    if(c.tier==="Hot")t.Hot++; if(c.tier==="Warm")t.Warm++;
+    const s = state[c.id].status;
+    if(s==="Contacted")t.Contacted++;
+    if(s==="Replied"||s==="Interested")t.Replied++;
+    if(s==="Closed-Won")t.Won++;
+  });
+  el("pipe").innerHTML = `
+    <div class="stat total"><div class="n">${CLINICS.length}</div><div class="l">Total leads</div></div>
+    <div class="stat hot"><div class="n">${t.Hot}</div><div class="l">Hot</div></div>
+    <div class="stat warm"><div class="n">${t.Warm}</div><div class="l">Warm</div></div>
+    <div class="stat contacted"><div class="n">${t.Contacted}</div><div class="l">Contacted</div></div>
+    <div class="stat replied"><div class="n">${t.Replied}</div><div class="l">Replied / Interested</div></div>
+    <div class="stat won"><div class="n">${t.Won}</div><div class="l">Closed-Won</div></div>`;
+}
+
+/* ===================== DIALER ===================== */
+function attemptLine(s){
+  const n = (s.calls||[]).length;
+  if(!n) return `<span class="attempts">not called yet</span>`;
+  const last = s.calls[n-1];
+  const ago = dur(Date.now() - last.at);
+  const out = last.outcome ? " · " + esc(last.outcome) : "";
+  return `<span class="attempts"><b>${n}</b> ${n===1?'call':'calls'} · ${ago} ago${out}</span>`;
+}
+
+const DIALER = (function(){
+  let device = null, call = null, tickId = null;
+  let secs = 0, muted = false, ready = false, currentId = null, lastId = null;
+
+  const D = id => document.getElementById(id);
+  const dock = () => D("dock");
+
+  function setLine(txt, cls){
+    const e = D("twStatus");
+    if(e){ e.className = "tw " + (cls||""); e.innerHTML = "line: <b>" + txt + "</b>"; }
+  }
+  function setState(txt, cls){
+    D("dockState").textContent = txt;
+    dock().className = "dock up" + (cls ? " " + cls : "");
+  }
+  function fmtSecs(n){
+    return String(Math.floor(n/60)).padStart(2,"0") + ":" + String(n%60).padStart(2,"0");
+  }
+  function tick(){
+    secs++; D("dockTimer").textContent = fmtSecs(secs);
+  }
+
+  async function boot(code){
+    const pass = code || sessionStorage.getItem("dialer_code") || "";
+    if(!pass){ ready = false; setLine("locked — click to unlock", ""); return false; }
+    try{
+      const r = await fetch("/api/token", { headers: { "x-dialer-code": pass } });
+      if(r.status === 401){
+        sessionStorage.removeItem("dialer_code");
+        ready = false; setLine("wrong passcode", "bad");
+        return false;
+      }
+      if(!r.ok) throw new Error("no token");
+      const { token } = await r.json();
+      sessionStorage.setItem("dialer_code", pass);
+      device = new Twilio.Device(token, { codecPreferences:["opus","pcmu"], logLevel:"error" });
+      device.on("error", e => setLine("error — " + (e.message||"unknown"), "bad"));
+      device.on("tokenWillExpire", async () => {
+        try{
+          const c = sessionStorage.getItem("dialer_code") || "";
+          const rr = await fetch("/api/token", { headers:{ "x-dialer-code": c } });
+          const d = await rr.json();
+          if(d.token) device.updateToken(d.token);
+        }catch(_){}
+      });
+      ready = true;
+      setLine("ready", "ok");
+      return true;
+    }catch(e){
+      ready = false;
+      setLine("not connected — check setup", "bad");
+      return false;
+    }
+  }
+
+  function openGate(){
+    D("gate").classList.add("open");
+    D("gateErr").textContent = "";
+    D("gateInput").value = "";
+    setTimeout(()=>D("gateInput").focus(), 50);
+  }
+
+  function isOn(id){ return currentId === id && !!call; }
+
+  async function dial(clinic){
+    if(!ready){ openGate(); return; }
+    if(call){ return; }                       // already on a call
+    currentId = clinic.id; lastId = clinic.id;
+    const to = "+" + clinic.phone.replace(/\D/g,"");
+
+    D("dockName").textContent = clinic.name;
+    D("dockPhone").textContent = clinic.phone + " · " + clinic.city + ", " + clinic.state;
+    D("kpSent").textContent = "";
+    D("wrapup").classList.remove("open");
+    D("keypad").classList.remove("open");
+    D("btnNext").style.display = "none";
+    D("btnClose").style.display = "none";
+    D("btnHang").style.display = "";
+    D("btnMute").disabled = true;
+    D("btnKeypad").disabled = true;
+    D("dockTimer").textContent = "00:00";
+    document.body.classList.add("docked");
+    setState("dialing…", "ringing");
+    render();
+
+    try{
+      call = await device.connect({ params:{ To: to } });
+
+      call.on("accept", () => {
+        secs = 0; muted = false;
+        D("btnMute").disabled = false; D("btnMute").textContent = "Mute"; D("btnMute").classList.remove("on");
+        D("btnKeypad").disabled = false;
+        setState("connected", "live");
+        clearInterval(tickId); tickId = setInterval(tick, 1000);
+        render();
+      });
+      ["disconnect","cancel","reject"].forEach(ev => call.on(ev, () => finish()));
+      call.on("error", () => { setLine("call error", "bad"); finish(); });
+    }catch(e){
+      setLine("call failed", "bad");
+      finish();
+    }
+  }
+
+  function finish(){
+    clearInterval(tickId); tickId = null;
+    const held = secs;
+    const id = currentId;
+    call = null; currentId = null; secs = 0;
+
+    if(id && held > 0){
+      state[id].calls.push({ at: Date.now(), secs: held, outcome: "" });
+      queueSave();
+    }
+    setState("call ended", "");
+    D("btnHang").style.display = "none";
+    D("btnMute").disabled = true;
+    D("btnKeypad").disabled = true;
+    D("keypad").classList.remove("open");
+    D("btnNext").style.display = "";
+    D("btnClose").style.display = "";
+    if(id){
+      D("wrapName").textContent = "— " + (CLINICS.find(c=>c.id===id)||{}).name;
+      D("wrapup").classList.add("open");
+    }
+    setLine("ready", "ok");
+    render();
+  }
+
+  function logOutcome(text, newStatus){
+    if(!lastId) return;
+    const s = state[lastId];
+    const arr = s.calls;
+    if(arr.length) arr[arr.length-1].outcome = text;
+    if(newStatus) s.status = newStatus;
+    else if(s.status === "New") s.status = "Contacted";
+    const stamp = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
+    s.notes = (s.notes ? s.notes.trim() + "\n" : "") + stamp + " — " + text;
+    queueSave();
+    D("wrapup").classList.remove("open");
+    hide();
+    renderPipe(); render();
+  }
+
+  // next callable lead: live window first, then hot tiers, skipping ones already called today
+  function nextLead(){
+    const today = new Date().toDateString();
+    const pool = CLINICS.filter(c=>{
+      if(c.id === lastId) return false;
+      if(c.tier === "Skip") return false;
+      const st = state[c.id].status;
+      if(st === "Rejected" || st === "Closed-Won") return false;
+      const calls = state[c.id].calls || [];
+      if(calls.some(k => new Date(k.at).toDateString() === today)) return false;
+      return true;
+    });
+    const rank = {Hot:0, Warm:1, Cool:2};
+    const live = pool.filter(c => liveState(c).code === "on");
+    const use  = live.length ? live : pool;
+    use.sort((a,b)=> (rank[a.tier]-rank[b.tier]) || (b.score-a.score) || (b.reviews-a.reviews));
+    return use[0] || null;
+  }
+
+  function hide(){
+    dock().classList.remove("up");
+    document.body.classList.remove("docked");
+    D("wrapup").classList.remove("open");
+  }
+
+  // controls
+  document.addEventListener("DOMContentLoaded", wire);
+  function wire(){
+    D("btnHang").addEventListener("click", ()=>{ if(call) call.disconnect(); });
+    D("btnClose").addEventListener("click", hide);
+    D("btnMute").addEventListener("click", ()=>{
+      if(!call) return;
+      muted = !muted; call.mute(muted);
+      D("btnMute").textContent = muted ? "Unmute" : "Mute";
+      D("btnMute").classList.toggle("on", muted);
+    });
+    D("btnKeypad").addEventListener("click", ()=> D("keypad").classList.toggle("open"));
+    D("keypad").addEventListener("click", e=>{
+      const b = e.target.closest("[data-k]"); if(!b || !call) return;
+      call.sendDigits(b.dataset.k);
+      D("kpSent").textContent = (D("kpSent").textContent + b.dataset.k).slice(-24);
+    });
+    D("btnNext").addEventListener("click", ()=>{
+      const n = nextLead();
+      if(!n){ setState("no leads left in queue", ""); return; }
+      dial(n);
+    });
+    D("outs").addEventListener("click", e=>{
+      const b = e.target.closest("[data-o]"); if(!b) return;
+      logOutcome(b.dataset.o, b.dataset.s || "");
+    });
+    // Esc hangs up
+    document.addEventListener("keydown", e=>{
+      if(e.key === "Escape" && call) call.disconnect();
+    });
+
+    // passcode gate
+    async function submitCode(){
+      const v = D("gateInput").value.trim();
+      if(!v){ D("gateErr").textContent = "Enter your passcode."; return; }
+      D("gateErr").textContent = "checking…";
+      const ok = await boot(v);
+      if(ok){ D("gate").classList.remove("open"); }
+      else { D("gateErr").textContent = "That didn't work. Try again."; }
+    }
+    D("gateGo").addEventListener("click", submitCode);
+    D("gateInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitCode(); });
+    D("gate").addEventListener("click", e=>{ if(e.target === D("gate")) D("gate").classList.remove("open"); });
+    D("twStatus").addEventListener("click", ()=>{ if(!ready) openGate(); });
+
+    boot();
+  }
+  if(document.readyState !== "loading") wire();
+
+  return { dial, isOn, nextLead };
+})();
+/* ================================================== */
+
+function card(c){
+  const s = state[c.id];
+  const n = BARS(c.tier);
+  const bars = [1,2,3].map(i=>`<div class="bar b${i} ${i<=n?'on':'off'}"></div>`).join("");
+  const tags = c.tags.map(t=>`<span class="tag ${TAG_CLASS(t)}">${esc(t)}</span>`).join("");
+  const note = c.note ? `<div class="note"><b>Angle:</b> ${esc(c.note)}</div>` : "";
+  let contact = "";
+  if(c.website){
+    const site = c.website.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    const bkClass = c.book_known==="Yes" ? "book-live" : c.book_known==="No" ? "book-manual" : "";
+    const socials = (c.socials||[]).map(s=>`<a class="soc" href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join("");
+    contact = `<div class="contact">
+      <div class="ch">✓ Verified contact</div>
+      <div class="crow2"><span class="k">Website</span><span class="v"><a href="${c.website}" target="_blank" rel="noopener">${esc(site)}</a></span></div>
+      ${c.email?`<div class="crow2"><span class="k">Email</span><span class="v"><a href="mailto:${c.email}">${esc(c.email)}</a></span></div>`:`<div class="crow2"><span class="k">Email</span><span class="v" style="color:var(--muted2)">no public address — contact form only</span></div>`}
+      <div class="crow2"><span class="k">Booking</span><span class="v ${bkClass}">${esc(c.booking||'')}</span></div>
+      ${socials?`<div class="crow2"><span class="k">Social</span><span class="v"><span class="socials">${socials}</span></span></div>`:""}
+    </div>`;
+  }
+  const seg = (field,val)=>["?","Yes","No"].map(o=>{
+    const on = val===o?`on ${o==='Yes'?'yes':o==='No'?'no':''}`:"";
+    return `<button class="${on}" data-act="v" data-id="${c.id}" data-field="${field}" data-val="${o}">${o}</button>`;
+  }).join("");
+  const STS=["New","Contacted","Replied","Interested","Rejected","Closed-Won"];
+  const statuses = STS.map(st=>`<button class="st ${s.status===st?'on':''}" data-act="s" data-id="${c.id}" data-s="${st}">${st}</button>`).join("");
+  const _live = liveState(c);
+  return `<div class="card tier-${c.tier} ${_live.code==='on'?'callable':''}">
+    <div class="chead">
+      <div>
+        <div class="cname">${esc(c.name)}</div>
+        <div class="cloc">${esc(c.city)}, ${c.state} &middot; <span>★ ${c.rating}</span> <span class="rev">(${c.reviews.toLocaleString()} reviews)</span></div>
+      </div>
+      <div class="meter"><div class="bars">${bars}</div><div class="tlabel">${c.tier}</div></div>
+    </div>
+    <div class="crow"><a class="phone" href="tel:${c.phone.replace(/\s/g,'')}">${esc(c.phone)}</a></div>
+    <div class="addr">${esc(c.address)}</div>
+    <div class="dialrow">
+      <button class="dialbtn ${DIALER.isOn(c.id)?'onair':''}" data-act="dial" data-id="${c.id}">
+        ${DIALER.isOn(c.id) ? '● On this call' : '📞 Call now'}
+      </button>
+      ${attemptLine(s)}
+    </div>
+    ${callBlock(c)}
+    ${tags?`<div class="tags">${tags}</div>`:""}
+    ${note}
+    ${contact}
+    <div class="verify">
+      <div class="vgroup"><div class="vl">Website?</div><div class="seg">${seg('website',s.website)}</div></div>
+      <div class="vgroup"><div class="vl">Online booking?</div><div class="seg">${seg('booking',s.booking)}</div></div>
+    </div>
+    <div class="status-wrap"><div class="vl">Pipeline</div><div class="statuses">${statuses}</div></div>
+    <textarea class="notes" placeholder="Notes — who you spoke to, next step…" data-act="n" data-id="${c.id}">${esc(s.notes)}</textarea>
+  </div>`;
+}
+
+function render(){
+  const q = el("q").value.trim().toLowerCase();
+  const fCity=el("fCity").value, fTier=el("fTier").value, fStatus=el("fStatus").value, fTag=el("fTag").value, fWin=el("fWin").value, sort=el("sort").value;
+  let list = CLINICS.filter(c=>{
+    if(fCity && c.city!==fCity) return false;
+    if(fTier && c.tier!==fTier) return false;
+    if(fStatus && state[c.id].status!==fStatus) return false;
+    if(fTag && !c.tags.includes(fTag)) return false;
+    if(fWin==="now"){ if(liveState(c).code!=="on") return false; }
+    else if(fWin && tzKeyOf(c)!==fWin) return false;
+    if(q){
+      const hay=(c.name+" "+c.city+" "+c.state+" "+c.phone+" "+c.address).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const rank={Hot:0,Warm:1,Cool:2,Skip:3};
+  list.sort((a,b)=>{
+    if(sort==="reviews") return b.reviews-a.reviews;
+    if(sort==="name") return a.name.localeCompare(b.name);
+    if(sort==="city") return a.city.localeCompare(b.city)||b.reviews-a.reviews;
+    if(sort==="window") return callPlan(a).prime[0]-callPlan(b).prime[0] || b.score-a.score;
+    return (rank[a.tier]-rank[b.tier]) || (b.score-a.score) || (b.reviews-a.reviews);
+  });
+  el("grid").innerHTML = list.map(card).join("");
+  el("empty").style.display = list.length?"none":"block";
+  el("grid").style.display = list.length?"grid":"none";
+}
+
+function initFilters(){
+  const cities=[...new Set(CLINICS.map(c=>c.city))].sort();
+  el("fCity").innerHTML = `<option value="">All cities</option>`+cities.map(c=>`<option>${c}</option>`).join("");
+  const tags=[...new Set(CLINICS.flatMap(c=>c.tags))].sort();
+  el("fTag").innerHTML = `<option value="">Any tag</option>`+tags.map(t=>`<option>${esc(t)}</option>`).join("");
+  buildWindowFilter();
+  el("cityCount").textContent = cities.length;
+  el("totalCount").textContent = CLINICS.length;
+}
+
+function buildWindowFilter(){
+  const keep = el("fWin").value;
+  const liveN = CLINICS.filter(c=>liveState(c).code==="on").length;
+  let out = `<option value="">All time zones (${CLINICS.length})</option>`
+          + `<option value="now">${liveN?"\u25CF ":""}Callable right now (${liveN})</option>`;
+  ["ET","CT","PT"].forEach(k=>{
+    const n = CLINICS.filter(c=>tzKeyOf(c)===k).length;
+    if(!n) return;
+    const sh = shiftHours(k);
+    out += `<option value="${k}">${TZ_META[k].label} \u00b7 ${fmtRange(PRIME[0]+sh, PRIME[1]+sh)} (${n})</option>`;
+  });
+  el("fWin").innerHTML = out;
+  el("fWin").value = keep;
+}
+
+// event delegation
+document.addEventListener("click", e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const act=b.dataset.act, id=b.dataset.id;
+  if(act==="s"){ state[id].status=b.dataset.s; queueSave(); renderPipe(); render(); }
+  else if(act==="v"){ state[id][b.dataset.field]=b.dataset.val; queueSave(); render(); }
+  else if(act==="dial"){ const c=CLINICS.find(x=>x.id===id); if(c) DIALER.dial(c); }
+});
+document.addEventListener("input", e=>{
+  const t=e.target.closest("textarea[data-act='n']"); if(!t) return;
+  state[t.dataset.id].notes=t.value; queueSave();
+});
+["q","fCity","fTier","fStatus","fTag","fWin","sort"].forEach(id=>{
+  el(id).addEventListener("input", render);
+  el(id).addEventListener("change", render);
+});
+
+(function(){
+  loadState();
+  initFilters();
+  renderPipe();
+  renderClocks();
+  render();
+  // keep clocks + live badges honest
+  setInterval(()=>{ renderClocks(); buildWindowFilter(); }, 20000);
+  setInterval(()=>{ if(!document.activeElement || document.activeElement.tagName!=="TEXTAREA") render(); }, 60000);
+})();
+</script>
+</body>
+</html>
