@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="locked">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -271,6 +271,10 @@
   .tw.ok b{color:var(--teal)} .tw.bad b{color:var(--red)}
 
   /* ---- passcode gate ---- */
+  /* The lock class ships in the HTML itself, not applied by script, so the lead list is never
+     painted for even a frame before the passcode is checked. Removed only after /api/token
+     confirms the code server-side. */
+  html.locked .wrap, html.locked .dock{display:none !important}
   .gate{position:fixed;inset:0;z-index:90;background:rgba(8,12,20,.86);backdrop-filter:blur(6px);
     display:none;align-items:center;justify-content:center;padding:20px}
   .gate.open{display:flex}
@@ -353,8 +357,8 @@
 
 <div class="gate" id="gate">
   <div class="gatebox">
-    <h3>Unlock the line</h3>
-    <p>Enter your passcode to enable calling. The lead list works without it — this only unlocks the dialer.</p>
+    <h3>Unlock the console</h3>
+    <p>Enter your passcode to open your lead list and enable calling.</p>
     <input type="password" id="gateInput" placeholder="passcode" autocomplete="off" inputmode="numeric">
     <button id="gateGo">Unlock</button>
     <div class="gateerr" id="gateErr"></div>
@@ -875,21 +879,32 @@ const DIALER = (function(){
       if(e.key === "Escape" && call) call.disconnect();
     });
 
-    // passcode gate
+    // passcode gate — now guards the lead list as well as the line, so the console shows
+    // nothing at all until the code is accepted.
+    function unlock(){ document.documentElement.classList.remove("locked"); }
+
     async function submitCode(){
       const v = D("gateInput").value.trim();
       if(!v){ D("gateErr").textContent = "Enter your passcode."; return; }
       D("gateErr").textContent = "checking…";
       const ok = await boot(v);
-      if(ok){ D("gate").classList.remove("open"); }
+      if(ok){ unlock(); D("gate").classList.remove("open"); }
       else { D("gateErr").textContent = "That didn't work. Try again."; }
     }
     D("gateGo").addEventListener("click", submitCode);
     D("gateInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitCode(); });
-    D("gate").addEventListener("click", e=>{ if(e.target === D("gate")) D("gate").classList.remove("open"); });
+    // Backdrop click only dismisses once unlocked — otherwise clicking outside the box would
+    // close the only way back in and leave a blank page.
+    D("gate").addEventListener("click", e=>{
+      if(e.target === D("gate") && !document.documentElement.classList.contains("locked")){
+        D("gate").classList.remove("open");
+      }
+    });
     D("twStatus").addEventListener("click", ()=>{ if(!ready) openGate(); });
 
-    boot();
+    // A refresh in the same tab re-uses the code boot() kept in sessionStorage; a new tab or a
+    // reopened browser has none, so it locks and asks again.
+    boot().then(ok => { if(ok) unlock(); else openGate(); });
   }
   if(document.readyState !== "loading") wire();
 
