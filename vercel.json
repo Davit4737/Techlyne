@@ -23,6 +23,13 @@
   ],
   "headers": [
     {
+      "source": "/dialer",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    },
+    {
       "source": "/widget.js",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=600, s-maxage=600" },
