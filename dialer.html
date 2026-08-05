@@ -808,8 +808,18 @@ const DIALER = (function(){
         render();
       });
       ["disconnect","cancel","reject"].forEach(ev => call.on(ev, () => finish()));
-      call.on("error", () => { setLine("call error", "bad"); finish(); });
+      // Twilio errors carry a numeric code that names the real problem (20101 bad token,
+      // 31402 mic denied, 13227 geo-permissions...). Swallowing it left "nothing at all"
+      // as the only symptom — show it and log it.
+      call.on("error", (err) => {
+        console.error("dialer call error:", err);
+        setState("failed — " + ((err && (err.code ? err.code + " " : "") + (err.message||"")) || "unknown"), "ended");
+        setLine("call error " + ((err && err.code) || ""), "bad");
+        finish();
+      });
     }catch(e){
+      console.error("dialer connect failed:", e);
+      setState("failed — " + ((e && (e.message||e.code)) || "couldn't start"), "ended");
       setLine("call failed", "bad");
       finish();
     }
