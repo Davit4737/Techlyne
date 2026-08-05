@@ -300,6 +300,7 @@ async function handleCalls(req, res) {
       for (const a of out.recentAlerts) {
         // The codes that actually explain a 31005 hangup, translated into the fix.
         const known = {
+          13225: "Twilio BLOCKED the call before dialling. For a +1 (US/Canada) destination this almost always means the account has no approved PRIMARY CUSTOMER PROFILE in Trust Hub — a regulatory prerequisite for calling US numbers. Console → Trust Hub → Customer Profiles. (It can also mean Twilio flagged that specific destination as high-risk, which only Twilio Support can lift.)",
           13224: "Twilio will not dial this number: VOICE GEOGRAPHIC PERMISSIONS block the destination country. Enable it in Console → Voice → Settings → Geo Permissions.",
           13227: "Twilio will not dial this number: geographic permissions block the destination country. Enable it in Console → Voice → Settings → Geo Permissions.",
           21215: "Geo permissions: this account is not enabled to call that country. Console → Voice → Settings → Geo Permissions.",
