@@ -143,9 +143,13 @@ async function handleCheck(req, res) {
   };
 
   try {
+    // A Standard API key is NOT permitted to read the account record — Twilio 401s that one
+    // endpoint even when the key is perfectly valid. Treating that as "bad credentials" is
+    // wrong, and it hides the answer that matters (trial vs full). So a 401 here is only
+    // damning if the other calls fail too; that is decided after they have all run.
     const acct = await get(`${base}.json`);
     if (acct.status === 401) {
-      out.verdicts.push("FAIL Twilio rejected the API key/secret pair (401). Re-create the API key and paste BOTH values fresh.");
+      out.accountReadable = false;
     } else if (acct.status === 404) {
       out.verdicts.push("FAIL TWILIO_ACCOUNT_SID doesn't match any account (404).");
     } else if (acct.body) {
@@ -162,7 +166,7 @@ async function handleCheck(req, res) {
     const app = await get(`${base}/Applications/${encodeURIComponent(appSid.trim())}.json`);
     if (app.status === 404) {
       out.verdicts.push("FAIL TWILIO_TWIML_APP_SID doesn't match any TwiML app on this account.");
-    } else if (app.body) {
+    } else if (app.status === 200 && app.body) {
       out.twimlApp = { voiceUrl: app.body.voice_url, voiceMethod: app.body.voice_method };
       const ok = /^https:\/\/(www\.)?bizzassist\.xyz\/api\/voice$/.test(app.body.voice_url || "");
       out.verdicts.push(ok
@@ -171,19 +175,45 @@ async function handleCheck(req, res) {
     }
 
     const nums = await get(`${base}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(callerId.trim())}`);
-    const owned = Boolean(nums.body && Array.isArray(nums.body.incoming_phone_numbers) && nums.body.incoming_phone_numbers.length);
-    out.verdicts.push(owned
-      ? `PASS caller ID ${callerId.trim()} is a number this account owns`
-      : `FAIL caller ID ${callerId.trim()} is NOT owned by this account — outbound <Dial> will be rejected.`);
+    const owned = Boolean(nums.status === 200 && nums.body && Array.isArray(nums.body.incoming_phone_numbers) && nums.body.incoming_phone_numbers.length);
+    if (nums.status === 200) {
+      out.verdicts.push(owned
+        ? `PASS caller ID ${callerId.trim()} is a number this account owns`
+        : `FAIL caller ID ${callerId.trim()} is NOT owned by this account — outbound <Dial> will be rejected.`);
+    }
+
+    // Trial detection that survives the account-record 401: a trial account's Balance endpoint
+    // is readable by a Standard key, and trials run on prepaid credit.
+    if (out.accountReadable === false) {
+      const bal = await get(`${base}/Balance.json`);
+      if (bal.status === 200 && bal.body && bal.body.balance !== undefined) {
+        out.balance = `${bal.body.balance} ${bal.body.currency || ""}`.trim();
+        out.verdicts.push(`INFO account balance: ${out.balance}`);
+      }
+    }
 
     const vids = await get(`${base}/OutgoingCallerIds.json`);
-    if (vids.body && Array.isArray(vids.body.outgoing_caller_ids)) {
+    if (vids.status === 200 && vids.body && Array.isArray(vids.body.outgoing_caller_ids)) {
       out.verifiedCallerIds = vids.body.outgoing_caller_ids.map((v) => v.phone_number);
-      if (out.account && out.account.type === "Trial") {
-        out.verdicts.push(out.verifiedCallerIds.length
-          ? `INFO on a trial, callable numbers are ONLY: ${out.verifiedCallerIds.join(", ")}`
-          : "WARN trial account with NO verified caller IDs — it cannot call anything. Verify your own mobile under Phone Numbers → Verified Caller IDs, or upgrade.");
-      }
+    }
+
+    // Now judge the credentials on evidence rather than on one endpoint's refusal: if any other
+    // authenticated call came back, the key/secret pair is valid and the account 401 was just
+    // the Standard-key permission limit.
+    const otherCallsWorked = Boolean(out.twimlApp) || owned || Array.isArray(out.verifiedCallerIds);
+    if (out.accountReadable === false && otherCallsWorked) {
+      out.verdicts.unshift("PASS credentials valid — the account-record 401 is normal for a Standard API key and can be ignored.");
+      out.verdicts.push("WARN could not read account type. If calls fail with error 13224/21215, the account is a TRIAL: it can only dial numbers under Verified Caller IDs. Upgrade it (add a payment method) to call clinics.");
+    } else if (out.accountReadable === false) {
+      out.verdicts.unshift("FAIL Twilio rejected the API key/secret pair (401) on every request. Re-create the API key and paste BOTH values fresh.");
+    }
+
+    if (out.verifiedCallerIds && out.verifiedCallerIds.length) {
+      out.verdicts.push(`INFO verified caller IDs on this account: ${out.verifiedCallerIds.join(", ")}. If this is a trial, these are the ONLY numbers it can call.`);
+    } else if (Array.isArray(out.verifiedCallerIds)) {
+      // An empty list is only fatal on a trial, but it is worth flagging either way: on a trial
+      // it means the account cannot legally dial a single number.
+      out.verdicts.push("WARN no verified caller IDs on this account. If it is a trial, it cannot call ANY number — verify one under Phone Numbers → Verified Caller IDs, or upgrade.");
     }
   } catch (e) {
     console.error("dialer check failed:", e);
