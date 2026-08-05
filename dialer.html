@@ -325,8 +325,23 @@
     <div style="color:var(--muted);font-size:12px;text-align:right">
       <div><span class="ki" id="totalCount" style="color:var(--text);font-size:15px"></span> clinics</div>
       <div class="tw" id="twStatus" style="margin-top:3px">line: <b>connecting…</b></div>
+      <button id="manualBtn" class="dbtn" style="margin-top:8px;padding:5px 12px;font-size:12px">☎ Dial a number</button>
     </div>
   </header>
+
+  <div class="gate" id="manualDial">
+    <div class="gatebox">
+      <h3>Dial a number</h3>
+      <p>US/Canada or Armenia only — anything else is refused server-side, same rule as the lead list.</p>
+      <input type="tel" id="manualInput" placeholder="+1 512 555 1234 or +374 99 123456" autocomplete="off">
+      <div class="gateerr" id="manualErr"></div>
+      <button id="manualGo">Call</button>
+      <!-- .gatebox button{} sets a teal background + near-black text for the single primary
+           "Unlock" button in the passcode gate; overriding both here so Cancel reads as the
+           secondary action it is, instead of near-invisible dark text on a dark panel. -->
+      <button id="manualCancel" class="dbtn" style="margin-top:8px;width:100%;background:transparent;color:var(--muted)">Cancel</button>
+    </div>
+  </div>
 
   <div class="clockbar" id="clockbar"></div>
 
@@ -822,7 +837,9 @@ const DIALER = (function(){
     const to = "+" + clinic.phone.replace(/\D/g,"");
 
     D("dockName").textContent = clinic.name;
-    D("dockPhone").textContent = clinic.phone + " · " + clinic.city + ", " + clinic.state;
+    // city/state are blank for a manual dial (no lead record to pull them from) — skip the
+    // separator entirely rather than print a bare "· , ".
+    D("dockPhone").textContent = clinic.phone + ((clinic.city || clinic.state) ? " · " + clinic.city + ", " + clinic.state : "");
     D("kpSent").textContent = "";
     D("wrapup").classList.remove("open");
     D("keypad").classList.remove("open");
@@ -1141,6 +1158,43 @@ document.addEventListener("input", e=>{
   el(id).addEventListener("input", render);
   el(id).addEventListener("change", render);
 });
+
+// ── manual dial: call any number, not just a lead on the list ──
+// This client-side normalization is a convenience, nothing more. The real gate is server-side —
+// api/dialer.js's allowed() decides what actually rings, using the same rule for a typed number
+// as for a lead card, so this panel cannot be used to reach anything the lead list couldn't.
+function normalizeManualNumber(raw){
+  let d = String(raw||"").replace(/[^\d+]/g, "");
+  if(d.startsWith("00")) d = "+" + d.slice(2);
+  const digits = d.replace(/\D/g, "");
+  if(d.startsWith("+")) return digits;
+  if(digits.length === 10) return "1" + digits;      // bare US/Canada number, no country code
+  if(digits.length === 8) return "374" + digits;      // bare Armenian national number
+  return digits;                                       // already has a country code, or unrecognized — let the server decide
+}
+function openManualDial(){
+  el("manualErr").textContent = "";
+  el("manualInput").value = "";
+  el("manualDial").classList.add("open");
+  setTimeout(()=>el("manualInput").focus(), 50);
+}
+function closeManualDial(){ el("manualDial").classList.remove("open"); }
+function submitManualDial(){
+  const raw = el("manualInput").value.trim();
+  if(!raw){ el("manualErr").textContent = "Enter a number."; return; }
+  const digits = normalizeManualNumber(raw);
+  if(digits.length < 8){ el("manualErr").textContent = "That doesn't look like a full number."; return; }
+  closeManualDial();
+  // id left undefined on purpose: dial()/finish() already treat a falsy id as "not a tracked
+  // lead" and skip call-history logging and the post-call wrap-up prompt, which don't make sense
+  // for an ad-hoc number that isn't on the pipeline.
+  DIALER.dial({ name: "Manual dial", phone: "+" + digits, city: "", state: "" });
+}
+el("manualBtn").addEventListener("click", openManualDial);
+el("manualGo").addEventListener("click", submitManualDial);
+el("manualCancel").addEventListener("click", closeManualDial);
+el("manualInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitManualDial(); });
+el("manualDial").addEventListener("click", e=>{ if(e.target===el("manualDial")) closeManualDial(); });
 
 (function(){
   loadState();
