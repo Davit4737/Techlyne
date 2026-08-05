@@ -682,6 +682,17 @@ function attemptLine(s){
 const DIALER = (function(){
   let device = null, call = null, tickId = null;
   let secs = 0, muted = false, ready = false, currentId = null, lastId = null;
+  // Why the line is not ready. Without this, dial() cannot tell "they need to type the passcode"
+  // apart from "the passcode was fine and the phone itself is broken", and it silently reopened
+  // the passcode box for both — so a blocked SDK looked like an endless password prompt.
+  let lastReason = "nocode";
+
+  const GATE_ERR = {
+    badcode: "Wrong passcode — check for a typo.",
+    nosdk:   "Passcode accepted, but the phone library is blocked. Disable your ad blocker or privacy extension for this page and reload.",
+    failed:  "Passcode accepted, but the phone couldn't start. Open the browser console (F12) for the reason.",
+    nocode:  "Enter your passcode.",
+  };
 
   const D = id => document.getElementById(id);
   const dock = () => D("dock");
@@ -706,12 +717,12 @@ const DIALER = (function(){
   // to the user as a wrong one — with the real fault (a blocked Twilio SDK) never surfaced.
   async function boot(code){
     const pass = code || sessionStorage.getItem("dialer_code") || "";
-    if(!pass){ ready = false; setLine("locked — click to unlock", ""); return "nocode"; }
+    if(!pass){ ready = false; lastReason = "nocode"; setLine("locked — click to unlock", ""); return "nocode"; }
     try{
       const r = await fetch("/api/token", { headers: { "x-dialer-code": pass } });
       if(r.status === 401){
         sessionStorage.removeItem("dialer_code");
-        ready = false; setLine("wrong passcode", "bad");
+        ready = false; lastReason = "badcode"; setLine("wrong passcode", "bad");
         return "badcode";
       }
       if(!r.ok) throw new Error("token endpoint returned " + r.status);
@@ -721,7 +732,7 @@ const DIALER = (function(){
       // block. Checked explicitly so that failure reads as itself instead of a ReferenceError
       // swallowed by the catch below and shown as a passcode problem.
       if(typeof Twilio === "undefined" || !Twilio.Device){
-        ready = false; setLine("phone library blocked", "bad");
+        ready = false; lastReason = "nosdk"; setLine("phone library blocked", "bad");
         return "nosdk";
       }
       device = new Twilio.Device(token, { codecPreferences:["opus","pcmu"], logLevel:"error" });
@@ -734,22 +745,24 @@ const DIALER = (function(){
           if(d.token) device.updateToken(d.token);
         }catch(_){}
       });
-      ready = true;
+      ready = true; lastReason = "ok";
       setLine("ready", "ok");
       return "ok";
     }catch(e){
       // Surfaced to the console because the on-screen line has no room for the real cause, and
       // without it "not connected" is undiagnosable.
       console.error("dialer boot failed:", e);
-      ready = false;
+      ready = false; lastReason = "failed";
       setLine("not connected — check setup", "bad");
       return "failed";
     }
   }
 
-  function openGate(){
+  // msg is optional; pass one when the gate is being opened to explain a failure rather than to
+  // ask for a passcode, so the box never reappears with no reason given.
+  function openGate(msg){
     D("gate").classList.add("open");
-    D("gateErr").textContent = "";
+    D("gateErr").textContent = msg || "";
     D("gateInput").value = "";
     setTimeout(()=>D("gateInput").focus(), 50);
   }
@@ -757,7 +770,13 @@ const DIALER = (function(){
   function isOn(id){ return currentId === id && !!call; }
 
   async function dial(clinic){
-    if(!ready){ openGate(); return; }
+    if(!ready){
+      // Only reprompt when a passcode is actually what's missing. If the code was already
+      // accepted and the phone itself failed, asking for it again is a dead end the owner can
+      // repeat forever — say what's wrong instead.
+      openGate(lastReason === "nocode" ? "" : (GATE_ERR[lastReason] || "The phone isn't available."));
+      return;
+    }
     if(call){ return; }                       // already on a call
     currentId = clinic.id; lastId = clinic.id;
     const to = "+" + clinic.phone.replace(/\D/g,"");
@@ -898,13 +917,6 @@ const DIALER = (function(){
 
     // Each failure gets its own message. A single "that didn't work" sent the owner hunting for
     // a passcode typo when the passcode was already accepted and the phone library was blocked.
-    const GATE_ERR = {
-      badcode: "Wrong passcode — check for a typo.",
-      nosdk:   "Passcode accepted, but the phone library is blocked. Disable your ad blocker or privacy extension for this page and reload.",
-      failed:  "Passcode accepted, but the phone couldn't start. Open the browser console for the reason.",
-      nocode:  "Enter your passcode.",
-    };
-
     async function submitCode(){
       const v = D("gateInput").value.trim();
       if(!v){ D("gateErr").textContent = "Enter your passcode."; return; }
@@ -925,7 +937,9 @@ const DIALER = (function(){
         D("gate").classList.remove("open");
       }
     });
-    D("twStatus").addEventListener("click", ()=>{ if(!ready) openGate(); });
+    D("twStatus").addEventListener("click", ()=>{
+      if(!ready) openGate(lastReason === "nocode" ? "" : (GATE_ERR[lastReason] || ""));
+    });
 
     // A refresh in the same tab re-uses the code boot() kept in sessionStorage; a new tab or a
     // reopened browser has none, so it locks and asks again.
