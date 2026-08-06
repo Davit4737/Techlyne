@@ -393,12 +393,33 @@ async function handleCalls(req, res) {
   return res.status(200).json(out);
 }
 
+// ─────────────────────────── /api/dialer?action=status ───────────────────────────
+// Twilio's optional Status Callback. It POSTs a call's lifecycle here (initiated → ringing →
+// answered → completed) and ignores whatever we return, so this only has to acknowledge quickly.
+//
+// NOT passcode-gated, because Twilio cannot send one. That is safe here specifically because the
+// handler has no side effects: it writes nothing, reads nothing, and returns no data. The worst
+// an outsider can do is add a line to our logs.
+//
+// Deliberately never points at /api/voice. That endpoint answers with TwiML, and a status
+// callback receiving TwiML makes Twilio log a warning on every single status update.
+function handleStatus(req, res) {
+  const b = (req.body && typeof req.body === "object") ? req.body : {};
+  console.log("dialer call status:", {
+    callSid: b.CallSid, status: b.CallStatus, to: b.To, from: b.From,
+    duration: b.CallDuration, direction: b.Direction,
+  });
+  // 204: acknowledged, nothing to say. Any 2xx satisfies Twilio.
+  return res.status(204).end();
+}
+
 export default function handler(req, res) {
   const action = req.query && req.query.action;
   if (action === "token") return handleToken(req, res);
   if (action === "voice") return handleVoice(req, res);
   if (action === "check") return handleCheck(req, res);
   if (action === "calls") return handleCalls(req, res);
+  if (action === "status") return handleStatus(req, res);
   return res.status(404).json({ error: "Not found" });
 }
 
