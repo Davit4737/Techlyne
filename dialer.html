@@ -518,19 +518,40 @@ function nextWindow(tzKey, closedDays){
   const tz = TZ_META[tzKey].iana, now = Date.now();
   const base = localYMD(tz, new Date());
   const start0 = Date.UTC(base.y, base.m-1, base.d);
+  // When we know the clinic, trust its own opening days and nothing else. This used to skip
+  // every Saturday and Sunday outright, which flatly contradicted the live badge: 20 of the
+  // clinics on this list open on Saturday, so on a Saturday morning a card would show
+  // "PRIME - CALL NOW" next to "next good window: Mon, in 48h". The blanket weekend skip is
+  // still the right default for the zone-level clocks, which have no clinic to ask.
+  const perClinic = Array.isArray(closedDays);
   for(let i=0;i<14;i++){
     const dd = new Date(start0 + i*86400000);
     const y=dd.getUTCFullYear(), m=dd.getUTCMonth()+1, d=dd.getUTCDate();
     const dow = DAYS[dd.getUTCDay()];
-    if(dow==="Sat" || dow==="Sun") continue;              // front desks are thin
-    if((closedDays||[]).includes(dow)) continue;
+    if(perClinic){
+      if(closedDays.includes(dow)) continue;
+    } else if(dow==="Sat" || dow==="Sun"){
+      continue;                                           // whole-zone view: assume weekdays
+    }
     for(const [w,tag] of [[PRIME,"prime"],[BACKUP,"backup"]]){
       const a = zonedInstant(tz, y, m, d, w[0], 0);
       const b = zonedInstant(tz, y, m, d, w[1], 0);
-      if(now < b) return { tag, dow, startsIn:a-now, endsIn:b-now, live: now>=a };
+      if(now < b) return { tag, dow, startAt:a, endAt:b, startsIn:a-now, endsIn:b-now, live: now>=a };
     }
   }
   return null;
+}
+
+// Weekday + decimal hour of an absolute instant, read on the USER's clock. The countdown line
+// is labelled "your time", so both halves of it have to come from the user's timezone. Taking
+// the day from the clinic's calendar and converting only the hour puts every Pacific backup
+// window on the wrong day, because +11h from 2pm lands at 1am the NEXT day in Dubai.
+function myParts(ts){
+  const p = new Intl.DateTimeFormat("en-US",{timeZone:MY_TZ,weekday:"short",
+    hour:"2-digit",minute:"2-digit",hour12:false})
+    .formatToParts(new Date(ts)).reduce((a,x)=>(a[x.type]=x.value,a),{});
+  let hh = parseInt(p.hour,10); if(hh===24) hh=0;
+  return { dow:p.weekday, h: hh + (+p.minute)/60 };
 }
 
 function dur(ms){
@@ -627,7 +648,8 @@ function callBlock(c){
     <div class="cdown ${nw && nw.live ? 'go' : ''}">
       <span class="cdl">${nw && nw.live ? 'Window closes in' : 'Next good window'}</span>
       <span class="cdv">${nw ? (nw.live ? dur(nw.endsIn) : dur(nw.startsIn)) : '—'}</span>
-      ${nw && !nw.live ? `<span class="cdn">${nw.dow} · ${fmtH((nw.tag==="prime"?PRIME[0]:BACKUP[0]) + p.sh)} your time</span>` : ''}
+      ${nw && !nw.live ? (()=>{ const mp = myParts(nw.startAt);
+          return `<span class="cdn">${mp.dow} · ${fmtH(mp.h)} your time</span>`; })() : ''}
     </div>
     <div class="win best"><span class="k">Best</span>
       <span class="v">${fmtRange(p.prime[0], p.prime[1])}</span>
