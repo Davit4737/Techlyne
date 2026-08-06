@@ -296,7 +296,7 @@ async function handleCalls(req, res) {
     const profiles = await get("https://trusthub.twilio.com/v1/CustomerProfiles?PageSize=5");
     if (profiles.status === 200 && profiles.body && Array.isArray(profiles.body.results)) {
       out.customerProfiles = profiles.body.results.map((p) => ({
-        friendlyName: p.friendly_name, status: p.status, updated: p.date_updated,
+        sid: p.sid, friendlyName: p.friendly_name, status: p.status, updated: p.date_updated,
       }));
       if (!out.customerProfiles.length) {
         out.verdicts.push("FAIL no Customer Profile exists on this account. US (+1) calling stays blocked until one is created and approved: Console → Trust Hub → Customer Profiles.");
@@ -313,6 +313,34 @@ async function handleCalls(req, res) {
       }
     } else if (profiles.status === 401 || profiles.status === 403) {
       out.verdicts.push("WARN this API key cannot read Trust Hub. Check the profile status manually: Console → Trust Hub → Customer Profiles.");
+    }
+
+    // Individual vs Business matters, and nothing in the profile record says which outright.
+    // Twilio requires a BUSINESS profile for +1 calling on accounts created outside the US/Canada
+    // after 2025-10-08 — an approved INDIVIDUAL profile satisfies nothing and still returns
+    // 13225, which is indistinguishable from "not approved yet" from the outside. Resolve it by
+    // reading the entities actually attached to the profile.
+    const approvedProfile = (out.customerProfiles || []).find((p) => p.status === "twilio-approved");
+    if (approvedProfile && approvedProfile.sid) {
+      const asg = await get(`https://trusthub.twilio.com/v1/CustomerProfiles/${encodeURIComponent(approvedProfile.sid)}/EntityAssignments?PageSize=20`);
+      if (asg.status === 200 && asg.body && Array.isArray(asg.body.results)) {
+        const types = [];
+        for (const a of asg.body.results) {
+          if (!a.object_sid || !String(a.object_sid).startsWith("IT")) continue;
+          const eu = await get(`https://trusthub.twilio.com/v1/EndUsers/${encodeURIComponent(a.object_sid)}`);
+          if (eu.status === 200 && eu.body && eu.body.type) types.push(eu.body.type);
+        }
+        out.profileEntityTypes = types;
+        const isBusiness = types.some((t) => /business/i.test(t));
+        const isIndividual = types.some((t) => /individual/i.test(t));
+        if (isBusiness) {
+          out.verdicts.push("PASS the approved profile is a BUSINESS profile, which is the type +1 calling requires.");
+        } else if (isIndividual) {
+          out.verdicts.push("FAIL the approved profile is an INDIVIDUAL profile. Twilio does NOT accept an Individual profile for +1 calling on accounts created outside the US/Canada after 2025-10-08 — this is why the calls are still blocked despite the approval. Create a BUSINESS Primary Customer Profile: Console → Trust Hub → Customer Profiles → new profile, business type.");
+        } else if (types.length) {
+          out.verdicts.push(`INFO profile entity types: ${types.join(", ")} — confirm in Trust Hub that this is a Business profile, which +1 calling requires.`);
+        }
+      }
     }
 
     const alerts = await get("https://monitor.twilio.com/v1/Alerts?PageSize=5");
