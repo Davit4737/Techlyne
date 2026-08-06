@@ -97,6 +97,8 @@
   .chead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
   .cname{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:-.2px;line-height:1.25}
   .cloc{color:var(--muted);font-size:12px;margin-top:2px;display:flex;align-items:center;gap:6px}
+  .cloc.localnow{margin-top:3px;font-size:11.5px}
+  .cloc.localnow b{color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}
   .cloc .rev{color:var(--muted2)}
 
   .meter{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
@@ -441,11 +443,28 @@ const CLINICS = [{"name": "ATX Family Dental", "city": "Austin", "state": "TX", 
 
 /* ===================== CALL-WINDOW ENGINE (Dubai local time) ===================== */
 const MY_TZ = "Asia/Dubai";
-const TZ_BY_STATE = { TX:"CT", TN:"CT", NC:"ET", OH:"ET", FL:"ET", CA:"PT" };
+const TZ_BY_STATE = { TX:"CT", TN:"CT", NC:"ET", OH:"ET", FL:"ET", CA:"PT", AZ:"MT", CO:"MT", UT:"MT", NM:"MT" };
 const TZ_META = {
   ET:{ iana:"America/New_York",    label:"Eastern" },
   CT:{ iana:"America/Chicago",     label:"Central" },
+  MT:{ iana:"America/Denver",      label:"Mountain" },
   PT:{ iana:"America/Los_Angeles", label:"Pacific" }
+};
+
+// City-level overrides, checked BEFORE the state map. Several states this list already covers
+// are split across zones — Tennessee runs Central in Nashville but Eastern in Knoxville, Texas
+// is Central except El Paso (Mountain), Florida is Eastern except the panhandle — so resolving
+// by state alone is only accidentally right for the current leads and would quietly show the
+// wrong clock the first time a clinic is added in the other half of one of those states.
+// Keys are "city|state", lower-cased.
+const TZ_BY_CITY = {
+  // present in the lead list today
+  "austin|tx":"CT", "nashville|tn":"CT", "raleigh|nc":"ET", "columbus|oh":"ET",
+  "tampa|fl":"ET", "los angeles|ca":"PT", "sherman oaks|ca":"PT", "culver city|ca":"PT",
+  // split-state cities, so adding one of these later is correct without a code change
+  "knoxville|tn":"ET", "chattanooga|tn":"ET", "memphis|tn":"CT",
+  "el paso|tx":"MT", "pensacola|fl":"CT", "tallahassee|fl":"ET",
+  "panama city|fl":"CT", "coeur d'alene|id":"PT", "boise|id":"MT",
 };
 // Front-desk sweet spots in the CLINIC's own local time (24h decimal)
 const PRIME  = [9, 11];    // just after open, before the lunch rush
@@ -464,7 +483,22 @@ function shiftHours(tzKey, date){
   date = date || new Date();
   return (tzOffsetMin(MY_TZ, date) - tzOffsetMin(TZ_META[tzKey].iana, date)) / 60;
 }
-function tzKeyOf(c){ return TZ_BY_STATE[c.state] || "ET"; }
+// City first, then state, then Eastern as a last resort. Keeping this one function as the single
+// source of truth means the region filter, the clock bar, the call-window maths and the per-card
+// clock can never disagree about which zone a clinic is in.
+function tzKeyOf(c){
+  const city = TZ_BY_CITY[((c.city||"") + "|" + (c.state||"")).toLowerCase()];
+  return city || TZ_BY_STATE[c.state] || "ET";
+}
+function ianaOf(c){ return TZ_META[tzKeyOf(c)].iana; }
+
+// The clinic's own wall clock right now, e.g. "2:14 PM". Rendered per card so a rep can see the
+// actual local time at that practice rather than inferring it from the region heading.
+function localTimeOf(c, date){
+  return new Intl.DateTimeFormat("en-US",{
+    timeZone: ianaOf(c), hour:"numeric", minute:"2-digit", hour12:true
+  }).format(date || new Date());
+}
 
 // Turn a wall-clock time in a given zone into a real UTC instant (DST-safe).
 function zonedInstant(tz, y, m, d, h, min){
@@ -565,7 +599,7 @@ function callPlan(c){
 // live state: is the clinic reachable at this exact moment?
 function liveState(c){
   const now = new Date();
-  const tz  = TZ_META[tzKeyOf(c)].iana;
+  const tz  = ianaOf(c);
   const parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
     weekday:"short",hour:"2-digit",minute:"2-digit"})
     .formatToParts(now).reduce((a,p)=>(a[p.type]=p.value,a),{});
@@ -1064,6 +1098,7 @@ function card(c){
       <div>
         <div class="cname">${esc(c.name)}</div>
         <div class="cloc">${esc(c.city)}, ${c.state} &middot; <span>★ ${c.rating}</span> <span class="rev">(${c.reviews.toLocaleString()} reviews)</span></div>
+        <div class="cloc localnow" data-tz="${ianaOf(c)}">🕐 <b>${localTimeOf(c)}</b> local <span class="rev">· ${TZ_META[tzKeyOf(c)].label}</span></div>
       </div>
       <div class="meter"><div class="bars">${bars}</div><div class="tlabel">${c.tier}</div></div>
     </div>
@@ -1203,7 +1238,19 @@ el("manualDial").addEventListener("click", e=>{ if(e.target===el("manualDial")) 
   renderClocks();
   render();
   // keep clocks + live badges honest
-  setInterval(()=>{ renderClocks(); buildWindowFilter(); }, 20000);
+  // Update the per-card clocks in place rather than re-rendering the list: a full render() would
+  // blow away any note the rep is mid-way through typing, which is why the render below is
+  // already guarded against a focused textarea.
+  function refreshLocalClocks(){
+    const now = new Date();
+    document.querySelectorAll(".localnow[data-tz]").forEach(node=>{
+      const b = node.querySelector("b"); if(!b) return;
+      b.textContent = new Intl.DateTimeFormat("en-US",{
+        timeZone: node.dataset.tz, hour:"numeric", minute:"2-digit", hour12:true
+      }).format(now);
+    });
+  }
+  setInterval(()=>{ renderClocks(); buildWindowFilter(); refreshLocalClocks(); }, 20000);
   setInterval(()=>{ if(!document.activeElement || document.activeElement.tagName!=="TEXTAREA") render(); }, 60000);
 })();
 </script>
