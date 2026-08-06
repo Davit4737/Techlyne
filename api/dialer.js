@@ -93,9 +93,43 @@ function allowedArmenia(d) {
   return true;
 }
 
+// United Kingdom: +44 followed by a 9- or 10-digit national number (10 for virtually everything;
+// a few legacy areas are 9). In international format the trunk "0" is dropped, so an NSN that
+// still starts with 0 means the number was pasted in national format and is rejected rather than
+// guessed at.
+//
+// The excluded ranges are precisely Ofcom's premium and higher-rate designations, which are what
+// toll-fraud bots dial:
+//   9xx  -> 09xx premium rate, up to GBP 3.60/min
+//   70x  -> 070x personal numbering; looks like a mobile, bills up to GBP 3.40/min, a classic
+//           fraud vector because it is so easily mistaken for an ordinary 07 mobile
+//   84x, 87x -> higher-rate service numbers
+//   118  -> directory enquiries, capped at GBP 3.65 per 90 seconds
+function allowedUK(d) {
+  if (!d.startsWith("44")) return false;
+  const nsn = d.slice(2);
+  if (nsn.length < 9 || nsn.length > 10) return false;
+  if (nsn.startsWith("0")) return false;   // trunk prefix left in; not a valid international NSN
+  if (nsn.startsWith("9")) return false;   // 09xx premium rate
+  if (nsn.startsWith("70")) return false;  // 070x personal numbering
+  if (nsn.startsWith("84") || nsn.startsWith("87")) return false;
+  if (nsn.startsWith("118")) return false; // directory enquiries
+  return true;
+}
+
+// Every destination this dialer may reach. Adding a country means adding one entry here plus a
+// matching test with that country's premium ranges excluded — never a blanket "allow everything
+// with this country code", because the expensive ranges are always inside an otherwise ordinary
+// country. Keep this list to countries actually being sold into.
+const DESTINATIONS = [
+  { name: "US/Canada", test: allowedNANP },
+  { name: "Armenia",   test: allowedArmenia },
+  { name: "UK",        test: allowedUK },
+];
+
 function allowed(raw) {
   const d = String(raw).replace(/\D/g, "");
-  return allowedNANP(d) || allowedArmenia(d);
+  return DESTINATIONS.some((dest) => dest.test(d));
 }
 
 function handleVoice(req, res) {
