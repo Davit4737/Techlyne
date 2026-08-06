@@ -334,7 +334,7 @@
   <div class="gate" id="manualDial">
     <div class="gatebox">
       <h3>Dial a number</h3>
-      <p>US/Canada or Armenia only — anything else is refused server-side, same rule as the lead list.</p>
+      <p>US/Canada, UK and Armenia — anything else is refused server-side, same rule as the lead list.</p>
       <input type="tel" id="manualInput" placeholder="+1 512 555 1234 or +374 99 123456" autocomplete="off">
       <div class="gateerr" id="manualErr"></div>
       <button id="manualGo">Call</button>
@@ -1223,10 +1223,17 @@ document.addEventListener("input", e=>{
 function normalizeManualNumber(raw){
   let d = String(raw||"").replace(/[^\d+]/g, "");
   if(d.startsWith("00")) d = "+" + d.slice(2);
-  const digits = d.replace(/\D/g, "");
+  let digits = d.replace(/\D/g, "");
+  // UK numbers are nearly always written with the trunk 0 — "+44 020 7946 0000" as well as the
+  // plain national "020 7946 0000". International format drops it, and the server rejects an NSN
+  // that still carries it rather than guessing, so strip it here where the intent is clear.
+  // Checked BEFORE the "+" shortcut below: a pasted "+44 020..." would otherwise return
+  // untouched and be refused.
+  if(digits.startsWith("440") && digits.length === 13) digits = "44" + digits.slice(3);
   if(d.startsWith("+")) return digits;
-  if(digits.length === 10) return "1" + digits;      // bare US/Canada number, no country code
+  if(digits.length === 10) return "1" + digits;       // bare US/Canada number, no country code
   if(digits.length === 8) return "374" + digits;      // bare Armenian national number
+  if(digits.length === 11 && digits.startsWith("0")) return "44" + digits.slice(1);  // 020…, 07700…
   return digits;                                       // already has a country code, or unrecognized — let the server decide
 }
 function openManualDial(){
