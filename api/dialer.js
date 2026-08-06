@@ -289,6 +289,32 @@ async function handleCalls(req, res) {
     }
 
     // The Monitor Alerts API is where the real reason lives.
+    // Trust Hub: for a +1 destination this is the thing 13225 is usually complaining about, so
+    // report what Twilio actually thinks the profile's status is rather than trusting the
+    // dashboard's "approved" banner. Only `twilio-approved` unblocks US calling; a profile can
+    // sit in in-review or come back rejected while still looking submitted in the console.
+    const profiles = await get("https://trusthub.twilio.com/v1/CustomerProfiles?PageSize=5");
+    if (profiles.status === 200 && profiles.body && Array.isArray(profiles.body.results)) {
+      out.customerProfiles = profiles.body.results.map((p) => ({
+        friendlyName: p.friendly_name, status: p.status, updated: p.date_updated,
+      }));
+      if (!out.customerProfiles.length) {
+        out.verdicts.push("FAIL no Customer Profile exists on this account. US (+1) calling stays blocked until one is created and approved: Console → Trust Hub → Customer Profiles.");
+      } else {
+        for (const p of out.customerProfiles) {
+          if (p.status === "twilio-approved") {
+            out.verdicts.push(`PASS Customer Profile "${p.friendlyName}" is APPROVED (updated ${p.updated}). If +1 calls still fail, approval may not have propagated yet — retry in a few minutes.`);
+          } else if (p.status === "twilio-rejected") {
+            out.verdicts.push(`FAIL Customer Profile "${p.friendlyName}" was REJECTED. Open it in Trust Hub for the reason and resubmit.`);
+          } else {
+            out.verdicts.push(`FAIL Customer Profile "${p.friendlyName}" is "${p.status}", not "twilio-approved" — US (+1) calling stays blocked until it is approved.`);
+          }
+        }
+      }
+    } else if (profiles.status === 401 || profiles.status === 403) {
+      out.verdicts.push("WARN this API key cannot read Trust Hub. Check the profile status manually: Console → Trust Hub → Customer Profiles.");
+    }
+
     const alerts = await get("https://monitor.twilio.com/v1/Alerts?PageSize=5");
     if (alerts.status === 200 && alerts.body && Array.isArray(alerts.body.alerts)) {
       out.recentAlerts = alerts.body.alerts.map((a) => ({
@@ -313,6 +339,20 @@ async function handleCalls(req, res) {
         else if (a.errorCode) out.verdicts.push(`INFO Twilio alert ${a.errorCode}: ${a.message.slice(0, 200)}`);
       }
       if (!out.recentAlerts.length) out.verdicts.push("INFO no recent Twilio alerts recorded.");
+
+      // Distinguish "still broken" from "you are reading errors from before the fix". Alerts
+      // stay in the list for days, so a freshly-approved profile plus stale failures looks
+      // identical to nothing having changed.
+      const approved = (out.customerProfiles || []).find((p) => p.status === "twilio-approved");
+      const newestAlert = out.recentAlerts[0] && out.recentAlerts[0].date;
+      if (approved && approved.updated && newestAlert) {
+        const okAt = Date.parse(approved.updated), alertAt = Date.parse(newestAlert);
+        if (Number.isFinite(okAt) && Number.isFinite(alertAt)) {
+          out.verdicts.push(alertAt <= okAt
+            ? "PASS every failure above predates the profile approval — these are stale. Place a fresh call and re-run this check."
+            : "FAIL a call failed AFTER the profile was approved, so the profile is not the remaining blocker. Check the newest alert code above.");
+        }
+      }
     } else if (alerts.status === 401) {
       out.verdicts.push("WARN could not read Twilio Alerts with this API key (401). Check Console → Monitor → Alerts manually for the error code.");
     }
