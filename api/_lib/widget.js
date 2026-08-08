@@ -40,10 +40,16 @@ const AVATAR_PREFIX = /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=
 // makes the feature on-by-default for every existing business without a backfill. An empty
 // array is a real choice ("all of them off") and is preserved as such.
 export function resolveQuickActions(row) {
-  // A missing row (unknown or not-yet-active slug) still yields the defaults: the widget installs
-  // and looks correct while an owner is testing it before their subscription goes live. Only an
-  // explicit quick_actions_on === false turns them off.
-  if (row && row.quick_actions_on === false) return [];
+  // No row means the slug is unknown OR the business is not active — getBusiness() filters on
+  // active = true. Both cases get NO buttons.
+  //
+  // This deliberately reversed an earlier decision to show the defaults here so an owner could
+  // preview them before activating. On a real visitor's screen that is a trap: every button
+  // leads to "this assistant isn't switched on yet", so the widget invites a click and then
+  // dead-ends on it. The owner's own preview passes its rows inline (data-quick) and never
+  // depends on this path, so nothing is lost by refusing here.
+  if (!row) return [];
+  if (row.quick_actions_on === false) return [];
   const stored = row && row.quick_actions;
   if (!Array.isArray(stored)) return DEFAULT_QUICK_ACTIONS.slice();
   return stored
