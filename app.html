@@ -308,9 +308,16 @@
       border-radius:12px; margin-bottom:8px; background:var(--paper); }
     .qa-row input[type=checkbox] { width:auto; margin:2px 0 0; flex:none; }
     .qa-row .qa-body { flex:1; min-width:0; }
-    .qa-row .qa-label { font-weight:600; font-size:13.5px; }
-    .qa-row .qa-prompt { font-size:12px; color:var(--muted); margin-top:2px; }
-    .qa-row.off { opacity:.5; }
+    .qa-row .qa-body input { margin:0 0 6px; font-size:13px; padding:7px 10px; }
+    .qa-row .qa-body input.qa-lab { font-weight:600; }
+    .qa-row .qa-body input:last-child { margin-bottom:0; }
+    .qa-row .qa-meta { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-top:5px; }
+    .qa-row .qa-count { font-size:11px; color:var(--faint); }
+    .qa-row .qa-count.over { color:var(--danger); font-weight:700; }
+    .qa-row .qa-del { background:transparent; border:0; color:var(--muted); cursor:pointer; font-size:12px; padding:2px 4px; }
+    .qa-row .qa-del:hover { color:var(--danger); }
+    .qa-row.off { opacity:.55; }
+    .qa-row { transition:opacity .15s ease; }
     .conn-cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px; align-items:start; }
     .conn-preview { position:sticky; top:24px; }
     .setup-note { display:flex; gap:10px; align-items:flex-start; background:var(--gold-soft); border:1px solid var(--gold-line); color:#7a5f1a; border-radius:14px; padding:13px 16px; font-size:13px; line-height:1.5; margin-bottom:22px; }
@@ -764,8 +771,10 @@
                     <span>Quick-action buttons</span>
                     <label class="switch"><input type="checkbox" id="qaOn" checked /><span>Show them</span></label>
                   </label>
-                  <div class="hint" style="margin:0 0 10px">One-tap buttons above the message box, so visitors don't have to think of what to type. Untick any you don't want.</div>
+                  <div class="hint" style="margin:0 0 10px">One-tap buttons above the message box, so visitors don't have to think of what to type. Edit the wording, untick any you don't want, or add your own.</div>
                   <div id="qaList"></div>
+                  <button type="button" class="ghost" id="qaAdd" style="margin-top:2px">+ Add a button</button>
+                  <div class="err" id="qaErr"></div>
                 </div>
 
                 <div class="full">
@@ -1369,9 +1378,15 @@
         position: connPos,
         launcher: ($("w_launcher") && $("w_launcher").value.trim()) || "",
         triggerText: ($("w_triggertext") && $("w_triggertext").value.trim()) || "",
+        // Live, unsaved state — so the preview shows what you are typing, not what is stored.
+        quickActions: $("qaOn") && $("qaOn").checked && $("qaList") ? readQuickActions().filter((a) => a.enabled) : [],
+        avatar: (biz && biz.avatar_url) || "",
       };
     }
 
+    // Note: deliberately does NOT emit data-quick/data-avatar. Those exist only so the preview
+    // can show unsaved edits; baking them into the customer's snippet would freeze their buttons
+    // at whatever they looked like the day they copied it.
     function buildSnippet(c) {
       const origin = widgetOrigin();
       const attrs = [
@@ -1402,8 +1417,14 @@
     function buildPreviewDoc(c) {
       const origin = widgetOrigin();
       const greeting = c.greeting || "Hi! 👋 How can I help you today?";
+      // data-quick / data-avatar make the widget skip its server fetch and render what the owner
+      // is editing this second. Only the preview ever sets them; a real embed leaves the server
+      // as the source of truth so changing a button never means re-copying the snippet.
+      const quickAttr = ' data-quick="' + escAttr(JSON.stringify(c.quickActions || [])) + '"';
+      const avatarAttr = c.avatar ? ' data-avatar="' + escAttr(c.avatar) + '"' : "";
       const common = ' data-slug="' + escAttr(c.slug) + '" data-name="' + escAttr(c.name) + '"' +
-        ' data-color="' + escAttr(c.color) + '" data-greeting="' + escAttr(greeting) + '"';
+        ' data-color="' + escAttr(c.color) + '" data-greeting="' + escAttr(greeting) + '"' +
+        quickAttr + avatarAttr;
       return '<!doctype html><html><head><meta charset="utf-8">' +
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
         '<style>html,body{margin:0;height:100%;background:transparent;}#bizassist-chat{position:absolute;inset:0;}</style></head><body>' +
@@ -1432,6 +1453,13 @@
     }
     function updatePreview() {
       $("previewFrame").srcdoc = buildPreviewDoc(connConfig());
+    }
+    // The preview reloads the whole iframe, so it is debounced harder than the counters —
+    // rebuilding it on every keystroke would restart the widget mid-word.
+    let qaPreviewTimer = null;
+    function previewQuickActions() {
+      clearTimeout(qaPreviewTimer);
+      qaPreviewTimer = setTimeout(updatePreview, 450);
     }
     function renderConnBanner() {
       const live = Boolean(biz && biz.active);
@@ -1490,7 +1518,14 @@
         finally { btn.disabled = false; btn.textContent = "Upload logo"; }
       });
       $("avClear").addEventListener("click", () => { $("avErr").textContent = ""; saveAvatar(null); });
-      $("qaOn").addEventListener("change", saveQuickActions);
+      $("qaOn").addEventListener("change", () => { previewQuickActions(); saveQuickActions(); });
+      $("qaAdd").addEventListener("click", () => {
+        if ($("qaList").querySelectorAll(".qa-row").length >= QA_MAX) return;
+        $("qaList").appendChild(qaRow({ label: "", prompt: "", enabled: true }));
+        syncAddButton();
+        const rows = $("qaList").querySelectorAll(".qa-row");
+        rows[rows.length - 1].querySelector(".qa-lab").focus();
+      });
 
       const onChange = () => { updateSnippet(); clearTimeout(connDebounce); connDebounce = setTimeout(updatePreview, 350); };
       $("w_name").addEventListener("input", onChange);
@@ -1577,41 +1612,96 @@
       }
     }
 
+    // Mirrors the server caps in api/_lib/widget.js. Kept in sync by the tests, which assert the
+    // browser refuses to submit anything the server would have to trim.
+    const QA_MAX = 6, QA_LABEL_WORDS = 4, QA_PROMPT_WORDS = 25;
+    const wordCount = (v) => String(v || "").trim().split(/\s+/).filter(Boolean).length;
+
+    function qaRow(a) {
+      const row = document.createElement("div");
+      row.className = "qa-row" + (a.enabled === false ? " off" : "");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "qa-en"; cb.checked = a.enabled !== false;
+
+      const body = document.createElement("div");
+      body.className = "qa-body";
+
+      const lab = document.createElement("input");
+      lab.className = "qa-lab"; lab.value = a.label; lab.maxLength = 40;
+      lab.placeholder = "Button text, e.g. Book an appointment";
+
+      const pr = document.createElement("input");
+      pr.className = "qa-pr"; pr.value = a.prompt; pr.maxLength = 300;
+      pr.placeholder = "What it sends, e.g. I'd like to book an appointment.";
+
+      const meta = document.createElement("div");
+      meta.className = "qa-meta";
+      const count = document.createElement("span");
+      count.className = "qa-count";
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "qa-del"; del.textContent = "Remove";
+      meta.appendChild(count); meta.appendChild(del);
+
+      body.appendChild(lab); body.appendChild(pr); body.appendChild(meta);
+      row.appendChild(cb); row.appendChild(body);
+
+      function refreshCount() {
+        const lw = wordCount(lab.value), pw = wordCount(pr.value);
+        const over = lw > QA_LABEL_WORDS || pw > QA_PROMPT_WORDS;
+        count.textContent = lw + "/" + QA_LABEL_WORDS + " words in the button · " + pw + "/" + QA_PROMPT_WORDS + " in the message";
+        count.classList.toggle("over", over);
+        return !over;
+      }
+      refreshCount();
+
+      // Live preview on every keystroke, saved on a pause. Typing straight through a debounce
+      // would otherwise fire a PATCH per character.
+      const onEdit = () => { refreshCount(); previewQuickActions(); scheduleQuickSave(); };
+      lab.addEventListener("input", onEdit);
+      pr.addEventListener("input", onEdit);
+      cb.addEventListener("change", () => { row.classList.toggle("off", !cb.checked); previewQuickActions(); saveQuickActions(); });
+      del.addEventListener("click", () => { row.remove(); previewQuickActions(); saveQuickActions(); syncAddButton(); });
+
+      return row;
+    }
+
     function renderQuickActions() {
       $("qaOn").checked = !(biz && biz.quick_actions_on === false);
       const wrap = $("qaList");
       wrap.innerHTML = "";
-      currentQuickActions().forEach((a, i) => {
-        const row = document.createElement("div");
-        row.className = "qa-row" + (a.enabled === false ? " off" : "");
-        const cb = document.createElement("input");
-        cb.type = "checkbox"; cb.checked = a.enabled !== false;
-        cb.addEventListener("change", () => saveQuickActions());
-        const body = document.createElement("div");
-        body.className = "qa-body";
-        const lab = document.createElement("div");
-        lab.className = "qa-label"; lab.textContent = a.label;
-        const pr = document.createElement("div");
-        pr.className = "qa-prompt"; pr.textContent = "Sends: " + a.prompt;
-        body.appendChild(lab); body.appendChild(pr);
-        row.appendChild(cb); row.appendChild(body);
-        row.dataset.i = String(i);
-        wrap.appendChild(row);
-      });
+      currentQuickActions().forEach((a) => wrap.appendChild(qaRow(a)));
+      syncAddButton();
+    }
+
+    function syncAddButton() {
+      $("qaAdd").disabled = $("qaList").querySelectorAll(".qa-row").length >= QA_MAX;
+      $("qaAdd").textContent = $("qaAdd").disabled ? "Maximum " + QA_MAX + " buttons" : "+ Add a button";
+    }
+
+    // Reads the rows as they are RIGHT NOW, including unsaved edits — this is what both the
+    // preview and the save use, so what you see is exactly what gets stored.
+    function readQuickActions() {
+      return Array.from($("qaList").querySelectorAll(".qa-row")).map((r) => ({
+        label: r.querySelector(".qa-lab").value.trim(),
+        prompt: r.querySelector(".qa-pr").value.trim(),
+        enabled: r.querySelector(".qa-en").checked,
+      })).filter((a) => a.label && a.prompt);
+    }
+
+    let qaSaveTimer = null;
+    function scheduleQuickSave() {
+      clearTimeout(qaSaveTimer);
+      qaSaveTimer = setTimeout(saveQuickActions, 700);
     }
 
     async function saveQuickActions() {
-      const base = currentQuickActions();
-      const rows = Array.from($("qaList").querySelectorAll(".qa-row"));
-      const next = base.map((a, i) => {
-        const cb = rows[i] && rows[i].querySelector("input[type=checkbox]");
-        return { ...a, enabled: cb ? cb.checked : a.enabled !== false };
-      });
+      clearTimeout(qaSaveTimer);
+      $("qaErr").textContent = "";
       try {
-        const { business } = await api("PATCH", { quick_actions: next, quick_actions_on: $("qaOn").checked });
+        const { business } = await api("PATCH", { quick_actions: readQuickActions(), quick_actions_on: $("qaOn").checked });
         biz = business;
-        renderQuickActions();
-      } catch (e) { $("avErr").textContent = e.message; }
+      } catch (e) { $("qaErr").textContent = e.message; }
     }
 
     // Downscaled in the browser to a 128px square before upload. A 128px avatar renders at
