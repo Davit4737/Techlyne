@@ -37,7 +37,15 @@
     .quick::-webkit-scrollbar { height:0; }
     .quick button { background:#fff; color:var(--green); border:1px solid var(--line); border-radius:999px;
       padding:8px 14px; font-size:13.5px; font-weight:600; white-space:nowrap; flex:none; cursor:pointer; }
-    .quick button:hover { border-color:var(--green); }
+    .quick button { transition:transform .15s ease, border-color .15s ease; }
+    .quick button:hover { border-color:var(--green); transform:translateY(-1px); }
+    .quick button:active { transform:translateY(0) scale(.97); }
+    @keyframes qin { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+    .quick button.qin { animation:qin .32s cubic-bezier(.22,.9,.32,1) both; }
+    @media (prefers-reduced-motion:reduce) {
+      .quick button.qin { animation:none; }
+      .quick button:hover, .quick button:active { transform:none; }
+    }
     .quick button:disabled { opacity:.5; cursor:default; }
     .quick:empty { display:none; }
   </style>
@@ -147,10 +155,12 @@
         } else if (cfg.name) {
           $("avatar").textContent = cfg.name.trim().charAt(0).toUpperCase() || "\u{1F4AC}";
         }
-        (cfg.quickActions || []).forEach((a) => {
+        (cfg.quickActions || []).forEach((a, i) => {
           const b = document.createElement("button");
           b.type = "button";
           b.textContent = a.label;              // textContent, never innerHTML — owner-supplied
+          b.className = "qin";
+          b.style.animationDelay = (i * 55) + "ms";   // staggered entrance
           b.addEventListener("click", () => send(a.prompt));
           $("quick").appendChild(b);
         });

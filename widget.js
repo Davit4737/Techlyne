@@ -58,6 +58,16 @@
   var LAUNCHER_LABEL = (data.launcher || "").slice(0, 40); // optional text next to the bubble
   var SHOW_BRANDING = data.branding !== "off";
 
+  // Preview overrides. The dashboard's live preview embeds this widget and needs to show
+  // UNSAVED edits, which the server obviously cannot serve yet — so it passes them inline and
+  // we skip the fetch. Absent on a real embed, where the server stays the source of truth and
+  // an owner never has to re-copy their snippet to change a button.
+  var QUICK_OVERRIDE = null;
+  if (data.quick) {
+    try { var q = JSON.parse(data.quick); if (Array.isArray(q)) QUICK_OVERRIDE = q; } catch (e) {}
+  }
+  var AVATAR_OVERRIDE = (data.avatar || "").slice(0, 200000) || null;
+
   // Display style:
   //   "bubble" (default) — a floating launcher + panel in the corner.
   //   "inline"           — the chat panel rendered inside the host's own element
@@ -320,9 +330,14 @@
   // the embed snippet off their Connect tab. Fails silently: the chat must work regardless.
   async function loadWidgetConfig() {
     try {
-      var res = await fetch(API_BASE + "/api/chat?slug=" + encodeURIComponent(SLUG));
-      if (!res.ok) return;
-      var cfg = await res.json();
+      var cfg;
+      if (QUICK_OVERRIDE || AVATAR_OVERRIDE) {
+        cfg = { avatarUrl: AVATAR_OVERRIDE, quickActions: QUICK_OVERRIDE || [] };
+      } else {
+        var res = await fetch(API_BASE + "/api/chat?slug=" + encodeURIComponent(SLUG));
+        if (!res.ok) return;
+        cfg = await res.json();
+      }
       if (cfg.avatarUrl) {
         var av = $(".avatar");
         if (av) {
@@ -338,6 +353,10 @@
           var b = document.createElement("button");
           b.type = "button";
           b.textContent = a.label;          // textContent, never innerHTML — owner-supplied text
+          // Staggered entrance. The delay is inline rather than in a class because the count is
+          // owner-controlled; the CSS honours prefers-reduced-motion and drops the whole thing.
+          b.className = "qin";
+          b.style.animationDelay = (i * 55) + "ms";
           b.addEventListener("click", function () { send(a.prompt); });
           quickEl.appendChild(b);
         })(actions[i]);
@@ -495,7 +514,14 @@
     ".quick:empty{display:none;}" +
     ".quick button{flex:none;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:#fff;" +
       "color:var(--accent);border-radius:999px;padding:7px 13px;font:600 12.5px/1 inherit;font-family:inherit;}" +
-    ".quick button:hover{border-color:var(--accent);}" +
+    ".quick button:hover{border-color:var(--accent);transform:translateY(-1px);}" +
+    ".quick button{transition:transform .15s ease,border-color .15s ease,background .15s ease;}" +
+    ".quick button:active{transform:translateY(0) scale(.97);}" +
+    "@keyframes qin{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}" +
+    ".quick button.qin{animation:qin .32s cubic-bezier(.22,.9,.32,1) both;}" +
+    /* Someone who asked the OS for less motion gets none of it — the buttons just appear. */
+    "@media (prefers-reduced-motion:reduce){.quick button.qin{animation:none;}" +
+      ".quick button:hover,.quick button:active{transform:none;}}" +
     ".quick button:disabled{opacity:.5;cursor:default;}" +
     ".composer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent);}" +
     ".composer .send{flex:none;width:42px;height:42px;border-radius:12px;border:0;background:var(--accent);color:var(--on-accent);" +
