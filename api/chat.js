@@ -11,6 +11,7 @@
 import { getAvailableSlots, createBooking, cancelBooking, rescheduleBooking } from "./_lib/scheduler.js";
 import { getBusiness, updateBusiness, insertAppointment, findConfirmedBySlot, findAppointmentsByContact, countUpcomingByContact, updateAppointment, cancelAppointment, bumpDemoUsage, bumpBusinessUsage } from "./_lib/db.js";
 import { sendEmail, senderFor, confirmationEmail, cancellationEmail, rescheduleEmail } from "./_lib/email.js";
+import { resolveQuickActions } from "./_lib/widget.js";
 
 // Both paid tenants and the free landing-page demo run on Sonnet 5 — booking correctness is the
 // product, and the demo is the first thing a prospect sees. The demo trims cost by running at
@@ -687,9 +688,32 @@ async function runTool(biz, name, input) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
+
+  // GET = the widget asking how to present itself (avatar, quick-action buttons). Served from
+  // here rather than a new endpoint because Vercel's Hobby plan caps this project at 12
+  // serverless functions and it is already at the ceiling.
+  //
+  // Deliberately public and deliberately narrow: it returns presentation data only, for a slug
+  // anyone can already read out of the embed snippet on the client's own website. Nothing about
+  // billing, credentials, staff or bookings is reachable through it.
+  if (req.method === "GET") {
+    const slug = typeof req.query?.slug === "string" ? req.query.slug.slice(0, 60).trim() : "";
+    if (!slug) return res.status(400).json({ error: "slug required" });
+    const r = await getBusiness(slug);
+    const row = r.ok ? r.business : null;
+    // An unknown or not-yet-active slug still gets the defaults: the widget installs and looks
+    // right before the subscription goes live, which is exactly when an owner is testing it.
+    res.setHeader("Cache-Control", "public, max-age=60");
+    return res.status(200).json({
+      name: row ? row.name : null,
+      avatarUrl: row ? row.avatar_url || null : null,
+      quickActions: resolveQuickActions(row),
+    });
+  }
+
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

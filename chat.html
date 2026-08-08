@@ -30,6 +30,16 @@
     button { background:var(--green); color:#fff; border:0; border-radius:12px; padding:0 20px; font-size:15px; font-weight:600; cursor:pointer; }
     button:disabled { opacity:.5; cursor:default; }
     .err { color:#B4402E; font-size:13px; text-align:center; margin-top:8px; }
+    header .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+    /* Quick actions sit ABOVE the composer: reachable without scrolling the thread, and they
+       scroll sideways rather than wrapping so a long set never pushes the input off-screen. */
+    .quick { max-width:640px; margin:0 auto 10px; display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
+    .quick::-webkit-scrollbar { height:0; }
+    .quick button { background:#fff; color:var(--green); border:1px solid var(--line); border-radius:999px;
+      padding:8px 14px; font-size:13.5px; font-weight:600; white-space:nowrap; flex:none; cursor:pointer; }
+    .quick button:hover { border-color:var(--green); }
+    .quick button:disabled { opacity:.5; cursor:default; }
+    .quick:empty { display:none; }
   </style>
 </head>
 <body>
@@ -44,6 +54,7 @@
   <main id="main"><div class="thread" id="thread"></div></main>
 
   <footer>
+    <div class="quick" id="quick"></div>
     <div class="composer">
       <textarea id="input" rows="1" placeholder="Type a message…"></textarea>
       <button id="send">Send</button>
@@ -72,8 +83,10 @@
       t.style.height = Math.min(t.scrollHeight, 120) + "px";
     }
 
-    async function send() {
-      const text = $("input").value.trim();
+    // Accepts an explicit string so a quick-action button can send its prompt without the
+    // visitor having to see it typed into the box first.
+    async function send(preset) {
+      const text = (typeof preset === "string" ? preset : $("input").value).trim();
       if (!text) return;
       $("err").textContent = "";
       $("input").value = ""; autosize();
@@ -81,6 +94,7 @@
       history.push({ role: "user", content: text });
 
       $("send").disabled = true;
+      setQuickDisabled(true);
       const typing = addMsg("bot", "…");
       typing.classList.add("typing");
 
@@ -100,6 +114,7 @@
         $("err").textContent = e.message;
       } finally {
         $("send").disabled = false;
+        setQuickDisabled(false);
         $("input").focus();
       }
     }
@@ -110,9 +125,42 @@
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
     });
 
+    function setQuickDisabled(on) {
+      $("quick").querySelectorAll("button").forEach((b) => { b.disabled = on; });
+    }
+
+    // Presentation config (avatar, quick actions) — fetched rather than baked in, so an owner
+    // changing it in their dashboard takes effect without anyone re-copying an embed snippet.
+    // Failure is silent on purpose: the chat itself must work even if this call doesn't.
+    async function loadConfig() {
+      try {
+        const res = await fetch("/api/chat?slug=" + encodeURIComponent(SLUG));
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (cfg.name) { $("hdrTitle").textContent = cfg.name; document.title = "Chat: " + cfg.name; }
+        if (cfg.avatarUrl) {
+          const img = document.createElement("img");
+          img.src = cfg.avatarUrl;
+          img.alt = "";
+          $("avatar").textContent = "";
+          $("avatar").appendChild(img);
+        } else if (cfg.name) {
+          $("avatar").textContent = cfg.name.trim().charAt(0).toUpperCase() || "\u{1F4AC}";
+        }
+        (cfg.quickActions || []).forEach((a) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = a.label;              // textContent, never innerHTML — owner-supplied
+          b.addEventListener("click", () => send(a.prompt));
+          $("quick").appendChild(b);
+        });
+      } catch (_) {}
+    }
+
     // Opening greeting (client-side; the bot personalizes from here using the tenant config).
     addMsg("bot", "Hi! 👋 I'm the front desk assistant. Ask me about services, hours, or booking an appointment.");
     $("input").focus();
+    loadConfig();
   </script>
 </body>
 </html>

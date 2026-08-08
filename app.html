@@ -296,6 +296,21 @@
        shrink below its widest content's intrinsic width. The code snippet is one long unwrapped
        line, so without this the column (and the whole page) stretches to fit it -- exactly the
        "Connect tab scrolls sideways on phone" bug. */
+    /* avatar picker + quick-action toggles (Connect tab) */
+    .avrow { display:flex; gap:14px; align-items:flex-start; }
+    .avprev { width:56px; height:56px; border-radius:50%; background:var(--green); color:#fff; flex:none;
+      display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; overflow:hidden; }
+    .avprev img { width:100%; height:100%; object-fit:cover; display:block; }
+    .avactions { flex:1; min-width:0; }
+    .switch { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); font-weight:500; cursor:pointer; }
+    .switch input { width:auto; margin:0; }
+    .qa-row { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:12px; margin-bottom:8px; background:var(--paper); }
+    .qa-row input[type=checkbox] { width:auto; margin:2px 0 0; flex:none; }
+    .qa-row .qa-body { flex:1; min-width:0; }
+    .qa-row .qa-label { font-weight:600; font-size:13.5px; }
+    .qa-row .qa-prompt { font-size:12px; color:var(--muted); margin-top:2px; }
+    .qa-row.off { opacity:.5; }
     .conn-cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px; align-items:start; }
     .conn-preview { position:sticky; top:24px; }
     .setup-note { display:flex; gap:10px; align-items:flex-start; background:var(--gold-soft); border:1px solid var(--gold-line); color:#7a5f1a; border-radius:14px; padding:13px 16px; font-size:13px; line-height:1.5; margin-bottom:22px; }
@@ -729,6 +744,29 @@
                   </div>
                 </div>
                 <div class="full"><label>Greeting message</label><input id="w_greeting" maxlength="300" placeholder="Hi! 👋 How can I help you today?" /></div>
+
+                <div class="full">
+                  <label>Chat avatar</label>
+                  <div class="avrow">
+                    <div class="avprev" id="avPreview"><span id="avLetter">B</span></div>
+                    <div class="avactions">
+                      <input type="file" id="avFile" accept="image/png,image/jpeg,image/webp" hidden />
+                      <button type="button" class="ghost" id="avPick">Upload logo</button>
+                      <button type="button" class="ghost" id="avClear" style="display:none">Remove</button>
+                      <div class="hint" style="margin-top:6px">Square image works best. Shrunk to 128px automatically, so it stays fast to load.</div>
+                    </div>
+                  </div>
+                  <div class="err" id="avErr"></div>
+                </div>
+
+                <div class="full">
+                  <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                    <span>Quick-action buttons</span>
+                    <label class="switch"><input type="checkbox" id="qaOn" checked /><span>Show them</span></label>
+                  </label>
+                  <div class="hint" style="margin:0 0 10px">One-tap buttons above the message box, so visitors don't have to think of what to type. Untick any you don't want.</div>
+                  <div id="qaList"></div>
+                </div>
 
                 <div class="full">
                   <label>How it opens on your site</label>
@@ -1436,6 +1474,24 @@
 
     function initConnectControls() {
       connReady = true;
+
+      $("avPick").addEventListener("click", () => { $("avErr").textContent = ""; $("avFile").click(); });
+      $("avFile").addEventListener("change", async () => {
+        const f = $("avFile").files && $("avFile").files[0];
+        $("avFile").value = "";                      // so re-picking the same file fires again
+        if (!f) return;
+        $("avErr").textContent = "";
+        // Guard before decoding: a 40MB photo would otherwise be read into memory just to be
+        // shrunk. The shrunk result is tiny either way, so the cap here is only about the input.
+        if (f.size > 8 * 1024 * 1024) { $("avErr").textContent = "That image is too large — pick one under 8MB."; return; }
+        const btn = $("avPick"); btn.disabled = true; btn.textContent = "Uploading…";
+        try { await saveAvatar(await shrinkImage(f, 128)); }
+        catch (e) { $("avErr").textContent = e.message || "Couldn't use that image."; }
+        finally { btn.disabled = false; btn.textContent = "Upload logo"; }
+      });
+      $("avClear").addEventListener("click", () => { $("avErr").textContent = ""; saveAvatar(null); });
+      $("qaOn").addEventListener("change", saveQuickActions);
+
       const onChange = () => { updateSnippet(); clearTimeout(connDebounce); connDebounce = setTimeout(updatePreview, 350); };
       $("w_name").addEventListener("input", onChange);
       $("w_color").addEventListener("input", () => { $("w_colorhex").value = $("w_color").value.toUpperCase(); onChange(); });
@@ -1481,9 +1537,115 @@
       if (!$("w_name").value) $("w_name").value = biz.name || "";
       if (!$("guides").childElementCount) $("guides").innerHTML = guidesHtml();
       renderConnBanner();
+      renderAvatar();
+      renderQuickActions();
       applyModeUI();
       updateSnippet();
       updatePreview();
+    }
+
+    // ── chat avatar + quick actions ───────────────────────────────────────────────────
+    // These two save immediately rather than waiting for a "Save" button: they live on the
+    // Connect tab, whose other controls are all live-preview, so a hidden unsaved state here
+    // would be the odd one out and easy to lose by switching tabs.
+    const DEFAULT_QUICK_ACTIONS = [
+      { key: "book",    label: "Book an appointment", prompt: "I'd like to book an appointment." },
+      { key: "prices",  label: "Check prices",        prompt: "What do your services cost?" },
+      { key: "contact", label: "Contact the clinic",  prompt: "How can I reach you — phone, address and opening hours?" },
+    ];
+    // A null column means "never configured" and the server serves the defaults, so mirror that
+    // here rather than writing defaults into the row on first render.
+    function currentQuickActions() {
+      return Array.isArray(biz && biz.quick_actions) && biz.quick_actions.length
+        ? biz.quick_actions
+        : DEFAULT_QUICK_ACTIONS.map((a) => ({ ...a, enabled: true }));
+    }
+
+    function renderAvatar() {
+      const url = biz && biz.avatar_url;
+      const prev = $("avPreview");
+      if (url) {
+        prev.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = url; img.alt = "";
+        prev.appendChild(img);
+        $("avClear").style.display = "";
+      } else {
+        prev.innerHTML = '<span id="avLetter"></span>';
+        $("avLetter").textContent = ((biz && biz.name) || "B").trim().charAt(0).toUpperCase();
+        $("avClear").style.display = "none";
+      }
+    }
+
+    function renderQuickActions() {
+      $("qaOn").checked = !(biz && biz.quick_actions_on === false);
+      const wrap = $("qaList");
+      wrap.innerHTML = "";
+      currentQuickActions().forEach((a, i) => {
+        const row = document.createElement("div");
+        row.className = "qa-row" + (a.enabled === false ? " off" : "");
+        const cb = document.createElement("input");
+        cb.type = "checkbox"; cb.checked = a.enabled !== false;
+        cb.addEventListener("change", () => saveQuickActions());
+        const body = document.createElement("div");
+        body.className = "qa-body";
+        const lab = document.createElement("div");
+        lab.className = "qa-label"; lab.textContent = a.label;
+        const pr = document.createElement("div");
+        pr.className = "qa-prompt"; pr.textContent = "Sends: " + a.prompt;
+        body.appendChild(lab); body.appendChild(pr);
+        row.appendChild(cb); row.appendChild(body);
+        row.dataset.i = String(i);
+        wrap.appendChild(row);
+      });
+    }
+
+    async function saveQuickActions() {
+      const base = currentQuickActions();
+      const rows = Array.from($("qaList").querySelectorAll(".qa-row"));
+      const next = base.map((a, i) => {
+        const cb = rows[i] && rows[i].querySelector("input[type=checkbox]");
+        return { ...a, enabled: cb ? cb.checked : a.enabled !== false };
+      });
+      try {
+        const { business } = await api("PATCH", { quick_actions: next, quick_actions_on: $("qaOn").checked });
+        biz = business;
+        renderQuickActions();
+      } catch (e) { $("avErr").textContent = e.message; }
+    }
+
+    // Downscaled in the browser to a 128px square before upload. A 128px avatar renders at
+    // ~38px in the widget, so it stays sharp on a 3x screen while landing around 5-15KB — small
+    // enough to inline in the widget config instead of standing up a storage bucket.
+    function shrinkImage(file, px) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Couldn't read that file."));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => reject(new Error("That doesn't look like an image."));
+          img.onload = () => {
+            const c = document.createElement("canvas");
+            c.width = px; c.height = px;
+            const ctx = c.getContext("2d");
+            // Cover-crop from the centre so a non-square logo isn't squashed.
+            const side = Math.min(img.width, img.height);
+            ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, px, px);
+            resolve(c.toDataURL("image/jpeg", 0.85));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function saveAvatar(dataUrl) {
+      try {
+        const { business } = await api("PATCH", { avatar_url: dataUrl });
+        biz = business;
+        renderAvatar();
+        updatePreview();
+      } catch (e) { $("avErr").textContent = e.message; }
     }
 
     // ── services & prices editor ──
