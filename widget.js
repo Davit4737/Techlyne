@@ -507,12 +507,21 @@
     ".composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:13px;padding:10px 13px;font-size:14.5px;" +
       "line-height:1.4;max-height:110px;color:var(--ink);background:#fff;outline:none;transition:border-color .15s ease,box-shadow .15s ease;}" +
     ".avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;}" +
-    /* Above the composer and horizontally scrollable: a long set never wraps into a wall that
-       pushes the input out of a 560px panel. */
-    ".quick{display:flex;gap:7px;overflow-x:auto;padding:0 14px 10px;flex:none;-webkit-overflow-scrolling:touch;}" +
-    ".quick::-webkit-scrollbar{height:0;}" +
+    /* WRAPS rather than scrolling sideways. A horizontal scroller silently clipped the last
+       button against the panel edge with no affordance, so it just looked broken — and a button
+       a visitor cannot see is a button that does not exist.
+       No max-height either: a fixed cap reintroduced the same bug on the vertical axis, hiding
+       the 4th row of a six-button set behind a scrollbar nobody can see. `flex:0 1 auto` with
+       min-height:0 lets the row take exactly the height it needs, and only yields (scrolling)
+       when the panel genuinely has no room — a landscape phone, not a normal screen. */
+    ".quick{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 10px;flex:0 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}" +
+    ".quick::-webkit-scrollbar{width:0;height:0;}" +
     ".quick:empty{display:none;}" +
-    ".quick button{flex:none;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:#fff;" +
+    /* max-width + ellipsis is the last line of defence: wrapping handles many buttons, but ONE
+       button whose label is a single unbreakable 40-character word would still push past the
+       panel edge. Capped at the row width it degrades to a visible "…" instead of being cut. */
+    ".quick button{flex:none;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
+      "cursor:pointer;border:1px solid var(--line);background:#fff;" +
       "color:var(--accent);border-radius:999px;padding:7px 13px;font:600 12.5px/1 inherit;font-family:inherit;}" +
     ".quick button:hover{border-color:var(--accent);transform:translateY(-1px);}" +
     ".quick button{transition:transform .15s ease,border-color .15s ease,background .15s ease;}" +

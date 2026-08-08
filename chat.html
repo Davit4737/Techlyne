@@ -31,12 +31,18 @@
     button:disabled { opacity:.5; cursor:default; }
     .err { color:#B4402E; font-size:13px; text-align:center; margin-top:8px; }
     header .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
-    /* Quick actions sit ABOVE the composer: reachable without scrolling the thread, and they
-       scroll sideways rather than wrapping so a long set never pushes the input off-screen. */
-    .quick { max-width:640px; margin:0 auto 10px; display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
-    .quick::-webkit-scrollbar { height:0; }
+    /* Quick actions sit ABOVE the composer. They WRAP rather than scrolling sideways: a
+       horizontal scroller clipped the last button against the edge with no affordance, and a
+       button nobody can see may as well not be there. No height cap either — that just moves
+       the same bug to the vertical axis. Six capped labels are a few rows, which the page has
+       room for. */
+    .quick { max-width:640px; margin:0 auto 10px; display:flex; flex-wrap:wrap; gap:8px; padding-bottom:2px; }
+    .quick::-webkit-scrollbar { width:0; height:0; }
+    /* max-width + ellipsis catches the one case wrapping can't: a single unbreakable long word,
+       which would otherwise run past the edge on a narrow phone. */
     .quick button { background:#fff; color:var(--green); border:1px solid var(--line); border-radius:999px;
-      padding:8px 14px; font-size:13.5px; font-weight:600; white-space:nowrap; flex:none; cursor:pointer; }
+      padding:8px 14px; font-size:13.5px; font-weight:600; white-space:nowrap; flex:none; cursor:pointer;
+      max-width:100%; overflow:hidden; text-overflow:ellipsis; }
     .quick button { transition:transform .15s ease, border-color .15s ease; }
     .quick button:hover { border-color:var(--green); transform:translateY(-1px); }
     .quick button:active { transform:translateY(0) scale(.97); }
