@@ -178,6 +178,7 @@
   var input = $(".composer textarea");
   var sendBtn = $(".composer .send");
   var errEl = $(".err");
+  var quickEl = $(".quick");
   var teaser = $(".teaser");
 
   // ── behavior ───────────────────────────────────────────────────────────────────────────
@@ -269,8 +270,10 @@
   }
   function hideTeaser() { teaser.classList.remove("show"); }
 
-  async function send() {
-    var text = input.value.trim();
+  // Accepts an explicit string so a quick-action button can send its prompt directly, without
+  // the visitor watching it get typed into the box.
+  async function send(preset) {
+    var text = (typeof preset === "string" ? preset : input.value).trim();
     if (!text || sending) return;
     errEl.textContent = "";
     input.value = ""; autosize();
@@ -278,7 +281,7 @@
     history.push({ role: "user", content: text });
     persist();
 
-    sending = true; sendBtn.disabled = true;
+    sending = true; sendBtn.disabled = true; setQuickDisabled(true);
     var typing = document.createElement("div");
     typing.className = "msg bot typing";
     typing.innerHTML = "<span></span><span></span><span></span>";
@@ -301,9 +304,45 @@
       typing.remove();
       errEl.textContent = e.message || "Network error. Please try again.";
     } finally {
-      sending = false; sendBtn.disabled = false;
+      sending = false; sendBtn.disabled = false; setQuickDisabled(false);
       try { input.focus(); } catch (err) {}
     }
+  }
+
+  function setQuickDisabled(on) {
+    if (!quickEl) return;
+    var bs = quickEl.querySelectorAll("button");
+    for (var i = 0; i < bs.length; i++) bs[i].disabled = on;
+  }
+
+  // Presentation config (avatar, quick actions), fetched rather than passed as data-* attributes
+  // so an owner changing it in their dashboard takes effect immediately — nobody has to re-copy
+  // the embed snippet off their Connect tab. Fails silently: the chat must work regardless.
+  async function loadWidgetConfig() {
+    try {
+      var res = await fetch(API_BASE + "/api/chat?slug=" + encodeURIComponent(SLUG));
+      if (!res.ok) return;
+      var cfg = await res.json();
+      if (cfg.avatarUrl) {
+        var av = $(".avatar");
+        if (av) {
+          var img = document.createElement("img");
+          img.src = cfg.avatarUrl; img.alt = "";
+          av.textContent = "";
+          av.appendChild(img);
+        }
+      }
+      var actions = cfg.quickActions || [];
+      for (var i = 0; i < actions.length; i++) {
+        (function (a) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = a.label;          // textContent, never innerHTML — owner-supplied text
+          b.addEventListener("click", function () { send(a.prompt); });
+          quickEl.appendChild(b);
+        })(actions[i]);
+      }
+    } catch (e) {}
   }
 
   function autosize() {
@@ -338,6 +377,8 @@
     if (state.opened) open();
   }
 
+  loadWidgetConfig();
+
   // Public control surface so a host site can wire its own "Chat with us" button.
   window.BizAssist = { open: open, close: close, toggle: toggle };
 
@@ -361,6 +402,7 @@
       '  </header>',
       '  <div class="thread" role="log" aria-live="polite"></div>',
       '  <div class="err" role="alert"></div>',
+      '  <div class="quick"></div>',
       '  <footer class="composer">',
       '    <textarea rows="1" placeholder="Type a message…" aria-label="Message"></textarea>',
       '    <button class="send" aria-label="Send message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>',
@@ -445,6 +487,16 @@
     ".composer{display:flex;gap:9px;align-items:flex-end;padding:12px 14px;border-top:1px solid var(--line);background:#fff;flex:none;}" +
     ".composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:13px;padding:10px 13px;font-size:14.5px;" +
       "line-height:1.4;max-height:110px;color:var(--ink);background:#fff;outline:none;transition:border-color .15s ease,box-shadow .15s ease;}" +
+    ".avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;}" +
+    /* Above the composer and horizontally scrollable: a long set never wraps into a wall that
+       pushes the input out of a 560px panel. */
+    ".quick{display:flex;gap:7px;overflow-x:auto;padding:0 14px 10px;flex:none;-webkit-overflow-scrolling:touch;}" +
+    ".quick::-webkit-scrollbar{height:0;}" +
+    ".quick:empty{display:none;}" +
+    ".quick button{flex:none;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:#fff;" +
+      "color:var(--accent);border-radius:999px;padding:7px 13px;font:600 12.5px/1 inherit;font-family:inherit;}" +
+    ".quick button:hover{border-color:var(--accent);}" +
+    ".quick button:disabled{opacity:.5;cursor:default;}" +
     ".composer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent);}" +
     ".composer .send{flex:none;width:42px;height:42px;border-radius:12px;border:0;background:var(--accent);color:var(--on-accent);" +
       "cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s ease,opacity .15s ease;}" +

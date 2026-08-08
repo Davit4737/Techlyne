@@ -14,12 +14,14 @@
 import { getBusinessByOwner, createBusiness, updateBusiness, deleteBusinessCascade } from "./_lib/db.js";
 import { bearerFromReq, getUserFromToken, deleteAuthUser } from "./_lib/auth.js";
 import { isPaddleConfigured, findSubscriptionByEmail, planFromPriceId, LIVE_STATUSES } from "./_lib/paddle.js";
+import { sanitizeQuickActions, sanitizeAvatar } from "./_lib/widget.js";
 
 // Config fields a client may set on their own business. Deliberately excludes owner_id,
 // active, subscription_status, slug, admin_secret, and all calcom_* (operator/advanced).
 const OWNER_FIELDS = [
   "name", "timezone", "hours", "address", "phone", "services", "industry",
   "availability", "slot_minutes", "staff", "services_list", "default_language",
+  "quick_actions", "quick_actions_on", "avatar_url",
 ];
 
 const WEEKDAYS = new Set(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
@@ -31,7 +33,7 @@ const HM = /^\d{1,2}:\d{2}$/;
 const OWNER_VIEW_FIELDS = [
   "id", "slug", "name", "timezone", "hours", "address", "phone", "services", "industry",
   "availability", "slot_minutes", "staff", "services_list", "default_language", "active", "subscription_status", "plan",
-  "paddle_customer_id", "created_at",
+  "paddle_customer_id", "created_at", "quick_actions", "quick_actions_on", "avatar_url",
 ];
 function ownerView(business) {
   if (!business) return null;
@@ -126,6 +128,23 @@ function pick(body) {
     const clean = sanitizeAvailability(out.availability);
     if (clean) out.availability = clean;
     else delete out.availability;
+  }
+
+  // Widget quick actions: rebuilt from scratch like everything else here. An unusable payload
+  // drops the field rather than writing junk, so a bad request leaves a working config intact.
+  if (out.quick_actions !== undefined) {
+    const clean = sanitizeQuickActions(out.quick_actions);
+    if (clean) out.quick_actions = clean;
+    else delete out.quick_actions;
+  }
+  if (out.quick_actions_on !== undefined) out.quick_actions_on = Boolean(out.quick_actions_on);
+
+  // Avatar: null clears it (the owner removing their logo), a valid data URI within the size cap
+  // replaces it, and anything else is dropped so a malformed upload can't wipe a good one.
+  if (out.avatar_url !== undefined) {
+    const clean = sanitizeAvatar(out.avatar_url);
+    if (clean === undefined) delete out.avatar_url;
+    else out.avatar_url = clean;
   }
   return out;
 }
